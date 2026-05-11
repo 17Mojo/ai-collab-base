@@ -1,0 +1,112 @@
+{
+  "metadata": {
+    "pack_id": "travel-planner-north-guide",
+    "pack_name": "南方小土豆北方旅游规划攻略",
+    "version": "1.0.0",
+    "type": "business",
+    "description": "专为南方小土豆前往北方旅游规划旅游攻略，提供定制化旅行建议和信息",
+    "category": "旅游规划",
+    "tags": ["旅游", "攻略", "北方", "南方小土豆", "定制"],
+    "language": "zh"
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_destination",
+        "name": "目的地分析",
+        "type": "analysis",
+        "ai_models": ["qianwen"],
+        "description": "分析目的地历史、文化、美食、人文"
+      },
+      {
+        "id": "step_2_schedule",
+        "name": "行程安排",
+        "type": "generation",
+        "ai_models": ["qianwen", "zhipu"],
+        "description": "规划每天详细行程，包括景点、时间表、交通路线"
+      },
+      {
+        "id": "step_3_nightlife",
+        "name": "夜生活推荐",
+        "type": "generation",
+        "ai_models": ["qianwen"],
+        "description": "推荐夜间活动地点、特色饭店、网红饭店"
+      },
+      {
+        "id": "step_4_safety",
+        "name": "安全防护指南",
+        "type": "analysis",
+        "ai_models": ["qianwen"],
+        "description": "提供天气情况、出行注意事项、安全注意事项"
+      },
+      {
+        "id": "step_5_emergency",
+        "name": "紧急联系方式",
+        "type": "local",
+        "description": "整理紧急救助机构及联系方式"
+      },
+      {
+        "id": "step_6_dialect",
+        "name": "方言教学",
+        "type": "generation",
+        "ai_models": ["qianwen"],
+        "description": "讲解当地常用方言"
+      },
+      {
+        "id": "step_7_transport",
+        "name": "公共交通规划",
+        "type": "generation",
+        "ai_models": ["qianwen"],
+        "description": "规划市区及旅游景点交通方式"
+      },
+      {
+        "id": "step_8_output",
+        "name": "整合输出",
+        "type": "fusion",
+        "description": "整合所有内容生成完整攻略"
+      }
+    ]
+  },
+  "system_prompt": "你是旅游博主，专为南方小土豆前往北方旅游规划旅游攻略。使用Emoji使内容更具吸引力，使用粗体表示重要内容。特别关注南方人在北方旅游可能遇到的气候、文化和生活方式差异。",
+  "domain": {
+    "primary_domain": "旅游规划",
+    "secondary_domains": ["北方旅游", "南方游客指南"],
+    "target_platforms": ["generic"],
+    "target_audience": "南方小土豆（南方游客）",
+    "brand_tone": "热情、专业、贴心"
+  },
+  "quality_metrics": {
+    "metrics": {
+      "completeness": {
+        "description": "内容完整性 - 是否覆盖所有章节",
+        "check_method": "compare_with_required_sections",
+        "weight": 0.3,
+        "min_threshold": 0.8
+      },
+      "accuracy": {
+        "description": "信息准确性 - 交通、地址等信息是否准确",
+        "check_method": "fact_verification",
+        "weight": 0.25,
+        "min_threshold": 0.9
+      },
+      "engagement": {
+        "description": "吸引力 - Emoji和格式使用是否恰当",
+        "check_method": "format_check",
+        "weight": 0.2,
+        "min_threshold": 0.7
+      },
+      "safety_coverage": {
+        "description": "安全覆盖 - 是否提供完整安全指南",
+        "check_method": "safety_check",
+        "weight": 0.15,
+        "min_threshold": 1.0
+      },
+      "practicality": {
+        "description": "实用性 - 是否可立即执行",
+        "check_method": "practical_check",
+        "weight": 0.1,
+        "min_threshold": 0.8
+      }
+    }
+  }
+}

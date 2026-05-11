@@ -1,0 +1,31 @@
+{
+  "name": "ai-collab-playwright-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright runtime tests for Prompt Pack extension popup",
+  "scripts": {
+    "test": "playwright test",
+    "test:ci": "CI=1 playwright test",
+    "test:a11y": "playwright test tests/popup.a11y.spec.js",
+    "test:a11y:ci": "CI=1 playwright test tests/popup.a11y.spec.js",
+    "test:a11y:axe": "playwright test tests/popup.a11y.axe.spec.js",
+    "test:a11y:axe:ci": "CI=1 playwright test tests/popup.a11y.axe.spec.js",
+    "test:runtime": "playwright test tests/popup.runtime.spec.js tests/error_handling.spec.js",
+    "test:runtime:ci": "CI=1 playwright test tests/popup.runtime.spec.js tests/error_handling.spec.js",
+    "test:popup:gate": "playwright test tests/popup.runtime.spec.js tests/error_handling.spec.js tests/popup.a11y.spec.js tests/popup.a11y.axe.spec.js",
+    "test:popup:gate:ci": "CI=1 playwright test tests/popup.runtime.spec.js tests/error_handling.spec.js tests/popup.a11y.spec.js tests/popup.a11y.axe.spec.js",
+    "test:popup:extended": "playwright test tests/popup.a11y.axe.spec.js tests/popup_visual_regression.spec.js tests/popup.performance.spec.js",
+    "test:popup:extended:ci": "CI=1 playwright test tests/popup.a11y.axe.spec.js tests/popup_visual_regression.spec.js tests/popup.performance.spec.js",
+    "test:visual": "playwright test tests/popup_visual_regression.spec.js",
+    "test:visual:ci": "CI=1 playwright test tests/popup_visual_regression.spec.js",
+    "test:perf": "playwright test tests/popup.performance.spec.js",
+    "test:perf:ci": "CI=1 playwright test tests/popup.performance.spec.js",
+    "test:gui-demo": "playwright test tests/prompt_pack_gui_demo.spec.js",
+    "report:show": "playwright show-report ../../logs/playwright-report",
+    "report:summary": "node scripts/playwright-summary.js"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@playwright/test": "^1.55.0"
+  }
+}

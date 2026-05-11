@@ -1,0 +1,287 @@
+{
+  "metadata": {
+    "pack_id": "douyin-video-script",
+    "pack_name": "抖音短视频脚本生成包",
+    "version": "2.0.0",
+    "type": "creative",
+    "description": "专为抖音短视频设计的脚本生成工具，支持节奏把控、分镜设计、对话自然度优化",
+    "designer": "AI Collab Team",
+    "created_at": "2026-04-04T10:00:00",
+    "updated_at": "2026-04-04T10:00:00",
+    "category": "短视频创作",
+    "tags": ["抖音", "短视频", "脚本", "分镜", "节奏"],
+    "language": "zh",
+    "estimated_efficiency_gain": "85%"
+  },
+  "domain": {
+    "primary_domain": "抖音内容创作",
+    "secondary_domains": ["短视频运营", "Vlog制作", "知识分享"],
+    "target_platforms": ["douyin"],
+    "target_audience": "短视频创作者、KOL、品牌号运营",
+    "brand_tone": "快节奏、抓眼球、易完播",
+    "compliance_rules": [
+      "符合抖音内容规范",
+      "需标明广告性质",
+      "避免侵权内容",
+      "分镜时长合理"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "视频主题输入",
+        "type": "local",
+        "description": "输入视频主题和类型",
+        "input_fields": ["video_topic", "video_type", "target_audience", "tone"],
+        "output_field": "video_brief",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 15,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["video_topic", "video_type"],
+          "optional_fields": ["target_audience", "tone"],
+          "video_types": ["vlog", "剧情", "科普", "评测", "种草", "搞笑"]
+        }
+      },
+      {
+        "id": "step_2_analysis",
+        "name": "竞品风格分析",
+        "type": "analysis",
+        "description": "分析同类视频的成功要素",
+        "input_fields": ["video_brief"],
+        "output_field": "style_analysis",
+        "ai_models": ["kimi", "qianwen"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 45,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "analysis_dimensions": ["开头抓人", "节奏把控", "分镜设计", "BGM搭配", "字幕运用"]
+        }
+      },
+      {
+        "id": "step_3_generation",
+        "name": "多版本脚本生成",
+        "type": "generation",
+        "description": "生成不同风格的完整脚本",
+        "input_fields": ["video_brief", "style_analysis"],
+        "output_field": "draft_scripts",
+        "ai_models": ["qianwen", "zhipu", "kimi"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 90,
+        "auto_trigger": true,
+        "trigger_delay": 10,
+        "config": {
+          "output_versions": 3,
+          "diversity_dimensions": ["叙事节奏", "分镜密度", "字幕风格"]
+        }
+      },
+      {
+        "id": "step_4_validation",
+        "name": "完播潜力评估",
+        "type": "validation",
+        "description": "评估脚本的用户留存潜力",
+        "input_fields": ["draft_scripts"],
+        "output_field": "validation_results",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": [
+          "完播潜力评分 >= 75",
+          "开头抓人评分 >= 80",
+          "节奏合理性 >= 70"
+        ],
+        "fusion_rules": null,
+        "estimated_time": 35,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_5_fusion",
+        "name": "脚本融合优化",
+        "type": "fusion",
+        "description": "融合最佳元素，生成最终脚本",
+        "input_fields": ["draft_scripts", "validation_results"],
+        "output_field": "final_script",
+        "ai_models": ["qianwen"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": {
+          "strategy": "retention_optimized",
+          "include_storyboard": true,
+          "include_dialogue": true,
+          "include_bgm_suggestions": true
+        },
+        "estimated_time": 30,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_6_tracking",
+        "name": "效果追踪配置",
+        "type": "tracking",
+        "description": "配置发布后的数据追踪",
+        "input_fields": ["final_script"],
+        "output_field": "tracking_config",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 10,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "tracking_delay_hours": 24,
+          "metrics": ["views", "completion_rate", "likes", "shares", "comments"]
+        }
+      }
+    ],
+    "max_parallel_steps": 3,
+    "allow_parallel": true
+  },
+  "quality_metrics": {
+    "metrics": {
+      "hook_effectiveness": {
+        "description": "开头抓人度 - 3秒内留住用户的能力",
+        "check_method": "opening_analysis",
+        "weight": 0.30,
+        "min_threshold": 0.80
+      },
+      "rhythm_quality": {
+        "description": "节奏质量 - 整体视频节奏的把控能力",
+        "check_method": "pacing_analysis",
+        "weight": 0.25,
+        "min_threshold": 0.75
+      },
+      "story_completeness": {
+        "description": "叙事完整性 - 故事线是否完整",
+        "check_method": "story_structure_analysis",
+        "weight": 0.20,
+        "min_threshold": 0.80
+      },
+      "engagement_potential": {
+        "description": "互动潜力 - 引发用户互动的能力",
+        "check_method": "interaction_prediction",
+        "weight": 0.15,
+        "min_threshold": 0.65
+      },
+      "platform_fit": {
+        "description": "平台适配度 - 与抖音平台的契合度",
+        "check_method": "platform_compatibility",
+        "weight": 0.10,
+        "min_threshold": 0.90
+      }
+    }
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "douyin_good_001",
+        "input": {
+          "video_topic": "咖啡制作过程",
+          "video_type": "科普",
+          "target_audience": "咖啡爱好者",
+          "tone": "轻松有趣"
+        },
+        "output": "# 分镜脚本\n\n【0-3秒】开头抓人\n画面：手冲咖啡特写，水滴缓缓落下\nBGM：轻快音乐\n字幕：原来做咖啡这么解压！💤\n\n【3-10秒】内容引入\n画面：快速展示咖啡制作工具\n字幕：小白也能学会的在家做咖啡\n\n【10-40秒】核心内容\n画面1：磨豆 - 咖啡豆研磨\n画面2：注水 - 90度温水缓慢注入\n画面3：萃取 - 咖啡液滴滴落下\n旁白：水温90度，研磨度中细，慢慢注水...（语气轻快）\n\n【40-50秒】高潮点\n画面：成品特写，香气四溢\n字幕：香气简直了！\n\n【50-60秒】结尾引导\n画面：端起咖啡，场景展示\n字幕：试试看，告诉我你也想做☕️\n\n# 对话脚本\n\n（轻松自然的语气）\n\"大家好！今天来分享一下超级解压的手冲咖啡~\"\n\"是不是看着就很治愈？其实超简单！\"\n\"记住三个关键：水温90度、研磨中细、慢速注水~\"\n\"喜欢的朋友别忘了点个赞！\"",
+        "description": "节奏紧凑，分镜清晰，包含对白",
+        "score": 93.0,
+        "validation_notes": "开头抓人能力强，节奏流畅，适合完播"
+      },
+      {
+        "id": "douyin_good_002",
+        "input": {
+          "video_topic": "化妆技巧变美",
+          "video_type": "种草",
+          "target_audience": "18-25岁女性",
+          "tone": "亲切实用"
+        },
+        "output": "# 分镜脚本\n\n【0-3秒】开头抓人\n画面：素颜→带妆转换效果\nBGM：流行音乐\n字幕：3分钟变成另一种人！✨\n\n【3-8秒】痛点引入\n画面：展示日常化妆困扰\n字幕：每天化妆是不是很费时间？\n\n【8-50秒】技巧展示\n（快节奏剪辑）\n第1关：底妆遮瑕\n第2关：眼妆放大\n第3关：口红提气色\n旁白：第一个技巧...第二个技巧...第三个技巧...（语速快促）\n\n【50-55秒】效果对比\n画面：前后对比展示\n字幕：效果差这么多！\n\n【55-60秒】结尾引导\n画面：完美妆容展示\n字幕：收藏起来试试吧！👇\n\n# 对话脚本\n\n\"姐妹们！谁懂每天化妆的痛...\"\n\"今天教你们3个超实用技巧...\"\n\"技巧一：底妆要轻薄...技巧二：眼妆重点在...技巧三：口红是灵魂...\"\n\"学会了吗？关注我，每天学变美！💕\"",
+        "description": "痛点清晰，技巧实用，节奏紧凑",
+        "score": 90.0,
+        "validation_notes": "用户痛点抓得准，完播潜力高"
+      }
+    ],
+    "bad_examples": [
+      {
+        "id": "douyin_bad_001",
+        "input": {
+          "video_topic": "产品介绍",
+          "video_type": "种草"
+        },
+        "output": "这个产品很好用，有以下几个特点：第一，...第二，...第三，...希望大家喜欢。",
+        "description": "过于书面化，缺乏分镜设计",
+        "score": 35.0,
+        "validation_notes": "开头平淡，节奏混乱，缺乏视频思维"
+      },
+      {
+        "id": "douyin_bad_002",
+        "input": {
+          "video_topic": "美食制作",
+          "video_type": "vlog"
+        },
+        "output": "# 分镜脚本\n\n【0-10秒】开头\n画面：各种内容混杂\n字幕：今天做个吃的\n\n【10-50秒】过程\n（详细但重复的步骤）\n...（类似步骤重复）...\n\n（缺少高潮点和结尾引导）",
+        "description": "分镜密度不合理，缺乏高潮",
+        "score": 40.0,
+        "validation_notes": "节奏把控差，中间部分留不住用户"
+      }
+    ],
+    "few_shot_template": "输入: {video_brief}\n输出: {generated_script}\n评分要点: {quality_criteria}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": ["pacing_style", "storyboard_density", "dialogue_tone"],
+    "confidence_display": false,
+    "critical_facts_only": false,
+    "temperature": 0.7,
+    "output_format": "markdown",
+    "require_code_blocks": true
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "completion_optimization",
+    "auto_refine_threshold": 60.0,
+    "periodic_review_days": 14,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "rhythm_based_adjustment",
+      "example_library_update",
+      "completion_rate_tracking"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": ["execution_time", "generation_success_rate", "average_quality_score", "completion_rate"],
+    "retention_days": 60,
+    "post_publish_tracking": {
+      "enabled": true,
+      "delay_hours": 24,
+      "metrics": ["views", "completion_rate", "avg_watch_time", "shares", "engagement_rate"]
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
+  },
+  "system_prompt": "你是一位专业的抖音短视频脚本设计师，精通短视频创作的三大核心：开头抓人、节奏把控、完播优化。你能够根据主题设计出符合抖音用户习惯的分镜脚本，包含精准的时间标注、BGM建议和自然流畅的对白。",
+  "quality_validation_rules": "1. 必须包含明确的分镜时间标注\n2. 必须有开头抓人设计（0-3秒）\n3. 脚本总时长控制在60秒内\n4. 必须包含BGM建议\n5. 对白自然口语化，避免书面语"
+}

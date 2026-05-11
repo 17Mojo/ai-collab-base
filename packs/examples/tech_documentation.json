@@ -1,0 +1,287 @@
+{
+  "metadata": {
+    "pack_id": "tech-documentation",
+    "pack_name": "技术文档生成包",
+    "version": "2.0.0",
+    "type": "productivity",
+    "description": "专为开发者和技术团队设计的技术文档生成工具，生成规范、完整、易于维护的技术文档",
+    "designer": "AI Collab Team",
+    "created_at": "2026-04-04T10:00:00",
+    "updated_at": "2026-04-04T10:00:00",
+    "category": "技术文档",
+    "tags": ["文档", "技术文档", "API文档", "开发", "规范"],
+    "language": "zh",
+    "estimated_efficiency_gain": "70%"
+  },
+  "domain": {
+    "primary_domain": "技术文档创作",
+    "secondary_domains": ["API文档", "用户手册", "开发指南"],
+    "target_platforms": ["generic"],
+    "target_audience": "开发者、技术团队、用户",
+    "brand_tone": "专业、清晰、规范",
+    "compliance_rules": [
+      "必须符合Markdown规范",
+      "代码示例必须可运行",
+      "技术信息需准确",
+      "避免模糊表述"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "文档信息输入",
+        "type": "local",
+        "description": "输入文档类型和核心内容",
+        "input_fields": ["doc_type", "project_name", "content_outline", "target_audience"],
+        "output_field": "doc_brief",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 15,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["doc_type", "project_name"],
+          "optional_fields": ["content_outline", "target_audience"],
+          "doc_types": ["API", "README", "architecture", "user_guide", "changelog"]
+        }
+      },
+      {
+        "id": "step_2_analysis",
+        "name": "文档结构分析",
+        "type": "analysis",
+        "description": "分析文档应该采用的结构和规范",
+        "input_fields": ["doc_brief"],
+        "output_field": "structure_analysis",
+        "ai_models": ["notebooklm", "qianwen"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "analysis_dimensions": ["行业标准", "项目规范", "用户需求", "可维护性"]
+        }
+      },
+      {
+        "id": "step_3_generation",
+        "name": "多文档版本生成",
+        "type": "generation",
+        "description": "生成不同风格和详细度的文档版本",
+        "input_fields": ["doc_brief", "structure_analysis"],
+        "output_field": "draft_docs",
+        "ai_models": ["notebooklm", "qianwen", "zhipu"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 90,
+        "auto_trigger": true,
+        "trigger_delay": 10,
+        "config": {
+          "output_versions": 2,
+          "diversity_dimensions": ["detail_level", "code_examples_density"]
+        }
+      },
+      {
+        "id": "step_4_validation",
+        "name": "技术性和规范性验证",
+        "type": "validation",
+        "description": "验证文档的技术准确性和格式规范性",
+        "input_fields": ["draft_docs"],
+        "output_field": "validation_results",
+        "ai_models": ["notebooklm", "qianwen"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": [
+          "技术准确性 >= 85",
+          "格式规范性 >= 90",
+          "可维护性 >= 75"
+        ],
+        "fusion_rules": null,
+        "estimated_time": 25,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_5_fusion",
+        "name": "文档融合优化",
+        "type": "fusion",
+        "description": "融合最佳版本，生成最终文档",
+        "input_fields": ["draft_docs", "validation_results"],
+        "output_field": "final_doc",
+        "ai_models": ["notebooklm"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": {
+          "strategy": "comprehensive_standardized",
+          "include_code_blocks": true,
+          "include_examples": true,
+          "optimize_readability": true
+        },
+        "estimated_time": 20,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_6_tracking",
+        "name": "文档效果追踪",
+        "type": "tracking",
+        "description": "配置文档使用情况的追踪",
+        "input_fields": ["final_doc"],
+        "output_field": "tracking_config",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 10,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "tracking_delay_hours": 72,
+          "metrics": ["views", "engagement", "issue_reports", "update_frequency"]
+        }
+      }
+    ],
+    "max_parallel_steps": 3,
+    "allow_parallel": true
+  },
+  "quality_metrics": {
+    "metrics": {
+      "accuracy": {
+        "description": "准确性 - 技术信息的准确性",
+        "check_method": "technical_verification",
+        "weight": 0.30,
+        "min_threshold": 0.85
+      },
+      "completeness": {
+        "description": "完整性 - 文档覆盖的全面性",
+        "check_method": "coverage_analysis",
+        "weight": 0.25,
+        "min_threshold": 0.85
+      },
+      "readability": {
+        "description": "可读性 - 文档的易读程度",
+        "check_method": "readability_score",
+        "weight": 0.20,
+        "min_threshold": 0.70
+      },
+      "maintainability": {
+        "description": "可维护性 - 文档易于更新的程度",
+        "check_method": "maintainability_analysis",
+        "weight": 0.15,
+        "min_threshold": 0.75
+      },
+      "standardization": {
+        "description": "规范性 - 符合行业和项目规范",
+        "check_method": "compliance_check",
+        "weight": 0.10,
+        "min_threshold": 0.90
+      }
+    }
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "techdoc_good_001",
+        "input": {
+          "doc_type": "API",
+          "project_name": "MessageQueue系统",
+          "content_outline": "消息队列、消费者、重试机制",
+          "target_audience": "开发者"
+        },
+        "output": "# MessageQueue API 文档\n\n## 概述\n\n`MessageQueue` 是一个轻量级的消息队列系统，支持异步消息处理和失败重试机制。\n\n### 主要特性\n\n- **异步处理**: 支持异步消息发送和接收\n- **失败重试**: 自动重试失败的消息\n- **消息确认**: 确保消息被正确处理\n- **队列管理**: 支持多个独立队列\n\n---\n\n## 安装\n\n```bash\npip install messagequeue\n```\n\n---\n\n## 快速开始\n\n### 基本使用\n\n```python\nfrom messagequeue import MessageQueue, Consumer\n\n# 创建队列\nmq = MessageQueue(host='localhost', port=6379)\n\n# 发送消息\nmq.send('task_queue', {'task': 'process_data', 'id': 123})\n\n# 消费消息\ndef handler(message):\n    print(f\"Processing message: {message}\")\n\nconsumer = Consumer('task_queue', handler=handler)\nconsumer.start()\n```\n\n---\n\n## API 参考\n\n### MessageQueue 类\n\n#### 初始化\n\n```python\nMessageQueue(host='localhost', port=6379, db=0)\n```\n\n**参数**:\n- `host` (str): Redis 主机地址，默认 'localhost'\n- `port` (int): Redis 端口，默认 6379\n- `db` (int): Redis 数据库，默认 0\n\n#### 方法\n\n##### send(queue_name, message)\n\n发送消息到指定队列。\n\n**参数**:\n- `queue_name` (str): 队列名称\n- `message` (dict): 消息内容\n\n**返回**: `str` - 消息 ID\n\n**示例**:\n```python\nmessage_id = mq.send('my_queue', {'data': 'test'})\n# 返回: 'msg_123456'\n```\n\n##### receive(queue_name, timeout=5)\n\n从队列接收消息。\n\n**参数**:\n- `queue_name` (str): 队列名称\n- `timeout` (int): 超时时间（秒），默认 5\n\n**返回**: `dict` - 消息内容，或 None 如果超时\n\n---\n\n## 配置说明\n\n### 消息重试配置\n\n```python\nmq.set_retry_config({\n    'max_retries': 3,\n    'retry_delay': 5,\n    'retry_backoff': 2\n})\n```\n\n---\n\n## 错误处理\n\n### 常见错误代码\n\n| 错误代码 | 说明 | 解决方案 |\n|----------|------|----------|\n| `MQ_001` | 连接失败 | 检查 Redis 服务状态 |\n| `MQ_002` | 队列不存在 | 检查队列名称拼写 |\n| `MQ_003` | 消息格式错误 | 确保消息为 dict 类型 |\n\n---\n\n## 最佳实践\n\n1. **消息大小**: 单个消息不超过 1MB\n2. **队列隔离**: 不同业务使用不同队列\n3. **错误处理**: 消费者必须正确处理异常\n4. **资源管理**: 使用完毕后关闭连接\n\n---\n\n## 更新日志\n\n### v2.0.0 (2026-04-01)\n- 新增消息确认机制\n- 优化重试策略\n- 改进错误提示\n\n### v1.0.0 (2026-02-01)\n- 初始版本发布",
+        "description": "结构完整、代码示例可运行、涵盖全部功能",
+        "score": 96.0,
+        "validation_notes": "技术文档标准高，易用性好"
+      },
+      {
+        "id": "techdoc_good_002",
+        "input": {
+          "doc_type": "README",
+          "project_name": "AI 协作系统",
+          "content_outline": "项目介绍、安装指南、使用说明",
+          "target_audience": "开发者"
+        },
+        "output": "# AI 协作系统\n\n> 一个支持多 AI 平台协作的工作流管理系统\n\n[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)\n[![Python](https://img.shields.io/badge/python-3.8+-brightgreen.svg)](https://www.python.org/)\n\n## 简介\n\nAI 协作系统是一个支持 Claude、Copilot、CodeArts 等多个 AI 平台的协作工作流管理系统，旨在提高 AI 辅助开发的效率和质量。\n\n### 核心特性\n\n- 🎯 **多 AI 平台支持**: Claude、Copilot、CodeArts、Codex\n- 🔄 **智能任务调度**: 自动分配任务给最合适的 AI\n- 📊 **协作追踪**: 完整的协作过程记录和分析\n- 🛡️ **治理机制**: 确保协作质量和安全性\n\n## 快速开始\n\n### 安装\n\n```bash\ngit clone https://github.com/yourusername/ai-collab-system.git\ncd ai-collab-system\npip install -r requirements.txt\n```\n\n### 配置\n\n复制配置模板：\n\n```bash\ncp .env.example .env\n# 编辑 .env 文件配置你的 API keys\n```\n\n### 使用\n\n```python\nfrom ai_collab import CollaborationManager\n\n# 初始化协作管理器\nmanager = CollaborationManager()\n\n# 创建协作任务\ntask = manager.create_task(\n    description=\"优化 API 接口性能\",\n    required_ais=[\"claude\", \"copilot\"],\n    context_files=[\"api/v1/users.py\"]\n)\n\n# 执行协作\nresult = manager.execute(task)\nprint(result.summary)\n```\n\n## 文档\n\n- [架构设计](docs/ARCHITECTURE.md)\n- [API 参考](docs/API.md)\n- [贡献指南](CONTRIBUTING.md)\n- [常见问题](docs/FAQ.md)\n\n## 许可证\n\nMIT License - 详见 [LICENSE](LICENSE) 文件",
+        "description": "简洁明了、信息完整、易于导航",
+        "score": 94.0,
+        "validation_notes": "README 标准高，用户友好"
+      }
+    ],
+    "bad_examples": [
+      {
+        "id": "techdoc_bad_001",
+        "input": {
+          "doc_type": "API",
+          "project_name": "数据处理系统"
+        },
+        "output": "# 数据处理 API\n\n这个系统可以处理数据，有一些功能。\n\n## 使用方法\n\n调用接口就行。\n\n## 参数说明\n\n有一些参数，具体自己看代码。",
+        "description": "信息不完整，缺乏代码示例",
+        "score": 35.0,
+        "validation_notes": "技术文档标准低，实用性差"
+      },
+      {
+        "id": "techdoc_bad_002",
+        "input": {
+          "doc_type": "README",
+          "project_name": "新项目"
+        },
+        "output": "README\n\n这是一个新项目。\n\n开发中...\n\n还没有文档。",
+        "description": "几乎没有内容，缺乏基本文档元素",
+        "score": 30.0,
+        "validation_notes": "文档完整性极差，无参考价值"
+      }
+    ],
+    "few_shot_template": "输入: {doc_brief}\n输出: {generated_doc}\n评分要点: {quality_criteria}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 2,
+    "diversity_dimensions": ["detail_level", "code_explanation_style"],
+    "confidence_display": false,
+    "critical_facts_only": true,
+    "temperature": 0.5,
+    "output_format": "markdown",
+    "require_code_blocks": true
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "documentation_standard",
+    "auto_refine_threshold": 70.0,
+    "periodic_review_days": 60,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "standard_compliance_check",
+      "example_library_update",
+      "usability_feedback"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": ["execution_time", "generation_success_rate", "average_quality_score", "doc_usage_rate"],
+    "retention_days": 120,
+    "post_publish_tracking": {
+      "enabled": true,
+      "delay_hours": 72,
+      "metrics": ["views", "engagement", "issue_reports", "pr_references"]
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
+  },
+  "system_prompt": "你是一位资深的技术文档专家，精通各种类型的技术文档写作规范。你能够根据项目特点和文档类型，生成结构清晰、内容完整、标准规范的技术文档，确保文档的可读性、可维护性和专业性。",
+  "quality_validation_rules": "1. 必须包含清晰的文档结构\n2. 代码示例必须准确可运行\n3. 技术信息必须准确无误\n4. 遵循行业文档规范\n5. 提供足够的使用示例和说明"
+}

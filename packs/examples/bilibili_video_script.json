@@ -1,0 +1,224 @@
+{
+  "metadata": {
+    "pack_id": "bilibili-video-script",
+    "pack_name": "B站视频脚本生成包",
+    "version": "2.0.0",
+    "type": "creative",
+    "description": "专为B站UP主设计的视频脚本生成工具，支持选题分析、脚本结构、分镜设计、台词撰写、互动设计",
+    "designer": "CodeArts Agent",
+    "created_at": "2026-04-13T12:00:00",
+    "updated_at": "2026-04-13T12:00:00",
+    "category": "视频创作",
+    "tags": ["B站", "视频", "脚本", "分镜", "UP主"],
+    "language": "zh",
+    "estimated_efficiency_gain": "75%"
+  },
+  "domain": {
+    "primary_domain": "B站视频创作",
+    "secondary_domains": ["内容策划", "视频制作", "粉丝运营"],
+    "target_platforms": ["bilibili"],
+    "target_audience": "B站UP主、视频创作者、内容团队",
+    "brand_tone": "有趣、专业、有梗",
+    "compliance_rules": [
+      "符合B站社区规范",
+      "避免敏感内容",
+      "尊重版权",
+      "正能量导向"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_topic",
+        "name": "选题分析",
+        "type": "ai",
+        "description": "分析选题热度和创作方向",
+        "input_fields": ["topic", "target_audience", "video_type"],
+        "output_field": "topic_analysis",
+        "ai_models": ["gpt-4", "claude-3"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": {
+          "required_elements": ["热度分析", "竞品分析", "创作建议"]
+        },
+        "fusion_rules": null,
+        "estimated_time": 60,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "data_sources": ["B站热榜", "搜索趋势"]
+        }
+      },
+      {
+        "id": "step_2_structure",
+        "name": "脚本结构设计",
+        "type": "ai",
+        "description": "设计视频整体结构和节奏",
+        "input_fields": ["topic_analysis", "video_duration", "style"],
+        "output_field": "script_structure",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "required_sections": ["开场", "主体", "结尾", "互动点"]
+        },
+        "fusion_rules": null,
+        "estimated_time": 45,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "pacing_rules": "B站黄金节奏"
+        }
+      },
+      {
+        "id": "step_3_storyboard",
+        "name": "分镜设计",
+        "type": "ai",
+        "description": "设计具体分镜和画面",
+        "input_fields": ["script_structure", "visual_style"],
+        "output_field": "storyboard",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "min_shots": 10,
+          "max_shots": 50
+        },
+        "fusion_rules": null,
+        "estimated_time": 60,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "shot_types": ["特写", "中景", "全景", "动画"]
+        }
+      },
+      {
+        "id": "step_4_script",
+        "name": "台词撰写",
+        "type": "ai",
+        "description": "撰写具体台词和解说词",
+        "input_fields": ["storyboard", "tone", "catchphrases"],
+        "output_field": "dialogue",
+        "ai_models": ["gpt-4", "claude-3"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": {
+          "style_check": "B站UP主风格"
+        },
+        "fusion_rules": {
+          "strategy": "best_of_both"
+        },
+        "estimated_time": 90,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "humor_level": "适中",
+          "meme_integration": true
+        }
+      },
+      {
+        "id": "step_5_interaction",
+        "name": "互动设计",
+        "type": "ai",
+        "description": "设计粉丝互动点和引导",
+        "input_fields": ["dialogue", "engagement_goals"],
+        "output_field": "interaction_design",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "required_elements": ["三连引导", "评论区话题"]
+        },
+        "fusion_rules": null,
+        "estimated_time": 20,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {}
+      },
+      {
+        "id": "step_6_output",
+        "name": "脚本整合输出",
+        "type": "local",
+        "description": "整合所有内容生成完整脚本",
+        "input_fields": ["topic_analysis", "script_structure", "storyboard", "dialogue", "interaction_design"],
+        "output_field": "final_script",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "format_check": "B站脚本标准格式"
+        },
+        "fusion_rules": {
+          "strategy": "sequential_merge"
+        },
+        "estimated_time": 10,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {}
+      }
+    ]
+  },
+  "quality_metrics": {
+    "metrics": [
+      {
+        "name": "内容原创度",
+        "weight": 0.30,
+        "threshold": 0.85,
+        "measurement_method": "similarity_check"
+      },
+      {
+        "name": "完播率预估",
+        "weight": 0.25,
+        "threshold": 0.6,
+        "measurement_method": "pacing_analysis"
+      },
+      {
+        "name": "互动率预估",
+        "weight": 0.20,
+        "threshold": 0.08,
+        "measurement_method": "engagement_prediction"
+      },
+      {
+        "name": "梗密度",
+        "weight": 0.15,
+        "threshold": 0.3,
+        "measurement_method": "meme_detection"
+      },
+      {
+        "name": "合规性",
+        "weight": 0.10,
+        "threshold": 1.0,
+        "measurement_method": "compliance_check"
+      }
+    ]
+  },
+  "example_library": {
+    "examples": [
+      {
+        "id": "good_example_1",
+        "name": "科技解说优秀案例",
+        "input": {
+          "topic": "iPhone 16 深度评测",
+          "video_type": "科技解说"
+        },
+        "output": {
+          "title": "iPhone 16 真的不香？实测告诉你真相",
+          "content_preview": "哈喽大家好，我是XX，今天我们来聊聊..."
+        },
+        "tags": ["优秀案例", "科技", "评测"]
+      },
+      {
+        "id": "bad_example_1",
+        "name": "标题党反面案例",
+        "input": {
+          "topic": "某产品评测"
+        },
+        "output": {
+          "title": "震惊！不看后悔一辈子！"
+        },
+        "tags": ["反面案例", "标题党"],
+        "issues": ["标题党", "低质内容"]
+      }
+    ]
+  }
+}

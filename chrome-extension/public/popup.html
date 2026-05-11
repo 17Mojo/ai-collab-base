@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Pack</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+    }
+
+    .header {
+      padding: 16px;
+      background: #16213e;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .pack-list {
+      list-style: none;
+    }
+
+    .pack-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #16213e;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .pack-item:hover {
+      background: #0f3460;
+    }
+
+    .pack-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .pack-desc {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .status {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: #888;
+      border-top: 1px solid #0f3460;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: #e94560;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #ff6b6b;
+    }
+
+    .panel {
+      margin-top: 12px;
+      padding: 12px;
+      background: #16213e;
+      border-radius: 8px;
+    }
+
+    .panel h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .studio-options label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .studio-options input[type="checkbox"] {
+      margin-right: 6px;
+    }
+
+    .studio-focus input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      background: #0f3460;
+      border: 1px solid #e94560;
+      border-radius: 4px;
+      color: #eee;
+      font-size: 13px;
+    }
+
+    .studio-focus input::placeholder {
+      color: #666;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      background: #e94560;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-primary:hover {
+      background: #ff6b6b;
+    }
+
+    .btn-primary:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    .status-area {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #888;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .status-area .artifact-item {
+      padding: 4px 0;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .status-area .artifact-item.success {
+      color: #4caf50;
+    }
+
+    .status-area .artifact-item.error {
+      color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Prompt Pack</h1>
+  </div>
+
+  <div class="content">
+    <ul class="pack-list" id="packList">
+      <!-- Pack 列表将由 JS 动态填充 -->
+      <li class="pack-item">
+        <div class="pack-name">加载中...</div>
+      </li>
+    </ul>
+
+    <button class="btn" id="refreshBtn">刷新 Pack 列表</button>
+
+    <!-- Studio 产物生成面板 -->
+    <div id="studio-panel" class="panel">
+      <h3>Studio 产物生成</h3>
+      <div class="studio-options">
+        <label><input type="checkbox" id="studio-audio" /> Audio 播客</label>
+        <label><input type="checkbox" id="studio-video" /> Video 视频</label>
+        <label><input type="checkbox" id="studio-slides" /> Slides 幻灯片</label>
+      </div>
+      <div class="studio-focus">
+        <input type="text" id="studio-focus-text" placeholder="生成主题焦点（可选）" />
+      </div>
+      <button id="generate-studio-btn" class="btn-primary" disabled>生成 Studio 产物</button>
+      <div id="studio-status" class="status-area"></div>
+    </div>
+  </div>
+
+  <div class="status" id="status">
+    状态: 就绪
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

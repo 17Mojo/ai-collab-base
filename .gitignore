@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.idea/
+.vscode/settings.json.license
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+logs/
+*.log
+
+# AI Collab specific
+.claude/settings.json
+.git/ai-collab/
+
+# NotebookLM Studio artifacts (large files > 10MB)
+deliverables/*/audio/*.m4a
+deliverables/*/video/*.mp4
+deliverables/*/slides/*.pdf
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# CC Claude Codex
+.cc-claude-codex/
+.cc-claude-codex/logs/
+.cc-claude-codex/snapshots/
+.cache/
+
+# Playwright runtime tests
+tests/playwright/node_modules/
+tests/playwright/playwright-report/
+tests/playwright/test-results/
+
+# Generated collaboration monitoring artifacts
+collaboration/monitoring/AGENT_DISPATCH_ORDERS_20*.md
+collaboration/monitoring/AGENT_RECEIPT_SUMMARY_20*.md
+collaboration/monitoring/AGENT_TRIGGER_codex_latest.md
+collaboration/monitoring/DAILY_REPORT_latest.md
+collaboration/monitoring/NOOP_PENDING_CONFLICT_SUMMARY_latest.md
+
+# Governance temp artifacts
+collaboration/results/governance_*/
+
+# Local database
+data/
+
+# SQLite temp files
+*.db-shm
+*.db-wal
+
+# Environment and secrets
+.env
+.env.*
+
+# Playwright MCP
+.playwright-mcp/
+
+# AI tools temp
+.trae/
+memory/
+knowledge-sources/
+
+# Export temp files
+exported_target_*.json
+
+# Test screenshots
+popup-ui-enhancement-test.png

@@ -1,0 +1,311 @@
+{
+  "metadata": {
+    "pack_id": "email-auto-reply",
+    "pack_name": "邮件自动回复包",
+    "version": "2.0.0",
+    "type": "utility",
+    "description": "专为商务沟通设计的邮件自动回复工具，根据邮件类型生成得体的回复内容",
+    "designer": "AI Collab Team",
+    "created_at": "2026-04-04T10:00:00",
+    "updated_at": "2026-04-04T10:00:00",
+    "category": "商务沟通",
+    "tags": ["邮件", "自动回复", "商务", "效率", "沟通"],
+    "language": "zh",
+    "estimated_efficiency_gain": "80%"
+  },
+  "domain": {
+    "primary_domain": "邮件沟通自动化",
+    "secondary_domains": ["客户服务", "业务对接", "团队协作"],
+    "target_platforms": ["email"],
+    "target_audience": "商务人士、客服、销售、HR",
+    "brand_tone": "专业、礼貌、高效",
+    "compliance_rules": [
+      "必须礼貌得体",
+      "信息准确无误",
+      "避免过度承诺",
+      "保持专业形象"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "邮件信息输入",
+        "type": "local",
+        "description": "输入收到的邮件信息",
+        "input_fields": ["incoming_email", "reply_context", "tone", "urgency"],
+        "output_field": "email_context",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 10,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["incoming_email"],
+          "optional_fields": ["reply_context", "tone", "urgency"],
+          "tone_options": ["polite", "friendly", "formal", "informal"],
+          "urgency_options": ["urgent", "normal", "low"]
+        }
+      },
+      {
+        "id": "step_2_analysis",
+        "name": "邮件意图分析",
+        "type": "analysis",
+        "description": "分析邮件的意图和期望回复",
+        "input_fields": ["email_context"],
+        "output_field": "intent_analysis",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 20,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "analysis_dimensions": ["邮件类型", "核心诉求", "关键信息", "期望动作"]
+        }
+      },
+      {
+        "id": "step_3_generation",
+        "name": "多风格回复生成",
+        "type": "generation",
+        "description": "生成不同风格的回复内容",
+        "input_fields": ["email_context", "intent_analysis"],
+        "output_field": "draft_replies",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "output_versions": 3,
+          "diversity_dimensions": ["语气", "详细信息", "行动请求"]
+        }
+      },
+      {
+        "id": "step_4_validation",
+        "name": "专业性与礼貌度验证",
+        "type": "validation",
+        "description": "验证回复的专业性和得体度",
+        "input_fields": ["draft_replies"],
+        "output_field": "validation_results",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": [
+          "专业性评分 >= 80",
+          "礼貌度评分 >= 85",
+          "信息完整性 >= 75"
+        ],
+        "fusion_rules": null,
+        "estimated_time": 15,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_5_fusion",
+        "name": "回复内容优化",
+        "type": "fusion",
+        "description": "融合最佳元素，生成最终回复",
+        "input_fields": ["draft_replies", "validation_results"],
+        "output_field": "final_reply",
+        "ai_models": ["qianwen"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": {
+          "strategy": "professional_balanced",
+          "include_greeting": true,
+          "include_closing": true,
+          "include_contact": true
+        },
+        "estimated_time": 10,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_6_tracking",
+        "name": "跟进追踪配置",
+        "type": "tracking",
+        "description": "配置回复后的跟进追踪",
+        "input_fields": ["final_reply"],
+        "output_field": "tracking_config",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 5,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "tracking_delay_hours": 48,
+          "metrics": ["opened", "replied", "conversion_rate"]
+        }
+      }
+    ],
+    "max_parallel_steps": 3,
+    "allow_parallel": true
+  },
+  "quality_metrics": {
+    "metrics": {
+      "accuracy": {
+        "description": "准确性 - 回复信息准确无误",
+        "check_method": "fact_verification",
+        "weight": 0.30,
+        "min_threshold": 0.90
+      },
+      "appropriateness": {
+        "description": "得体度 - 语气和风格是否合适",
+        "check_method": "tone_analysis",
+        "weight": 0.25,
+        "min_threshold": 0.85
+      },
+      "clarity": {
+        "description": "清晰度 - 表达是否清晰明确",
+        "check_method": "readability_analysis",
+        "weight": 0.20,
+        "min_threshold": 0.80
+      },
+      "completeness": {
+        "description": "完整性 - 是否回应了所有关切点",
+        "check_method": "response_coverage",
+        "weight": 0.15,
+        "min_threshold": 0.75
+      },
+      "efficiency": {
+        "description": "效率性 - 回复是否高效简洁",
+        "check_method": "length_analysis",
+        "weight": 0.10,
+        "min_threshold": 0.70
+      }
+    }
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "email_good_001",
+        "input": {
+          "incoming_email": {
+            "from": "partner@company.com",
+            "subject": "关于项目进度的询问",
+            "content": "您好，我们的项目现在进展如何？预计什么时候可以交付？"
+          },
+          "reply_context": {
+            "current_progress": "80%",
+            "expected_delivery": "下周三"
+          }
+        },
+        "output": "您好！\n\n感谢您对项目进展的关心。经过团队的共同努力，目前项目已经完成了80%的开发工作。\n\n根据当前的进度和测试情况，我们预计将在下周三（具体日期：X月X日）完成全部开发并进行内部测试，确保质量达标后交付。\n\n在此期间，如果您有任何问题或需要了解更多细节，随时可以联系我。我会保持项目透明的更新。\n\n再次感谢您的耐心等待！\n\n祝好，\n[您的姓名]\n[您的职位]\n[联系方式]",
+        "description": "信息准确、语气得体、回应关切",
+        "score": 95.0,
+        "validation_notes": "准确性高，礼貌度好，进度清晰"
+      },
+      {
+        "id": "email_good_002",
+        "input": {
+          "incoming_email": {
+            "from": "client@company.com",
+            "subject": "报价函",
+            "content": "我们需要采购一批设备，请提供报价。"
+          },
+          "reply_context": {
+            "product_category": "办公设备",
+            "quantity": 50,
+            "discount_available": true
+          }
+        },
+        "output": "尊敬的客户：\n\n您好！感谢您选择我们公司的产品/服务。\n\n关于您的采购需求，我们已经收到了。以下是我们为贵公司准备的报价方案：\n\n【报价明细】\n- 产品：办公设备\n- 数量：50套\n- 单价：¥[价格]\n- 总价：¥[总价]\n\n【优惠政策】\n针对本次采购，我们特别提供8.5折优惠，折后总价为¥[折扣价]。\n\n【产品说明】\n我们的产品具有以下优势：\n1. ...\n2. ...\n3. ...\n\n【售后服务】\n我们提供完整的产品保修和技术支持服务，确保您的使用无忧。\n\n如果对此报价有任何疑问或需要调整的地方，请随时联系我，我们很乐意为您解答。\n\n期待与您的合作！\n\n此致\n敬礼！\n\n[您的姓名]\n[您的职务]\n[公司名称]\n[联系电话]\n[邮箱]",
+        "description": "结构完整、信息全面、专业规范",
+        "score": 92.0,
+        "validation_notes": "信息完整度好，专业性强"
+      }
+    ],
+    "bad_examples": [
+      {
+        "id": "email_bad_001",
+        "input": {
+          "incoming_email": {
+            "from": "colleague@company.com",
+            "subject": "会议时间",
+            "content": "会议改到周三下午3点。"
+          },
+          "reply_context": {
+            "can_attend": true
+          }
+        },
+        "output": "好的。",
+        "description": "过于简短，缺乏信息",
+        "score": 30.0,
+        "validation_notes": "信息不完整，礼貌度不足"
+      },
+      {
+        "id": "email_bad_002",
+        "input": {
+          "incoming_email": {
+            "from": "supplier@company.com",
+            "subject": "报价单",
+            "content": "这是我们的最新报价单。"
+          },
+          "reply_context": {
+            "decision": "pending"
+          }
+        },
+        "output": "收到，我们会尽快回复。",
+        "description": "信息模糊，缺乏专业度",
+        "score": 35.0,
+        "validation_notes": "回复含糊，专业度低"
+      }
+    ],
+    "few_shot_template": "输入: {email_context}\n输出: {generated_reply}\n评分要点: {quality_criteria}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": ["tone_politeness", "detail_level", "action_request"],
+    "confidence_display": false,
+    "critical_facts_only": true,
+    "temperature": 0.5,
+    "output_format": "text",
+    "require_code_blocks": false
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "professional_optimization",
+    "auto_refine_threshold": 70.0,
+    "periodic_review_days": 30,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "template_refinement",
+      "example_library_update",
+      "tone_calibration"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": ["execution_time", "generation_success_rate", "average_quality_score", "reply_effectiveness"],
+    "retention_days": 60,
+    "post_publish_tracking": {
+      "enabled": true,
+      "delay_hours": 48,
+      "metrics": ["opened", "clicked", "replied", "conversion_rate"]
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
+  },
+  "system_prompt": "你是一位专业的商务沟通专家，擅长撰写得体、高效的商务邮件回复。你能够根据邮件内容和回复意图，生成符合商务礼仪的回复，确保用词准确、语气礼貌、信息完整。",
+  "quality_validation_rules": "1. 必须包含得体的开场和结尾\n2. 信息必须准确无误\n3. 语气要礼貌专业\n4. 长度控制在合理范围\n5. 必要时包含联系方式或后续行动"
+}

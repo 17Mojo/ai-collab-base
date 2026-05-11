@@ -1,0 +1,69 @@
+{
+  "AI Collab: Claude Code Activation": {
+    "prefix": [
+      "2X-activate",
+      "claude-activate",
+      "ac"
+    ],
+    "body": [
+      "2X",
+      "",
+      "# Claude Code 激活系统已启动",
+      "# - 规则已加载",
+      "# - 冲突检测已激活",
+      "# - 日志初始化完成"
+    ],
+    "description": "激活 Claude Code AI 协作系统"
+  },
+  "AI Collab: Copilot Activation": {
+    "prefix": [
+      "2X-copilot",
+      "copilot-activate",
+      "ai-activate"
+    ],
+    "body": [
+      "2X",
+      "",
+      "# Copilot AI 协作系统已启动",
+      "# - 规则已加载",
+      "# - 冲突检测已激活",
+      "# - 日志初始化完成"
+    ],
+    "description": "激活 GitHub Copilot AI 协作系统"
+  },
+  "AI Collab: Task Header": {
+    "prefix": [
+      "ai-task",
+      "task-header"
+    ],
+    "body": [
+      "// === AI 协作任务 ===",
+      "// 任务ID: TASK-${1:XXX}",
+      "// AI: ${2|claude,copilot|}",
+      "// 开始时间: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE} ${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}",
+      "//",
+      "",
+      "$0"
+    ],
+    "description": "AI 协作任务头部注释"
+  },
+  "AI Collab: Conflict Marker": {
+    "prefix": ["conflict-mark", "ai-conflict"],
+    "body": [
+      "// [AI CONFLICT WARNING]",
+      "// 此文件正在被 ${1:other AI} 修改",
+      "// 请等待任务完成后再进行修改",
+      "$0"
+    ],
+    "description": "标记冲突区域"
+  },
+  "AI Collab: Progress Comment": {
+    "prefix": ["ai-progress", "progress"],
+    "body": [
+      "// [PROGRESS] ${1|Preflight,Plan,Implement,Test,Record,Report|}: ${2:description}",
+      "// 时间: ${CURRENT_HOUR}:${CURRENT_MINUTE}",
+      "$0"
+    ],
+    "description": "AI 开发进度注释"
+  }
+}

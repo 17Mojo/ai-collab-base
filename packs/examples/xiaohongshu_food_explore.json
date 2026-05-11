@@ -1,0 +1,224 @@
+{
+  "metadata": {
+    "pack_id": "xiaohongshu-food-explore",
+    "pack_name": "小红书美食探店文案生成包",
+    "version": "2.0.0",
+    "type": "business",
+    "description": "专为美食博主设计的探店文案生成工具，支持店铺信息收集、菜品点评、氛围描述、拍照建议",
+    "designer": "CodeArts Agent",
+    "created_at": "2026-04-13T12:00:00",
+    "updated_at": "2026-04-13T12:00:00",
+    "category": "美食探店",
+    "tags": ["小红书", "美食", "探店", "点评", "文案"],
+    "language": "zh",
+    "estimated_efficiency_gain": "80%"
+  },
+  "domain": {
+    "primary_domain": "小红书美食运营",
+    "secondary_domains": ["内容创作", "餐厅点评", "本地生活"],
+    "target_platforms": ["xiaohongshu"],
+    "target_audience": "美食博主、探店达人、本地生活运营",
+    "brand_tone": "真实、诱人、实用",
+    "compliance_rules": [
+      "如实描述菜品口感",
+      "标注人均消费",
+      "标注店铺地址",
+      "避免过度夸张"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "店铺信息收集",
+        "type": "local",
+        "description": "收集店铺基础信息",
+        "input_fields": ["shop_name", "address", "cuisine_type", "price_range"],
+        "output_field": "shop_info",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["shop_name", "address"],
+          "optional_fields": ["cuisine_type", "price_range", "business_hours"]
+        }
+      },
+      {
+        "id": "step_2_analysis",
+        "name": "菜品点评生成",
+        "type": "ai",
+        "description": "根据菜品信息生成专业点评",
+        "input_fields": ["dishes", "taste_notes", "presentation"],
+        "output_field": "dish_reviews",
+        "ai_models": ["gpt-4", "claude-3"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": {
+          "min_length": 50,
+          "max_length": 500,
+          "required_elements": ["口感描述", "推荐指数"]
+        },
+        "fusion_rules": null,
+        "estimated_time": 60,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "style": "小红书种草风",
+          "tone": "真实体验"
+        }
+      },
+      {
+        "id": "step_3_atmosphere",
+        "name": "氛围描述生成",
+        "type": "ai",
+        "description": "描述店铺环境和用餐氛围",
+        "input_fields": ["decor_style", "ambiance", "service_quality"],
+        "output_field": "atmosphere_text",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "min_length": 30,
+          "max_length": 200
+        },
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {}
+      },
+      {
+        "id": "step_4_photo",
+        "name": "拍照建议生成",
+        "type": "ai",
+        "description": "提供菜品和环境的拍照建议",
+        "input_fields": ["dishes", "lighting", "angles"],
+        "output_field": "photo_tips",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 20,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "platform": "小红书",
+          "aspect_ratio": "3:4"
+        }
+      },
+      {
+        "id": "step_5_output",
+        "name": "文案整合输出",
+        "type": "local",
+        "description": "整合所有内容生成最终文案",
+        "input_fields": ["shop_info", "dish_reviews", "atmosphere_text", "photo_tips"],
+        "output_field": "final_content",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "required_sections": ["标题", "正文", "标签", "拍照建议"]
+        },
+        "fusion_rules": {
+          "strategy": "sequential_merge",
+          "deduplication": true
+        },
+        "estimated_time": 10,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "format": "小红书笔记格式"
+        }
+      },
+      {
+        "id": "step_6_tracking",
+        "name": "效果追踪",
+        "type": "local",
+        "description": "记录发布后的数据表现",
+        "input_fields": ["post_id", "publish_time"],
+        "output_field": "tracking_data",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 5,
+        "auto_trigger": true,
+        "trigger_delay": 86400,
+        "config": {
+          "metrics": ["likes", "comments", "shares", "saves"]
+        }
+      }
+    ]
+  },
+  "quality_metrics": {
+    "metrics": [
+      {
+        "name": "内容原创度",
+        "weight": 0.25,
+        "threshold": 0.8,
+        "measurement_method": "similarity_check"
+      },
+      {
+        "name": "信息完整度",
+        "weight": 0.20,
+        "threshold": 0.9,
+        "measurement_method": "field_coverage"
+      },
+      {
+        "name": "用户互动率",
+        "weight": 0.25,
+        "threshold": 0.05,
+        "measurement_method": "engagement_rate"
+      },
+      {
+        "name": "转化效果",
+        "weight": 0.15,
+        "threshold": 0.02,
+        "measurement_method": "conversion_tracking"
+      },
+      {
+        "name": "合规性",
+        "weight": 0.15,
+        "threshold": 1.0,
+        "measurement_method": "compliance_check"
+      }
+    ]
+  },
+  "example_library": {
+    "examples": [
+      {
+        "id": "good_example_1",
+        "name": "火锅探店优秀案例",
+        "input": {
+          "shop_name": "蜀大侠火锅",
+          "cuisine_type": "川渝火锅",
+          "price_range": "人均120元"
+        },
+        "output": {
+          "title": "成都必吃！这家火锅让我连吃三天都不腻",
+          "content_preview": "红油翻滚间，毛肚七上八下..."
+        },
+        "tags": ["优秀案例", "火锅", "成都"]
+      },
+      {
+        "id": "bad_example_1",
+        "name": "过度夸张反面案例",
+        "input": {
+          "shop_name": "某网红店"
+        },
+        "output": {
+          "content_preview": "全世界最好吃！不吃后悔一辈子！"
+        },
+        "tags": ["反面案例", "过度夸张"],
+        "issues": ["违反广告法", "过度夸张"]
+      }
+    ]
+  }
+}

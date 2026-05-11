@@ -1,0 +1,55 @@
+{
+  "assignee": "codearts_agent",
+  "generated_at": "2026-04-13T23:50:00",
+  "mode": "direct_execution",
+  "task_id": "TASK_W6_CHROME_EXTENSION_BASE",
+  "task_file": "collaboration/tasks/TASK_W6_CHROME_EXTENSION_BASE_2026-04-13.md",
+  "reference_docs": [
+    "docs/CHROME_EXTENSION_ARCHITECTURE.md"
+  ],
+  "steps": [
+    {
+      "id": 1,
+      "title": "创建 Manifest V3 基础结构",
+      "commands": [
+        "mkdir -p chrome-extension/src/{background,content,popup,platforms,utils}",
+        "mkdir -p chrome-extension/public/icons",
+        "mkdir -p chrome-extension/dist"
+      ],
+      "files": [
+        "chrome-extension/manifest.json",
+        "chrome-extension/src/background/service-worker.js",
+        "chrome-extension/src/content/content-script.js",
+        "chrome-extension/public/popup.html"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "实现 Platform Adapter 接口",
+      "file": "chrome-extension/src/platforms/adapter.js"
+    },
+    {
+      "id": 3,
+      "title": "实现 Claude.ai 适配器",
+      "file": "chrome-extension/src/platforms/claude-adapter.js"
+    },
+    {
+      "id": 4,
+      "title": "实现 DOM Observer",
+      "file": "chrome-extension/src/utils/dom-observer.js"
+    },
+    {
+      "id": 5,
+      "title": "创建 Pack 执行引擎",
+      "file": "chrome-extension/src/background/pack-executor.js"
+    }
+  ],
+  "acceptance_criteria": [
+    "manifest.json 验证通过",
+    "PlatformAdapter 类定义完整",
+    "ClaudeAdapter 能正确检测页面元素",
+    "DOM Observer 能检测消息变化",
+    "Pack Executor 能执行简单 workflow"
+  ],
+  "ack_format": "A.ACK|task=chrome-extension-base|status=ok|result=chrome-extension/ 目录创建完成"
+}

@@ -1,0 +1,263 @@
+{
+  "metadata": {
+    "pack_id": "xiaohongshu-beauty-review",
+    "pack_name": "小红书美妆测评文案生成包",
+    "version": "2.0.0",
+    "type": "business",
+    "description": "专为美妆博主设计的测评文案生成工具，支持多角度分析、卖点提炼、合规检查",
+    "designer": "AI Collab Team",
+    "created_at": "2026-02-27T12:00:00",
+    "updated_at": "2026-02-27T12:00:00",
+    "category": "美妆测评",
+    "tags": ["小红书", "美妆", "测评", "种草", "文案"],
+    "language": "zh",
+    "estimated_efficiency_gain": "85%"
+  },
+  "domain": {
+    "primary_domain": "小红书美妆运营",
+    "secondary_domains": ["内容创作", "产品测评", "社交媒体营销"],
+    "target_platforms": ["xiaohongshu"],
+    "target_audience": "美妆博主、品牌方、内容运营",
+    "brand_tone": "专业、真实、亲和",
+    "compliance_rules": [
+      "严禁虚假宣传",
+      "禁止夸大功效",
+      "需标明是否为广告",
+      "符合《广告法》规定"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "产品信息收集",
+        "type": "local",
+        "description": "收集产品基础信息和用户输入",
+        "input_fields": ["product_name", "brand", "category", "key_ingredients", "price"],
+        "output_field": "product_info",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["product_name", "brand"],
+          "optional_fields": ["key_ingredients", "price", "target_skin_type"]
+        }
+      },
+      {
+        "id": "step_2_analysis",
+        "name": "产品成分分析",
+        "type": "analysis",
+        "description": "分析产品成分，提取核心卖点",
+        "input_fields": ["product_info"],
+        "output_field": "ingredient_analysis",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 60,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "analysis_dimensions": ["功效成分", "安全风险", "适用人群", "竞品对比"]
+        }
+      },
+      {
+        "id": "step_3_generation",
+        "name": "多版本文案生成",
+        "type": "generation",
+        "description": "基于分析结果生成多个版本的测评文案",
+        "input_fields": ["product_info", "ingredient_analysis"],
+        "output_field": "draft_copies",
+        "ai_models": ["qianwen", "zhipu", "kimi"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 90,
+        "auto_trigger": true,
+        "trigger_delay": 10,
+        "config": {
+          "output_versions": 3,
+          "diversity_dimensions": ["情感基调", "叙事风格", "卖点侧重"]
+        }
+      },
+      {
+        "id": "step_4_validation",
+        "name": "交叉质量验证",
+        "type": "validation",
+        "description": "多 AI 交叉验证文案质量",
+        "input_fields": ["draft_copies"],
+        "output_field": "validation_results",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": false,
+        "cross_review": true,
+        "validation_criteria": [
+          "卖点覆盖率 >= 80%",
+          "创意度评分 >= 70",
+          "合规性检查通过"
+        ],
+        "fusion_rules": null,
+        "estimated_time": 45,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_5_fusion",
+        "name": "智能融合优化",
+        "type": "fusion",
+        "description": "融合各版本优点，生成最终文案",
+        "input_fields": ["draft_copies", "validation_results"],
+        "output_field": "final_copy",
+        "ai_models": ["qianwen"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": {
+          "strategy": "best_of_each",
+          "max_length": 800,
+          "include_emoji": true,
+          "include_hashtags": true
+        },
+        "estimated_time": 30,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_6_tracking",
+        "name": "发布追踪配置",
+        "type": "tracking",
+        "description": "配置发布后的效果追踪",
+        "input_fields": ["final_copy"],
+        "output_field": "tracking_config",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 15,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "tracking_delay_hours": 24,
+          "metrics": ["likes", "comments", "shares", "saves", "click_rate"]
+        }
+      }
+    ],
+    "max_parallel_steps": 3,
+    "allow_parallel": true
+  },
+  "quality_metrics": {
+    "metrics": {
+      "coverage": {
+        "description": "卖点覆盖率 - 是否覆盖所有关键卖点",
+        "check_method": "compare_with_required_features",
+        "weight": 0.25,
+        "min_threshold": 0.8
+      },
+      "distinctiveness": {
+        "description": "创意度 - 与竞品文案的差异性",
+        "check_method": "semantic_similarity_analysis",
+        "weight": 0.30,
+        "min_threshold": 0.7
+      },
+      "accuracy": {
+        "description": "准确性 - 事实信息的可靠性",
+        "check_method": "fact_verification",
+        "weight": 0.20,
+        "min_threshold": 0.9
+      },
+      "attractiveness": {
+        "description": "吸引力 - 标题和开头的抓眼程度",
+        "check_method": "clickbait_analysis",
+        "weight": 0.15,
+        "min_threshold": 0.6
+      },
+      "compliance": {
+        "description": "规范性 - 平台规范符合度",
+        "check_method": "format_compliance",
+        "weight": 0.10,
+        "min_threshold": 1.0
+      }
+    }
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "example_001",
+        "input": {
+          "product_name": "XX精华液",
+          "brand": "某品牌",
+          "category": "精华",
+          "key_ingredients": "烟酰胺、透明质酸、神经酰胺",
+          "target_concern": "暗沉、干燥"
+        },
+        "output": "用了两周，真的被惊艳到了！\n\n这瓶XX精华真的是我的本命精华，主打烟酰胺+神经酰胺组合，淡斑提亮还能修护屏障。\n\n质地清爽不黏腻，混油皮也能用。早晚各一次，一个月下来肤色明显均匀了，之前熬夜留下的暗沉也淡了不少。\n\n唯一的缺点就是有点小贵，但真的值！\n\n#精华推荐 #美白精华 #护肤分享",
+        "description": "真实体验感强的测评文案",
+        "score": 92.0,
+        "validation_notes": "卖点覆盖全面，情感真实，符合平台调性"
+      }
+    ],
+    "bad_examples": [
+      {
+        "id": "bad_001",
+        "input": {
+          "product_name": "XX面膜",
+          "brand": "某品牌"
+        },
+        "output": "这个面膜很好用，非常推荐大家购买，效果特别好。",
+        "description": "过于笼统，缺乏具体信息",
+        "score": 35.0,
+        "validation_notes": "卖点缺失，过于泛泛，缺乏真实感"
+      }
+    ],
+    "few_shot_template": "输入: {product_info}\n输出: {generated_copy}\n评分要点: {quality_criteria}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": ["emotional_tone", "narrative_style", "feature_highlighting"],
+    "confidence_display": true,
+    "critical_facts_only": true,
+    "temperature": 0.7,
+    "output_format": "markdown",
+    "require_code_blocks": false
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "feedback_driven",
+    "auto_refine_threshold": 60.0,
+    "periodic_review_days": 30,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "periodic_template_optimization",
+      "example_library_update",
+      "metric_weight_adjustment"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": ["execution_time", "generation_success_rate", "average_quality_score", "user_satisfaction"],
+    "retention_days": 90,
+    "post_publish_tracking": {
+      "enabled": true,
+      "delay_hours": 24,
+      "metrics": ["likes", "comments", "shares", "saves", "conversion_rate"]
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
+  },
+  "system_prompt": "你是一位专业的小红书美妆博主，擅长撰写真实、有说服力的产品测评文案。你的文案风格亲切自然，善于用生活化的语言描述产品体验，同时保持专业性和可信度。",
+  "quality_validation_rules": "1. 必须包含至少3个具体卖点\n2. 必须有真实的使用体验描述\n3. 不得包含虚假宣传或夸大功效\n4. 字数控制在300-800字\n5. 必须包含相关话题标签"
+}

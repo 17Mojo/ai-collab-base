@@ -1,0 +1,28 @@
+{
+  "name": "web-dev-pack",
+  "version": "1.0.0",
+  "category": "domain",
+  "description": "Web 开发标准规则 - 包含代码规范、最佳实践、安全要求",
+  "author": "AI Collab Team",
+  "created_at": "2026-03-02T10:00:00+08:00",
+  "updated_at": "2026-03-02T10:00:00+08:00",
+  "dependencies": [],
+  "compatible_tools": [
+    "claude_code",
+    "github_copilot",
+    "codearts_agent",
+    "codex_agent"
+  ],
+  "tags": [
+    "web",
+    "frontend",
+    "backend",
+    "standards",
+    "best-practices"
+  ],
+  "metadata": {
+    "estimated_efficiency_gain": "40%",
+    "primary_language": "web",
+    "target_audience": "Web 开发者"
+  }
+}

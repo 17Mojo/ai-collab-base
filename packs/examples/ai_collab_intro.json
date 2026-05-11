@@ -1,0 +1,121 @@
+{
+  "metadata": {
+    "pack_name": "AI协作系统介绍文案生成器",
+    "version": "1.0.0",
+    "type": "content_generation",
+    "author": "Claude Code",
+    "created_at": "2026-02-27",
+    "description": "生成AI协作系统的介绍文案，支持多种风格和平台"
+  },
+  "workflow": {
+    "steps": [
+      {
+        "name": "收集用户输入",
+        "type": "LOCAL",
+        "description": "收集用户提供的主题和关键信息",
+        "inputs": [
+          {
+            "key": "topic",
+            "source": "user_input",
+            "required": true,
+            "description": "主题名称"
+          },
+          {
+            "key": "key_features",
+            "source": "user_input",
+            "required": true,
+            "description": "关键特性列表"
+          },
+          {
+            "key": "target_audience",
+            "source": "user_input",
+            "required": false,
+            "default": "开发者",
+            "description": "目标受众"
+          },
+          {
+            "key": "style",
+            "source": "user_input",
+            "required": false,
+            "default": "专业",
+            "description": "文案风格（专业/轻松/技术）"
+          }
+        ]
+      },
+      {
+        "name": "分析内容特征",
+        "type": "ANALYSIS",
+        "description": "分析输入内容，提取关键信息",
+        "analysis_type": "keyword_extraction",
+        "params": {
+          "extract_keywords": true,
+          "analyze_sentiment": true,
+          "identify_category": true
+        }
+      },
+      {
+        "name": "生成介绍文案",
+        "type": "GENERATION",
+        "description": "基于模板和输入生成介绍文案",
+        "template": "# {topic}\n\n## 简介\n\n{topic}是一个创新的系统，专为{target_audience}设计。\n\n## 核心特性\n\n{features_section}\n\n## 适用场景\n\n{use_cases}\n\n## 技术优势\n\n{tech_advantages}\n\n---\n*生成时间: {timestamp}*\n*风格: {style}*",
+        "params": {
+          "max_length": 1000,
+          "include_examples": true,
+          "format": "markdown"
+        }
+      },
+      {
+        "name": "验证文案质量",
+        "type": "VALIDATION",
+        "description": "验证生成的文案质量",
+        "validation_rules": [
+          {
+            "type": "length_check",
+            "min_length": 200,
+            "max_length": 2000
+          },
+          {
+            "type": "keyword_coverage",
+            "min_coverage": 0.6
+          },
+          {
+            "type": "structure_check",
+            "required_sections": ["简介", "核心特性", "适用场景"]
+          }
+        ]
+      }
+    ]
+  },
+  "quality_metrics": {
+    "coverage": {
+      "weight": 0.3,
+      "description": "关键词覆盖率"
+    },
+    "creativity": {
+      "weight": 0.2,
+      "description": "创意度"
+    },
+    "accuracy": {
+      "weight": 0.3,
+      "description": "准确性"
+    },
+    "engagement": {
+      "weight": 0.2,
+      "description": "吸引力"
+    }
+  },
+  "examples": [
+    {
+      "input": {
+        "topic": "AI协作系统",
+        "key_features": ["双AI协作", "零成本", "完全离线", "自动冲突检测"],
+        "target_audience": "开发者",
+        "style": "专业"
+      },
+      "expected_output": {
+        "min_length": 300,
+        "must_include": ["双AI协作", "零成本", "完全离线"]
+      }
+    }
+  ]
+}

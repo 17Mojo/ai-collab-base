@@ -1,0 +1,57 @@
+[project]
+name = "ai-collab-system"
+version = "2.0.0"
+description = "AI 协作开发系统 - Claude Code + GitHub Copilot 协作框架"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "AI Collab Team"},
+]
+keywords = ["ai", "collaboration", "vscode", "claude", "copilot"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+ai-collab = "ai_collab.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.0.0",
+    "pytest>=7.0.0",
+]
+
+[build-system]
+requires = ["wheel", "setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E402", "E501", "F402", "F821"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"local-backend/**" = ["E", "F"]
+"products/**" = ["E", "F"]
+"collaboration/scripts/**" = ["E", "F"]
+"monitor.py" = ["E722"]
+"release-*/**" = ["E", "F"]

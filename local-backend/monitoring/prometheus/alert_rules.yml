@@ -1,0 +1,133 @@
+groups:
+  - name: prompt-pack-api-slo
+    interval: 30s
+    rules:
+      # 目标: 5xx 错误率 < 1%（30m SLO）
+      - alert: PromptPackApiErrorRateWarning
+        expr: |
+          (
+            sum(rate(prompt_pack_http_requests_total{status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(prompt_pack_http_requests_total[5m])), 0.000001)
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          service: prompt-pack-api
+          category: error-rate
+        annotations:
+          summary: "Prompt Pack API 5xx 错误率过高（warning）"
+          description: "5 分钟窗口 5xx 错误率 > 5%，持续 10 分钟。"
+          runbook: "docs/ALERTING_RUNBOOK.md#错误率告警演练"
+
+      - alert: PromptPackApiErrorRateCritical
+        expr: |
+          (
+            sum(rate(prompt_pack_http_requests_total{status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(prompt_pack_http_requests_total[5m])), 0.000001)
+          ) > 0.10
+        for: 5m
+        labels:
+          severity: critical
+          service: prompt-pack-api
+          category: error-rate
+        annotations:
+          summary: "Prompt Pack API 5xx 错误率严重超标（critical）"
+          description: "5 分钟窗口 5xx 错误率 > 10%，持续 5 分钟。"
+          runbook: "docs/ALERTING_RUNBOOK.md#错误率告警演练"
+
+      # 目标: P95 响应时延 < 250ms（核心 API）
+      - alert: PromptPackApiLatencyP95Warning
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(prompt_pack_http_request_duration_seconds_bucket[5m])
+            )
+          ) > 0.25
+        for: 10m
+        labels:
+          severity: warning
+          service: prompt-pack-api
+          category: latency
+        annotations:
+          summary: "Prompt Pack API P95 时延偏高（warning）"
+          description: "5 分钟窗口 P95 时延 > 250ms，持续 10 分钟。"
+          runbook: "docs/ALERTING_RUNBOOK.md#延迟告警演练"
+
+      - alert: PromptPackApiLatencyP95Critical
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(prompt_pack_http_request_duration_seconds_bucket[5m])
+            )
+          ) > 0.50
+        for: 5m
+        labels:
+          severity: critical
+          service: prompt-pack-api
+          category: latency
+        annotations:
+          summary: "Prompt Pack API P95 时延严重超标（critical）"
+          description: "5 分钟窗口 P95 时延 > 500ms，持续 5 分钟。"
+          runbook: "docs/ALERTING_RUNBOOK.md#延迟告警演练"
+
+      # 目标: /api/packs 失败比例（4xx+5xx）< 10%
+      - alert: PromptPackPackApiFailureRatioWarning
+        expr: |
+          (
+            sum(
+              rate(prompt_pack_http_requests_total{path=~"/api/packs.*", status=~"4..|5.."}[10m])
+            )
+            /
+            clamp_min(
+              sum(rate(prompt_pack_http_requests_total{path=~"/api/packs.*"}[10m])),
+              0.000001
+            )
+          ) > 0.15
+        for: 10m
+        labels:
+          severity: warning
+          service: prompt-pack-api
+          category: failure-ratio
+        annotations:
+          summary: "Pack API 失败比例偏高（warning）"
+          description: "/api/packs 路径族 10 分钟失败比例 > 15%，持续 10 分钟。"
+          runbook: "docs/ALERTING_RUNBOOK.md#失败比例告警演练"
+
+      - alert: PromptPackPackApiFailureRatioCritical
+        expr: |
+          (
+            sum(
+              rate(prompt_pack_http_requests_total{path=~"/api/packs.*", status=~"4..|5.."}[10m])
+            )
+            /
+            clamp_min(
+              sum(rate(prompt_pack_http_requests_total{path=~"/api/packs.*"}[10m])),
+              0.000001
+            )
+          ) > 0.30
+        for: 5m
+        labels:
+          severity: critical
+          service: prompt-pack-api
+          category: failure-ratio
+        annotations:
+          summary: "Pack API 失败比例严重超标（critical）"
+          description: "/api/packs 路径族 10 分钟失败比例 > 30%，持续 5 分钟。"
+          runbook: "docs/ALERTING_RUNBOOK.md#失败比例告警演练"
+
+      # 异常突增（非业务状态码），用于快速发现运行时异常
+      - alert: PromptPackApiExceptionBurst
+        expr: increase(prompt_pack_http_exceptions_total[5m]) >= 20
+        for: 2m
+        labels:
+          severity: warning
+          service: prompt-pack-api
+          category: exception
+        annotations:
+          summary: "Prompt Pack API 异常突增"
+          description: "5 分钟内 exceptions 增量 >= 20，持续 2 分钟。"
+          runbook: "docs/ALERTING_RUNBOOK.md#异常突增告警演练"

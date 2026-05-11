@@ -1,0 +1,30 @@
+{
+  "name": "python-best-practices",
+  "version": "1.0.0",
+  "category": "domain",
+  "description": "Python 最佳实践 - 包含代码风格、性能优化、安全要求、测试标准",
+  "author": "AI Collab Team",
+  "created_at": "2026-03-02T13:00:00+08:00",
+  "updated_at": "2026-03-02T13:00:00+08:00",
+  "dependencies": [],
+  "compatible_tools": [
+    "claude_code",
+    "github_copilot",
+    "codearts_agent",
+    "codex_agent",
+    "universal"
+  ],
+  "tags": [
+    "python",
+    "best-practices",
+    "quality",
+    "testing",
+    "performance"
+  ],
+  "metadata": {
+    "estimated_efficiency_gain": "50%",
+    "primary_language": "python",
+    "python_versions": ["3.8", "3.9", "3.10", "3.11"],
+    "target_audience": "Python 开发者"
+  }
+}

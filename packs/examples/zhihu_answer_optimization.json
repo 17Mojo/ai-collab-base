@@ -1,0 +1,286 @@
+{
+  "metadata": {
+    "pack_id": "zhihu-answer-optimization",
+    "pack_name": "知乎回答优化包",
+    "version": "2.0.0",
+    "type": "business",
+    "description": "专为知乎创作者设计的回答优化工具，提升回答专业性、可读性和互动性",
+    "designer": "AI Collab Team",
+    "created_at": "2026-04-04T10:00:00",
+    "updated_at": "2026-04-04T10:00:00",
+    "category": "知识问答",
+    "tags": ["知乎", "问答", "专业回答", "知识分享", "优化"],
+    "language": "zh",
+    "estimated_efficiency_gain": "75%"
+  },
+  "domain": {
+    "primary_domain": "知乎内容创作",
+    "secondary_domains": ["知识分享", "个人品牌建设", "专业答疑"],
+    "target_platforms": ["generic"],
+    "target_audience": "知乎创作者、专业人士、学生",
+    "brand_tone": "专业、客观、友善",
+    "compliance_rules": [
+      "必须客观中立",
+      "事实信息需可验证",
+      "禁止抄袭",
+      "避免广告性质内容"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "问题与回答输入",
+        "type": "local",
+        "description": "输入问题内容和原有回答",
+        "input_fields": ["question_title", "question_detail", "original_answer", "target_audience"],
+        "output_field": "qa_context",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 15,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["question_title", "original_answer"],
+          "optional_fields": ["question_detail", "target_audience"]
+        }
+      },
+      {
+        "id": "step_2_analysis",
+        "name": "问题深度分析",
+        "type": "analysis",
+        "description": "分析问题核心和用户关注点",
+        "input_fields": ["qa_context"],
+        "output_field": "question_analysis",
+        "ai_models": ["notebooklm", "qianwen"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 40,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "analysis_dimensions": ["问题核心", "用户痛点", "竞争回答分析", "知识缺口"]
+        }
+      },
+      {
+        "id": "step_3_generation",
+        "name": "多风格回答生成",
+        "type": "generation",
+        "description": "生成不同风格的专业回答",
+        "input_fields": ["qa_context", "question_analysis"],
+        "output_field": "draft_answers",
+        "ai_models": ["qianwen", "zhipu", "notebooklm"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 80,
+        "auto_trigger": true,
+        "trigger_delay": 10,
+        "config": {
+          "output_versions": 3,
+          "diversity_dimensions": ["专业深度", "易懂程度", "互动引导"]
+        }
+      },
+      {
+        "id": "step_4_validation",
+        "name": "专业性和事实验证",
+        "type": "validation",
+        "description": "验证回答的专业性和事实准确性",
+        "input_fields": ["draft_answers"],
+        "output_field": "validation_results",
+        "ai_models": ["notebooklm", "qianwen"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": [
+          "专业性评分 >= 80",
+          "事实准确性 >= 85",
+          "逻辑连贯性 >= 75"
+        ],
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_5_fusion",
+        "name": "回答融合优化",
+        "type": "fusion",
+        "description": "融合最佳元素，生成最终回答",
+        "input_fields": ["draft_answers", "validation_results"],
+        "output_field": "final_answer",
+        "ai_models": ["notebooklm"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": {
+          "strategy": "professional_balanced",
+          "include_references": true,
+          "include_examples": true,
+          "optimize_readability": true
+        },
+        "estimated_time": 25,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_6_tracking",
+        "name": "效果追踪配置",
+        "type": "tracking",
+        "description": "配置回答互动数据追踪",
+        "input_fields": ["final_answer"],
+        "output_field": "tracking_config",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 10,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "tracking_delay_hours": 24,
+          "metrics": ["upvotes", "comments", "shares", "reads", "follow_conversions"]
+        }
+      }
+    ],
+    "max_parallel_steps": 3,
+    "allow_parallel": true
+  },
+  "quality_metrics": {
+    "metrics": {
+      "professionalism": {
+        "description": "专业性 - 回答的专业深度和可信度",
+        "check_method": "expert_review_simulation",
+        "weight": 0.30,
+        "min_threshold": 0.80
+      },
+      "accuracy": {
+        "description": "准确性 - 事实信息的可靠性",
+        "check_method": "fact_verification",
+        "weight": 0.25,
+        "min_threshold": 0.85
+      },
+      "completeness": {
+        "description": "完整性 - 是否全面回答问题",
+        "check_method": "answer_coverage_analysis",
+        "weight": 0.20,
+        "min_threshold": 0.80
+      },
+      "engagement": {
+        "description": "吸引力 - 用户阅读和互动吸引力",
+        "check_method": "readability_analysis",
+        "weight": 0.15,
+        "min_threshold": 0.70
+      },
+      "objectivity": {
+        "description": "客观性 - 观点的中立和平衡",
+        "check_method": "bias_detection",
+        "weight": 0.10,
+        "min_threshold": 0.80
+      }
+    }
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "zhihu_good_001",
+        "input": {
+          "question_title": "如何提高工作效率？",
+          "question_detail": "职场新人，感觉经常加班却效率不高",
+          "original_answer": "试试番茄工作法，或者用一些效率工具。",
+          "target_audience": "职场新人"
+        },
+        "output": "谢邀。作为一个在职场摸爬滚打多年的过来人，我非常理解你的困境。刚开始工作时，我也经常陷入「努力但无效」的循环。\n\n**先说结论：提高效率的核心不是做得更快，而是做得更少。**\n\n具体来说，可以从三个层面入手：\n\n### 一、精力管理层面\n\n很多人忽略了精力比时间更重要。我观察到的高效人士都有一个共同点：他们会把自己的精力最好的时间段留给最重要的工作。\n\n**实用建议**：\n1. 记录一周的精力曲线，找到你的「黄金时段」\n2. 用黄金时段做最重要的1-2件事\n3. 其他时间用来处理常规工作\n\n### 二、工作方法层面\n\n这里分享两个我亲测有效的方法：\n\n**方法1：任务四象限分类**\n把所有任务分成四类，优先处理「重要紧急」的，花最多时间在「重要不紧急」的。\n\n**方法2：深度工作**\n每天至少留出90分钟无干扰时间，关闭手机通知，专注做一件事。\n\n### 三、心理层面\n\n**这一点很少有人提，但很重要：接受完美主义是效率的敌人。**\n\n职场新人最容易犯的错就是想把事情做到100分，结果花80%的时间在最后20%的细节上。80分足够让大多数人满意，剩下的精力可以去做更重要的事。\n\n---\n\n以上是我的经验总结，希望对你有帮助。如果有什么具体问题，欢迎在评论区继续讨论~",
+        "description": "结构清晰、有实践经验、实用性强",
+        "score": 94.0,
+        "validation_notes": "专业性强，逻辑完整，有引用来源的潜力"
+      },
+      {
+        "id": "zhihu_good_002",
+        "input": {
+          "question_title": "初学者如何学习编程？",
+          "question_detail": "零基础，想转行做程序员",
+          "original_answer": "先学Python，然后多练项目。",
+          "target_audience": "零基础转行者"
+        },
+        "output": "谢邀。看到这个问题挺感慨的，因为我也是从零基础转行过来的。现在回想起来，如果能当初有人给个详细建议，可能会少走很多弯路。\n\n先说个重要结论：**编程不是靠「学」会的，而是靠「做」会的。**\n\n### 一、语言选择：不要纠结，开始就好\n\n对于零基础，推荐以下几个路径：\n\n**如果你想要快速看到成果**：选 Python\n- 语法简单，入门快\n- 应用范围广（数据分析、AI、Web开发）\n- 社区资源丰富\n\n**如果你想要就业面广**：选 Java\n- 企业需求量大\n- 生态成熟\n- 求职岗位多\n\n**关键不是选哪个，而是选定后坚持3个月。**\n\n### 二、学习路径：从模仿到创造\n\n**第1个月：基础语法**\n- 找个免费教程（B站、MOOC）\n- 跟着敲代码，不要只是看\n- 每天花1-2小时\n\n**第2-2.5个月：小项目实践**\n这是最关键的阶段。从模仿开始：\n- 做一个计算器\n- 做一个记事本\n- 做一个简单的爬虫\n\n**第2.5-3个月：进阶与选方向**\n这个时候你已经知道自己喜欢什么了：\n- 喜欢做界面 → Web开发\n- 喜欢处理数据 → 数据分析/AI\n- 喜欢底层 → 系统编程\n\n### 三、常见误区避坑\n\n**误区1：想等「学完」再开始**\n编程永远没有「学完」的那一天。边学边做才是正确方式。\n\n**误区2：只看不练**\n这是零基础最大的坑。记住：看10遍不如亲手写1遍。\n\n**误区3：遇到困难就放弃**\n每个程序员都会无数次遇到「看不懂」的代码和「解决不了」的问题。坚持下来，你会发现今天让你头疼的东西，半年后只是小菜一碟。\n\n### 四、资源推荐\n\n**入门教程**：菜鸟教程、廖雪峰Python\n**练习平台**：LeetCode、力扣（国内版）\n**社区平台**：GitHub、Stack Overflow\n\n---\n\n最后想说：转行编程很辛苦，但也很值得。如果你决定要走这条路，希望我的经验能帮到你。有任何具体问题，随时可以问我~",
+        "description": "循序渐进、有路径图、避坑提醒",
+        "score": 90.0,
+        "validation_notes": "针对性强，实用价值高，易于理解"
+      }
+    ],
+    "bad_examples": [
+      {
+        "id": "zhihu_bad_001",
+        "input": {
+          "question_title": "什么是人工智能？",
+          "original_answer": "人工智能就是让机器像人一样思考。"
+        },
+        "output": "人工智能是计算机科学的一个分支，它研究如何让计算机模拟人类的思维过程。机器学习是人工智能的一个子集，深度学习又是机器学习的一个子集。它们之间有包含关系。",
+        "description": "过于教科书化，缺乏实际价值",
+        "score": 40.0,
+        "validation_notes": "专业性弱，缺乏深度，用户获得感低"
+      },
+      {
+        "id": "zhihu_bad_002",
+        "input": {
+          "question_title": "如何减肥？",
+          "original_answer": "少吃多动。"
+        },
+        "output": "减肥就是要少吃多动，没有其他方法。网上那些减肥产品都是骗人的，不要相信。",
+        "description": "过于绝对，缺乏专业支撑",
+        "score": 35.0,
+        "validation_notes": "观点极端，缺乏专业性，容易引起争议"
+      }
+    ],
+    "few_shot_template": "输入: {qa_context}\n输出: {generated_answer}\n评分要点: {quality_criteria}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": ["professional_depth", "accessibility", "engagement_guidance"],
+    "confidence_display": false,
+    "critical_facts_only": true,
+    "temperature": 0.6,
+    "output_format": "markdown",
+    "require_code_blocks": true
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "credibility_optimization",
+    "auto_refine_threshold": 65.0,
+    "periodic_review_days": 30,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "fact_based_adjustment",
+      "example_library_update",
+      "credibility_tracking"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": ["execution_time", "generation_success_rate", "average_quality_score", "upvote_rate"],
+    "retention_days": 90,
+    "post_publish_tracking": {
+      "enabled": true,
+      "delay_hours": 24,
+      "metrics": ["upvotes", "comments", "shares", "reads", "helpful_votes"]
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
+  },
+  "system_prompt": "你是一位在知乎活跃的专业答主，擅长将复杂问题转化为结构清晰、易于理解的回答。你的回答风格专业但不傲慢，客观但有观点，善于用实际经验和例子支撑观点，总是能够为用户提供有价值的见解。",
+  "quality_validation_rules": "1. 必须直接回答问题核心\n2. 事实信息需有可信来源\n3. 避免绝对化表述\n4. 结构清晰，易于阅读\n5. 鼓励互动讨论"
+}

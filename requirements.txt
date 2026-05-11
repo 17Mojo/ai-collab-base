@@ -1,0 +1,22 @@
+# AI Collab Base Project Dependencies
+
+# FastAPI backend
+fastapi>=0.100.0
+uvicorn>=0.23.0
+sqlite3
+
+# Chrome Extension (no Python deps)
+# Built with vanilla JS + Chrome APIs
+
+# CLI dependencies
+argparse
+json
+datetime
+pathlib
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+
+# Development
+python>=3.10

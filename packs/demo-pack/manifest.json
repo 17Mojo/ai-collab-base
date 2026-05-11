@@ -1,0 +1,18 @@
+{
+  "name": "demo-pack",
+  "version": "1.0.1",
+  "category": "domain",
+  "description": "演示 Pack - 展示 Prompt Pack 系统的完整功能",
+  "author": "AI Collaboration System",
+  "tags": [
+    "demo",
+    "example",
+    "tutorial"
+  ],
+  "compatible_tools": [
+    "claude_code"
+  ],
+  "dependencies": [],
+  "created_at": "2026-03-02T00:00:00",
+  "updated_at": "2026-03-02T21:52:43.934688"
+}

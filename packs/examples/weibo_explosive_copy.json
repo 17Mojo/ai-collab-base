@@ -1,0 +1,286 @@
+{
+  "metadata": {
+    "pack_id": "weibo-explosive-copy",
+    "pack_name": "微博爆文生成包",
+    "version": "2.0.0",
+    "type": "creative",
+    "description": "专为微博营销推文设计的爆文生成工具，支持热点追踪、情绪煽动、话题植入",
+    "designer": "AI Collab Team",
+    "created_at": "2026-04-04T10:00:00",
+    "updated_at": "2026-04-04T10:00:00",
+    "category": "社交媒体营销",
+    "tags": ["微博", "爆文", "营销", "热点", "话题"],
+    "language": "zh",
+    "estimated_efficiency_gain": "90%"
+  },
+  "domain": {
+    "primary_domain": "微博内容运营",
+    "secondary_domains": ["热点营销", "品牌推广", "KOL运营"],
+    "target_platforms": ["weibo"],
+    "target_audience": "品牌运营、KOL、营销人员",
+    "brand_tone": "热点、情绪、传播",
+    "compliance_rules": [
+      "禁止虚假热点",
+      "需标明广告性质",
+      "符合微博社区规范",
+      "避免敏感词汇"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "热点/主题输入",
+        "type": "local",
+        "description": "输入热点话题或发布主题",
+        "input_fields": ["hot_topic", "angle", "brand", "target_emotion"],
+        "output_field": "topic_info",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 20,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["hot_topic", "angle"],
+          "optional_fields": ["brand", "target_emotion"]
+        }
+      },
+      {
+        "id": "step_2_analysis",
+        "name": "热点趋势分析",
+        "type": "analysis",
+        "description": "分析热点趋势和用户关注点",
+        "input_fields": ["topic_info"],
+        "output_field": "trend_analysis",
+        "ai_models": ["qianwen", "kimi"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 40,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "analysis_dimensions": ["热度趋势", "用户情绪", "讨论焦点", "潜在争议"]
+        }
+      },
+      {
+        "id": "step_3_generation",
+        "name": "多角度爆文生成",
+        "type": "generation",
+        "description": "生成不同角度和情绪的爆文",
+        "input_fields": ["topic_info", "trend_analysis"],
+        "output_field": "draft_posts",
+        "ai_models": ["qianwen", "zhipu", "chatgpt"],
+        "parallel": true,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 60,
+        "auto_trigger": true,
+        "trigger_delay": 10,
+        "config": {
+          "output_versions": 3,
+          "diversity_dimensions": ["情绪角度", "叙事视角", "话题切入"]
+        }
+      },
+      {
+        "id": "step_4_validation",
+        "name": "传播潜力验证",
+        "type": "validation",
+        "description": "验证内容的传播潜力和合规性",
+        "input_fields": ["draft_posts"],
+        "output_field": "validation_results",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": [
+          "传播潜力评分 >= 75",
+          "情绪煽动度 >= 70",
+          "合规性检查通过"
+        ],
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_5_fusion",
+        "name": "爆文融合优化",
+        "type": "fusion",
+        "description": "融合最佳元素，生成最终爆文",
+        "input_fields": ["draft_posts", "validation_results"],
+        "output_field": "final_post",
+        "ai_models": ["qianwen"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": {
+          "strategy": "emotional_resonance",
+          "max_length": 140,
+          "include_hashtag": true,
+          "include_emoji": true
+        },
+        "estimated_time": 25,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {}
+      },
+      {
+        "id": "step_6_tracking",
+        "name": "传播追踪配置",
+        "type": "tracking",
+        "description": "配置发布后的传播效果追踪",
+        "input_fields": ["final_post"],
+        "output_field": "tracking_config",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 15,
+        "auto_trigger": true,
+        "trigger_delay": 5,
+        "config": {
+          "tracking_delay_hours": 12,
+          "metrics": ["reposts", "comments", "likes", "mentions", "click_rate"]
+        }
+      }
+    ],
+    "max_parallel_steps": 3,
+    "allow_parallel": true
+  },
+  "quality_metrics": {
+    "metrics": {
+      "viral_potential": {
+        "description": "病毒传播潜力 - 内容引发转发的可能性",
+        "check_method": "engagement_prediction",
+        "weight": 0.30,
+        "min_threshold": 0.75
+      },
+      "emotional_resonance": {
+        "description": "情绪共鸣度 - 激发用户情绪的能力",
+        "check_method": "sentiment_analysis",
+        "weight": 0.25,
+        "min_threshold": 0.70
+      },
+      "relevance": {
+        "description": "相关性 - 与热点的契合度",
+        "check_method": "topic_matching",
+        "weight": 0.20,
+        "min_threshold": 0.85
+      },
+      "creativity": {
+        "description": "创意度 - 角度的新颖性",
+        "check_method": "novelty_analysis",
+        "weight": 0.15,
+        "min_threshold": 0.65
+      },
+      "compliance": {
+        "description": "规范性 - 平台规范符合度",
+        "check_method": "platform_compliance",
+        "weight": 0.10,
+        "min_threshold": 1.0
+      }
+    }
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "weibo_good_001",
+        "input": {
+          "hot_topic": "AI技术突破",
+          "angle": "普通人受益",
+          "brand": null,
+          "target_emotion": "excitement"
+        },
+        "output": "刚刚被震撼到了！这个AI工具让普通人10分钟干完一整天的工作！🔥\n\n一直觉得AI是科技公司的事，今天亲自试了下，真的离我们这么近了！\n\n翻译、写文案、做表、分析数据...这些日常杂活，一个工具全搞定！\n\n感觉以后打工人要被解放了！🙌\n\n#AI工具 #效率神器 #打工人 #科技改变生活",
+        "description": "情绪煽动性强，贴近普通人痛点",
+        "score": 95.0,
+        "validation_notes": "情绪共鸣强，传播潜力高，角度新颖"
+      },
+      {
+        "id": "weibo_good_002",
+        "input": {
+          "hot_topic": "咖啡文化",
+          "angle": "生活方式",
+          "brand": "某咖啡品牌",
+          "target_emotion": "relax"
+        },
+        "output": "原来咖啡不只是提神剂...☕️\n\n今天在咖啡馆发现，大家来这里不只是为了工作。\n\n有人看书、有人聊天、有人只是发呆...\n\n咖啡好像变成了一种生活方式的符号，代表着「忙碌中的喘息」。\n\n你呢？为什么喜欢喝咖啡？💕\n\n#咖啡 #生活方式 #慢生活 #治愈系",
+        "description": "情感共鸣，引发讨论",
+        "score": 88.0,
+        "validation_notes": "观察角度细致，容易引发用户参与"
+      }
+    ],
+    "bad_examples": [
+      {
+        "id": "weibo_bad_001",
+        "input": {
+          "hot_topic": "新品发布",
+          "angle": "产品介绍"
+        },
+        "output": "我们公司发布了一款新产品，非常好用，大家可以了解一下。",
+        "description": "过于平淡，缺乏情绪和传播点",
+        "score": 30.0,
+        "validation_notes": "无情绪煽动，角度普通，缺乏传播潜力"
+      },
+      {
+        "id": "weibo_bad_002",
+        "input": {
+          "hot_topic": "社会事件",
+          "angle": "评论"
+        },
+        "output": "这个事件说明了我们的社会还有很多问题，需要大家共同努力解决。",
+        "description": "过于严肃，不适合社交媒体",
+        "score": 35.0,
+        "validation_notes": "情绪基调不符，缺乏传播属性"
+      }
+    ],
+    "few_shot_template": "输入: {topic_info}\n输出: {generated_post}\n评分要点: {quality_criteria}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": ["emotional_tone", "narrative_perspective", "topic_angle"],
+    "confidence_display": true,
+    "critical_facts_only": false,
+    "temperature": 0.8,
+    "output_format": "text",
+    "require_code_blocks": false
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "viral_optimization",
+    "auto_refine_threshold": 65.0,
+    "periodic_review_days": 7,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "trend_based_template_adjustment",
+      "example_library_update",
+      "viral_factor_analysis"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": ["execution_time", "generation_success_rate", "average_quality_score", "viral_success_rate"],
+    "retention_days": 30,
+    "post_publish_tracking": {
+      "enabled": true,
+      "delay_hours": 12,
+      "metrics": ["reposts", "comments", "mentions", "click_rate", "viral_index"]
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
+  },
+  "system_prompt": "你是一位资深的微博运营专家，擅长创作具有病毒传播潜力的爆款微博。你精通用户心理和情绪煽动，能够在140字有限空间内制造强烈的情绪共鸣和转发动机。",
+  "quality_validation_rules": "1. 必须包含情绪煽动点\n2. 字数控制在140字以内\n3. 必须包含话题标签\n4. 避免敏感词汇\n5. 传播潜力评分需达到要求"
+}

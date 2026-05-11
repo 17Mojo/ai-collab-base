@@ -1,0 +1,30 @@
+{
+  "name": "api-design-pack",
+  "version": "1.0.0",
+  "category": "domain",
+  "description": "RESTful API 设计规范 - 包含命名约定、版本管理、错误处理、文档要求",
+  "author": "AI Collab Team",
+  "created_at": "2026-03-02T12:30:00+08:00",
+  "updated_at": "2026-03-02T12:30:00+08:00",
+  "dependencies": [],
+  "compatible_tools": [
+    "claude_code",
+    "github_copilot",
+    "codearts_agent",
+    "codex_agent",
+    "universal"
+  ],
+  "tags": [
+    "api",
+    "rest",
+    "design",
+    "backend",
+    "standards"
+  ],
+  "metadata": {
+    "estimated_efficiency_gain": "45%",
+    "primary_language": "backend",
+    "protocols": ["HTTP", "REST", "JSON"],
+    "target_audience": "Backend 开发者、API 设计师"
+  }
+}

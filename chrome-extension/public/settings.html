@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Pack - 设置</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .setting-group {
+      margin-bottom: 20px;
+    }
+    .setting-group h2 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #666;
+    }
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .setting-item label {
+      font-size: 14px;
+    }
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 20px;
+    }
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 10px;
+    }
+    .toggle input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    .toggle .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    .toggle input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    input[type="number"] {
+      width: 60px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .save-btn {
+      width: 100%;
+      padding: 10px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .save-btn:hover {
+      background: #3367d6;
+    }
+    .status {
+      text-align: center;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚙️ Prompt Pack 设置</h1>
+
+  <!-- 平台开关 -->
+  <div class="setting-group">
+    <h2>平台启用</h2>
+    <div class="setting-item">
+      <label>Claude.ai</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-claude" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>ChatGPT</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-chatgpt" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>Gemini</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-gemini" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>Kimi (月之暗面)</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-kimi" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>千问 (阿里云)</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-qianwen" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>ChatGLM (智谱AI)</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-chatglm" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>LongCat AI</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-longcat" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>腾讯元宝</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-yuanbao" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>文心一言</label>
+      <label class="toggle">
+        <input type="checkbox" id="platform-yiyan" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- 执行设置 -->
+  <div class="setting-group">
+    <h2>执行设置</h2>
+    <div class="setting-item">
+      <label>执行超时 (秒)</label>
+      <input type="number" id="timeout" value="60" min="10" max="300">
+    </div>
+    <div class="setting-item">
+      <label>重试次数</label>
+      <input type="number" id="retries" value="3" min="0" max="10">
+    </div>
+    <div class="setting-item">
+      <label>重试延迟 (毫秒)</label>
+      <input type="number" id="retry-delay" value="1000" min="100" max="5000">
+    </div>
+  </div>
+
+  <!-- 日志设置 -->
+  <div class="setting-group">
+    <h2>日志设置</h2>
+    <div class="setting-item">
+      <label>启用日志</label>
+      <label class="toggle">
+        <input type="checkbox" id="logging-enabled" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <label>详细日志</label>
+      <label class="toggle">
+        <input type="checkbox" id="verbose-logging">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- 风格管理 -->
+  <div class="setting-group">
+    <h2>风格管理</h2>
+    <div class="setting-item">
+      <label>打开风格编辑器</label>
+      <button id="openStyleEditorBtn" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">打开</button>
+    </div>
+    <p style="font-size: 12px; color: #888; margin-top: 8px;">
+      创建、编辑自定义灵魂注入风格
+    </p>
+  </div>
+
+  <!-- Pack 管理 -->
+  <div class="setting-group">
+    <h2>Pack 管理</h2>
+    <div class="setting-item">
+      <label>打开 Pack 编辑器</label>
+      <button id="openPackEditorBtn" style="padding: 8px 16px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer;">打开</button>
+    </div>
+    <p style="font-size: 12px; color: #888; margin-top: 8px;">
+      创建、编辑、导入导出 Pack
+    </p>
+  </div>
+
+  <button class="save-btn" id="save-btn">保存设置</button>
+  <div class="status" id="status"></div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

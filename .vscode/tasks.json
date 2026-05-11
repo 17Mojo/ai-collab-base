@@ -1,0 +1,226 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "AI Collab: Activate Claude Code",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "activate",
+        "--ai",
+        "claude",
+        "--mode",
+        "command"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": [],
+      "icon": "$(robot)"
+    },
+    {
+      "label": "AI Collab: Activate CodeArts Agent",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "activate",
+        "--ai",
+        "codearts_agent",
+        "--mode",
+        "command"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": [],
+      "icon": "$(request-access)"
+    },
+    {
+      "label": "AI Collab: Check Conflicts",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "check",
+        "--ai",
+        "claude",
+        "--files",
+        "${file}"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "AI Collab: List Active Tasks",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "tasks",
+        "list",
+        "--status",
+        "active"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "AI Collab: Show Conflicts",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "conflicts",
+        "list"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "AI Collab: List Logs",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "logs",
+        "list"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "AI Collab: Initialize Project",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "init"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "AI Collab: Clean Old Logs",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "ai_collab.cli",
+        "clean",
+        "--days",
+        "30"
+      ],
+      "presentation": {
+        "reveal": "silent"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Prompt Pack: Pre-release Check (Quick)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/pre_release_check.sh",
+        "--workspace",
+        "${workspaceFolder}",
+        "--quick"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Prompt Pack: Pre-release Check (Strict)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/pre_release_check.sh",
+        "--workspace",
+        "${workspaceFolder}",
+        "--with-locks"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Prompt Pack: Release (with checks)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/release.sh",
+        "--with-locks"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "AI Collab: Daily Benefit Snapshot",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "collaboration/scripts/run_daily_benefit_snapshot.py",
+        "--workspace",
+        "${workspaceFolder}"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "metadata": {
+    "pack_id": "xiaohongshu-knowledge-creator",
+    "pack_name": "小红书知识型博主 - 图文内容创作指南",
+    "version": "2.0.0",
+    "type": "business",
+    "description": "将复杂AI/新技术/新产品讲成普通人听得懂、愿意看完、愿意收藏的内容",
+    "designer": "Claude Code",
+    "created_at": "2026-04-23T10:00:00",
+    "updated_at": "2026-04-23T10:00:00",
+    "category": "知识分享",
+    "tags": ["小红书", "知识博主", "图文", "AI科普", "内容创作"],
+    "language": "zh",
+    "estimated_efficiency_gain": "90%"
+  },
+  "domain": {
+    "primary_domain": "小红书知识内容创作",
+    "secondary_domains": ["AI科普", "科技测评", "新产品解读"],
+    "target_platforms": ["xiaohongshu"],
+    "target_audience": "知识型博主、科技博主、AI博主",
+    "brand_tone": "靠谱、不割韭菜、讲人话",
+    "compliance_rules": [
+      "3秒内让读者知道值不值得看",
+      "看完后觉得原来如此/我也能用",
+      "建立长期信任"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_topic",
+        "name": "选题确认",
+        "type": "local",
+        "description": "确认要讲解的AI/技术/产品主题",
+        "input_fields": ["topic", "target_audience_level"],
+        "output_field": "topic_info",
+        "config": {
+          "required_fields": ["topic"],
+          "optional_fields": ["target_audience_level", "key_points"]
+        }
+      },
+      {
+        "id": "step_2_hook",
+        "name": "结论提炼",
+        "type": "analysis",
+        "description": "提炼明确观点/反常识判断作为开头",
+        "input_fields": ["topic_info"],
+        "output_field": "hook_statement",
+        "ai_models": ["qianwen"],
+        "config": {
+          "output_rules": [
+            "开头必须是明确观点",
+            "避免铺垫背景介绍",
+            "允许有态度但不情绪化"
+          ],
+          "example_hooks": [
+            "很多人把XX理解错了",
+            "这类AI，现在根本不适合用在XX"
+          ]
+        }
+      },
+      {
+        "id": "step_3_explain",
+        "name": "人话翻译",
+        "type": "generation",
+        "description": "用生活类比、工作场景解释复杂概念",
+        "input_fields": ["topic_info", "hook_statement"],
+        "output_field": "explanation_text",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "config": {
+          "style_rules": [
+            "能不用专业名词就不用",
+            "必须用时一句话翻译",
+            "多用生活类比、工作场景",
+            "像在给朋友解释"
+          ],
+          "paragraph_count": "2-4",
+          "each_paragraph_rule": "每段只讲1点"
+        }
+      },
+      {
+        "id": "step_4_scene",
+        "name": "场景化表达",
+        "type": "generation",
+        "description": "创建具体使用场景",
+        "input_fields": ["topic_info"],
+        "output_field": "use_cases",
+        "ai_models": ["qianwen"],
+        "config": {
+          "scene_format": "谁+在做什么+为什么用到它",
+          "example_scenes": [
+            "如果你是接广告的视频工作室",
+            "当你第一次想把XX用进工作里时"
+          ]
+        }
+      },
+      {
+        "id": "step_5_boundary",
+        "name": "边界标注",
+        "type": "local",
+        "description": "标注适用人群和局限性",
+        "input_fields": ["topic_info"],
+        "output_field": "boundary_notes",
+        "config": {
+          "required_elements": [
+            "明确什么人适合",
+            "明确什么人不适合",
+            "可说目前还不成熟",
+            "不做万能工具叙事"
+          ]
+        }
+      },
+      {
+        "id": "step_6_takeaway",
+        "name": "可带走内容",
+        "type": "generation",
+        "description": "生成判断标准/简单框架/可尝试动作",
+        "input_fields": ["explanation_text", "use_cases"],
+        "output_field": "takeaway_content",
+        "ai_models": ["qianwen"],
+        "config": {
+          "output_options": [
+            "一个判断标准",
+            "一个简单框架",
+            "一个可立即尝试的小动作"
+          ],
+          "must_include_one": true
+        }
+      },
+      {
+        "id": "step_7_visual",
+        "name": "图片内容生成",
+        "type": "generation",
+        "description": "生成小红书图片文案（封面+内容图+收尾图）",
+        "input_fields": ["hook_statement", "explanation_text", "takeaway_content"],
+        "output_field": "visual_content",
+        "ai_models": ["qianwen"],
+        "config": {
+          "format": "3:4竖版 1080x1440px",
+          "image_count": "3-6张",
+          "cover_requirements": {
+            "title_size": "占画面1/3以上",
+            "font_size": "80-120px",
+            "high_contrast": true,
+            "visual_impact": ["大号数字", "emoji", "几何色块"]
+          },
+          "content_image_requirements": {
+            "each_image_rule": "每张图只讲1个点",
+            "text_ratio": "≤40%",
+            "font_size_title": "60-80px",
+            "font_size_body": "40-50px"
+          },
+          "ending_image_requirements": {
+            "summary": "记住这3点就够了",
+            "interaction": "你踩过哪些坑？评论区聊聊",
+            "ip_signature": "@绿皮火车 Roadtrip | 专注AI平权"
+          }
+        }
+      },
+      {
+        "id": "step_8_output",
+        "name": "整合输出",
+        "type": "fusion",
+        "description": "整合所有内容生成最终图文",
+        "input_fields": ["hook_statement", "explanation_text", "use_cases", "boundary_notes", "takeaway_content", "visual_content"],
+        "output_field": "final_content",
+        "config": {
+          "format": "小红书笔记格式",
+          "checklist": [
+            "3:4竖版",
+            "封面标题够大",
+            "每张图只讲1个点",
+            "字号≥40px",
+            "配色不超过3种",
+            "最后一张有互动引导"
+          ]
+        }
+      }
+    ]
+  },
+  "system_prompt": "你是小红书知识型博主，擅长把复杂的AI、新技术、新产品讲成普通人听得懂、愿意看完、愿意收藏的内容。\n\n核心目标：\n- 让读者3秒内知道值不值得看\n- 看完后觉得\"原来如此 / 我也能用\"\n- 建立\"靠谱、不割韭菜\"的长期信任\n\n语气风格：\n- 冷静但不冷漠\n- 专业但不居高临下\n- 有经验感，不贩卖焦虑\n- 不喊口号，不夸大收益\n\n禁止事项：\n- 标题党但内容空\n- 过度乐观或恐吓式表达\n- 把复杂问题一句话\"神化解决\"\n- 明显的割韭菜话术",
+  "quality_metrics": {
+    "metrics": {
+      "clarity": {
+        "description": "人话程度 - 是否用通俗语言解释",
+        "weight": 0.30,
+        "min_threshold": 0.8
+      },
+      "hook_power": {
+        "description": "开头吸引力 - 3秒内能否抓住读者",
+        "weight": 0.25,
+        "min_threshold": 0.7
+      },
+      "practicality": {
+        "description": "实用价值 - 是否有可带走的东西",
+        "weight": 0.25,
+        "min_threshold": 0.8
+      },
+      "trustworthiness": {
+        "description": "可信度 - 是否标注边界和局限",
+        "weight": 0.20,
+        "min_threshold": 0.9
+      }
+    }
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "example_ai_tool",
+        "topic": "AI写作工具",
+        "hook": "AI写作工具，90%的人用错了",
+        "explanation": "很多人把AI写作当成\"一键生成\"，以为输入标题就能出爆款。实际上，AI更像一个协作搭档——你给方向，它给你选项。",
+        "scene": "如果你是每天要写3条小红书的运营……",
+        "takeaway": "记住这个判断标准：AI适合做\"结构化重复\"，不适合做\"创意从零开始\"",
+        "visual_plan": {
+          "cover": "90% | 都用错了",
+          "image_2": "核心观点：AI是协作搭档不是一键生成",
+          "image_3": "使用场景对比图",
+          "ending": "记住这1点就够了 | 评论聊聊你的使用心得"
+        }
+      }
+    ],
+    "bad_examples": [
+      {
+        "id": "bad_overhype",
+        "topic": "某AI产品",
+        "hook": "这个AI太牛了！颠覆一切！",
+        "issues": ["恐吓式表达", "夸大收益", "割韭菜话术"],
+        "score": 20
+      }
+    ]
+  }
+}

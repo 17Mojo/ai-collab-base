@@ -1,0 +1,229 @@
+{
+  "metadata": {
+    "pack_id": "weekly-report",
+    "pack_name": "企业周报生成包",
+    "version": "2.0.0",
+    "type": "productivity",
+    "description": "专为企业员工设计的周报生成工具，支持工作总结、数据分析、问题汇总、下周计划",
+    "designer": "CodeArts Agent",
+    "created_at": "2026-04-13T12:00:00",
+    "updated_at": "2026-04-13T12:00:00",
+    "category": "办公效率",
+    "tags": ["周报", "工作总结", "数据分析", "企业", "效率"],
+    "language": "zh",
+    "estimated_efficiency_gain": "70%"
+  },
+  "domain": {
+    "primary_domain": "企业办公",
+    "secondary_domains": ["项目管理", "数据分析", "团队协作"],
+    "target_platforms": ["generic"],
+    "target_audience": "企业员工、项目经理、团队Leader",
+    "brand_tone": "专业、简洁、数据驱动",
+    "compliance_rules": [
+      "数据准确性",
+      "保护敏感信息",
+      "客观描述进展",
+      "明确责任归属"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_input",
+        "name": "工作信息收集",
+        "type": "local",
+        "description": "收集本周工作基础信息",
+        "input_fields": ["tasks_completed", "tasks_in_progress", "blockers"],
+        "output_field": "work_info",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": null,
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "required_fields": ["tasks_completed"],
+          "optional_fields": ["tasks_in_progress", "blockers", "meetings"]
+        }
+      },
+      {
+        "id": "step_2_summary",
+        "name": "工作总结生成",
+        "type": "ai",
+        "description": "根据任务信息生成工作总结",
+        "input_fields": ["work_info", "summary_style"],
+        "output_field": "work_summary",
+        "ai_models": ["gpt-4", "claude-3"],
+        "parallel": true,
+        "cross_review": true,
+        "validation_criteria": {
+          "min_length": 100,
+          "max_length": 500,
+          "required_elements": ["完成事项", "关键成果"]
+        },
+        "fusion_rules": {
+          "strategy": "best_of_both"
+        },
+        "estimated_time": 45,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "style": "简洁专业",
+          "highlight_key_results": true
+        }
+      },
+      {
+        "id": "step_3_data",
+        "name": "数据分析整理",
+        "type": "ai",
+        "description": "整理和分析本周数据指标",
+        "input_fields": ["metrics", "comparison_period"],
+        "output_field": "data_analysis",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "required_elements": ["核心指标", "环比变化", "趋势分析"]
+        },
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "chart_suggestions": true
+        }
+      },
+      {
+        "id": "step_4_issues",
+        "name": "问题汇总分析",
+        "type": "ai",
+        "description": "汇总本周遇到的问题和风险",
+        "input_fields": ["issues", "risks", "dependencies"],
+        "output_field": "issue_summary",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "required_elements": ["问题描述", "影响范围", "建议方案"]
+        },
+        "fusion_rules": null,
+        "estimated_time": 20,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "priority_sorting": true
+        }
+      },
+      {
+        "id": "step_5_plan",
+        "name": "下周计划生成",
+        "type": "ai",
+        "description": "根据本周情况生成下周计划",
+        "input_fields": ["work_info", "issue_summary", "upcoming_tasks"],
+        "output_field": "next_week_plan",
+        "ai_models": ["gpt-4"],
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "required_elements": ["重点任务", "时间安排", "资源需求"]
+        },
+        "fusion_rules": null,
+        "estimated_time": 30,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "smart_prioritization": true
+        }
+      },
+      {
+        "id": "step_6_output",
+        "name": "周报整合输出",
+        "type": "local",
+        "description": "整合所有内容生成最终周报",
+        "input_fields": ["work_summary", "data_analysis", "issue_summary", "next_week_plan"],
+        "output_field": "final_report",
+        "ai_models": null,
+        "parallel": false,
+        "cross_review": false,
+        "validation_criteria": {
+          "required_sections": ["本周工作", "数据分析", "问题风险", "下周计划"]
+        },
+        "fusion_rules": {
+          "strategy": "sequential_merge"
+        },
+        "estimated_time": 10,
+        "auto_trigger": false,
+        "trigger_delay": null,
+        "config": {
+          "format": "企业周报标准格式",
+          "export_formats": ["markdown", "html", "docx"]
+        }
+      }
+    ]
+  },
+  "quality_metrics": {
+    "metrics": [
+      {
+        "name": "内容完整度",
+        "weight": 0.30,
+        "threshold": 0.9,
+        "measurement_method": "section_coverage"
+      },
+      {
+        "name": "数据准确性",
+        "weight": 0.25,
+        "threshold": 0.95,
+        "measurement_method": "data_validation"
+      },
+      {
+        "name": "表达清晰度",
+        "weight": 0.20,
+        "threshold": 0.8,
+        "measurement_method": "readability_score"
+      },
+      {
+        "name": "可执行性",
+        "weight": 0.15,
+        "threshold": 0.85,
+        "measurement_method": "actionability_check"
+      },
+      {
+        "name": "格式规范性",
+        "weight": 0.10,
+        "threshold": 1.0,
+        "measurement_method": "format_check"
+      }
+    ]
+  },
+  "example_library": {
+    "examples": [
+      {
+        "id": "good_example_1",
+        "name": "研发周报优秀案例",
+        "input": {
+          "tasks_completed": ["完成用户模块重构", "修复3个P0 bug"],
+          "metrics": {"代码提交": 15, "bug修复": 5}
+        },
+        "output": {
+          "title": "研发部第16周工作周报",
+          "content_preview": "本周完成用户模块重构，性能提升30%..."
+        },
+        "tags": ["优秀案例", "研发", "技术"]
+      },
+      {
+        "id": "bad_example_1",
+        "name": "流水账反面案例",
+        "input": {
+          "tasks_completed": ["开会", "写代码", "吃饭"]
+        },
+        "output": {
+          "content_preview": "周一开会，周二写代码，周三吃饭..."
+        },
+        "tags": ["反面案例", "流水账"],
+        "issues": ["缺乏重点", "无数据支撑", "无计划"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "metadata": {
+    "pack_id": "error-handling-workflow",
+    "pack_name": "错误处理流程 Pack",
+    "version": "2.1.0",
+    "type": "custom",
+    "description": "演示分支和正则表达式匹配的工作流",
+    "designer": "AI Collab Team",
+    "created_at": "2026-04-22T00:00:00",
+    "updated_at": "2026-04-22T00:00:00",
+    "tags": ["workflow", "branching", "regex", "error-handling"]
+  },
+  "domain": {
+    "primary_domain": "工作流自动化",
+    "target_platforms": ["generic"]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_request",
+        "name": "发送初始请求",
+        "type": "analysis",
+        "description": "发送请求到 AI 并获取响应",
+        "ai_models": ["qianwen"],
+        "branches": [
+          {
+            "condition_type": "regex_match",
+            "target_field": "output",
+            "target_step": "step_success",
+            "regex_config": {
+              "pattern": "^SUCCESS:|完成|成功|DONE",
+              "flags": "i"
+            }
+          },
+          {
+            "condition_type": "regex_match",
+            "target_field": "output",
+            "target_step": "step_error_handler",
+            "regex_config": {
+              "pattern": "ERROR:\\s*(\\w+)|错误|失败|FAILED",
+              "flags": "i",
+              "extract_fields": { "error_code": "error_code" }
+            }
+          }
+        ],
+        "on_error": "step_error_handler",
+        "on_timeout": "step_timeout_handler",
+        "config": {
+          "timeout": 30000
+        }
+      },
+      {
+        "id": "step_success",
+        "name": "处理成功响应",
+        "type": "local",
+        "description": "成功路径：处理正常响应",
+        "input_fields": ["initial_response"],
+        "output_field": "processed_result",
+        "next_step": "step_finalize"
+      },
+      {
+        "id": "step_error_handler",
+        "name": "错误分析与恢复",
+        "type": "analysis",
+        "description": "分析错误并决定恢复策略",
+        "ai_models": ["qianwen", "zhipu"],
+        "parallel": true,
+        "branches": [
+          {
+            "condition_type": "contains",
+            "target_field": "output",
+            "condition_value": "retry",
+            "target_step": "step_1_request"
+          },
+          {
+            "condition_type": "contains",
+            "target_field": "output",
+            "condition_value": "abort",
+            "target_step": "step_finalize"
+          }
+        ],
+        "config": {
+          "allow_reexecute": true,
+          "max_retries": 2
+        }
+      },
+      {
+        "id": "step_timeout_handler",
+        "name": "超时恢复",
+        "type": "local",
+        "description": "处理超时场景",
+        "output_field": "timeout_result",
+        "next_step": "step_1_request",
+        "config": {
+          "allow_reexecute": true
+        }
+      },
+      {
+        "id": "step_finalize",
+        "name": "完成流程",
+        "type": "local",
+        "description": "结束工作流并返回结果",
+        "input_fields": ["processed_result", "error_analysis"],
+        "output_field": "final_output"
+      }
+    ],
+    "max_parallel_steps": 2,
+    "allow_parallel": true
+  },
+  "quality_metrics": {
+    "metrics": {
+      "success_rate": {
+        "description": "成功率",
+        "check_method": "outcome_verification",
+        "weight": 0.5,
+        "min_threshold": 0.8
+      },
+      "recovery_effectiveness": {
+        "description": "错误恢复有效性",
+        "check_method": "error_handling_score",
+        "weight": 0.5,
+        "min_threshold": 0.6
+      }
+    },
+    "normalization_method": "linear"
+  },
+  "example_library": {
+    "good_examples": [],
+    "bad_examples": []
+  },
+  "generation_params": {},
+  "optimization": {
+    "enabled": false
+  },
+  "performance_tracking": {
+    "enabled": false
+  },
+  "collaboration": {
+    "is_public": true
+  }
+}

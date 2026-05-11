@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Pack - Pack 编辑器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 600px;
+      min-height: 700px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+    }
+
+    .header {
+      padding: 16px;
+      background: #16213e;
+      border-bottom: 1px solid #0f3460;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-btn {
+      padding: 8px 16px;
+      background: #0f3460;
+      border: none;
+      border-radius: 6px;
+      color: #eee;
+      cursor: pointer;
+    }
+
+    .header-btn:hover {
+      background: #16213e;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #e94560;
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Pack List */
+    .pack-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pack-card {
+      padding: 12px;
+      background: #16213e;
+      border-radius: 8px;
+      border: 1px solid #0f3460;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pack-info {
+      flex: 1;
+    }
+
+    .pack-info h3 {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .pack-info p {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .pack-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .pack-badge.default {
+      background: #e94560;
+      color: white;
+    }
+
+    .pack-badge.user {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .pack-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .pack-actions button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .edit-btn {
+      background: #0f3460;
+      color: #eee;
+    }
+
+    .edit-btn:hover {
+      background: #16213e;
+    }
+
+    .delete-btn {
+      background: #ff6b6b;
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background: #e94560;
+    }
+
+    /* Editor Form */
+    .editor-section {
+      display: none;
+    }
+
+    .editor-section.visible {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      color: #eee;
+      font-size: 14px;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 10px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      color: #eee;
+      font-size: 14px;
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: 10px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 6px;
+      color: #eee;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 120px;
+      font-family: 'Monaco', 'Menlo', monospace;
+    }
+
+    .form-textarea:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn-primary {
+      padding: 10px 20px;
+      background: #e94560;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover {
+      background: #ff6b6b;
+    }
+
+    .btn-secondary {
+      padding: 10px 20px;
+      background: #0f3460;
+      border: none;
+      border-radius: 6px;
+      color: #eee;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background: #16213e;
+    }
+
+    /* Import/Export */
+    .import-export-section {
+      padding: 12px;
+      background: #16213e;
+      border-radius: 8px;
+      border: 1px solid #0f3460;
+    }
+
+    .io-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .io-btn {
+      padding: 10px 16px;
+      background: #0f3460;
+      border: none;
+      border-radius: 6px;
+      color: #eee;
+      cursor: pointer;
+    }
+
+    .io-btn:hover {
+      background: #16213e;
+    }
+
+    .import-options {
+      display: none;
+      padding-top: 12px;
+      border-top: 1px solid #0f3460;
+    }
+
+    .import-options.visible {
+      display: block;
+    }
+
+    .import-options label {
+      display: block;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+
+    .import-options input[type="radio"] {
+      margin-right: 8px;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      padding: 8px 16px;
+      background: #16213e;
+      border-top: 1px solid #0f3460;
+      font-size: 12px;
+      color: #888;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .status-bar.success {
+      color: #4CAF50;
+    }
+
+    .status-bar.error {
+      color: #ff6b6b;
+    }
+
+    /* 验证样式 */
+    .validation-error {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .validation-error.visible {
+      display: block;
+    }
+
+    .form-input.error {
+      border-color: #ff6b6b;
+    }
+
+    /* 正则测试 */
+    .regex-test-btn {
+      padding: 4px 10px;
+      background: #4CAF50;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
+    .regex-test-btn:hover {
+      background: #45a049;
+    }
+
+    .regex-test-result {
+      padding: 8px;
+      background: #1a1a2e;
+      border-radius: 4px;
+      margin-top: 6px;
+      font-size: 12px;
+      display: none;
+    }
+
+    .regex-test-result.visible {
+      display: block;
+    }
+
+    .regex-test-result.match {
+      border: 1px solid #4CAF50;
+      color: #4CAF50;
+    }
+
+    .regex-test-result.nomatch {
+      border: 1px solid #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    .regex-test-input {
+      width: 100%;
+      padding: 6px 10px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      color: #eee;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    /* Loading */
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #888;
+      border-top-color: #e94560;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Branch Config */
+    .branch-config {
+      background: #0f3460;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .branch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .branch-title {
+      font-size: 13px;
+      color: #e94560;
+    }
+
+    .branch-item {
+      background: #16213e;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border: 1px solid #0f3460;
+    }
+
+    .branch-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .branch-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .branch-select {
+      padding: 6px 10px;
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      color: #eee;
+      font-size: 12px;
+      min-width: 100px;
+    }
+
+    .branch-input {
+      padding: 6px 10px;
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      color: #eee;
+      font-size: 12px;
+      flex: 1;
+    }
+
+    .branch-input-small {
+      width: 80px;
+    }
+
+    .branch-btn {
+      padding: 4px 8px;
+      background: transparent;
+      border: 1px solid #ff6b6b;
+      border-radius: 4px;
+      color: #ff6b6b;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .branch-btn:hover {
+      background: #ff6b6b;
+      color: white;
+    }
+
+    .add-branch-btn {
+      padding: 6px 12px;
+      background: #4CAF50;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .add-branch-btn:hover {
+      background: #45a049;
+    }
+
+    .regex-config {
+      background: #1a1a2e;
+      border-radius: 4px;
+      padding: 8px;
+      margin-top: 6px;
+    }
+
+    .regex-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .regex-pattern {
+      flex: 1;
+    }
+
+    .regex-flags {
+      width: 60px;
+    }
+
+    .step-item {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #0f3460;
+    }
+
+    .step-item.selected {
+      border-color: #e94560;
+    }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .step-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .step-type-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      background: #e94560;
+    }
+
+    .step-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .field-input {
+      padding: 6px 10px;
+      background: #1a1a2e;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      color: #eee;
+      font-size: 12px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 24px;
+      text-align: center;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📦 Pack 编辑器</h1>
+    <button class="header-btn" id="backBtn">← 返回</button>
+  </div>
+
+  <div class="content">
+    <!-- Pack List Section -->
+    <div class="section" id="packListSection">
+      <div class="section-header">
+        <span class="section-title">可用 Pack</span>
+        <div class="section-actions">
+          <button class="btn-secondary" id="refreshBtn">🔄 刷新</button>
+          <button class="btn-primary" id="newPackBtn">+ 新建</button>
+        </div>
+      </div>
+      <div class="pack-list" id="packList">
+        <!-- Dynamic pack cards -->
+      </div>
+    </div>
+
+    <!-- Pack Editor Form -->
+    <div class="section editor-section" id="editorSection">
+      <div class="section-header">
+        <span class="section-title">编辑 Pack</span>
+      </div>
+
+      <form id="packForm">
+        <div class="form-group">
+          <label class="form-label">Pack ID *</label>
+          <input type="text" class="form-input" id="packId" required pattern="[a-z0-9-]+" placeholder="例如: my-custom-pack">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pack 名称 *</label>
+          <input type="text" class="form-input" id="packName" required placeholder="例如: 我的自定义Pack">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">描述</label>
+          <textarea class="form-textarea" id="packDescription" rows="3" placeholder="Pack 功能描述..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">类别</label>
+          <select class="form-select" id="packCategory">
+            <option value="productivity">生产力</option>
+            <option value="creative">创意</option>
+            <option value="analysis">分析</option>
+            <option value="business">商业</option>
+            <option value="education">教育</option>
+            <option value="custom">自定义</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Workflow 步骤配置</label>
+          <div id="stepsEditor">
+            <!-- 步骤列表区域 -->
+            <div class="section-header" style="margin-bottom: 12px;">
+              <span style="font-size: 14px; color: #888;">步骤列表</span>
+              <button class="add-branch-btn" id="addStepBtn">+ 添加步骤</button>
+            </div>
+            <div id="stepsList">
+              <!-- 动态生成步骤卡片 -->
+            </div>
+          </div>
+          <div style="margin-top: 12px;">
+            <label class="form-label" style="cursor: pointer;">
+              <input type="checkbox" id="showJsonToggle" style="margin-right: 6px;">
+              显示原始 JSON
+            </label>
+            <textarea class="form-textarea" id="workflowJson" rows="8" style="display: none; font-family: 'Monaco', 'Menlo', monospace;"></textarea>
+          </div>
+          <p style="font-size: 11px; color: #666; margin-top: 4px;">
+            提示: 可用变量 {{prompt}}, {{soulProfile}}, {{topic}}
+          </p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="saveBtn">保存</button>
+          <button type="button" class="btn-secondary" id="cancelBtn">取消</button>
+          <button type="button" class="btn-secondary delete-btn" id="deleteBtn" style="display: none; background: #ff6b6b;">删除</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Import/Export Section -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">导入 / 导出</span>
+      </div>
+      <div class="import-export-section">
+        <div class="io-actions">
+          <button class="io-btn" id="exportAllBtn">📤 导出全部</button>
+          <button class="io-btn" id="exportSelectedBtn">📤 导出选中</button>
+          <button class="io-btn" id="importBtn">📥 导入 Pack</button>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+        <div class="import-options" id="importOptions">
+          <label>
+            <input type="radio" name="mergeStrategy" value="merge" checked>
+            合并 (保留现有 Pack)
+          </label>
+          <label>
+            <input type="radio" name="mergeStrategy" value="overwrite">
+            覆盖 (替换同名 Pack)
+          </label>
+          <button class="btn-primary" id="confirmImportBtn" style="margin-top: 8px;">确认导入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar" id="statusBar">就绪</div>
+
+  <script src="pack-editor.js"></script>
+</body>
+</html>

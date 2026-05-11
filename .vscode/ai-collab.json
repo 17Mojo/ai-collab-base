@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "rulesDir": "./rules",
+  "logsDir": "./logs",
+  "stateFile": "./logs/collaboration_state.json",
+  "activationKeyword": "2X",
+  "conflictCheckOnSave": true,
+  "conflictCheckOnCommand": true,
+  "enabledAIs": [
+    "claude_code",
+    "codex",
+    "codearts_agent"
+  ],
+  "agentOrchestration": {
+    "autoDetectAgents": true,
+    "includeUserAsOperator": true,
+    "operatorFirst": false,
+    "forceLeadAgent": null,
+    "disabledAgents": [
+      "copilot"
+    ],
+    "intentLeadMap": {
+      "architecture": [
+        "codex",
+        "claude_code",
+        "codearts_agent"
+      ],
+      "implementation": [
+        "claude_code",
+        "codex",
+        "codearts_agent"
+      ],
+      "testing": [
+        "codearts_agent",
+        "claude_code",
+        "codex"
+      ],
+      "documentation": [
+        "codearts_agent",
+        "codex",
+        "claude_code"
+      ]
+    },
+    "modelAgentMap": {
+      "claude": "claude_code",
+      "copilot": "codearts_agent",
+      "glm|codearts": "codearts_agent",
+      "gpt|codex|openai": "codex"
+    }
+  }
+}
