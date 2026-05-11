@@ -1,4 +1,8 @@
-# AI Collab System - Prompt Pack v2.0
+# AI Collab Base - Prompt Pack v2.0 执行平台
+
+> **定位**: 本地优先的 AI 聊天自动化执行平台
+>
+> **姊妹项目**: [ai-collab-research](https://github.com/17Mojo/ai-collab-research) - 研究成果 + 防遗忘工具
 
 一个本地优先的 AI 聊天自动化工具，通过 Chrome 扩展实现多 AI 平台的内容生成自动化，支持 NotebookLM 知识增强。
 
@@ -6,7 +10,7 @@
 
 ## 简介
 
-**AI Collab System** 是一个**本地优先**的 Chrome 扩展 + 本地后端系统：
+**AI Collab Base** 是一个**本地优先**的 Chrome 扩展 + 本地后端系统：
 
 - 🎯 **多平台支持**: ChatGPT、Claude、Gemini、Kimi、通义千问、智谱清言等 10+ 平台
 - 🔧 **Pack 工作流**: 支持 6 种步骤类型 + 分支逻辑 + 正则表达式匹配
