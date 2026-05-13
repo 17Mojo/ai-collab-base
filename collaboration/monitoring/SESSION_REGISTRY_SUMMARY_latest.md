@@ -1,65 +1,11 @@
 # Session Registry Summary（自动生成）
 
-- 生成时间: `2026-05-11T10:37:14.703349`
-- 会话数: `55`
-- healthy: `54`
-- unhealthy: `1`
+- 生成时间: `2026-05-13T20:21:36.282368`
+- 会话数: `1`
+- healthy: `1`
+- unhealthy: `0`
 - state_file: `logs/session_registry_state.json`
 
 ## Sessions
 
-- `405f92e7-8bba-459d-8fc9-c4ae825970fb` assignee=`claude_code` transport=`manual` status=`idle` health=`healthy`
-- `4967575e-fd61-498f-b6c4-1c5fcdcee047` assignee=`claude_code` transport=`manual` status=`idle` health=`healthy`
-- `5f7d8c96-a655-46c9-9b17-269b23078d59` assignee=`claude_code` transport=`manual` status=`idle` health=`healthy`
-- `9a4fe98e-7b91-4174-96cc-1a66f12654b9` assignee=`claude_code` transport=`manual` status=`idle` health=`healthy`
-- `9d0cd72d-bc0f-4263-b9e9-6598852f11ba` assignee=`claude_code` transport=`manual` status=`active` health=`healthy`
-- `bd39e6f2-ce68-4cbf-a1c0-c0b5c7652961` assignee=`claude_code` transport=`manual` status=`idle` health=`healthy`
-- `claude-tracka-april05` assignee=`claude_code` transport=`bridge` status=`active` health=`healthy`
-- `f2b177cf-6984-4ab8-9122-cabe5058bbe7` assignee=`claude_code` transport=`manual` status=`active` health=`healthy`
-- `codearts-week-1-2026-04-05` assignee=`codearts_agent` transport=`manual` status=`active` health=`healthy`
-- `codearts_agent_20260404_100519_685757` assignee=`codearts_agent` transport=`manual` status=`closed` health=`closed`
-- `00d0a370-a58e-4e95-bf3f-9a67d931fca2` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `014ae40f-2975-4598-9bbc-fe17d8d7c77c` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `076d15cd-652c-4bef-adcb-5b0f59139968` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `1641462a-5f3b-4911-b808-13b7d05279ab` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `1694c351-193b-46dd-9c99-2d90e7e4488f` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `1c7a3b7b-8026-4c20-b058-6865e0a2d0b5` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `2790f4cd-29bc-447f-ad11-9861c18106b6` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `283a3c43-5073-499e-a390-52086f5802e6` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `2865bfb4-45b0-4f11-a491-8afbbbc681fa` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `45fad633-8f0b-49a6-88fe-bf4ceed4e60d` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `4d44be24-b45f-440e-b0ab-5de6258785c0` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `4dbad3ad-355b-4a41-b1c4-c95e2fc746f2` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `53b44dff-cb55-4cc0-b9ca-2cea9e33c62a` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `554b9df3-a278-495e-9316-4a239a2dd6cc` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `596ebbad-6227-4282-b7f6-1f256466bf8f` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `59914265-a0da-495b-938a-9be31cbbf194` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `63a91db5-6dc5-45b3-a89d-a632dcfa64cb` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `6cffdf66-f01c-4666-a1c5-bb05384456d4` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `7188038f-0b31-49ca-9fc0-77ffcc9635db` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `718bef76-03ab-4acc-8f9b-e0ea4f4cc9fd` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `75161e08-faf3-4ccb-b418-de6ad20db79d` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `785f2534-1e38-4c83-8de3-1d0903c16cc3` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `79832177-14ea-4a26-913a-219f5e0aaa83` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `7af522b7-4053-4b0a-9223-0e8593468a7d` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `7fe552d6-5c37-4742-91e0-3827f55200d9` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `7ff01a7f-f0eb-4231-a24e-6b4363768ab2` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `820f54a8-3585-4cd5-9e0e-d54ad3aa12e0` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `84a8c093-907e-4f8c-ae60-b8ea175e2221` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `8560574d-315a-4812-9a25-1febcb7066da` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `99ef5ee1-e06f-4296-a2ae-db39cd01b478` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `9e47511c-55f6-447b-8f84-a476a0c749c5` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `9f25f74b-4624-4075-992c-97b4d08e6f07` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `bf0da1c3-e793-4052-9bc3-3de5dcaada0b` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `c2ebe38d-d551-4cfd-b9c0-28c1454c02f6` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `c88fdea6-97d3-4f9f-b03c-bef77e6314d9` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `ccfb54fd-87f2-425d-8a08-6cd1027f8b61` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `dba02558-20a8-426c-a3e3-c6ac11fa2a35` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `dbd2b3ff-7f49-41da-8e90-9620341b53e7` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `dce4eb9b-d72b-493d-b343-e4e211d609bb` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `e2eb29cf-46e4-4e12-b404-666f0c764123` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `e325b3a4-56c9-4b84-9dc4-f35feb9ad74c` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `e5a25017-cbac-4430-a24d-9b5c2ab5e1cb` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `ed44c8eb-a1a8-4c9e-b4d1-1241ec66fc3b` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `eeba0518-fdd5-4fb1-a4d5-0e0e72b5b516` assignee=`codex` transport=`manual` status=`active` health=`healthy`
-- `fd496a79-0e39-46dc-aa56-599fa476ad56` assignee=`codex` transport=`manual` status=`active` health=`healthy`
+- `03cc6ad2-c943-4288-a673-2b22277b83e0` assignee=`claude_code` transport=`manual` status=`idle` health=`healthy`

@@ -1,1 +1,0 @@
-C.ACK|task=TASK-W3-DAY2-BULK-OPERATIONS-001|status=ok|result=collaboration/results/RESULT_TASK-W3-DAY2-BULK-OPERATIONS-001.md
