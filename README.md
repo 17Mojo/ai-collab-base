@@ -30,15 +30,32 @@
 | **Local Backend** | FastAPI + SQLite | Pack 注册、API 端点、数据存储 |
 | **Pack Schema** | Python Dataclass | Pack v2.0 完整定义 |
 
-### 🤝 AI 协作架构
+### 🤝 动态角色编排架构
+
+本项目采用**角色别名驱动**的动态协作架构，Agent 提供商通过配置动态绑定：
 
 ```
-Claude Code (主执行者)
-    ├─ Codex (技术合伙人/开发管理负责人)
-    └─ CodeArts Agent (执行辅助者)
+角色代号 (Role ID)     职责定位
+──────────────────────────────────
+AGENT_EXEC           主执行者 (R)
+AGENT_ARCH           架构师 (A)
+AGENT_TEST           测试验证 (C)
+AGENT_DOC            文档编写 (C)
 ```
 
-**GitHub Copilot**: 已禁用
+**冷启动配置**：
+```bash
+# CLI 方式
+python3 -m src.cli orchestration cold-start
+
+# 或通过 /menu 技能
+/menu
+```
+
+**命令协议**：
+- `X.RUN` → AGENT_EXEC
+- `A.RUN` → AGENT_ARCH
+- `C.RUN` → AGENT_TEST
 
 ---
 

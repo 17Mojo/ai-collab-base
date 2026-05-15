@@ -1,8 +1,7 @@
-# AI 行为约束文件清单
+# AI 行为约束文件清单 (v3.0)
 
-**生成时间**: 2026-03-01
-**生成者**: CodeArts Agent (技术合伙人)
-**用途**: 为不遵守规则的 AI 提供必读文件列表
+**生成时间**: 2026-05-15
+**用途**: 为不遵守规则的 Agent 提供必读文件列表
 
 ---
 
@@ -20,7 +19,7 @@
 - 质量标准
 - 违规处理机制
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent (通过角色绑定)
 
 ---
 
@@ -28,12 +27,13 @@
 **路径**: `/collaboration/PROTOCOL.md`
 **重要性**: ⭐⭐⭐⭐⭐
 **内容**:
-- 多 Agent 协作协议
-- 通信机制
+- 动态角色编排架构
+- 冷启动机制
+- 命令协议 (RUN/ACK)
 - 任务分配规则
 - 结果汇报格式
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent
 
 ---
 
@@ -45,189 +45,81 @@
 - 代码风格要求
 - 文档格式规范
 - 测试覆盖要求
+- 角色命令协议
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent
 
 ---
 
-#### 4. 跨 AI 协作推进标准
-**路径**: `/collaboration/CROSS_AI_COLLABORATION_STANDARDS.md`
+#### 4. 角色编排配置
+**路径**: `/config/agent-orchestration.json`
 **重要性**: ⭐⭐⭐⭐⭐
 **内容**:
-- 任务启动准则
-- 资源使用准则
-- 质量标准准则
-- 协同推进准则
-- Checklist 模板
+- 当前角色绑定状态
+- 命令前缀映射
+- Agent 提供商配置
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent (运行时解析)
 
 ---
 
-### 🟡 P1 - Agent 专属规则 (按角色阅读)
-
-#### 5. 资源使用最佳实践指南
-**路径**: `/collaboration/RESOURCE_USAGE_GUIDE.md`
+#### 5. /menu 交互规范
+**路径**: `/collaboration/guides/MENU_INTERACTION_SPEC.md`
 **重要性**: ⭐⭐⭐⭐⭐
+**内容**:
+- 配置管理面板使用方法
+- 角色激活/休眠操作
+- Agent 绑定调整
+- 命令重定义
+
+**适用对象**: 所有 Agent
+
+---
+
+### 🟡 P1 - 操作指南
+
+#### 6. 资源使用最佳实践指南
+**重要性**: ⭐⭐⭐⭐
 **内容**:
 - NotebookLM 使用指南
 - Context7 使用指南
 - Skills 使用指南
 - 知识图谱使用指南
-- 资源使用决策树
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent
 
 ---
 
-#### 6. 规则遵守检查清单
-**路径**: `/collaboration/RULE_COMPLIANCE_CHECKLIST.md`
-**重要性**: ⭐⭐⭐⭐⭐
+#### 7. 规则遵守检查清单
+**重要性**: ⭐⭐⭐⭐
 **内容**:
 - 规则传播机制
 - 规则遵守检查清单
 - 违规检测流程
 - 持续改进机制
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent
 
 ---
 
-#### 7. Claude Code 规则
-**路径**: `/rules/claude_code_memory.md`
-**重要性**: ⭐⭐⭐⭐⭐
-**角色**: 主控 AI
-**内容**:
-- Claude Code 专属规则
-- 决策权限
-- 任务分配职责
-- 与其他 Agent 的协作方式
+### 🟢 P2 - 历史参考文档
 
-**适用对象**: Claude Code
+以下文件为历史 Agent 专属规则，可作为参考但不再强制执行：
 
----
+| 文件 | 历史角色 | 说明 |
+|------|---------|------|
+| `/rules/claude_code_memory.md` | Claude Code 专属 | 历史参考 |
+| `/rules/codearts_agent_rules.md` | CodeArts Agent 专属 | 历史参考 |
+| `/rules/codex_agent_rules.md` | Codex Agent 专属 | 历史参考 |
+| `/rules/copilot_rules.md` | Copilot 专属 | 历史参考 |
 
-#### 8. CodeArts Agent 规则
-**路径**: `/rules/codearts_agent_rules.md`
-**重要性**: ⭐⭐⭐⭐⭐
-**角色**: 执行辅助者
-**内容**:
-- CodeArts Agent 专属规则
-- 测试/文档/并行验证职责
-- 代码生成标准
-- 测试覆盖要求
-
-**适用对象**: CodeArts Agent
+**注意**: 当前角色绑定通过 `/menu` 动态配置，不再依赖这些硬编码规则文件。
 
 ---
 
-#### 9. Codex Agent 规则
-**路径**: `/rules/codex_agent_rules.md`
-**重要性**: ⭐⭐⭐⭐⭐
-**角色**: 技术合伙人 / 开发管理负责人
-**内容**:
-- Codex Agent 专属规则
-- 技术路线与治理裁决职责
-- `spawn_agent` 内部委派边界
-- 复杂问题解决流程
-- 云端任务执行规范
+### 🔵 P3 - 架构文档
 
-**适用对象**: Codex Agent
-
----
-
-#### 9.1 Codex `spawn_agent` 使用准则
-**路径**: `/collaboration/guides/CODEX_SPAWN_AGENT_USAGE_GUIDELINES.md`
-**重要性**: ⭐⭐⭐⭐⭐
-**角色**: Codex 内部子代理委派规范
-**内容**:
-- 单一父任务内委派边界
-- 写集隔离与禁止场景
-- 与 Claude / CodeArts / ACK 正式工单体系的衔接规则
-- 资源最大化与回退规则
-
-**适用对象**: Codex Agent
-
----
-
-#### 10. Copilot 规则
-**路径**: `/rules/copilot_rules.md`
-**重要性**: ⭐⭐⭐⭐
-**角色**: 助手 (暂时不可用)
-**内容**:
-- Copilot 专属规则
-- 助手职责
-- 任务执行标准
-
-**适用对象**: Copilot (当恢复可用时)
-
----
-
-### 🟢 P2 - 操作指南 (按需阅读)
-
-#### 11. 操作手册
-**路径**: `/OPERATION_MANUAL.md`
-**重要性**: ⭐⭐⭐⭐
-**内容**:
-- 系统操作手册
-- 日常维护流程
-- 故障排查指南
-
-**适用对象**: 所有 AI Agent
-
----
-
-#### 12. 项目结构指南
-**路径**: `/PROJECT_STRUCTURE_GUIDE.md`
-**重要性**: ⭐⭐⭐⭐
-**内容**:
-- 项目目录结构说明
-- 模块职责划分
-- 文件组织规范
-
-**适用对象**: 所有 AI Agent
-
----
-
-#### 13. Chrome 扩展指南
-**路径**: `/docs/CHROME_EXTENSION_GUIDE.md`
-**重要性**: ⭐⭐⭐
-**内容**:
-- Chrome 扩展开发指南
-- Manifest V3 规范
-- 内容脚本注入规则
-
-**适用对象**: 涉及前端开发的 AI
-
----
-
-#### 14. 多 Agent 验证指南
-**路径**: `/docs/MULTI_AGENT_VERIFICATION_GUIDE.md`
-**重要性**: ⭐⭐⭐
-**内容**:
-- 多 Agent 协作验证流程
-- 测试验证标准
-- 质量保证机制
-
-**适用对象**: 所有 AI Agent
-
----
-
-#### 15. 手动测试指南
-**路径**: `/MANUAL_TESTING_GUIDE.md`
-**重要性**: ⭐⭐⭐
-**内容**:
-- 手动测试流程
-- 测试用例设计
-- 测试报告格式
-
-**适用对象**: 涉及测试的 AI
-
----
-
-### 🔵 P3 - 架构文档 (理解项目)
-
-#### 16. 架构设计文档
+#### 8. 架构设计文档
 **路径**: `/ARCHITECTURE.md`
 **重要性**: ⭐⭐⭐⭐
 **内容**:
@@ -235,19 +127,19 @@
 - 技术选型说明
 - 模块依赖关系
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent
 
 ---
 
-#### 17. 所有权文档
-**路径**: `/rules/OWNERSHIP.md`
-**重要性**: ⭐⭐⭐
+#### 9. CLAUDE.md 项目说明
+**路径**: `/CLAUDE.md`
+**重要性**: ⭐⭐⭐⭐
 **内容**:
-- 模块所有权划分
-- 责任人分配
-- 权限管理
+- 项目说明
+- 动态角色架构
+- 开发工作流
 
-**适用对象**: 所有 AI Agent
+**适用对象**: 所有 Agent
 
 ---
 
@@ -257,52 +149,44 @@
 
 | 类型 | 文件数 | 路径 |
 |------|--------|------|
-| **协同规则** | 6 | `collaboration/*.md`, `rules/AI-COLLABORATION-STANDARDS.md` |
-| **Agent 规则** | 4 | `rules/*_rules.md`, `rules/*_memory.md` |
-| **操作指南** | 5 | `docs/*.md`, `*GUIDE.md`, `*MANUAL.md` |
-| **架构文档** | 2 | `ARCHITECTURE.md`, `rules/OWNERSHIP.md` |
+| **协同规则** | 3 | `collaboration/*.md` |
+| **配置文件** | 3 | `config/*.json` |
+| **交互规范** | 2 | `collaboration/guides/*.md`, `collaboration/skills/*.md` |
+| **架构文档** | 2 | `ARCHITECTURE.md`, `CLAUDE.md` |
 
 ### 按优先级分类
 
 | 优先级 | 文件数 | 必读对象 |
 |--------|--------|---------|
-| **P0 (核心规则)** | 6 | 所有 AI Agent |
-| **P1 (Agent 专属)** | 4 | 对应角色的 AI |
-| **P2 (操作指南)** | 5 | 按需阅读 |
+| **P0 (核心规则)** | 5 | 所有 Agent |
+| **P1 (操作指南)** | 2 | 按需阅读 |
+| **P2 (历史参考)** | 4 | 可选阅读 |
 | **P3 (架构文档)** | 2 | 理解项目 |
 
 ---
 
 ## 🎯 阅读建议
 
-### 新加入的 AI Agent
+### 新配置的 Agent
 
 **必读顺序**:
-1. `/collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md` (必读文件清单)
-2. `/collaboration/COLLABORATION_GUIDELINES.md` (协同工作准则)
-3. `/collaboration/PROTOCOL.md` (协作协议)
-4. `/collaboration/CROSS_AI_COLLABORATION_STANDARDS.md` (跨 AI 协作标准)
-5. `/collaboration/RESOURCE_USAGE_GUIDE.md` (资源使用指南)
-6. `/rules/AI-COLLABORATION-STANDARDS.md` (AI 协作标准)
-7. 对应角色的专属规则文件
-8. `/ARCHITECTURE.md` (架构设计文档)
 
-### 已有 AI Agent (定期复习)
+1. `/config/agent-orchestration.json` (当前绑定状态)
+2. `/collaboration/PROTOCOL.md` (协议规范 v3.0)
+3. `/collaboration/COLLABORATION_GUIDELINES.md` (协同准则)
+4. `/rules/AI-COLLABORATION-STANDARDS.md` (协作标准)
+5. `/collaboration/guides/MENU_INTERACTION_SPEC.md` (配置管理)
+6. `/CLAUDE.md` (项目说明)
+
+### 已有 Agent (定期复习)
 
 **每次会话复习**:
-- `/collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md`
-- `/collaboration/CROSS_AI_COLLABORATION_STANDARDS.md`
-- `/collaboration/RESOURCE_USAGE_GUIDE.md`
+- `/config/agent-orchestration.json` (确认绑定状态)
+- `/collaboration/PROTOCOL.md`
 
 **每周复习**:
 - `/collaboration/COLLABORATION_GUIDELINES.md`
-- `/collaboration/RULE_COMPLIANCE_CHECKLIST.md`
-- 对应角色的专属规则文件
-
-**每月复习**:
-- `/collaboration/PROTOCOL.md`
 - `/rules/AI-COLLABORATION-STANDARDS.md`
-- `/ARCHITECTURE.md`
 
 ---
 
@@ -311,60 +195,20 @@
 ### 发现违规行为
 
 **处理流程**:
+
 1. 指出违规文件和具体条款
-2. 要求违规 AI 阅读相关规则文件
-3. 记录违规行为到知识图谱
-4. 累计 3 次轻微违规 → 升级为中度违规
-5. 中度违规 → 任务标记为 `blocked`,要求返工
-6. 严重违规 → 回滚修改,重新分配任务
-
-### 违规示例
-
-**示例 1: 文档位置违规**
-- **违规行为**: 将报告放在项目根目录而不是 `collaboration/results/`
-- **违反文件**: `COLLABORATION_GUIDELINES.md` 第 4.1 节
-- **处理**: 要求移动文件到正确位置
-
-**示例 2: 未使用资源**
-- **违规行为**: 没有使用 NotebookLM、Context7 等资源
-- **违反文件**: `COLLABORATION_GUIDELINES.md` 第 3 节
-- **处理**: 要求重新评估资源需求并使用
-
-**示例 3: 未打标记**
-- **违规行为**: 开始任务前没有打 `[IN_PROGRESS]` 标记
-- **违反文件**: `COLLABORATION_GUIDELINES.md` 第 2.1 节
-- **处理**: 要求补打标记并更新看板
-
----
-
-## 📊 文件完整性检查
-
-### 检查清单
-
-- [x] 协同工作准则存在
-- [x] 协作协议存在
-- [x] AI 协作标准存在
-- [x] Claude Code 规则存在
-- [x] CodeArts Agent 规则存在
-- [x] Codex Agent 规则存在
-- [x] Copilot 规则存在
-- [x] 操作手册存在
-- [x] 项目结构指南存在
-- [x] 架构设计文档存在
-
-### 缺失文件
-
-- [ ] `CONTRIBUTING.md` (贡献指南)
-- [ ] `CHANGELOG.md` (变更日志)
-- [ ] `CODE_OF_CONDUCT.md` (行为准则)
-
-**建议**: 补充缺失文件以完善项目文档体系
+2. 要求违规 Agent 阅读相关规则文件
+3. 通过 `/menu` 调整角色绑定（如需要）
+4. 记录违规行为到变更历史
+5. 累计 3 次轻微违规 → 升级为中度违规
+6. 中度违规 → 任务标记为 `blocked`，要求返工
+7. 严重违规 → 回滚修改，重新分配任务
 
 ---
 
 ## 🔗 快速访问
 
-### 核心规则文件 (复制路径)
+### 核心规则文件
 
 ```bash
 # 协同工作准则
@@ -376,49 +220,38 @@
 # AI 协作标准
 /rules/AI-COLLABORATION-STANDARDS.md
 
-# Claude Code 规则
-/rules/claude_code_memory.md
+# 角色编排配置
+/config/agent-orchestration.json
 
-# CodeArts Agent 规则
-/rules/codearts_agent_rules.md
-
-# Codex Agent 规则
-/rules/codex_agent_rules.md
+# /menu 交互规范
+/collaboration/guides/MENU_INTERACTION_SPEC.md
 ```
 
-### 按角色快速访问
+### CLI 快速命令
 
-**Claude Code**:
 ```bash
-/collaboration/COLLABORATION_GUIDELINES.md
-/collaboration/PROTOCOL.md
-/rules/claude_code_memory.md
-```
+# 查看当前状态
+python3 -m src.cli orchestration status
 
-**CodeArts Agent**:
-```bash
-/collaboration/COLLABORATION_GUIDELINES.md
-/collaboration/PROTOCOL.md
-/rules/codearts_agent_rules.md
-```
+# 冷启动配置
+python3 -m src.cli orchestration cold-start
 
-**Codex Agent**:
-```bash
-/collaboration/COLLABORATION_GUIDELINES.md
-/collaboration/PROTOCOL.md
-/rules/codex_agent_rules.md
+# 检测 Agent 服务商
+python3 -m src.cli orchestration detect
+
+# 角色管理
+python3 -m src.cli orchestration roles list
 ```
 
 ---
 
 ## 📝 更新记录
 
-| 日期 | 更新内容 | 更新者 |
-|------|---------|--------|
-| 2026-03-01 | 创建文件清单 | CodeArts Agent |
+| 日期 | 更新内容 |
+|------|---------|
+| 2026-05-15 | 升级为动态角色编排架构 |
+| 2026-03-01 | 创建文件清单 |
 
 ---
 
-**本清单为所有 AI Agent 必读,违反规则将按违规处理流程执行**
-
-🎯
+**本清单为所有 Agent 必读，违反规则将按违规处理流程执行**

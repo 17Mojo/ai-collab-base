@@ -14,6 +14,20 @@ from datetime import datetime
 from .activation_handler import ActivationHandler, ActivationMode, AIType, VSCodeIntegration
 from .state_manager import PatchStatus, StateManager, TaskStatus
 
+# Orchestration 模块导入
+try:
+    from .ai_collab.orchestration import (
+        BindingStatus,
+        ColdStartWizard,
+        OrchestrationConfig,
+        StartupMode,
+        check_cold_start,
+        get_orchestration_config
+    )
+    ORCHESTRATION_AVAILABLE = True
+except ImportError:
+    ORCHESTRATION_AVAILABLE = False
+
 
 def cmd_activate(args):
     """激活 AI 协作系统"""
@@ -568,6 +582,241 @@ def cmd_status(args):
         for c in conflicts[:3]:
             print(f"    - {c['task_id_1']} vs {c['task_id_2']}")
 
+    # 显示 orchestration 状态（如果可用）
+    if ORCHESTRATION_AVAILABLE:
+        orch_config = get_orchestration_config(workspace)
+        print("\n[Orchestration 配置]")
+        print(f"  绑定状态: {orch_config.get_binding_status().value}")
+        print(f"  启动模式: {orch_config.config.get('startup_mode', '未设置')}")
+
+        active_roles = [r for r in orch_config.roles.values() if r.is_active()]
+        print(f"  活跃角色: {len(active_roles)}/{len(orch_config.roles)}")
+
+        if active_roles and args.verbose:
+            print("\n  角色绑定详情:")
+            for role in active_roles:
+                provider = role.binding.get("provider", "")
+                variant = role.binding.get("model_variant", "")
+                variant_display = f" ({variant})" if variant else ""
+                print(f"    {role.role_id} ({role.display_name}) → {provider}{variant_display}")
+
+    return 0
+
+
+def cmd_orchestration(args):
+    """Orchestration 配置管理"""
+    if not ORCHESTRATION_AVAILABLE:
+        print("错误: Orchestration 模块未加载")
+        print("请确保 ai_collab.orchestration 模块可用")
+        return 1
+
+    workspace = args.workspace or os.getcwd()
+
+    print("=" * 60)
+    print("AI Collab Base - Orchestration 配置管理")
+    print("=" * 60)
+
+    cmd = args.subcommand
+
+    if cmd == "status":
+        config = get_orchestration_config(workspace)
+        print(f"\n绑定状态: {config.get_binding_status().value}")
+        print(f"启动模式: {config.config.get('startup_mode', '未设置')}")
+
+        print("\n角色列表:")
+        for role in config.roles.values():
+            status_icon = "✓" if role.is_active() else "○"
+            provider = role.binding.get("provider", "未绑定")
+            variant = role.binding.get("model_variant", "")
+            variant_display = f" ({variant})" if variant else ""
+            print(f"  {status_icon} {role.role_id} ({role.display_name}) → {provider}{variant_display}")
+
+        print("\n命令映射:")
+        prefixes = config.config.get("command_prefixes", {})
+        for prefix in ["A.RUN", "X.RUN", "C.RUN"]:
+            role_id = prefixes.get(prefix, "")
+            role = config.roles.get(role_id)
+            role_name = role.display_name if role else role_id
+            print(f"  {prefix} → {role_name}")
+
+        custom = prefixes.get("custom_prefixes", {})
+        if custom:
+            print("\n自定义命令:")
+            for prefix, role_id in custom.items():
+                role = config.roles.get(role_id)
+                role_name = role.display_name if role else role_id
+                print(f"  {prefix} → {role_name}")
+
+    elif cmd == "cold-start":
+        config = get_orchestration_config(workspace)
+
+        if not config.is_cold_start_needed():
+            print("\n冷启动已完成，无需重新执行")
+            print("如需重新配置，请先运行: orchestration reset")
+            return 1
+
+        wizard = ColdStartWizard(config)
+        wizard.run()
+        return 0
+
+    elif cmd == "detect":
+        config = get_orchestration_config(workspace)
+        print("\n检测可用 Agent 服务商...")
+
+        providers = config.detect_providers()
+        print("\n检测结果:")
+        for provider in providers.values():
+            status_icon = "✓" if provider.connection_status.value in ["connected", "detected"] else "✗"
+            status_text = provider.connection_status.value
+            sub_agent = " (支持 SubAgent)" if provider.supports_sub_agent else ""
+            print(f"  {status_icon} {provider.name} [{status_text}]{sub_agent}")
+
+        config.save()
+        print("\n检测结果已保存到配置")
+
+    elif cmd == "roles":
+        config = get_orchestration_config(workspace)
+
+        if args.role_action == "list":
+            print("\n角色列表:")
+            for role in config.roles.values():
+                status = role.binding.get("status", "dormant")
+                status_icon = "✓" if status == "active" else "○"
+                print(f"  {status_icon} {role.role_id}")
+                print(f"      名称: {role.display_name}")
+                print(f"      职责: {', '.join(role.duties)}")
+                print(f"      状态: {status}")
+
+        elif args.role_action == "add":
+            role_id = args.role_id
+            if not role_id:
+                print("\n错误: 需要指定 --role-id")
+                return 1
+
+            if role_id in config.roles:
+                print(f"\n错误: 角色 {role_id} 已存在")
+                return 1
+
+            role = config.add_role(
+                role_id=role_id,
+                display_name=args.display_name or role_id,
+                duties=args.duties or [],
+                required_capabilities=args.capabilities or [],
+                raci_role=args.raci or "C"
+            )
+            config.save()
+            print(f"\n角色已添加: {role_id}")
+
+        elif args.role_action == "activate":
+            role_id = args.role_id
+            provider = args.provider
+
+            if not role_id or not provider:
+                print("\n错误: 需要指定 --role-id 和 --provider")
+                return 1
+
+            if role_id not in config.roles:
+                print(f"\n错误: 角色 {role_id} 不存在")
+                return 1
+
+            config.activate_role(role_id, provider, args.model_variant)
+            config.save()
+            print(f"\n角色已激活: {role_id} → {provider}")
+            if args.model_variant:
+                print(f"  模型变体: {args.model_variant}")
+
+        elif args.role_action == "deactivate":
+            role_id = args.role_id
+            if not role_id:
+                print("\n错误: 需要指定 --role-id")
+                return 1
+
+            role = config.roles.get(role_id)
+            if not role:
+                print(f"\n错误: 角色 {role_id} 不存在")
+                return 1
+
+            role.deactivate()
+            config.update_binding_status()
+            config.save()
+            print(f"\n角色已休眠: {role_id}")
+
+    elif cmd == "bind":
+        config = get_orchestration_config(workspace)
+
+        print("\n当前绑定:")
+        for role in config.roles.values():
+            status = role.binding.get("status", "dormant")
+            if status == "active":
+                provider = role.binding.get("provider", "")
+                variant = role.binding.get("model_variant", "")
+                variant_display = f" ({variant})" if variant else ""
+                print(f"  {role.role_id} → {provider}{variant_display}")
+
+        available = config.get_available_providers()
+        print(f"\n可用服务商 ({len(available)} 个):")
+        for provider in available:
+            print(f"  - {provider.name}")
+
+        print("\n使用方式:")
+        print("  orchestration roles activate --role-id <ID> --provider <PROVIDER>")
+        print("  orchestration roles activate --role-id <ID> --provider <PROVIDER> --model-variant <VARIANT>")
+
+    elif cmd == "snapshot":
+        config = get_orchestration_config(workspace)
+
+        if args.snapshot_action == "list":
+            snapshots = config.config.get("snapshots", [])
+            print(f"\n快照列表 ({len(snapshots)} 个):")
+            for snap in snapshots[-10:]:
+                print(f"  {snap['snapshot_id']} [{snap['trigger']}] {snap['timestamp']}")
+
+        elif args.snapshot_action == "create":
+            snap_id = config.create_snapshot(trigger="manual", note=args.note or "")
+            config.save()
+            print(f"\n快照已创建: {snap_id}")
+
+        elif args.snapshot_action == "rollback":
+            snap_id = args.snapshot_id
+            if not snap_id:
+                print("\n错误: 需要指定 --snapshot-id")
+                return 1
+
+            if config.rollback_to_snapshot(snap_id):
+                print(f"\n已回滚到快照: {snap_id}")
+            else:
+                print(f"\n错误: 快照 {snap_id} 不存在")
+                return 1
+
+    elif cmd == "history":
+        config = get_orchestration_config(workspace)
+        history = config.config.get("history", [])
+
+        limit = args.limit or 20
+        print(f"\n变更历史 (最近 {limit} 条):")
+        for event in history[-limit:]:
+            timestamp = event.get("timestamp", "")
+            event_type = event.get("event", "")
+            details = event.get("details", {})
+            print(f"  [{timestamp}] {event_type}")
+            if details:
+                for key, value in details.items():
+                    print(f"    {key}: {value}")
+
+    elif cmd == "reset":
+        config = get_orchestration_config(workspace)
+
+        print("\n⚠️  警告: 此操作将重置 orchestration 配置")
+        print("所有角色绑定和自定义命令将丢失")
+
+        confirm = input("确认重置? (yes/no): ").strip().lower()
+        if confirm == "yes":
+            config._create_default_config()
+            print("\n配置已重置")
+            print("请运行: orchestration cold-start 重新配置")
+        else:
+            print("\n取消重置")
+
     return 0
 
 
@@ -592,6 +841,12 @@ def main():
 
   # 查看活跃任务
   ai-collab tasks list --status active
+
+  # Orchestration 管理 (新功能)
+  ai-collab orchestration status
+  ai-collab orchestration cold-start
+  ai-collab orchestration detect
+  ai-collab orchestration roles activate --role-id AGENT_EXEC --provider claude_code
         """,
     )
 
@@ -693,6 +948,30 @@ def main():
     status_parser = subparsers.add_parser("status", help="显示系统状态")
     status_parser.add_argument("-v", "--verbose", action="store_true", help="详细输出")
 
+    # orchestration 命令 (新功能)
+    if ORCHESTRATION_AVAILABLE:
+        orch_parser = subparsers.add_parser("orchestration", help="Orchestration 配置管理")
+        orch_parser.add_argument(
+            "subcommand",
+            choices=["status", "cold-start", "detect", "roles", "bind", "snapshot", "history", "reset"],
+            help="子命令"
+        )
+
+        # roles 子命令参数
+        orch_parser.add_argument("--role-action", choices=["list", "add", "activate", "deactivate"], help="角色操作")
+        orch_parser.add_argument("--role-id", help="角色ID (如 AGENT_PERF)")
+        orch_parser.add_argument("--display-name", help="角色显示名称")
+        orch_parser.add_argument("--duties", nargs="*", help="职责列表")
+        orch_parser.add_argument("--capabilities", nargs="*", help="所需能力")
+        orch_parser.add_argument("--raci", choices=["R", "A", "C", "I"], help="RACI 角色")
+        orch_parser.add_argument("--provider", help="Agent 服务商")
+        orch_parser.add_argument("--model-variant", help="模型变体 (SubAgent 模式)")
+
+        # snapshot 子命令参数
+        orch_parser.add_argument("--snapshot-action", choices=["list", "create", "rollback"], help="快照操作")
+        orch_parser.add_argument("--snapshot-id", help="快照ID")
+        orch_parser.add_argument("--limit", type=int, help="历史记录数量限制")
+
     args = parser.parse_args()
 
     # 命令路由
@@ -710,6 +989,12 @@ def main():
         return cmd_logs(args)
     elif args.command == "init":
         return cmd_init(args)
+    elif args.command == "clean":
+        return cmd_clean(args)
+    elif args.command == "status":
+        return cmd_status(args)
+    elif args.command == "orchestration":
+        return cmd_orchestration(args)
     elif args.command == "clean":
         return cmd_clean(args)
     elif args.command == "status":

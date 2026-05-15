@@ -1,51 +1,27 @@
 {
-  "version": "1.0.0",
+  "version": "3.0.0",
   "rulesDir": "./rules",
   "logsDir": "./logs",
   "stateFile": "./logs/collaboration_state.json",
+  "orchestrationFile": "./config/agent-orchestration.json",
   "activationKeyword": "2X",
   "conflictCheckOnSave": true,
   "conflictCheckOnCommand": true,
-  "enabledAIs": [
-    "claude_code",
-    "codex",
-    "codearts_agent"
+  "roleOrchestration": {
+    "configPath": "./config/agent-orchestration.json",
+    "templatePath": "./config/agent-orchestration.template.json",
+    "schemaPath": "./config/agent-orchestration.schema.json",
+    "coldStartRequired": true,
+    "menuSkillPath": "./collaboration/skills/menu_skill.md"
+  },
+  "defaultRoles": [
+    "AGENT_EXEC",
+    "AGENT_ARCH",
+    "AGENT_TEST"
   ],
-  "agentOrchestration": {
-    "autoDetectAgents": true,
-    "includeUserAsOperator": true,
-    "operatorFirst": false,
-    "forceLeadAgent": null,
-    "disabledAgents": [
-      "copilot"
-    ],
-    "intentLeadMap": {
-      "architecture": [
-        "codex",
-        "claude_code",
-        "codearts_agent"
-      ],
-      "implementation": [
-        "claude_code",
-        "codex",
-        "codearts_agent"
-      ],
-      "testing": [
-        "codearts_agent",
-        "claude_code",
-        "codex"
-      ],
-      "documentation": [
-        "codearts_agent",
-        "codex",
-        "claude_code"
-      ]
-    },
-    "modelAgentMap": {
-      "claude": "claude_code",
-      "copilot": "codearts_agent",
-      "glm|codearts": "codearts_agent",
-      "gpt|codex|openai": "codex"
-    }
+  "commandPrefixes": {
+    "A.RUN": "AGENT_ARCH",
+    "X.RUN": "AGENT_EXEC",
+    "C.RUN": "AGENT_TEST"
   }
 }

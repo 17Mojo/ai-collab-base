@@ -1,0 +1,289 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Orchestration Configuration",
+  "description": "Dynamic role-based agent orchestration for AI collaboration base project",
+  "version": "2.0.0",
+  "type": "object",
+
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "default": "2.0.0",
+      "description": "Configuration schema version"
+    },
+
+    "binding_status": {
+      "type": "string",
+      "enum": ["uninitialized", "minimal", "partial", "active"],
+      "default": "uninitialized",
+      "description": "Current binding status: uninitialized (cold start), minimal (single agent), partial (some roles bound), active (all roles active)"
+    },
+
+    "startup_mode": {
+      "type": "string",
+      "enum": ["single_agent", "sub_agent", "multi_agent"],
+      "description": "Initial startup mode selected during cold start"
+    },
+
+    "roles": {
+      "type": "object",
+      "description": "Dynamic role registry - extensible at runtime",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "pattern": "^AGENT_[A-Z_]+$",
+            "description": "Unique role identifier"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable role name"
+          },
+          "duties": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+            "description": "List of responsibilities for this role"
+          },
+          "required_capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "implementation",
+                "refactoring",
+                "architecture",
+                "design",
+                "testing",
+                "validation",
+                "documentation",
+                "research",
+                "performance",
+                "security",
+                "deployment",
+                "maintenance"
+              ]
+            },
+            "description": "Capabilities required for this role"
+          },
+          "binding": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": ["string", "null"],
+                "description": "Agent provider name (null if dormant)"
+              },
+              "model_variant": {
+                "type": ["string", "null"],
+                "description": "Specific model variant for subAgent mode"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "dormant", "disabled"],
+                "default": "dormant",
+                "description": "Role activation status"
+              }
+            },
+            "required": ["status"]
+          },
+          "raci_role": {
+            "type": "string",
+            "enum": ["R", "A", "C", "I"],
+            "description": "RACI matrix role assignment: Responsible, Accountable, Consulted, Informed"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "activated_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "required": ["role_id", "display_name", "duties", "binding"]
+      }
+    },
+
+    "command_prefixes": {
+      "type": "object",
+      "description": "RUN command prefix mappings",
+      "properties": {
+        "A.RUN": {
+          "type": "string",
+          "description": "Maps to role_id for architecture tasks"
+        },
+        "X.RUN": {
+          "type": "string",
+          "description": "Maps to role_id for execution tasks"
+        },
+        "C.RUN": {
+          "type": "string",
+          "description": "Maps to role_id for testing/validation tasks"
+        },
+        "custom_prefixes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^AGENT_[A-Z_]+$"
+          },
+          "description": "User-defined custom command prefixes"
+        },
+        "custom_allowed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether users can add custom prefixes"
+        },
+        "history_compatible": {
+          "type": "boolean",
+          "default": true,
+          "description": "Maintain backward compatibility with historical formats"
+        }
+      }
+    },
+
+    "provider_registry": {
+      "type": "object",
+      "description": "Available agent providers detected or configured",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider_name": {"type": "string"},
+          "connection_status": {
+            "type": "string",
+            "enum": ["connected", "detected", "unavailable"]
+          },
+          "supports_sub_agent": {"type": "boolean", "default": false},
+          "model_variants": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Available model variants for subAgent mode"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "last_check": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+
+    "runtime_policy": {
+      "type": "object",
+      "description": "Runtime behavior configuration",
+      "properties": {
+        "allow_hot_reload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow configuration changes without restart"
+        },
+        "require_confirmation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require user confirmation for major changes"
+        },
+        "snapshot_before_change": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-snapshot configuration before changes"
+        },
+        "max_roles": {
+          "type": "integer",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Maximum number of roles allowed"
+        },
+        "auto_activate_dormant": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically activate dormant roles when needed"
+        }
+      }
+    },
+
+    "snapshots": {
+      "type": "array",
+      "description": "Configuration history snapshots for rollback",
+      "items": {
+        "type": "object",
+        "properties": {
+          "snapshot_id": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "trigger": {
+            "type": "string",
+            "enum": ["manual", "auto_before_change", "cold_start", "mode_switch"]
+          },
+          "config_copy": {"type": "object"}
+        }
+      }
+    },
+
+    "history": {
+      "type": "array",
+      "description": "Change history log",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {"type": "string", "format": "date-time"},
+          "event": {
+            "type": "string",
+            "enum": [
+              "cold_start",
+              "role_added",
+              "role_removed",
+              "role_activated",
+              "role_deactivated",
+              "binding_changed",
+              "command_redefined",
+              "mode_switched",
+              "provider_connected",
+              "provider_disconnected",
+              "snapshot_created",
+              "rollback_executed"
+            ]
+          },
+          "details": {"type": "object"}
+        }
+      }
+    },
+
+    "cold_start_config": {
+      "type": "object",
+      "description": "Cold start initialization data",
+      "properties": {
+        "initialized_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "initial_provider": {"type": ["string", "null"]},
+        "initial_mode": {"type": ["string", "null"]},
+        "wizard_completed": {"type": "boolean", "default": false}
+      }
+    }
+  },
+
+  "required": ["version", "binding_status", "roles", "command_prefixes"],
+
+  "definitions": {
+    "RoleStatus": {
+      "type": "string",
+      "enum": ["active", "dormant", "disabled"]
+    },
+
+    "BindingStatus": {
+      "type": "string",
+      "enum": ["uninitialized", "minimal", "partial", "active"]
+    },
+
+    "StartupMode": {
+      "type": "string",
+      "enum": ["single_agent", "sub_agent", "multi_agent"]
+    }
+  }
+}
