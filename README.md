@@ -193,6 +193,18 @@ python3 -m src.cli status --verbose
 | **缓存** | Python lru_cache |
 | **协议** | OpenSpec, Dynamic Role Orchestration |
 
+### 📋 使用场景
+
+| 场景 | 模式 | 适用人群 |
+|------|------|---------|
+| **个人开发** | 单 Agent 模式 | 个人开发者、小型项目 |
+| **中型团队** | SubAgent 模式 | 3-10 人团队、中型复杂度 |
+| **大型项目** | 多 Agent 模式 | 10+ 人团队、专业分工 |
+| **临时扩展** | 动态接入 | 专项任务（性能测试、安全审计） |
+| **团队共享** | 配置导出 | 新成员入职、配置统一 |
+
+> 📖 **详细场景指南**: [使用场景指南](collaboration/guides/USAGE_SCENARIOS_GUIDE.md)
+
 ### 🛠️ 开发路线
 
 ```mermaid
