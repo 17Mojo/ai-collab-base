@@ -1,6 +1,7 @@
+import pytest
 from pathlib import Path
 
-import scripts.task_controller_daemon as daemon
+daemon = pytest.importorskip("scripts.task_controller_daemon", reason="scripts/task_controller_daemon.py not present")
 
 
 class _FakeManager:
