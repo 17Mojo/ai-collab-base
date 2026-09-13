@@ -5,7 +5,6 @@ import re
 import sys
 from pathlib import Path
 
-
 VALID_STATUSES = {"planning", "implementing", "testing", "completed", "cancelled"}
 HEADER = "| 状态 | owner | task | start | note |"
 DIVIDER = "|---|---|---|---|---|"
@@ -16,7 +15,7 @@ def validate(path: Path) -> int:
     if not path.exists():
         print(f"Lock report not found: {path}", file=sys.stderr)
         return 1
-    lines = [l for l in path.read_text().splitlines() if l.strip()]
+    lines = [line for line in path.read_text().splitlines() if line.strip()]
     if HEADER not in lines or DIVIDER not in lines:
         print(f"Lock report missing table header: {path}", file=sys.stderr)
         return 1

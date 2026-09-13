@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Validate collaboration governance files."""
 import argparse
-import json
 import sys
 from pathlib import Path
-
 
 REQUIRED_FILES = [
     "collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md",
@@ -36,7 +34,7 @@ def main():
         issues.append({"kind": "missing_agents_reference", "path": "AGENTS.md"})
     else:
         # Verify AGENTS.md references all required files
-        refs = [l.strip() for l in agents_file.read_text().splitlines() if l.strip()]
+        refs = [ln.strip() for ln in agents_file.read_text().splitlines() if ln.strip()]
         missing = [f for f in REQUIRED_FILES if f not in refs]
         if missing:
             issues.append({
@@ -59,7 +57,7 @@ def main():
                 # Check if AGENTS.md has enough refs
                 agents_file = workspace / "AGENTS.md"
                 if agents_file.exists():
-                    refs = [l for l in agents_file.read_text().splitlines() if l.strip()]
+                    refs = [ln for ln in agents_file.read_text().splitlines() if ln.strip()]
                     if len(refs) < 3:
                         print("missing required collaboration reference")
                 else:

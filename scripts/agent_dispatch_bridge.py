@@ -5,7 +5,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List
 
 
 def read_state(workspace: Path) -> dict:
@@ -72,12 +72,6 @@ def write_orders_markdown(workspace: Path, orders: list, dispatch_state: dict = 
         "## Task Status Updates",
         "",
     ]
-    # Track if any task is being redispatched
-    has_reopened = any(
-        dispatch_state.get("items", {}).get(o.get("task_id"), {}).get("dispatch_count", 0) >= 1
-        for o in orders
-    )
-
     for o in orders:
         lines.append("")
         # Check if this task was previously dispatched

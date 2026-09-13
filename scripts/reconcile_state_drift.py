@@ -4,8 +4,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
-
 
 RECONCILEABLE_TASK_STATUSES = {"deferred", "in_progress", "planning", "implementing", "testing"}
 RECONCILEABLE_PATCH_STATUSES = {"blocked", "in_progress", "planning"}

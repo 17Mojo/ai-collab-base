@@ -11,7 +11,7 @@
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -377,9 +377,6 @@ def run_controller_once(
     state.setdefault("workspace", str(workspace))
     state.setdefault("tasks", {})
     state.setdefault("patches", {})
-    ack_state = read_ack_state(workspace)
-    audit_snapshot = json.loads(json.dumps(state))
-
     errors: List[Dict[str, Any]] = []
 
     # 契约检查（通过 StateManager 以支持注入）
@@ -512,7 +509,7 @@ def run_once(args) -> int:
     state.setdefault("patches", {})
     ack_state = read_ack_state(workspace)
 
-    # 审计快照（反映本轮开始时的状态）
+    # 审计快照（反映本轮开始时的状态，供结果一致性审计使用）
     audit_snapshot = json.loads(json.dumps(state))
 
     dry_run = args.dry_run
@@ -696,8 +693,6 @@ def main() -> int:
     return run_once(args)
 
 
-# 兼容测试导入
-StateManager = None
 
 
 if __name__ == "__main__":

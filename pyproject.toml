@@ -61,3 +61,17 @@ ignore = ["E402", "E501", "F402", "F821"]
 "collaboration/scripts/**" = ["E", "F"]
 "monitor.py" = ["E722"]
 "release-*/**" = ["E", "F"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers"
+markers = [
+    "asyncio: mark test as async",
+    "slow: mark test as slow",
+    "integration: mark test as integration",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

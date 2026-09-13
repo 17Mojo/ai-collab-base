@@ -203,8 +203,6 @@ def run_receipt(args) -> int:
     ack_state = read_json(workspace / "logs" / "agent_ack_bridge_state.json", {"items": {}})
 
     tasks = state.get("tasks", {})
-    active = set(state.get("active_tasks", []))
-
     candidate_count = 0
     completed: List[str] = []
     skipped: List[Dict[str, Any]] = []
