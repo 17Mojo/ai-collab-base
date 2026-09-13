@@ -14,7 +14,6 @@ import shutil
 import subprocess
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
@@ -309,7 +308,6 @@ class OrchestrationConfig:
 
     def _create_default_config(self):
         """Create default configuration"""
-        now = datetime.now().isoformat()
 
         roles = {}
         for role_id, role_def in self.DEFAULT_ROLES.items():
@@ -547,7 +545,7 @@ class ColdStartWizard:
 
         # Step 1: Detect providers
         print("\n[步骤 1] 检测可用 Agent 服务商...")
-        providers = self.config.detect_providers()
+# providers detection moved to available
 
         available = self.config.get_available_providers()
 
@@ -649,7 +647,7 @@ class ColdStartWizard:
         print("\n" + "=" * 60)
         print("✓ 冷启动配置完成!")
         print("=" * 60)
-        print(f"\n当前状态:")
+        print("\n当前状态:")
         print(f"  模式: {selected_mode.value}")
         print(f"  绑定状态: {self.config.get_binding_status().value}")
 

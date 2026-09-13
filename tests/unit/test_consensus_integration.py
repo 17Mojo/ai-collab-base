@@ -10,15 +10,10 @@ Tests:
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, patch
 
-import pytest
-
-from ai_collab.engines.consensus_engine import ConsensusEngine
 from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
-from ai_collab.pack.schema_v2 import ConsensusConfig, WorkflowStep, StepType
-
+from ai_collab.pack.schema_v2 import ConsensusConfig, StepType, WorkflowStep
 
 # ==================== ConsensusConfig Schema Tests ====================
 

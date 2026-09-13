@@ -10,20 +10,15 @@ import os
 import sys
 from datetime import datetime
 
-# 原有模块导入
-from .activation_handler import ActivationHandler, ActivationMode, AIType, VSCodeIntegration
-from .state_manager import PatchStatus, StateManager, TaskStatus
-
 # 新增 orchestration 模块导入
 from ai_collab.orchestration import (
-    BindingStatus,
     ColdStartWizard,
-    OrchestrationConfig,
-    StartupMode,
-    check_cold_start,
-    get_orchestration_config
+    get_orchestration_config,
 )
 
+# 原有模块导入
+from .activation_handler import ActivationHandler, ActivationMode, AIType, VSCodeIntegration
+from .state_manager import StateManager, TaskStatus
 
 # ============== 原有命令 ==============
 

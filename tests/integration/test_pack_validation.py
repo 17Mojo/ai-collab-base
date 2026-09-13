@@ -74,7 +74,7 @@ class TestSchemaV2Compatibility:
     @pytest.mark.parametrize("pack_name,pack_data", [p for p in ALL_PACKS if "_error" not in p[1]])
     def test_step_types_valid(self, pack_name, pack_data):
         """Step type 字段有效"""
-        valid_types = {"prompt", "action", "extract", "branch", "loop", "parallel", "condition"}
+        _valid_types = {"prompt", "action", "extract", "branch", "loop", "parallel", "condition"}
         workflow = pack_data.get("workflow", {})
         for step in workflow.get("steps", []):
             if "type" in step:

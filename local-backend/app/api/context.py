@@ -23,6 +23,7 @@ from ai_collab.context.schema import (
     ScenarioType,
     create_context,
 )
+
 from ..models.context import Base, ContextChangeLogModel, ContextModel
 
 logger = logging.getLogger(__name__)

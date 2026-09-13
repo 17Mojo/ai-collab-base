@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 daemon = pytest.importorskip("scripts.task_controller_daemon", reason="scripts/task_controller_daemon.py not present")
 

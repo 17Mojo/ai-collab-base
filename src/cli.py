@@ -16,13 +16,13 @@ from .state_manager import PatchStatus, StateManager, TaskStatus
 
 # Orchestration 模块导入
 try:
-    from .ai_collab.orchestration import (
+    from .ai_collab.orchestration import (  # noqa: F401
         BindingStatus,
         ColdStartWizard,
         OrchestrationConfig,
         StartupMode,
         check_cold_start,
-        get_orchestration_config
+        get_orchestration_config,
     )
     ORCHESTRATION_AVAILABLE = True
 except ImportError:
