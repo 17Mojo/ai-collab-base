@@ -1,5 +1,5 @@
 # 灵魂注入引擎 - v1.2
-# src/ai_collab/engines/soul_injection_engine.py
+# ai_collab/engines/soul_injection_engine.py
 
 """
 灵魂注入引擎

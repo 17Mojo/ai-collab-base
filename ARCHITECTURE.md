@@ -103,7 +103,7 @@ prompt-pack-extension/
 ### 1.2 Pack v2.0 Schema 模块
 
 ```python
-# src/ai_collab/pack/schema_v2.py
+# ai_collab/pack/schema_v2.py
 
 """
 Prompt Pack v2.0 Schema
@@ -265,7 +265,7 @@ class PromptPackV2:
 | `fallback` | 优先真实调用，失败时回退模拟 | 默认生产策略（兼顾可用性与可观测） |
 | `real` | 仅真实调用，不允许模拟回退 | 严格生产环境、发布前联调 |
 
-默认配置位于 `src/ai_collab/config/integration_flags.py`：
+默认配置位于 `ai_collab/config/integration_flags.py`：
 
 - `notebooklm`: `fallback`
 - `consensus_engine`: `fallback`

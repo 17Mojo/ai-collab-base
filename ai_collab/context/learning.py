@@ -1,5 +1,5 @@
 # Context Learning Module
-# src/ai_collab/context/learning.py
+# ai_collab/context/learning.py
 
 """
 User Behavior Learning for Context Recommendations

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gemini</title>
+</head>
+<body>
+  <!-- Chat Input: contenteditable with aria-label -->
+  <div contenteditable="true" aria-label="Enter a prompt here" class="ql-editor" role="textbox">
+    <p>Explain general relativity</p>
+  </div>
+
+  <!-- Fallback textarea -->
+  <textarea placeholder="Enter a prompt here" style="display:none;"></textarea>
+
+  <!-- Send Button: custom element -->
+  <send-button aria-label="Send prompt">
+    <button aria-label="Send prompt">
+      <svg><!-- send icon --></svg>
+    </button>
+  </send-button>
+
+  <!-- Stop Button -->
+  <button aria-label="Stop" style="display:none;">
+    <svg><!-- stop icon --></svg>
+  </button>
+
+  <!-- Typing Indicator: material progress bar -->
+  <mat-progress-bar style="display:none;"></mat-progress-bar>
+
+  <!-- Loading fallback -->
+  <div class="loading-indicator" style="display:none;"></div>
+
+  <!-- Message List: model-response custom element -->
+  <model-response class="conversation-turn">
+    <div class="model-response-text">
+      <div class="markdown"><p>What is machine learning?</p></div>
+    </div>
+  </model-response>
+
+  <model-response class="conversation-turn">
+    <div class="model-response-text">
+      <div class="markdown"><p>Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience.</p></div>
+    </div>
+  </model-response>
+
+  <!-- Chat turn fallback -->
+  <div class="chat-turn" style="display:none;">
+    <message-content>
+      <div class="markdown"><p>fallback content</p></div>
+    </message-content>
+  </div>
+
+  <!-- Conversation turn fallback -->
+  <div class="conversation-turn-element" style="display:none;"></div>
+</body>
+</html>

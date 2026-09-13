@@ -1,5 +1,5 @@
 # 通识生成引擎 - v1.2
-# src/ai_collab/engines/consensus_engine.py
+# ai_collab/engines/consensus_engine.py
 
 """
 通识生成引擎

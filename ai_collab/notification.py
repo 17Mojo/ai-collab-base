@@ -1,5 +1,5 @@
 # @Mention 通知系统 - 代码实现
-# src/ai_collab/notification.py
+# ai_collab/notification.py
 
 """
 @Mention 通知系统

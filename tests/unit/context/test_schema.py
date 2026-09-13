@@ -50,12 +50,12 @@ class TestFileContext:
 
     def test_file_context_creation(self):
         file_ctx = FileContext(
-            path="src/ai_collab/context/schema.py",
+            path="ai_collab/context/schema.py",
             content="print('hello')",
             language="python",
             size=100,
         )
-        assert file_ctx.path == "src/ai_collab/context/schema.py"
+        assert file_ctx.path == "ai_collab/context/schema.py"
         assert file_ctx.content == "print('hello')"
         assert file_ctx.language == "python"
         assert file_ctx.size == 100

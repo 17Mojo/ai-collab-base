@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Claude</title>
+</head>
+<body>
+  <!-- Chat Input: ProseMirror contenteditable -->
+  <div class="ProseMirror" contenteditable="true" data-placeholder="Reply to Claude...">
+    <p>Tell me a story</p>
+  </div>
+
+  <!-- Send Button -->
+  <button aria-label="Send" data-testid="send-button">
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Stop Button (shown during generation) -->
+  <button aria-label="Stop generating" style="display:none;">
+    <svg><!-- stop icon --></svg>
+  </button>
+
+  <!-- Typing Indicator -->
+  <div data-testid="typing-indicator" style="display:none;">
+    <span>Thinking...</span>
+  </div>
+
+  <!-- Message List -->
+  <div data-testid="conversation-turn" class="conversation-turn">
+    <div class="prose" data-testid="message-content">
+      <p>Hello Claude, how are you?</p>
+    </div>
+  </div>
+
+  <div data-testid="conversation-turn" class="conversation-turn">
+    <div class="prose" data-testid="message-content">
+      <p>I'm doing well! I'd be happy to help. What would you like to know?</p>
+    </div>
+  </div>
+
+  <div data-testid="conversation-turn" class="conversation-turn">
+    <div class="prose" data-testid="message-content">
+      <p>Tell me a story</p>
+    </div>
+  </div>
+</body>
+</html>

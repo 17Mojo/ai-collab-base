@@ -1,5 +1,5 @@
 # Prompt资源聚合器
-# src/ai_collab/resources/prompt_aggregator.py
+# ai_collab/resources/prompt_aggregator.py
 
 """
 Prompt资源聚合器

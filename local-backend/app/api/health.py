@@ -7,6 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter
 
 from app.core.cache import get_cache_manager
+from app.core.database import get_database_status
 
 router = APIRouter()
 
@@ -23,6 +24,22 @@ async def health_check():
         "service": "prompt-pack-api",
         "cache": get_cache_manager().get_stats(),
         "integrations": integration_status,
+    }
+
+
+@router.get("/health/database")
+async def database_health():
+    """数据库状态检查
+
+    返回数据库 journal_mode、连接池状态、各项 PRAGMA 配置。
+    用于运维监控和诊断 WAL 模式是否生效。
+    """
+    db_status = get_database_status()
+
+    return {
+        "status": "healthy" if db_status.get("healthy") else "degraded",
+        "timestamp": datetime.now().isoformat(),
+        "database": db_status,
     }
 
 

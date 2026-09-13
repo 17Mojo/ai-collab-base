@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Yuanbao (腾讯元宝)</title>
+</head>
+<body>
+  <!-- Chat Input: Quill editor -->
+  <div class="ql-editor" contenteditable="true" role="textbox">
+    <p>讲一个笑话</p>
+  </div>
+
+  <!-- Fallback contenteditable -->
+  <div contenteditable="true" style="display:none;"></div>
+
+  <!-- Fallback textarea -->
+  <textarea style="display:none;"></textarea>
+
+  <!-- Send Button -->
+  <button type="submit" aria-label="发送消息" class="send-btn" data-send>
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Typing Indicator -->
+  <div class="loading" style="display:none;">
+    <span>思考中...</span>
+  </div>
+  <div class="spinner" style="display:none;"></div>
+
+  <!-- Message List -->
+  <div class="message-item">
+    <div class="answer-content">
+      <div class="prose"><p>你好，元宝</p></div>
+    </div>
+  </div>
+
+  <div class="message-item">
+    <div class="answer-content">
+      <div class="prose"><p>你好！我是腾讯元宝，有什么可以帮你的？</p></div>
+    </div>
+  </div>
+
+  <div class="message-item">
+    <div class="answer-content">
+      <div class="prose"><p>讲一个笑话</p></div>
+    </div>
+  </div>
+
+  <!-- Fallback selectors -->
+  <div class="chat-item" style="display:none;">
+    <div class="content"><p>fallback chat</p></div>
+  </div>
+  <div class="response-item" style="display:none;">
+    <div class="content"><p>fallback response</p></div>
+  </div>
+</body>
+</html>

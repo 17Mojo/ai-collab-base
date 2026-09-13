@@ -1,5 +1,5 @@
 # Context Recommender Module
-# src/ai_collab/context/recommender.py
+# ai_collab/context/recommender.py
 
 """
 Context-based Recommendation Engine

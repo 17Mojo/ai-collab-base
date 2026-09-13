@@ -49,6 +49,28 @@ class TargetPlatform(Enum):
 
 
 @dataclass
+class RegexPattern:
+    """正则表达式配置"""
+
+    pattern: str  # 正则模式
+    flags: str = ""  # 标志: 'i'=忽略大小写, 'm'=多行, 'g'=全局
+    extract_fields: Optional[Dict[str, str]] = None  # 提取字段映射 {捕获组名: 字段名}
+
+
+@dataclass
+class BranchCondition:
+    """分支条件定义"""
+
+    target_step: str  # 目标步骤 ID (条件满足时跳转) - 必须放在第一个
+    condition_type: str = 'regex_match'  # 'regex_match', 'contains', 'equals', 'threshold', 'exists'
+    target_field: str = "output"  # 检查字段 (output, input, context)
+    condition_value: str = ""  # 匹配值/模式 (对于 contains/equals)
+    regex_config: Optional[RegexPattern] = None  # 正则配置 (对于 regex_match)
+    negate: bool = False  # 否定条件 (条件不满足时跳转)
+    threshold_value: Optional[float] = None  # 阈值 (对于 threshold)
+
+
+@dataclass
 class PackMetadata:
     """Pack 元数据"""
 
@@ -273,6 +295,17 @@ class GenerationParams:
 
 
 @dataclass
+class ConsensusConfig:
+    """共识引擎配置 - 用于多 AI 协同生成"""
+
+    enabled: bool = False  # 是否启用共识引擎
+    providers: List[str] = field(default_factory=list)  # 参与的 AI provider 列表
+    timeout: float = 30.0  # 单个 provider 超时(秒)
+    min_providers: int = 2  # 最少需要成功响应的 provider 数量
+    fusion_strategy: str = "concat"  # 融合策略: concat / best / weighted
+
+
+@dataclass
 class WorkflowStep:
     """工作流步骤定义"""
 
@@ -296,12 +329,21 @@ class WorkflowStep:
     # 融合规则
     fusion_rules: Optional[Dict[str, Any]] = None
 
+    # 共识引擎配置
+    consensus_config: Optional[ConsensusConfig] = None
+
     # 预估时间
     estimated_time: Optional[int] = None  # 秒
 
     # 自动触发
     auto_trigger: bool = False
     trigger_delay: Optional[int] = None
+
+    # 分支逻辑
+    next_step: Optional[str] = None  # 显式下一步 (可选)
+    branches: Optional[List[BranchCondition]] = None  # 条件分支列表
+    on_error: Optional[str] = None  # 错误处理步骤 ID
+    on_timeout: Optional[str] = None  # 超时处理步骤 ID
 
     # 其他配置
     config: Dict[str, Any] = field(default_factory=dict)
@@ -503,6 +545,15 @@ class PromptPackV2:
                         "cross_review": step.cross_review,
                         "validation_criteria": step.validation_criteria,
                         "fusion_rules": step.fusion_rules,
+                        "consensus_config": {
+                            "enabled": step.consensus_config.enabled,
+                            "providers": step.consensus_config.providers,
+                            "timeout": step.consensus_config.timeout,
+                            "min_providers": step.consensus_config.min_providers,
+                            "fusion_strategy": step.consensus_config.fusion_strategy,
+                        }
+                        if step.consensus_config
+                        else None,
                         "estimated_time": step.estimated_time,
                         "auto_trigger": step.auto_trigger,
                         "trigger_delay": step.trigger_delay,
@@ -629,6 +680,15 @@ class PromptPackV2:
                 cross_review=step.get("cross_review", False),
                 validation_criteria=step.get("validation_criteria"),
                 fusion_rules=step.get("fusion_rules"),
+                consensus_config=ConsensusConfig(
+                    enabled=step["consensus_config"].get("enabled", False),
+                    providers=step["consensus_config"].get("providers", []),
+                    timeout=step["consensus_config"].get("timeout", 30.0),
+                    min_providers=step["consensus_config"].get("min_providers", 2),
+                    fusion_strategy=step["consensus_config"].get("fusion_strategy", "concat"),
+                )
+                if step.get("consensus_config")
+                else None,
                 estimated_time=step.get("estimated_time"),
                 auto_trigger=step.get("auto_trigger", False),
                 trigger_delay=step.get("trigger_delay"),

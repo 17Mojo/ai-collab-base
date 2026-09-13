@@ -200,7 +200,7 @@ def validate() -> bool:               # 验证完整性
 
 ### 基础创建
 ```python
-from src.ai_collab.pack.schema_v2 import PromptPackV2, create_xiaohongshu_base
+from ai_collab.pack.schema_v2 import PromptPackV2, create_xiaohongshu_base
 
 # 创建小红书 Pack
 pack = create_xiaohongshu_base()
@@ -276,6 +276,6 @@ Pack 验证检查以下内容：
 
 ---
 
-**文件位置**: [src/ai_collab/pack/schema_v2.py](../../src/ai_collab/pack/schema_v2.py)  
+**文件位置**: [ai_collab/pack/schema_v2.py](../pack/schema_v2.py)  
 **最后修复**: 2026-02-27 09:01  
 **状态**: ✅ 语法验证通过，可导入使用

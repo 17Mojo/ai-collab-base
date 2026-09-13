@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 # Import schema classes
-from src.ai_collab.pack.schema_v2 import BranchCondition, RegexPattern, StepType, WorkflowStep
+from ai_collab.pack.schema_v2 import BranchCondition, RegexPattern, StepType, WorkflowStep
 
 PACK_DIR = Path("packs/examples")
 

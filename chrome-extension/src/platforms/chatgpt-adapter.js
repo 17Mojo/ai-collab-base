@@ -5,31 +5,27 @@
 
 import PlatformAdapter from "./adapter.js";
 import DOMObserver from "../utils/dom-observer.js";
+import { findElement, findElements, extractMessageContent } from "./adapter-utils.js";
 
 /**
  * ChatGPT 选择器配置
  */
 const SELECTORS = {
   // 输入框
-  chatInput: '#prompt-textarea',
-  chatInputAlt: 'textarea[placeholder*="Message"]',
-  chatInputAlt2: 'div[contenteditable="true"]',
+  chatInput: ['#prompt-textarea', 'textarea[placeholder*="Message"]', 'div[contenteditable="true"]'],
 
   // 发送按钮
-  sendButton: 'button[data-testid="send-button"]',
-  sendButtonAlt: 'button[aria-label="Send prompt"]',
+  sendButton: ['button[data-testid="send-button"]', 'button[aria-label="Send prompt"]'],
 
   // 消息列表
-  messageList: '[data-testid="conversation-turn"]',
-  messageListAlt: ".text-base",
+  messageList: ['[data-testid="conversation-turn"]', ".text-base"],
 
   // AI 响应状态
-  typingIndicator: '[data-testid="typing-indicator"]',
-  stopButton: 'button[aria-label="Stop generating"]',
+  typingIndicator: ['[data-testid="typing-indicator"]'],
+  stopButton: ['button[aria-label="Stop generating"]'],
 
   // 消息内容
-  messageContent: ".markdown",
-  messageContentAlt: "[data-message-author-role]",
+  messageContent: [".markdown", "[data-message-author-role]"],
 };
 
 /**
@@ -54,33 +50,11 @@ class ChatGPTAdapter extends PlatformAdapter {
   }
 
   /**
-   * 查找元素（支持多个选择器）
-   * @param {string} primary - 主选择器
-   * @param {string} alt - 备用选择器
-   * @param {string} alt2 - 第二备用选择器
-   * @returns {HTMLElement|null}
-   */
-  _findElement(primary, alt = null, alt2 = null) {
-    let element = document.querySelector(primary);
-    if (!element && alt) {
-      element = document.querySelector(alt);
-    }
-    if (!element && alt2) {
-      element = document.querySelector(alt2);
-    }
-    return element;
-  }
-
-  /**
    * 获取聊天输入框
    * @returns {HTMLElement|null}
    */
   getChatInput() {
-    return this._findElement(
-      SELECTORS.chatInput,
-      SELECTORS.chatInputAlt,
-      SELECTORS.chatInputAlt2
-    );
+    return findElement(SELECTORS.chatInput);
   }
 
   /**
@@ -88,7 +62,7 @@ class ChatGPTAdapter extends PlatformAdapter {
    * @returns {HTMLElement|null}
    */
   getSendButton() {
-    return this._findElement(SELECTORS.sendButton, SELECTORS.sendButtonAlt);
+    return findElement(SELECTORS.sendButton);
   }
 
   /**
@@ -96,11 +70,7 @@ class ChatGPTAdapter extends PlatformAdapter {
    * @returns {NodeList}
    */
   getMessageList() {
-    let messages = document.querySelectorAll(SELECTORS.messageList);
-    if (messages.length === 0) {
-      messages = document.querySelectorAll(SELECTORS.messageListAlt);
-    }
-    return messages;
+    return findElements(SELECTORS.messageList);
   }
 
   /**
@@ -158,11 +128,11 @@ class ChatGPTAdapter extends PlatformAdapter {
    */
   isTyping() {
     // 检查停止按钮
-    const stopButton = this._findElement(SELECTORS.stopButton);
+    const stopButton = findElement(SELECTORS.stopButton);
     if (stopButton) return true;
 
     // 检查输入指示器
-    const typingIndicator = this._findElement(SELECTORS.typingIndicator);
+    const typingIndicator = findElement(SELECTORS.typingIndicator);
     return !!typingIndicator;
   }
 
@@ -190,7 +160,7 @@ class ChatGPTAdapter extends PlatformAdapter {
           clearInterval(checkInterval);
 
           const latestMessage = this.getLatestMessage();
-          const content = this._extractMessageContent(latestMessage);
+          const content = extractMessageContent(latestMessage, SELECTORS.messageContent);
 
           resolve({
             messageCount: currentMessageCount,
@@ -200,21 +170,6 @@ class ChatGPTAdapter extends PlatformAdapter {
         }
       }, 500);
     });
-  }
-
-  /**
-   * 提取消息内容
-   * @param {HTMLElement} messageElement
-   * @returns {string}
-   */
-  _extractMessageContent(messageElement) {
-    if (!messageElement) return "";
-
-    const contentEl =
-      messageElement.querySelector(SELECTORS.messageContent) ||
-      messageElement.querySelector(SELECTORS.messageContentAlt);
-
-    return contentEl ? contentEl.textContent.trim() : "";
   }
 
   /**
@@ -234,4 +189,5 @@ class ChatGPTAdapter extends PlatformAdapter {
   }
 }
 
+export { SELECTORS };
 export default ChatGPTAdapter;

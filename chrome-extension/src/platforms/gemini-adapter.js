@@ -5,31 +5,37 @@
 
 import PlatformAdapter from "./adapter.js";
 import DOMObserver from "../utils/dom-observer.js";
+import { findElement, findElements, extractMessageContent } from "./adapter-utils.js";
 
 /**
  * Gemini 选择器配置
  */
 const SELECTORS = {
   // 输入框
-  chatInput: 'div[contenteditable="true"][aria-label*="prompt"]',
-  chatInputAlt: 'div[contenteditable="true"].ql-editor',
-  chatInputAlt2: 'textarea[placeholder*="prompt"]',
+  chatInput: [
+    'div[contenteditable="true"][aria-label*="prompt"]',
+    'div[contenteditable="true"][aria-label*="Gemini"]',
+    'div[contenteditable="true"].ql-editor',
+    '[role="textbox"]',
+    'textarea[placeholder*="prompt"]',
+  ],
 
   // 发送按钮
-  sendButton: 'button[aria-label="Send prompt"]',
-  sendButtonAlt: 'send-button',
+  sendButton: [
+    'button[aria-label="Send prompt"]',
+    'send-button',
+    'button[aria-label*="Send"]',
+  ],
 
   // 消息列表
-  messageList: 'model-response',
-  messageListAlt: '.chat-turn',
+  messageList: ['model-response', '.chat-turn', '[class*="conversation-turn"]'],
 
   // AI 响应状态
-  typingIndicator: 'mat-progress-bar',
-  stopButton: 'button[aria-label="Stop"]',
+  typingIndicator: ['mat-progress-bar', '[class*="loading"]'],
+  stopButton: ['button[aria-label="Stop"]', 'button[aria-label*="Stop"]'],
 
   // 消息内容
-  messageContent: '.model-response-text',
-  messageContentAlt: 'message-content',
+  messageContent: ['.model-response-text', 'message-content', '.markdown'],
 };
 
 /**
@@ -51,33 +57,11 @@ class GeminiAdapter extends PlatformAdapter {
   }
 
   /**
-   * 查找元素（支持多个选择器）
-   * @param {string} primary
-   * @param {string} alt
-   * @param {string} alt2
-   * @returns {HTMLElement|null}
-   */
-  _findElement(primary, alt = null, alt2 = null) {
-    let element = document.querySelector(primary);
-    if (!element && alt) {
-      element = document.querySelector(alt);
-    }
-    if (!element && alt2) {
-      element = document.querySelector(alt2);
-    }
-    return element;
-  }
-
-  /**
    * 获取聊天输入框
    * @returns {HTMLElement|null}
    */
   getChatInput() {
-    return this._findElement(
-      SELECTORS.chatInput,
-      SELECTORS.chatInputAlt,
-      SELECTORS.chatInputAlt2
-    );
+    return findElement(SELECTORS.chatInput);
   }
 
   /**
@@ -85,7 +69,7 @@ class GeminiAdapter extends PlatformAdapter {
    * @returns {HTMLElement|null}
    */
   getSendButton() {
-    return this._findElement(SELECTORS.sendButton, SELECTORS.sendButtonAlt);
+    return findElement(SELECTORS.sendButton);
   }
 
   /**
@@ -93,11 +77,7 @@ class GeminiAdapter extends PlatformAdapter {
    * @returns {NodeList}
    */
   getMessageList() {
-    let messages = document.querySelectorAll(SELECTORS.messageList);
-    if (messages.length === 0) {
-      messages = document.querySelectorAll(SELECTORS.messageListAlt);
-    }
-    return messages;
+    return findElements(SELECTORS.messageList);
   }
 
   /**
@@ -152,11 +132,11 @@ class GeminiAdapter extends PlatformAdapter {
    */
   isTyping() {
     // 检查进度条
-    const progressBar = this._findElement(SELECTORS.typingIndicator);
+    const progressBar = findElement(SELECTORS.typingIndicator);
     if (progressBar) return true;
 
     // 检查停止按钮
-    const stopButton = this._findElement(SELECTORS.stopButton);
+    const stopButton = findElement(SELECTORS.stopButton);
     return !!stopButton;
   }
 
@@ -184,7 +164,7 @@ class GeminiAdapter extends PlatformAdapter {
           clearInterval(checkInterval);
 
           const latestMessage = this.getLatestMessage();
-          const content = this._extractMessageContent(latestMessage);
+          const content = extractMessageContent(latestMessage, SELECTORS.messageContent);
 
           resolve({
             messageCount: currentMessageCount,
@@ -194,21 +174,6 @@ class GeminiAdapter extends PlatformAdapter {
         }
       }, 500);
     });
-  }
-
-  /**
-   * 提取消息内容
-   * @param {HTMLElement} messageElement
-   * @returns {string}
-   */
-  _extractMessageContent(messageElement) {
-    if (!messageElement) return "";
-
-    const contentEl =
-      messageElement.querySelector(SELECTORS.messageContent) ||
-      messageElement.querySelector(SELECTORS.messageContentAlt);
-
-    return contentEl ? contentEl.textContent.trim() : "";
   }
 
   /**
@@ -228,4 +193,5 @@ class GeminiAdapter extends PlatformAdapter {
   }
 }
 
+export { SELECTORS };
 export default GeminiAdapter;

@@ -1,5 +1,5 @@
 # 独立测试 Skill - 无外部依赖
-# src/ai_collab/skills/simple_skill.py
+# ai_collab/skills/simple_skill.py
 
 """
 简单测试 Skill

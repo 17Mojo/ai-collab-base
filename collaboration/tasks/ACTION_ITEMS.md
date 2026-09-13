@@ -188,7 +188,7 @@ rules/OWNERSHIP.md
 **预期时间**: 2 天  
 **优先级**: 🔴 高
 
-**现状**: 60% 完成 (`src/ai_collab/pack/schema_v2.py`)
+**现状**: 60% 完成 (`ai_collab/pack/schema_v2.py`)
 
 **待完成项**:
 ```
@@ -228,8 +228,8 @@ rules/OWNERSHIP.md
 ```
 
 **输出文件**:
-- `src/ai_collab/pack/schema_v2.py` (完成)
-- `src/ai_collab/pack/tests/test_schema_v2.py` (新建)
+- `ai_collab/pack/schema_v2.py` (完成)
+- `ai_collab/pack/tests/test_schema_v2.py` (新建)
 - `docs/pack-schema-guide.md` (新建)
 
 **验收标准**:

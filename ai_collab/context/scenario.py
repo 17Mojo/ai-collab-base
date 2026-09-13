@@ -1,5 +1,5 @@
 # 场景识别引擎
-# src/ai_collab/context/scenario.py
+# ai_collab/context/scenario.py
 
 """
 场景识别引擎
@@ -475,9 +475,9 @@ if __name__ == "__main__":
     # 测试场景 1: 编码场景
     print("场景 1: 编码场景")
     coding_files = [
-        "src/ai_collab/context/schema.py",
-        "src/ai_collab/cli.py",
-        "src/ai_collab/pack/schema_v2.py",
+        "ai_collab/context/schema.py",
+        "ai_collab/cli.py",
+        "ai_collab/pack/schema_v2.py",
     ]
     result = detector.detect(coding_files)
     print(f"检测到场景: {result.scenario.value}")

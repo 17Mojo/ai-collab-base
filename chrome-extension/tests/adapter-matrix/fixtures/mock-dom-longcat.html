@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LongCat AI</title>
+</head>
+<body>
+  <!-- Chat Input: role textbox -->
+  <div role="textbox" contenteditable="true">
+    <p>Write a haiku about cats</p>
+  </div>
+
+  <!-- Fallback contenteditable -->
+  <div contenteditable="true" style="display:none;"></div>
+
+  <!-- Send Button: submit button -->
+  <button type="submit">
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Fallback send: clickable image -->
+  <img cursor="pointer" src="send-icon.png" alt="Send" style="display:none;" />
+
+  <!-- Loading / Typing Indicator -->
+  <div class="loading-dots" style="display:none;">
+    <span>Generating...</span>
+  </div>
+
+  <!-- Message List -->
+  <div class="message">
+    <div class="response-content">
+      <div class="prose"><p>What is LongCat?</p></div>
+    </div>
+  </div>
+
+  <div class="message">
+    <div class="response-content">
+      <div class="prose"><p>LongCat is an AI assistant. How can I help you?</p></div>
+    </div>
+  </div>
+
+  <div class="message">
+    <div class="response-content">
+      <div class="prose"><p>Write a haiku about cats</p></div>
+    </div>
+  </div>
+
+  <!-- Fallback selectors -->
+  <div class="response-item" style="display:none;">
+    <div class="content"><p>fallback</p></div>
+  </div>
+  <div class="chat-item" style="display:none;">
+    <div class="content"><p>chat item fallback</p></div>
+  </div>
+</body>
+</html>

@@ -98,7 +98,7 @@ openspec/changes/add-pack-market-infrastructure/
 ## Impact
 
 - Affected specs: `pack-market`（新增）
-- Affected code: `src/ai_collab/pack/market.py`, `market_store.py`, `market_api.py`
+- Affected code: `ai_collab/pack/market.py`, `market_store.py`, `market_api.py`
 - 风险: 评分系统需要防止滥用，反馈需要审核机制
 ```
 
@@ -259,7 +259,7 @@ DRAFT → PENDING → APPROVED/REJECTED → ARCHIVED
 
 ```bash
 # 单元测试
-pytest tests/unit/pack/test_market.py -v --cov=src/ai_collab/pack/market
+pytest tests/unit/pack/test_market.py -v --cov=ai_collab/pack/market
 
 # 验证覆盖率 ≥ 80%
 pytest tests/unit/pack/test_market.py --cov-report=term-missing

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DeepSeek</title>
+</head>
+<body>
+  <!-- Chat Input: textarea (primary) -->
+  <textarea id="chat-input" placeholder="输入消息...">What are transformers in AI?</textarea>
+
+  <!-- Fallback contenteditable -->
+  <div contenteditable="true" style="display:none;"></div>
+
+  <!-- Send Button -->
+  <button data-testid="send-button" aria-label="发送" class="send-button">
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Stop Button -->
+  <button aria-label="Stop generating" style="display:none;">
+    <svg><!-- stop icon --></svg>
+  </button>
+
+  <!-- Typing Indicator -->
+  <div class="loading-spinner" style="display:none;"></div>
+  <div class="generating" style="display:none;">
+    <span>生成中...</span>
+  </div>
+
+  <!-- Message List -->
+  <div data-testid="conversation-turn" class="ds-chat-message">
+    <div class="ds-assistant-message-main-content">
+      <div class="markdown"><p>What is deep learning?</p></div>
+    </div>
+  </div>
+
+  <div data-testid="conversation-turn" class="ds-chat-message">
+    <div class="ds-assistant-message-main-content">
+      <div class="markdown"><p>Deep learning is a subset of machine learning that uses neural networks with multiple layers.</p></div>
+    </div>
+  </div>
+
+  <div class="ds-chat-message">
+    <div class="ds-assistant-message-main-content">
+      <div class="markdown prose"><p>What are transformers in AI?</p></div>
+    </div>
+  </div>
+
+  <!-- Fallback message elements -->
+  <div class="chat-message" style="display:none;">
+    <div class="message-content"><p>fallback</p></div>
+  </div>
+</body>
+</html>

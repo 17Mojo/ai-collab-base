@@ -1,1 +1,1 @@
-# src/ai_collab/skills/__init__.py
+# ai_collab/skills/__init__.py

@@ -1,5 +1,5 @@
 # 双向交接回通知机制
-# src/ai_collab/handoff_notification.py
+# ai_collab/handoff_notification.py
 
 """
 双向交接回通知机制

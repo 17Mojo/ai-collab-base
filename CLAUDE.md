@@ -204,8 +204,8 @@ cat handoff_status.json
 ### Project State
 
 - **Architecture**: Complete ([`ARCHITECTURE.md`](ARCHITECTURE.md))
-- **Schema v2.0**: Partially defined ([`src/ai_collab/pack/schema_v2.py`](src/ai_collab/pack/schema_v2.py))
-- **Notification System**: Complete ([`src/ai_collab/notification.py`](src/ai_collab/notification.py))
+- **Schema v2.0**: Partially defined ([`ai_collab/pack/schema_v2.py`](ai_collab/pack/schema_v2.py))
+- **Notification System**: Complete ([`ai_collab/notification.py`](ai_collab/notification.py))
 - **Backend alternatives researched**: See [`docs/backend-alternatives.md`](docs/backend-alternatives.md)
 
 ## Key File Locations
@@ -214,7 +214,7 @@ cat handoff_status.json
 |---------|------|
 | Orchestration Config | `config/agent-orchestration.json` |
 | Orchestration Schema | `config/agent-orchestration.schema.json` |
-| Pack v2.0 Schema | `src/ai_collab/pack/schema_v2.py` |
+| Pack v2.0 Schema | `ai_collab/pack/schema_v2.py` |
 | System Architecture | `ARCHITECTURE.md` |
 | Collaboration Protocol | `collaboration/PROTOCOL.md` |
 | Collaboration Guidelines | `collaboration/COLLABORATION_GUIDELINES.md` |
@@ -252,7 +252,7 @@ Activate Copilot for:
 ### For Pack Development
 
 1. Design workflow in [`ARCHITECTURE.md`](ARCHITECTURE.md) section "2.3 执行流程"
-2. Reference schema in [`src/ai_collab/pack/schema_v2.py`](src/ai_collab/pack/schema_v2.py)
+2. Reference schema in [`ai_collab/pack/schema_v2.py`](ai_collab/pack/schema_v2.py)
 3. Use `WorkflowStep` structure with `action` types: `input/select/validate/output`
 
 ### For Network Research Tasks

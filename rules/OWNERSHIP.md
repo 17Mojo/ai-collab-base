@@ -54,7 +54,7 @@
 
 ---
 
-### Pack v2.0 Schema 文件 (`src/ai_collab/pack/`)
+### Pack v2.0 Schema 文件 (`ai_collab/pack/`)
 
 | 文件 | 所有权 | 类型 | 完成度 | 修改权限 |
 |------|--------|------|--------|---------|

@@ -1,5 +1,5 @@
 # NotebookLM 上下文增强模块
-# src/ai_collab/context/enhanced.py
+# ai_collab/context/enhanced.py
 
 """
 NotebookLM 集成模块 - 增强上下文理解

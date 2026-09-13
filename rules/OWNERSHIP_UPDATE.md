@@ -31,7 +31,7 @@
 
 ### 双向交接回通知机制
 
-**文件**: `src/ai_collab/handoff_notification.py`  
+**文件**: `ai_collab/handoff_notification.py`  
 **所有权**: Claude Code  
 **功能**: 支持Claude Code和Copilot之间的任务交接和回馈
 

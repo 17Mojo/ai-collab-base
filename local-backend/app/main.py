@@ -3,6 +3,7 @@ Prompt Pack Local Backend
 FastAPI + SQLite 本地服务
 """
 
+import logging
 import os
 import re
 import time
@@ -25,6 +26,8 @@ from app.api import (
 from app.core.database import create_tables, optimize_database
 from app.core.monitoring import get_performance_monitor
 from app.core.rate_limit import get_ip_blacklist, get_rate_limiter
+
+logger = logging.getLogger(__name__)
 
 # 请求载荷大小限制（10MB）
 MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024  # 10MB
@@ -65,8 +68,15 @@ async def lifespan(app: FastAPI):
     # 启动时
     print("🚀 启动 Prompt Pack API...")
     create_tables()
-    optimize_database()  # 优化数据库性能
-    print("✅ 数据库初始化完成")
+    db_result = optimize_database()  # 优化数据库性能
+
+    if db_result.get("wal_enabled"):
+        logger.info("SQLite WAL 模式已确认启用")
+        print("✅ 数据库初始化完成 (WAL 模式已启用)")
+    else:
+        journal = db_result.get("journal_mode", "unknown")
+        logger.warning("SQLite WAL 模式未生效，当前: %s", journal)
+        print(f"⚠️  数据库初始化完成，但 WAL 模式未生效 (当前: {journal})")
 
     if RATE_LIMIT_ENABLED:
         print(f"✅ 速率限制已启用 (默认: {RATE_LIMIT_DEFAULT} 请求/分钟)")

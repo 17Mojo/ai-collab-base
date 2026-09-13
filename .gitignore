@@ -98,3 +98,8 @@ exported_target_*.json
 
 # Test screenshots
 popup-ui-enhancement-test.png
+
+# Private solo workspace metadata (auto-generated)
+.solopreneur/
+.codeartsdoer/
+.codexdoer/

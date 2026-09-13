@@ -1,5 +1,5 @@
 # 上下文数据模型定义
-# src/ai_collab/context/schema.py
+# ai_collab/context/schema.py
 
 """
 上下文管理的数据模型定义
@@ -344,8 +344,8 @@ if __name__ == "__main__":
         scenario=ScenarioType.CODING,
         name="AI 协作系统编码场景",
         files=[
-            "src/ai_collab/context/schema.py",
-            "src/ai_collab/cli.py",
+            "ai_collab/context/schema.py",
+            "ai_collab/cli.py",
         ],
     )
 

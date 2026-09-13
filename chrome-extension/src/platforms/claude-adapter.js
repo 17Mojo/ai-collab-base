@@ -5,30 +5,27 @@
 
 import PlatformAdapter from "./adapter.js";
 import DOMObserver from "../utils/dom-observer.js";
+import { findElement, findElements, extractMessageContent } from "./adapter-utils.js";
 
 /**
  * Claude.ai 选择器配置
  */
 const SELECTORS = {
   // 输入框
-  chatInput: 'div[contenteditable="true"]',
-  chatInputAlt: 'div.ProseMirror[contenteditable="true"]',
+  chatInput: ['div[contenteditable="true"]', 'div.ProseMirror[contenteditable="true"]'],
 
   // 发送按钮
-  sendButton: 'button[aria-label="Send"]',
-  sendButtonAlt: 'button[data-testid="send-button"]',
+  sendButton: ['button[aria-label="Send"]', 'button[data-testid="send-button"]'],
 
   // 消息列表
-  messageList: '[data-testid="conversation-turn"]',
-  messageListAlt: ".conversation-turn",
+  messageList: ['[data-testid="conversation-turn"]', ".conversation-turn"],
 
   // AI 响应状态
-  typingIndicator: '[data-testid="typing-indicator"]',
-  stopButton: 'button[aria-label="Stop generating"]',
+  typingIndicator: ['[data-testid="typing-indicator"]'],
+  stopButton: ['button[aria-label="Stop generating"]'],
 
   // 消息内容
-  messageContent: ".prose",
-  messageContentAlt: '[data-testid="message-content"]',
+  messageContent: [".prose", '[data-testid="message-content"]'],
 };
 
 /**
@@ -50,25 +47,11 @@ class ClaudeAdapter extends PlatformAdapter {
   }
 
   /**
-   * 查找元素（支持多个选择器）
-   * @param {string} primary - 主选择器
-   * @param {string} alt - 备用选择器
-   * @returns {HTMLElement|null}
-   */
-  _findElement(primary, alt = null) {
-    let element = document.querySelector(primary);
-    if (!element && alt) {
-      element = document.querySelector(alt);
-    }
-    return element;
-  }
-
-  /**
    * 获取聊天输入框
    * @returns {HTMLElement|null}
    */
   getChatInput() {
-    return this._findElement(SELECTORS.chatInput, SELECTORS.chatInputAlt);
+    return findElement(SELECTORS.chatInput);
   }
 
   /**
@@ -76,7 +59,7 @@ class ClaudeAdapter extends PlatformAdapter {
    * @returns {HTMLElement|null}
    */
   getSendButton() {
-    return this._findElement(SELECTORS.sendButton, SELECTORS.sendButtonAlt);
+    return findElement(SELECTORS.sendButton);
   }
 
   /**
@@ -84,11 +67,7 @@ class ClaudeAdapter extends PlatformAdapter {
    * @returns {NodeList}
    */
   getMessageList() {
-    let messages = document.querySelectorAll(SELECTORS.messageList);
-    if (messages.length === 0) {
-      messages = document.querySelectorAll(SELECTORS.messageListAlt);
-    }
-    return messages;
+    return findElements(SELECTORS.messageList);
   }
 
   /**
@@ -142,11 +121,11 @@ class ClaudeAdapter extends PlatformAdapter {
    */
   isTyping() {
     // 检查是否有停止按钮（表示正在生成）
-    const stopButton = this._findElement(SELECTORS.stopButton);
+    const stopButton = findElement(SELECTORS.stopButton);
     if (stopButton) return true;
 
     // 检查是否有输入指示器
-    const typingIndicator = this._findElement(SELECTORS.typingIndicator);
+    const typingIndicator = findElement(SELECTORS.typingIndicator);
     return !!typingIndicator;
   }
 
@@ -176,7 +155,7 @@ class ClaudeAdapter extends PlatformAdapter {
           clearInterval(checkInterval);
 
           const latestMessage = this.getLatestMessage();
-          const content = this._extractMessageContent(latestMessage);
+          const content = extractMessageContent(latestMessage, SELECTORS.messageContent);
 
           resolve({
             messageCount: currentMessageCount,
@@ -186,21 +165,6 @@ class ClaudeAdapter extends PlatformAdapter {
         }
       }, 500);
     });
-  }
-
-  /**
-   * 提取消息内容
-   * @param {HTMLElement} messageElement
-   * @returns {string}
-   */
-  _extractMessageContent(messageElement) {
-    if (!messageElement) return "";
-
-    const contentEl =
-      messageElement.querySelector(SELECTORS.messageContent) ||
-      messageElement.querySelector(SELECTORS.messageContentAlt);
-
-    return contentEl ? contentEl.textContent.trim() : "";
   }
 
   /**
@@ -220,4 +184,5 @@ class ClaudeAdapter extends PlatformAdapter {
   }
 }
 
+export { SELECTORS };
 export default ClaudeAdapter;

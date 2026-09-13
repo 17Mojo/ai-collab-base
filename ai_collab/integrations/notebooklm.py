@@ -1,5 +1,5 @@
 # NotebookLM集成模块
-# src/ai_collab/integrations/notebooklm.py
+# ai_collab/integrations/notebooklm.py
 
 """
 NotebookLM集成模块

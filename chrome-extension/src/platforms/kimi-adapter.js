@@ -1,178 +1,129 @@
 /**
- * Kimi Adapter
- * 月之暗面 Kimi AI 平台适配器
+ * Kimi Adapter (Kimi AI)
+ * 月之暗面 Kimi AI 平台适配器 — 完整实现 PlatformAdapter 接口
  */
 
-import PlatformAdapter from './adapter.js';
+import PlatformAdapter from "./adapter.js";
+import { findElement, injectTextSmart, delay } from "./adapter-utils.js";
 
+/** Kimi 平台选择器配置 */
+const SELECTORS = {
+  chatInput: ['div.chat-input-editor', 'div[contenteditable="true"]', "textarea"],
+  sendButton: [
+    'button[type="submit"]',
+    'button[aria-label*="发送"]',
+    'button[class*="send"]',
+  ],
+  messageList: [".chat-message", '[class*="message"]'],
+  messageContent: [".prose", ".chat-content", '[class*="content"]'],
+  typingIndicator: [".loading", '[class*="loading"]', ".generating"],
+};
+
+/**
+ * Kimi AI 平台适配器
+ */
 class KimiAdapter extends PlatformAdapter {
   constructor() {
-    super();
-    this.platformId = 'kimi.com';
-    this.platformName = 'Kimi AI';
-    this.company = 'Moonshot AI (月之暗面)';
+    super("kimi.com");
+    this.platformName = "Kimi AI";
+    this.company = "Moonshot AI (月之暗面)";
+    this.selectors = SELECTORS;
   }
 
-  /**
-   * 检测当前页面是否为 Kimi
-   * @returns {boolean}
-   */
-  detectPage() {
-    const hostname = window.location.hostname;
-    return hostname.includes('kimi.com');
+  detect() {
+    return window.location.hostname.includes("kimi.com");
   }
 
-  /**
-   * 获取输入框选择器
-   * @returns {string}
-   */
-  getInputSelector() {
-    // Kimi 使用 textarea 作为输入框
-    return 'textarea, div[contenteditable="true"]';
+  getChatInput() {
+    return findElement(this.selectors.chatInput);
   }
 
-  /**
-   * 获取消息容器选择器
-   * @returns {string}
-   */
-  getMessageSelector() {
-    return '.chat-message, [class*="message"]';
+  getSendButton() {
+    return findElement(this.selectors.sendButton);
   }
 
-  /**
-   * 获取发送按钮选择器
-   * @returns {string}
-   */
-  getSendButtonSelector() {
-    // 发送按钮通常在输入后有特定图标
-    return 'button[type="submit"], button[aria-label*="发送"], button[class*="send"]';
+  getMessageList() {
+    const els = document.querySelectorAll(this.selectors.messageList[0]);
+    return els.length > 0
+      ? els
+      : document.querySelectorAll(this.selectors.messageList[1]);
   }
 
-  /**
-   * 获取输入元素
-   * @returns {HTMLElement|null}
-   */
-  findInputElement() {
-    const selector = this.getInputSelector();
-    const elements = document.querySelectorAll(selector);
+  async injectText(text) {
+    const input = this.getChatInput();
+    if (!input) throw new Error("Kimi: Chat input not found");
 
-    // Kimi 的主输入框通常是第一个 textarea 或 contenteditable
-    for (const el of elements) {
-      if (el.offsetWidth > 100 && el.offsetHeight > 20) {
-        return el;
-      }
+    injectTextSmart(input, text);
+    await delay(100);
+  }
+
+  async clickSend() {
+    const button = this.getSendButton();
+    if (button && !button.disabled) {
+      button.click();
+      await delay(100);
+      return;
     }
 
-    return elements[0] || null;
-  }
-
-  /**
-   * 注入文本到输入框
-   * @param {string} text
-   */
-  injectText(text) {
-    const input = this.findInputElement();
-    if (!input) {
-      throw new Error('Input element not found');
-    }
-
-    input.focus();
-
-    if (input.tagName === 'TEXTAREA') {
-      // Kimi textarea 处理
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLTextAreaElement.prototype,
-        'value'
-      )?.set;
-
-      if (nativeInputValueSetter) {
-        nativeInputValueSetter.call(input, text);
-      } else {
-        input.value = text;
-      }
-
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      // contenteditable 处理
-      document.execCommand('selectAll', false, null);
-      document.execCommand('delete', false, null);
-      document.execCommand('insertText', false, text);
-      input.dispatchEvent(new Event('input', { bubbles: true }));
+    const input = this.getChatInput();
+    if (input) {
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          code: "Enter",
+          bubbles: true,
+        }),
+      );
     }
   }
 
-  /**
-   * 检查是否正在生成响应
-   * @returns {boolean}
-   */
   isTyping() {
-    // Kimi 生成时通常有加载动画
-    return document.querySelector('.loading, [class*="loading"], .generating') !== null;
+    return findElement(this.selectors.typingIndicator) !== null;
   }
 
-  /**
-   * 获取最新响应
-   * @returns {string}
-   */
-  getLatestResponse() {
-    const messages = document.querySelectorAll(this.getMessageSelector());
-    if (messages.length === 0) {
-      return '';
-    }
-
-    // 获取最后一个 AI 响应
-    const lastMessage = messages[messages.length - 1];
-    return lastMessage.textContent?.trim() || '';
-  }
-
-  /**
-   * 等待响应完成
-   * @param {number} timeout
-   * @returns {Promise<string>}
-   */
   async waitForResponse(timeout = 60000) {
     const startTime = Date.now();
-    let lastMessageCount = document.querySelectorAll(this.getMessageSelector()).length;
+    const initialCount = this.getMessageList().length;
 
     return new Promise((resolve, reject) => {
-      const checkInterval = setInterval(() => {
+      const interval = setInterval(() => {
         if (Date.now() - startTime > timeout) {
-          clearInterval(checkInterval);
-          reject(new Error('Response timeout'));
+          clearInterval(interval);
+          reject(new Error("Kimi: Response timeout"));
           return;
         }
 
-        const isTyping = this.isTyping();
-        const currentMessageCount = document.querySelectorAll(this.getMessageSelector()).length;
-
-        if (!isTyping && currentMessageCount > lastMessageCount) {
-          clearInterval(checkInterval);
-          resolve(this.getLatestResponse());
+        const currentCount = this.getMessageList().length;
+        if (currentCount > initialCount && !this.isTyping()) {
+          clearInterval(interval);
+          const latest = this.getLatestMessage();
+          resolve({
+            messageCount: currentCount,
+            content: latest ? this._extractContent(latest) : "",
+            duration: Date.now() - startTime,
+          });
         }
       }, 500);
     });
   }
 
-  /**
-   * 点击发送按钮
-   */
-  clickSendButton() {
-    const sendButton = document.querySelector(this.getSendButtonSelector());
-    if (sendButton && !sendButton.disabled) {
-      sendButton.click();
-    } else {
-      // 尝试 Enter 键发送
-      const input = this.findInputElement();
-      if (input) {
-        input.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter',
-          code: 'Enter',
-          bubbles: true
-        }));
-      }
+  _extractContent(element) {
+    if (!element) return "";
+    for (const sel of this.selectors.messageContent) {
+      const el = element.querySelector(sel);
+      if (el) return el.textContent.trim();
     }
+    return element.textContent?.trim() || "";
+  }
+
+  getConfig() {
+    return {
+      platformId: this.platformId,
+      selectors: this.selectors,
+      timeouts: { response: 60000, typing: 5000, input: 100 },
+    };
   }
 }
 
+export { SELECTORS };
 export default KimiAdapter;

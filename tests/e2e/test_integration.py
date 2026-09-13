@@ -463,7 +463,7 @@ class TestProjectStructure:
         base_path = os.path.join(os.path.dirname(__file__), "..", "..")
 
         required_dirs = [
-            "src/ai_collab/pack",
+            "ai_collab/pack",
             "products/prompt-pack-extension/chrome/src/content",
             "products/prompt-pack-extension/chrome/src/background",
             "products/prompt-pack-extension/chrome/src/popup",

@@ -1,5 +1,5 @@
 # 编辑Skill - v1.0 MVP核心模块
-# src/ai_collab/skills/editor_skill.py
+# ai_collab/skills/editor_skill.py
 
 """
 编辑Skill

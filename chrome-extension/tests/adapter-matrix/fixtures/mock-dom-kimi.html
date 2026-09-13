@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kimi AI</title>
+</head>
+<body>
+  <!-- Chat Input: Lexical editor -->
+  <div class="chat-input-editor" contenteditable="true" role="textbox">
+    <p>What is quantum computing?</p>
+  </div>
+
+  <!-- Fallback contenteditable -->
+  <div contenteditable="true" style="display:none;"></div>
+
+  <!-- Fallback textarea -->
+  <textarea style="display:none;"></textarea>
+
+  <!-- Send Button -->
+  <button type="submit" aria-label="发送消息" class="send-btn">
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Loading / Typing Indicator -->
+  <div class="loading" style="display:none;">
+    <span>思考中...</span>
+  </div>
+
+  <!-- Message List -->
+  <div class="chat-message">
+    <div class="chat-content">
+      <div class="prose"><p>你好，你是谁？</p></div>
+    </div>
+  </div>
+
+  <div class="chat-message">
+    <div class="chat-content">
+      <div class="prose"><p>我是 Kimi，一个 AI 助手。有什么可以帮你的？</p></div>
+    </div>
+  </div>
+
+  <div class="chat-message">
+    <div class="chat-content">
+      <div class="prose"><p>什么是量子计算？</p></div>
+    </div>
+  </div>
+
+  <!-- Additional message elements for fallback selector -->
+  <div class="message-item" style="display:none;">
+    <div class="content"><p>fallback message</p></div>
+  </div>
+</body>
+</html>

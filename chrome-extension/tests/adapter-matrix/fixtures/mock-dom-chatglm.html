@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ChatGLM (智谱清言)</title>
+</head>
+<body>
+  <!-- Chat Input: contenteditable div -->
+  <div contenteditable="true">
+    <p>解释一下深度学习</p>
+  </div>
+
+  <!-- Fallback textarea -->
+  <textarea style="display:none;"></textarea>
+
+  <!-- Fallback textbox role -->
+  <div role="textbox" style="display:none;"></div>
+
+  <!-- Send Button -->
+  <button type="submit" aria-label="发送消息" class="send-btn">
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Typing Indicator -->
+  <div class="loading" style="display:none;">
+    <span>生成中...</span>
+  </div>
+  <div class="typing-indicator" style="display:none;"></div>
+
+  <!-- Message List -->
+  <div class="chat-message">
+    <div class="chat-content">
+      <div class="message-text"><p>你好，智谱清言</p></div>
+    </div>
+  </div>
+
+  <div class="chat-message">
+    <div class="chat-content">
+      <div class="message-text"><p>你好！我是智谱清言，有什么可以帮你的？</p></div>
+    </div>
+  </div>
+
+  <div class="chat-message">
+    <div class="chat-content">
+      <div class="message-text"><p>解释一下深度学习</p></div>
+    </div>
+  </div>
+
+  <!-- Fallback selectors -->
+  <div class="response-item" style="display:none;">
+    <div class="content"><p>fallback</p></div>
+  </div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 # Prompt Pack MVP - 核心执行引擎
-# src/ai_collab/pack/pack_executor_mvp.py
+# ai_collab/pack/pack_executor_mvp.py
 
 """
 Prompt Pack MVP - 最小可用版本
@@ -11,9 +11,12 @@ Prompt Pack MVP - 最小可用版本
 3. 逐步完善 - 边用边改
 """
 
+import asyncio
 import json
 from datetime import datetime
 from typing import Any, Dict
+
+from ai_collab.engines.consensus_engine import ConsensusEngine
 
 
 class PackExecutorMVP:
@@ -154,6 +157,11 @@ class PackExecutorMVP:
         """执行生成步骤"""
         print("  ✨ 生成内容...")
 
+        # 检查是否配置了 ai_models，如果是则走共识引擎路径
+        ai_models = step.get("ai_models")
+        if ai_models:
+            return self._execute_generation_with_consensus(step)
+
         # MVP版本：基于模板生成
         template = step.get("template", "默认模板")
         _ = step.get("params", {})  # 保留参数获取以维持原有接口
@@ -187,6 +195,142 @@ class PackExecutorMVP:
             "step_type": "GENERATION",
             "outputs": {"content": generated_content, "length": len(generated_content)},
         }
+
+    def _execute_generation_with_consensus(self, step: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        使用共识引擎执行生成步骤
+
+        当 step 中配置了 ai_models 时，创建 ConsensusEngine 实例，
+        启用指定的 providers，调用 generate_consensus() 获取共识结果。
+
+        Args:
+            step: 步骤配置，必须包含 ai_models 字段
+
+        Returns:
+            步骤执行结果
+        """
+        print("  🤝 共识引擎生成...")
+        ai_models = step.get("ai_models", [])
+        consensus_config = step.get("consensus_config", {})
+
+        # 从配置中获取参数
+        timeout = consensus_config.get("timeout", 30.0) if isinstance(consensus_config, dict) else getattr(consensus_config, "timeout", 30.0)
+        fusion_strategy = consensus_config.get("fusion_strategy", "concat") if isinstance(consensus_config, dict) else getattr(consensus_config, "fusion_strategy", "concat")
+        min_providers = consensus_config.get("min_providers", 2) if isinstance(consensus_config, dict) else getattr(consensus_config, "min_providers", 2)
+
+        topic = self.context.get("topic", self.context.get("content", "通用主题"))
+        print(f"     - 主题: {topic}")
+        print(f"     - Providers: {ai_models}")
+        print(f"     - 融合策略: {fusion_strategy}")
+
+        try:
+            # 创建共识引擎并配置 providers
+            engine = ConsensusEngine()
+
+            # 禁用未指定的 providers
+            for name in list(engine.providers.keys()):
+                if name not in ai_models:
+                    engine.providers[name].enabled = False
+                else:
+                    engine.providers[name].enabled = True
+                    engine.providers[name].timeout = timeout
+
+            # 运行异步共识生成
+            loop = asyncio.new_event_loop()
+            try:
+                consensus_result = loop.run_until_complete(engine.generate_consensus(topic))
+            finally:
+                loop.close()
+
+            # 检查是否满足最少 provider 数量
+            source_count = len(consensus_result.get("sources", []))
+            if source_count < min_providers:
+                print(f"     - ⚠️ 响应数 ({source_count}) 低于最低要求 ({min_providers})")
+
+            # 根据融合策略处理结果
+            generated_content = self._apply_fusion_strategy(
+                consensus_result, fusion_strategy
+            )
+
+            self.context["generated_content"] = generated_content
+            self.context["consensus_result"] = consensus_result
+            print(f"     - 共识完成, 来源数: {source_count}")
+            print(f"     - 生成字数: {len(generated_content)}")
+
+            return {
+                "status": "success",
+                "step_type": "GENERATION",
+                "outputs": {
+                    "content": generated_content,
+                    "length": len(generated_content),
+                    "consensus": consensus_result,
+                    "mode": consensus_result.get("mode", "unknown"),
+                },
+            }
+
+        except Exception as e:
+            print(f"     - ⚠️ 共识引擎失败: {e}, 回退到模板生成")
+            # 回退到默认模板生成
+            generated_content = f"""
+# 生成内容（共识引擎回退）
+
+基于输入: {topic}
+
+注意: 共识引擎执行失败 ({type(e).__name__}), 已回退到模板生成。
+
+---
+生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+"""
+            self.context["generated_content"] = generated_content
+            return {
+                "status": "success",
+                "step_type": "GENERATION",
+                "outputs": {
+                    "content": generated_content,
+                    "length": len(generated_content),
+                    "fallback": True,
+                    "error": str(e),
+                },
+            }
+
+    def _apply_fusion_strategy(self, consensus_result: Dict[str, Any], strategy: str) -> str:
+        """
+        根据融合策略处理共识结果
+
+        Args:
+            consensus_result: 共识引擎返回的结果
+            strategy: 融合策略 (concat/best/weighted)
+
+        Returns:
+            融合后的内容字符串
+        """
+        sources = consensus_result.get("sources", [])
+        if not sources:
+            return consensus_result.get("consensus", "")
+
+        if strategy == "concat":
+            # 拼接所有来源的响应
+            return "\n\n---\n\n".join(s.get("response", "") for s in sources)
+
+        elif strategy == "best":
+            # 选择置信度最高的响应
+            best = max(sources, key=lambda s: s.get("confidence", 0))
+            return best.get("response", "")
+
+        elif strategy == "weighted":
+            # 按置信度加权拼接（置信度高的排在前面）
+            sorted_sources = sorted(
+                sources, key=lambda s: s.get("confidence", 0), reverse=True
+            )
+            parts = []
+            for s in sorted_sources:
+                weight = s.get("confidence", 0)
+                parts.append(f"[置信度: {weight:.2f}] {s.get('response', '')}")
+            return "\n\n---\n\n".join(parts)
+
+        else:
+            # 默认使用 concat
+            return consensus_result.get("consensus", "")
 
     def _execute_validation(self, step: Dict[str, Any]) -> Dict[str, Any]:
         """执行验证步骤"""

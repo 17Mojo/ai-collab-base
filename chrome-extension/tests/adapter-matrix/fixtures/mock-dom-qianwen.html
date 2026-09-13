@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Qianwen (千问)</title>
+</head>
+<body>
+  <!-- Chat Input: contenteditable div -->
+  <div contenteditable="true">
+    <p>帮我写一首诗</p>
+  </div>
+
+  <!-- Fallback textarea -->
+  <textarea style="display:none;"></textarea>
+
+  <!-- Send Button -->
+  <button aria-label="发送消息" title="发送" class="send-btn">
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Typing Indicator -->
+  <div class="loading" style="display:none;">
+    <span>思考中...</span>
+  </div>
+  <div class="generating" style="display:none;"></div>
+
+  <!-- Message List -->
+  <div class="chat-message-item">
+    <div class="message-content">
+      <div class="prose"><p>你好，千问</p></div>
+    </div>
+  </div>
+
+  <div class="chat-message-item">
+    <div class="message-content">
+      <div class="prose"><p>你好！我是通义千问，有什么可以帮你的？</p></div>
+    </div>
+  </div>
+
+  <div class="chat-item">
+    <div class="message-content">
+      <div class="prose"><p>帮我写一首诗</p></div>
+    </div>
+  </div>
+
+  <!-- Fallback response content -->
+  <div class="response-content" style="display:none;">
+    <div class="content"><p>fallback</p></div>
+  </div>
+</body>
+</html>

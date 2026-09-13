@@ -1,7 +1,15 @@
 {
+  "scripts": {
+    "build": "node build.js",
+    "build:sw": "BUILD_TARGET=service-worker npx vite build",
+    "build:cs": "BUILD_TARGET=content-script npx vite build",
+    "test:adapters": "node tests/adapter-matrix/adapter-test-runner.js"
+  },
   "devDependencies": {
     "@playwright/cli": "^0.1.8",
-    "playwright": "^1.59.1"
+    "jsdom": "^27.0.1",
+    "playwright": "^1.59.1",
+    "vite": "^6.4.3"
   },
   "dependencies": {
     "@playwright/test": "^1.59.1"

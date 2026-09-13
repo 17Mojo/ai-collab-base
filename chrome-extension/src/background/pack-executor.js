@@ -7,21 +7,21 @@
  * Runtime Override 白名单 (prompt-pack-runtime-style Requirement 2)
  */
 const ALLOWED_OVERRIDE_KEYS = [
-  'user_query',
-  'context_injection',
-  'platform_selection',
-  'model_preference'
+  "user_query",
+  "context_injection",
+  "platform_selection",
+  "model_preference",
 ];
 
 /**
  * 执行状态枚举
  */
 const ExecutionStatus = {
-  IDLE: 'idle',
-  RUNNING: 'running',
-  PAUSED: 'paused',
-  COMPLETED: 'completed',
-  FAILED: 'failed'
+  IDLE: "idle",
+  RUNNING: "running",
+  PAUSED: "paused",
+  COMPLETED: "completed",
+  FAILED: "failed",
 };
 
 /**
@@ -35,7 +35,7 @@ class RegexMatcher {
    * @param {string} flags - 正则标志 (i, m, g)
    * @returns {Object} { matched, extracts, fullMatch }
    */
-  static match(pattern, text, flags = '') {
+  static match(pattern, text, flags = "") {
     try {
       // 处理命名捕获组
       const regex = new RegExp(pattern, flags);
@@ -52,11 +52,16 @@ class RegexMatcher {
         matched: true,
         extracts,
         fullMatch: match[0],
-        index: match.index
+        index: match.index,
       };
     } catch (error) {
-      console.error('RegexMatcher.match error:', error);
-      return { matched: false, extracts: {}, fullMatch: null, error: error.message };
+      console.error("RegexMatcher.match error:", error);
+      return {
+        matched: false,
+        extracts: {},
+        fullMatch: null,
+        error: error.message,
+      };
     }
   }
 
@@ -67,19 +72,19 @@ class RegexMatcher {
    * @param {string} flags - 正则标志 (默认包含 g)
    * @returns {Array<Object>} 匹配结果数组
    */
-  static matchAll(pattern, text, flags = 'g') {
+  static matchAll(pattern, text, flags = "g") {
     try {
       const regex = new RegExp(pattern, flags);
       const matches = [...text.matchAll(regex)];
 
-      return matches.map(match => ({
+      return matches.map((match) => ({
         matched: true,
         extracts: match.groups || {},
         fullMatch: match[0],
-        index: match.index
+        index: match.index,
       }));
     } catch (error) {
-      console.error('RegexMatcher.matchAll error:', error);
+      console.error("RegexMatcher.matchAll error:", error);
       return [];
     }
   }
@@ -102,38 +107,41 @@ class BranchEvaluator {
     let extracts = {};
 
     switch (branch.condition_type) {
-      case 'regex_match':
+      case "regex_match":
         if (branch.regex_config) {
           const result = RegexMatcher.match(
             branch.regex_config.pattern,
             String(targetValue),
-            branch.regex_config.flags || ''
+            branch.regex_config.flags || "",
           );
           matched = result.matched;
           extracts = result.extracts;
         }
         break;
 
-      case 'contains':
+      case "contains":
         matched = String(targetValue).includes(branch.condition_value);
         break;
 
-      case 'equals':
+      case "equals":
         matched = String(targetValue) === branch.condition_value;
         break;
 
-      case 'exists':
-        matched = targetValue !== null && targetValue !== undefined && String(targetValue) !== '';
+      case "exists":
+        matched =
+          targetValue !== null &&
+          targetValue !== undefined &&
+          String(targetValue) !== "";
         break;
 
-      case 'threshold':
+      case "threshold":
         const numValue = parseFloat(targetValue);
         const threshold = branch.threshold_value || 0;
         matched = !isNaN(numValue) && numValue >= threshold;
         break;
 
       default:
-        console.warn('Unknown condition_type:', branch.condition_type);
+        console.warn("Unknown condition_type:", branch.condition_type);
         matched = false;
     }
 
@@ -145,7 +153,7 @@ class BranchEvaluator {
     return {
       matched,
       targetStep: matched ? branch.target_step : null,
-      extracts
+      extracts,
     };
   }
 
@@ -157,18 +165,18 @@ class BranchEvaluator {
    */
   static _getTargetValue(targetField, execution) {
     switch (targetField) {
-      case 'output':
+      case "output":
         return execution.output || {};
-      case 'input':
+      case "input":
         return execution.input || {};
-      case 'context':
+      case "context":
         return execution.context || {};
-      case 'last_step_output':
+      case "last_step_output":
         const lastStep = execution.steps[execution.steps.length - 1];
         return lastStep?.output || null;
       default:
         // 支持嵌套字段访问 (如: output.data)
-        const parts = targetField.split('.');
+        const parts = targetField.split(".");
         let value = execution;
         for (const part of parts) {
           value = value?.[part];
@@ -194,7 +202,7 @@ class PackExecutor {
       maxRetries: 3,
       retryDelay: 1000,
       timeout: 60000,
-      ...options
+      ...options,
     };
   }
 
@@ -214,13 +222,18 @@ class PackExecutor {
         validOverrides[key] = value;
       } else {
         invalidKeys.push(key);
-        warnings.push(`Invalid runtime_override key: '${key}' - not in whitelist`);
+        warnings.push(
+          `Invalid runtime_override key: '${key}' - not in whitelist`,
+        );
       }
     }
 
     // 记录验证警告 (prompt-pack-runtime-style: "SHALL log validation warnings for audit")
     if (warnings.length > 0) {
-      console.warn('[PackExecutor] Runtime override validation warnings:', warnings);
+      console.warn(
+        "[PackExecutor] Runtime override validation warnings:",
+        warnings,
+      );
     }
 
     return validOverrides;
@@ -232,7 +245,7 @@ class PackExecutor {
    */
   loadPack(pack) {
     if (!pack.metadata || !pack.metadata.pack_id) {
-      throw new Error('Invalid pack: missing metadata or pack_id');
+      throw new Error("Invalid pack: missing metadata or pack_id");
     }
     this.packs.set(pack.metadata.pack_id, pack);
   }
@@ -264,14 +277,14 @@ class PackExecutor {
     const execution = {
       packId,
       input,
-      runtime_overrides: validatedOverrides,  // 存储验证后的合法 overrides
+      runtime_overrides: validatedOverrides, // 存储验证后的合法 overrides
       startTime: Date.now(),
       status: ExecutionStatus.RUNNING,
       steps: [],
       output: {},
       errors: [],
-      extractedData: {},  // 存储正则提取的数据
-      stepIndex: new Map()  // 步骤 ID 到索引的映射
+      extractedData: {}, // 存储正则提取的数据
+      stepIndex: new Map(), // 步骤 ID 到索引的映射
     };
 
     this.currentExecution = execution;
@@ -288,7 +301,9 @@ class PackExecutor {
       }
 
       // 检查是否有分支逻辑
-      const hasBranches = steps.some(step => step.branches && step.branches.length > 0);
+      const hasBranches = steps.some(
+        (step) => step.branches && step.branches.length > 0,
+      );
 
       if (hasBranches) {
         // 使用分支执行流程
@@ -309,14 +324,13 @@ class PackExecutor {
       execution.status = ExecutionStatus.COMPLETED;
       execution.endTime = Date.now();
       execution.duration = execution.endTime - execution.startTime;
-
     } catch (error) {
       execution.status = ExecutionStatus.FAILED;
       execution.endTime = Date.now();
       execution.duration = execution.endTime - execution.startTime;
       execution.errors.push({
         message: error.message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
@@ -336,14 +350,19 @@ class PackExecutor {
   async _executeWorkflowWithBranching(steps, execution) {
     let currentStepIndex = 0;
     const executedSteps = new Set();
-    const maxIterations = steps.length * 3;  // 防止无限循环
+    const maxIterations = steps.length * 3; // 防止无限循环
 
-    while (currentStepIndex < steps.length && executedSteps.size < maxIterations) {
+    while (
+      currentStepIndex < steps.length &&
+      executedSteps.size < maxIterations
+    ) {
       const step = steps[currentStepIndex];
 
       // 检查是否已执行过 (防止重复执行)
       if (executedSteps.has(step.id)) {
-        console.warn(`Step ${step.id} already executed, skipping to prevent loop`);
+        console.warn(
+          `Step ${step.id} already executed, skipping to prevent loop`,
+        );
         currentStepIndex++;
         continue;
       }
@@ -370,7 +389,7 @@ class PackExecutor {
       // 确定下一步
       const nextStepId = this._determineNextStep(step, execution);
 
-      if (nextStepId === 'end') {
+      if (nextStepId === "end") {
         // 明确结束
         break;
       }
@@ -381,7 +400,9 @@ class PackExecutor {
         if (nextIndex !== undefined) {
           currentStepIndex = nextIndex;
         } else {
-          console.warn(`Target step ${nextStepId} not found, continuing sequentially`);
+          console.warn(
+            `Target step ${nextStepId} not found, continuing sequentially`,
+          );
           currentStepIndex++;
         }
       } else {
@@ -391,10 +412,10 @@ class PackExecutor {
     }
 
     if (executedSteps.size >= maxIterations) {
-      console.warn('Max iterations reached, potential infinite loop detected');
+      console.warn("Max iterations reached, potential infinite loop detected");
       execution.errors.push({
-        message: 'Max iterations reached',
-        timestamp: Date.now()
+        message: "Max iterations reached",
+        timestamp: Date.now(),
       });
     }
   }
@@ -419,7 +440,10 @@ class PackExecutor {
         if (result.matched) {
           // 存储提取的数据
           if (result.extracts && Object.keys(result.extracts).length > 0) {
-            execution.extractedData = { ...execution.extractedData, ...result.extracts };
+            execution.extractedData = {
+              ...execution.extractedData,
+              ...result.extracts,
+            };
           }
 
           return result.targetStep;
@@ -445,16 +469,16 @@ class PackExecutor {
       startTime: Date.now(),
       success: false,
       output: null,
-      error: null
+      error: null,
     };
 
     try {
       switch (step.type) {
-        case 'local':
+        case "local":
           stepResult.output = await this._executeLocalStep(step, execution);
           break;
 
-        case 'ai':
+        case "ai":
           stepResult.output = await this._executeAIStep(step, execution);
           break;
 
@@ -463,7 +487,6 @@ class PackExecutor {
       }
 
       stepResult.success = true;
-
     } catch (error) {
       stepResult.error = error.message;
 
@@ -495,9 +518,9 @@ class PackExecutor {
    */
   async _executeStepByType(step, execution) {
     switch (step.type) {
-      case 'local':
+      case "local":
         return this._executeLocalStep(step, execution);
-      case 'ai':
+      case "ai":
         return this._executeAIStep(step, execution);
       default:
         throw new Error(`Unknown step type: ${step.type}`);
@@ -522,7 +545,7 @@ class PackExecutor {
     }
 
     // 简单的数据处理逻辑
-    if (config.operation === 'merge') {
+    if (config.operation === "merge") {
       return { ...inputData };
     }
 
@@ -545,9 +568,9 @@ class PackExecutor {
 
     // 发送消息到 content script
     const response = await chrome.runtime.sendMessage({
-      type: 'SEND_TO_AI',
+      type: "SEND_TO_AI",
       prompt,
-      config
+      config,
     });
 
     return response;
@@ -560,7 +583,7 @@ class PackExecutor {
    * @returns {string}
    */
   _buildPrompt(step, execution) {
-    const template = step.prompt_template || '';
+    const template = step.prompt_template || "";
     const input = execution.input;
     const overrides = execution.runtime_overrides || {};
 
@@ -570,14 +593,14 @@ class PackExecutor {
     // 1. 替换 runtime_overrides 字段 (白名单约束)
     for (const key of ALLOWED_OVERRIDE_KEYS) {
       if (overrides[key] !== undefined) {
-        prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), overrides[key]);
+        prompt = prompt.replace(new RegExp(`{{${key}}}`, "g"), overrides[key]);
       }
     }
 
     // 2. 替换其他 input 字段 (向后兼容)
     for (const [key, value] of Object.entries(input)) {
-      if (key !== 'runtime_overrides') {
-        prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
+      if (key !== "runtime_overrides") {
+        prompt = prompt.replace(new RegExp(`{{${key}}}`, "g"), value);
       }
     }
 
@@ -590,7 +613,7 @@ class PackExecutor {
    * @returns {Promise<void>}
    */
   _delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -600,14 +623,17 @@ class PackExecutor {
   getStatus() {
     return {
       status: this.status,
-      currentExecution: this.currentExecution ? {
-        packId: this.currentExecution.packId,
-        startTime: this.currentExecution.startTime,
-        stepsCompleted: this.currentExecution.steps.filter(s => s.success).length,
-        stepsTotal: this.currentExecution.steps.length
-      } : null,
+      currentExecution: this.currentExecution
+        ? {
+            packId: this.currentExecution.packId,
+            startTime: this.currentExecution.startTime,
+            stepsCompleted: this.currentExecution.steps.filter((s) => s.success)
+              .length,
+            stepsTotal: this.currentExecution.steps.length,
+          }
+        : null,
       historyCount: this.executionHistory.length,
-      loadedPacks: Array.from(this.packs.keys())
+      loadedPacks: Array.from(this.packs.keys()),
     };
   }
 

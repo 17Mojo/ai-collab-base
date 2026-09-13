@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Yiyan (文心一言)</title>
+</head>
+<body>
+  <!-- Chat Input: textarea with ci-textarea class -->
+  <textarea class="ci-textarea" placeholder="请输入你的问题...">推荐一本好书</textarea>
+
+  <!-- Fallback textarea -->
+  <textarea style="display:none;"></textarea>
+
+  <!-- Fallback contenteditable -->
+  <div contenteditable="true" style="display:none;"></div>
+
+  <!-- Fallback textbox role -->
+  <div role="textbox" style="display:none;"></div>
+
+  <!-- Fallback input -->
+  <input type="text" style="display:none;" />
+
+  <!-- Send Button -->
+  <button type="submit" aria-label="发送" class="send-btn" data-send>
+    <svg><!-- send icon --></svg>
+  </button>
+
+  <!-- Typing Indicator -->
+  <div class="loading" style="display:none;">
+    <span>生成中...</span>
+  </div>
+  <div class="spinner" style="display:none;"></div>
+
+  <!-- Message List -->
+  <div class="chat-message">
+    <div class="answer-content">
+      <div class="prose"><p>你好，文心一言</p></div>
+    </div>
+  </div>
+
+  <div class="chat-message">
+    <div class="answer-content">
+      <div class="prose"><p>你好！我是文心一言，很高兴为你服务。</p></div>
+    </div>
+  </div>
+
+  <div class="chat-item">
+    <div class="answer-content">
+      <div class="prose"><p>推荐一本好书</p></div>
+    </div>
+  </div>
+
+  <!-- Fallback selectors -->
+  <div class="response-item" style="display:none;">
+    <div class="content"><p>fallback</p></div>
+  </div>
+</body>
+</html>
