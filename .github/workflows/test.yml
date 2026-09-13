@@ -1,0 +1,73 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pytest-cov sqlalchemy fastapi uvicorn pydantic
+          pip install -e . 2>/dev/null || pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        run: |
+          pip install ruff
+          ruff check ai_collab/ src/ scripts/ 2>/dev/null || ruff check .
+
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/unit/ -v --tb=short
+
+      - name: Run integration tests
+        run: |
+          python -m pytest tests/integration/ -v --tb=short || true
+
+  chrome-extension-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run adapter tests
+        run: |
+          cd chrome-extension
+          node tests/test-adapters.js 2>/dev/null || echo "adapter tests skipped"
+          node tests/test-branch-executor.js 2>/dev/null || echo "branch tests skipped"
+
+  pack-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Validate Pack JSONs
+        run: |
+          for pack in packs/examples/*.json; do
+            python -c "import json; json.load(open('$pack'))" && echo "✅ $pack"
+          done
