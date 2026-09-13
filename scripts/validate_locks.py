@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 
-VALID_STATUSES = {"planning", "implementing", "testing", "completed", "cancelled", "paused"}
+VALID_STATUSES = {"planning", "implementing", "testing", "completed", "cancelled"}
 HEADER = "| 状态 | owner | task | start | note |"
 DIVIDER = "|---|---|---|---|---|"
 ROW_RE = re.compile(r"^\|\s*`?([a-zA-Z]+)`?\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|\s*(\S+)\s*\|\s*(.*?)\s*\|$")
@@ -37,7 +37,7 @@ def validate(path: Path) -> int:
             continue
         status = m.group(1).lower()
         if status not in VALID_STATUSES:
-            print(f"unknown status '{m.group(1)}'", file=sys.stderr)
+            print(f"unknown status '{m.group(1).upper()}'")
             rc = 1
     if rc == 0:
         print("[OK] lock validation passed")

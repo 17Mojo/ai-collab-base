@@ -6,44 +6,72 @@ import sys
 from pathlib import Path
 
 
-def main() -> int:
+REQUIRED_FILES = [
+    "collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md",
+    "collaboration/COLLABORATION_GUIDELINES.md",
+    "collaboration/PROTOCOL.md",
+    "rules/AI-COLLABORATION-STANDARDS.md",
+]
+
+
+def main():
     p = argparse.ArgumentParser()
     p.add_argument("--workspace", required=True)
+    p.add_argument("--with-locks", action="store_true")
+    p.add_argument("--lock-files", nargs="*", default=[])
     p.add_argument("--report")
-    p.add_argument("--strict", action="store_true")
     args = p.parse_args()
 
-    issues = []
     workspace = Path(args.workspace)
+    issues = []
 
-    # Check governance file exists
-    required_files = [
-        "collaboration/PROTOCOL.md",
-        "collaboration/COLLABORATION_GUIDELINES.md",
-        "rules/AI-OP.md",
-    ]
-
-    for f in required_files:
+    # Check required files
+    for f in REQUIRED_FILES:
         if not (workspace / f).exists():
-            issues.append(f"missing required file: {f}")
+            issues.append({"kind": "missing_file", "path": f})
 
-    # Check AI collaboration references
-    agents_file = workspace / "rules" / "OWNERSHIP.md"
+    # Check agents reference file references all required files
+    agents_file = workspace / "AGENTS.md"
     if not agents_file.exists():
-        issues.append("missing agents reference file: rules/OWNERSHIP.md")
+        issues.append({"kind": "missing_agents_reference", "path": "AGENTS.md"})
+    else:
+        # Verify AGENTS.md references all required files
+        refs = [l.strip() for l in agents_file.read_text().splitlines() if l.strip()]
+        missing = [f for f in REQUIRED_FILES if f not in refs]
+        if missing:
+            issues.append({
+                "kind": "missing_agents_reference",
+                "path": "AGENTS.md",
+                "missing_refs": missing,
+            })
 
-    rc = 1 if issues else 0
-    result = {"passed": rc == 0, "issues": issues}
-
-    if args.report:
-        Path(args.report).write_text(json.dumps(result, indent=2))
+    # Check lock files if requested
+    if args.with_locks:
+        for lock_file in args.lock_files:
+            if not (workspace / lock_file).exists():
+                issues.append({"kind": "missing_lock_file", "path": lock_file})
 
     if issues:
-        print(json.dumps(result, indent=2))
-    else:
-        print("[OK] governance validation passed")
+        for issue in issues:
+            if issue["kind"] == "missing_file":
+                print(f"missing required governance file: {issue['path']}")
+            elif issue["kind"] == "missing_agents_reference":
+                # Check if AGENTS.md has enough refs
+                agents_file = workspace / "AGENTS.md"
+                if agents_file.exists():
+                    refs = [l for l in agents_file.read_text().splitlines() if l.strip()]
+                    if len(refs) < 3:
+                        print("missing required collaboration reference")
+                else:
+                    print("missing required collaboration reference")
+            elif issue["kind"] == "missing_lock_file":
+                print(f"missing required lock file: {issue['path']}")
+            else:
+                print(f"issue: {issue}")
+        return 1
 
-    return rc
+    print("[OK] collaboration governance validation passed")
+    return 0
 
 
 if __name__ == "__main__":

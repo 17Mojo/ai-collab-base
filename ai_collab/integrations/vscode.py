@@ -10,6 +10,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
+# 向上查找工作区标记的最大层数（避免误命中上层无关目录）
+MAX_WORKSPACE_SEARCH_DEPTH = 3
+
+
 class VSCodeIntegration:
     """VSCode 集成辅助类"""
 
@@ -41,22 +45,32 @@ class VSCodeIntegration:
         Returns:
             工作区路径，如果找不到则返回 None
         """
-        # 通过环境变量获取工作区路径
+        # 优先通过环境变量获取工作区路径
         workspace = os.environ.get("VSCODE_CWD")
         if workspace and VSCodeIntegration._is_valid_workspace(workspace):
             return os.path.abspath(workspace)
 
-        # 尝试从 .vscode 目录定位
-        cwd = os.path.abspath(os.getcwd())
-        if cwd:
-            # 向上查找包含 .vscode 或 package.json 的目录
-            path = cwd
-            while path and path != os.path.dirname(path):
-                if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(
-                    os.path.join(path, "package.json")
-                ):
-                    return path
-                path = os.path.dirname(path)
+        # 检查 cwd 自身是否有 .vscode 或 package.json
+        try:
+            cwd = os.path.abspath(os.getcwd())
+        except (FileNotFoundError, OSError):
+            return None
+
+        if not cwd:
+            return None
+
+        # 向上查找工作区标记（.vscode / package.json），最多向上 MAX_WORKSPACE_SEARCH_DEPTH 层
+        # 深度限制用于避免误命中文件系统上层无关目录（如工具在 HOME 写入的 .vscode）
+        path = cwd
+        for _ in range(MAX_WORKSPACE_SEARCH_DEPTH + 1):
+            if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(
+                os.path.join(path, "package.json")
+            ):
+                return path
+            parent = os.path.dirname(path)
+            if parent == path:
+                break
+            path = parent
 
         return cwd
 
