@@ -294,6 +294,106 @@ export AI_INTEGRATION_MODE_NOTEBOOKLM=real
 - `fallback` 模式需记录回退原因与时间，支持健康检查与门禁统计。
 - 无效 mode 值必须显式报错，禁止静默降级。
 
+### 1.5 AI-Pair 多 Provider 审查融合 (v2.1)
+
+**来源**: [AI-Pair (axtonliu/ai-pair)](https://github.com/axtonliu/ai-pair) - 335 stars 的 Claude Code Skill
+
+**融合日期**: 2026-08-09
+
+#### 架构变化
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AI-Pair 融合架构                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌───────────────────┐      ┌───────────────────┐              │
+│  │  AI-Pair Skill    │      │  ConsensusEngine  │              │
+│  │  (审查工作流)      │─────►│  (多 Provider)    │              │
+│  ├───────────────────┤      ├───────────────────┤              │
+│  │ • 自动模式        │      │ • Claude          │              │
+│  │ • 半自动模式      │      │ • Codex (新增)    │              │
+│  │ • 手动模式        │      │ • Cursor (新增)   │              │
+│  └───────────────────┘      │ • Copilot (新增)  │              │
+│           │                 │ • Gemini          │              │
+│           ▼                 │ • DeepSeek        │              │
+│  ┌───────────────────┐      │ • Kimi            │              │
+│  │  Quality Guard    │      │ • Qianwen         │              │
+│  │  (质量防护)        │      └───────────────────┘              │
+│  ├───────────────────┤                                         │
+│  │ • 危险模式检测    │      ┌───────────────────┐              │
+│  │ • 审查陷阱检测    │      │  SemiAutoCtrl     │              │
+│  │ • 质量门禁        │◄─────│  (半自动控制)      │              │
+│  └───────────────────┘      ├───────────────────┤              │
+│                             │ Plan → Approve →  │              │
+│                             │ Execute           │              │
+│                             └───────────────────┘              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 新增模块
+
+| 模块 | 路径 | 功能 |
+| --- | --- | --- |
+| AI-Pair Skill | `ai_collab/skills/ai_pair_review_skill.py` | 多 Provider 代码审查 |
+| SKILL.md 加载器 | `ai_collab/skills/skill_md_loader.py` | 兼容 AI-Pair Skill 格式 |
+| 质量防护 | `ai_collab/quality/after_edit_check.py` | 编辑后检查 |
+| 审查防护 | `ai_collab/quality/review_guard.py` | 审查质量门禁 |
+| Provider 抽象层 | `ai_collab/engines/providers/base_provider.py` | 统一 Provider 接口 |
+| Provider 注册表 | `ai_collab/engines/providers/provider_registry.py` | 动态 Provider 管理 |
+| Codex Provider | `ai_collab/engines/providers/codex_provider.py` | OpenAI Codex |
+| Cursor Provider | `ai_collab/engines/providers/cursor_provider.py` | Cursor IDE |
+| Copilot Provider | `ai_collab/engines/providers/copilot_provider.py` | GitHub Copilot |
+| 半自动控制器 | `ai_collab/workflow/semi_auto_controller.py` | Plan→Approve→Execute |
+
+#### 审查模式
+
+| 模式 | 流程 | 适用场景 |
+|------|------|----------|
+| `auto` | 直接执行审查并返回结果 | 快速审查、CI/CD |
+| `semi-auto` | Plan → 用户确认 → Execute | 重要代码变更 |
+| `manual` | 仅生成审查计划 | 审查前评估 |
+
+#### Schema 扩展
+
+`ai_collab/pack/schema_v2.py` 新增 `ReviewWorkflow` 数据类：
+
+```python
+@dataclass
+class ReviewWorkflow:
+    """审查工作流配置 - 融合 AI-Pair 的审查模式"""
+    mode: str = "auto"              # auto / semi-auto / manual
+    providers: List[str]            # 审查 Provider 列表
+    timeout: float = 60.0           # 单个 Provider 超时(秒)
+    min_providers: int = 2          # 最少成功响应数
+    require_approval: bool = True   # 半自动模式是否需要确认
+    quality_gates: List[str]        # 质量门禁
+    output_format: str = "markdown" # 输出格式
+    fusion_strategy: str = "concat" # 融合策略
+```
+
+`WorkflowStep` 新增字段：
+
+```python
+review_workflow: Optional[ReviewWorkflow] = None  # 审查工作流配置
+```
+
+#### Provider 统一接口
+
+```python
+class AIProvider(ABC):
+    """统一的 Provider 接口"""
+    async def generate(self, prompt: str, **kwargs) -> ProviderResponse
+    async def review(self, code: str, context: str = "", **kwargs) -> ReviewResult
+    async def check_availability(self) -> bool
+    async def safe_generate(self, prompt: str, **kwargs) -> ProviderResponse  # 带重试
+```
+
+#### 测试覆盖
+
+- 34 个单元测试全部通过
+- 覆盖：ReviewConfig、ReviewMode、CodeQualityGuard、SkillMdLoader、ProviderRegistry、ReviewWorkflow、ExecutionPlan、SemiAutoController、AfterEditCheck、ReviewGuard
+
 ## 二、数据流设计
 
 ### 2.1 Pack 生命周期
@@ -1286,8 +1386,8 @@ FastAPI 本地     →    Cloudflare Workers
 
 ---
 
-**文档版本**: v2.0 (Local-First)
+**文档版本**: v2.1 (AI-Pair 融合)
 **创建日期**: 2026-02-26
 **作者**: Claude Code
-**更新日期**: 2026-02-26
-**状态**: 🟢 本地优先架构设计完成
+**更新日期**: 2026-08-09
+**状态**: 🟢 AI-Pair 多 Provider 审查融合完成

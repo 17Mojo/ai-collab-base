@@ -1,9 +1,13 @@
 function makePack(overrides = {}) {
   const packId = overrides.packId || 'pack-default';
+  const packName = overrides.packName || `Pack ${packId}`;
   return {
+    id: packId,
+    name: packName,
+    description: overrides.description || 'Mock pack for Playwright runtime tests',
     metadata: {
       pack_id: packId,
-      pack_name: overrides.packName || `Pack ${packId}`,
+      pack_name: packName,
       version: overrides.version || '1.0.0',
       description: overrides.description || 'Mock pack for Playwright runtime tests',
       category: overrides.category || 'test',
@@ -80,19 +84,32 @@ async function installChromeHostMock(page, options = {}) {
         }
 
         if (!keys) {
-          return { activePack: state.activePack };
+          return { activePack: state.activePack, packs: state.packs };
         }
 
-        if (Array.isArray(keys) && keys.includes('activePack')) {
-          return { activePack: state.activePack };
+        const result = {};
+
+        if (Array.isArray(keys)) {
+          if (keys.includes('activePack')) result.activePack = state.activePack;
+          if (keys.includes('packs')) result.packs = state.packs;
+          return result;
         }
 
-        if (typeof keys === 'string' && keys === 'activePack') {
-          return { activePack: state.activePack };
+        if (typeof keys === 'string') {
+          if (keys === 'activePack') return { activePack: state.activePack };
+          if (keys === 'packs') return { packs: state.packs };
+          if (keys === 'promptPackSettings') return { promptPackSettings: state.promptPackSettings || null };
+          return {};
         }
 
-        if (typeof keys === 'object' && Object.prototype.hasOwnProperty.call(keys, 'activePack')) {
-          return { activePack: state.activePack ?? keys.activePack };
+        if (typeof keys === 'object') {
+          if (Object.prototype.hasOwnProperty.call(keys, 'activePack')) {
+            result.activePack = state.activePack ?? keys.activePack;
+          }
+          if (Object.prototype.hasOwnProperty.call(keys, 'packs')) {
+            result.packs = state.packs ?? keys.packs;
+          }
+          return result;
         }
 
         return {};
@@ -101,6 +118,12 @@ async function installChromeHostMock(page, options = {}) {
       async set(items) {
         if (items && Object.prototype.hasOwnProperty.call(items, 'activePack')) {
           state.activePack = items.activePack;
+        }
+        if (items && Object.prototype.hasOwnProperty.call(items, 'packs')) {
+          state.packs = items.packs;
+        }
+        if (items && Object.prototype.hasOwnProperty.call(items, 'promptPackSettings')) {
+          state.promptPackSettings = items.promptPackSettings;
         }
       },
     };
@@ -113,9 +136,35 @@ async function installChromeHostMock(page, options = {}) {
           return fail(runtimeBehavior.forceFailure);
         }
 
-        switch (message.action) {
+        // 支持 message.type（popup.js 协议）和 message.action（旧协议）
+        const action = message.type || message.action;
+
+        switch (action) {
           case 'listPacks':
-            return ok(state.packs);
+          case 'GET_ALL_PACKS':
+            return { packs: state.packs };
+
+          case 'REFRESH_PACKS':
+            return { success: true, packs: state.packs };
+
+          case 'EXECUTE_PACK':
+            return { success: true, result: { completed: true } };
+
+          case 'GENERATE_STUDIO_ARTIFACTS':
+            return {
+              success: true,
+              artifacts: [
+                { success: true, content_type: 'audio', mode: 'mock', download_url: '' },
+              ],
+            };
+
+          case 'CREATE_PACK':
+          case 'UPDATE_PACK':
+          case 'DELETE_PACK':
+          case 'EXPORT_PACKS':
+          case 'IMPORT_PACKS':
+          case 'SETTINGS_UPDATED':
+            return { success: true };
 
           case 'loadPack': {
             const pack = state.packs.find((item) => item.metadata.pack_id === message?.data?.packId);
@@ -208,7 +257,7 @@ async function installChromeHostMock(page, options = {}) {
     };
 
     globalThis.chrome = {
-      storage: { local: storageLocal },
+      storage: { local: storageLocal, sync: storageLocal },
       runtime,
       tabs,
     };

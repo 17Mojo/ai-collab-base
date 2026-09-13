@@ -15,6 +15,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_
 
 from app.api import (
     consensus,
+    context,
     executor,
     health,
     notebooklm,
@@ -211,6 +212,7 @@ app.include_router(
 app.include_router(
     notebooklm_sync.router, prefix="/api/notebooklm/sync", tags=["NotebookLM Knowledge Sync"]
 )
+app.include_router(context.router)
 
 
 @app.get("/")

@@ -100,118 +100,118 @@
   </style>
 </head>
 <body>
-  <h1>⚙️ Prompt Pack 设置</h1>
+  <h1 data-testid="settings-title">⚙️ Prompt Pack 设置</h1>
 
   <!-- 平台开关 -->
-  <div class="setting-group">
+  <div class="setting-group" data-testid="platform-group">
     <h2>平台启用</h2>
     <div class="setting-item">
       <label>Claude.ai</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-claude" checked>
+        <input type="checkbox" id="platform-claude" data-testid="platform-claude" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>ChatGPT</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-chatgpt" checked>
+        <input type="checkbox" id="platform-chatgpt" data-testid="platform-chatgpt" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>Gemini</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-gemini" checked>
+        <input type="checkbox" id="platform-gemini" data-testid="platform-gemini" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>Kimi (月之暗面)</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-kimi" checked>
+        <input type="checkbox" id="platform-kimi" data-testid="platform-kimi" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>千问 (阿里云)</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-qianwen" checked>
+        <input type="checkbox" id="platform-qianwen" data-testid="platform-qianwen" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>ChatGLM (智谱AI)</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-chatglm" checked>
+        <input type="checkbox" id="platform-chatglm" data-testid="platform-chatglm" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>LongCat AI</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-longcat" checked>
+        <input type="checkbox" id="platform-longcat" data-testid="platform-longcat" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>腾讯元宝</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-yuanbao" checked>
+        <input type="checkbox" id="platform-yuanbao" data-testid="platform-yuanbao" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>文心一言</label>
       <label class="toggle">
-        <input type="checkbox" id="platform-yiyan" checked>
+        <input type="checkbox" id="platform-yiyan" data-testid="platform-yiyan" checked>
         <span class="slider"></span>
       </label>
     </div>
   </div>
 
   <!-- 执行设置 -->
-  <div class="setting-group">
+  <div class="setting-group" data-testid="execution-group">
     <h2>执行设置</h2>
     <div class="setting-item">
       <label>执行超时 (秒)</label>
-      <input type="number" id="timeout" value="60" min="10" max="300">
+      <input type="number" id="timeout" data-testid="timeout" value="60" min="10" max="300">
     </div>
     <div class="setting-item">
       <label>重试次数</label>
-      <input type="number" id="retries" value="3" min="0" max="10">
+      <input type="number" id="retries" data-testid="retries" value="3" min="0" max="10">
     </div>
     <div class="setting-item">
       <label>重试延迟 (毫秒)</label>
-      <input type="number" id="retry-delay" value="1000" min="100" max="5000">
+      <input type="number" id="retry-delay" data-testid="retry-delay" value="1000" min="100" max="5000">
     </div>
   </div>
 
   <!-- 日志设置 -->
-  <div class="setting-group">
+  <div class="setting-group" data-testid="logging-group">
     <h2>日志设置</h2>
     <div class="setting-item">
       <label>启用日志</label>
       <label class="toggle">
-        <input type="checkbox" id="logging-enabled" checked>
+        <input type="checkbox" id="logging-enabled" data-testid="logging-enabled" checked>
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-item">
       <label>详细日志</label>
       <label class="toggle">
-        <input type="checkbox" id="verbose-logging">
+        <input type="checkbox" id="verbose-logging" data-testid="verbose-logging">
         <span class="slider"></span>
       </label>
     </div>
   </div>
 
   <!-- 风格管理 -->
-  <div class="setting-group">
+  <div class="setting-group" data-testid="style-group">
     <h2>风格管理</h2>
     <div class="setting-item">
       <label>打开风格编辑器</label>
-      <button id="openStyleEditorBtn" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">打开</button>
+      <button id="openStyleEditorBtn" data-testid="open-style-editor" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">打开</button>
     </div>
     <p style="font-size: 12px; color: #888; margin-top: 8px;">
       创建、编辑自定义灵魂注入风格
@@ -219,19 +219,19 @@
   </div>
 
   <!-- Pack 管理 -->
-  <div class="setting-group">
+  <div class="setting-group" data-testid="pack-group">
     <h2>Pack 管理</h2>
     <div class="setting-item">
       <label>打开 Pack 编辑器</label>
-      <button id="openPackEditorBtn" style="padding: 8px 16px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer;">打开</button>
+      <button id="openPackEditorBtn" data-testid="open-pack-editor" style="padding: 8px 16px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer;">打开</button>
     </div>
     <p style="font-size: 12px; color: #888; margin-top: 8px;">
       创建、编辑、导入导出 Pack
     </p>
   </div>
 
-  <button class="save-btn" id="save-btn">保存设置</button>
-  <div class="status" id="status"></div>
+  <button class="save-btn" id="save-btn" data-testid="save-btn">保存设置</button>
+  <div class="status" id="status" data-testid="settings-status"></div>
 
   <script src="settings.js"></script>
 </body>

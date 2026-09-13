@@ -124,6 +124,147 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true; // 保持消息通道开放
 
+    case "GET_ALL_PACKS":
+      (async () => {
+        try {
+          const result = await chrome.storage.local.get("packs");
+          const packs = result.packs || [];
+          sendResponse({ packs });
+        } catch (error) {
+          sendResponse({ packs: [], error: error.message });
+        }
+      })();
+      return true;
+
+    case "CREATE_PACK":
+      (async () => {
+        try {
+          const result = await chrome.storage.local.get("packs");
+          const packs = result.packs || [];
+          const packId = message.packData?.metadata?.pack_id || message.packId;
+          if (packs.some((p) => (p.metadata?.pack_id || p.pack_id) === packId)) {
+            sendResponse({ success: false, error: `Pack 已存在: ${packId}` });
+            return;
+          }
+          packs.push(message.packData);
+          await chrome.storage.local.set({ packs });
+          sendResponse({ success: true, packId });
+        } catch (error) {
+          sendResponse({ success: false, error: error.message });
+        }
+      })();
+      return true;
+
+    case "UPDATE_PACK":
+      (async () => {
+        try {
+          const result = await chrome.storage.local.get("packs");
+          const packs = result.packs || [];
+          const packId = message.packId;
+          const index = packs.findIndex(
+            (p) => (p.metadata?.pack_id || p.pack_id) === packId,
+          );
+          if (index === -1) {
+            sendResponse({ success: false, error: `Pack 不存在: ${packId}` });
+            return;
+          }
+          packs[index] = message.packData;
+          await chrome.storage.local.set({ packs });
+          sendResponse({ success: true, packId });
+        } catch (error) {
+          sendResponse({ success: false, error: error.message });
+        }
+      })();
+      return true;
+
+    case "DELETE_PACK":
+      (async () => {
+        try {
+          const result = await chrome.storage.local.get("packs");
+          const packs = result.packs || [];
+          const filtered = packs.filter(
+            (p) => (p.metadata?.pack_id || p.pack_id) !== message.packId,
+          );
+          await chrome.storage.local.set({ packs: filtered });
+          sendResponse({ success: true, packId: message.packId });
+        } catch (error) {
+          sendResponse({ success: false, error: error.message });
+        }
+      })();
+      return true;
+
+    case "EXPORT_PACKS":
+      (async () => {
+        try {
+          const result = await chrome.storage.local.get("packs");
+          let packs = result.packs || [];
+          if (message.packIds && Array.isArray(message.packIds)) {
+            packs = packs.filter((p) =>
+              message.packIds.includes(p.metadata?.pack_id || p.pack_id),
+            );
+          }
+          const data = JSON.stringify({ packs }, null, 2);
+          sendResponse({ success: true, data });
+        } catch (error) {
+          sendResponse({ success: false, error: error.message });
+        }
+      })();
+      return true;
+
+    case "IMPORT_PACKS":
+      (async () => {
+        try {
+          const parsed = JSON.parse(message.jsonData);
+          const incoming = parsed.packs || [];
+          const result = await chrome.storage.local.get("packs");
+          const existing = result.packs || [];
+          const imported = [];
+          const errors = [];
+
+          for (const pack of incoming) {
+            const packId = pack.metadata?.pack_id || pack.pack_id;
+            const exists = existing.some(
+              (p) => (p.metadata?.pack_id || p.pack_id) === packId,
+            );
+            if (exists && message.mergeStrategy === "skip") {
+              errors.push({ packId, error: "已存在，跳过" });
+              continue;
+            }
+            if (exists && message.mergeStrategy === "overwrite") {
+              const idx = existing.findIndex(
+                (p) => (p.metadata?.pack_id || p.pack_id) === packId,
+              );
+              existing[idx] = pack;
+            } else {
+              existing.push(pack);
+            }
+            imported.push(packId);
+          }
+
+          await chrome.storage.local.set({ packs: existing });
+          sendResponse({ imported, errors });
+        } catch (error) {
+          sendResponse({ imported: [], errors: [{ error: error.message }] });
+        }
+      })();
+      return true;
+
+    case "REFRESH_PACKS":
+      (async () => {
+        try {
+          const result = await chrome.storage.local.get("packs");
+          sendResponse({ success: true, packs: result.packs || [] });
+        } catch (error) {
+          sendResponse({ success: false, error: error.message });
+        }
+      })();
+      return true;
+
+    case "SETTINGS_UPDATED":
+      console.log("[Prompt Pack] Settings updated:", Object.keys(message.settings || {}));
+      sendResponse({ success: true });
+      break;
+
     default:
       sendResponse({ error: "Unknown message type" });
   }

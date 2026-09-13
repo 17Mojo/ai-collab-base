@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from ...context.schema import (
+from ai_collab.context.schema import (
     AISessionContext,
     Context,
     NotebookLMContext,

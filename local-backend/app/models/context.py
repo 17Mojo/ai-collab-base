@@ -7,8 +7,9 @@ Context 持久化数据模型
 
 import json
 from datetime import datetime
+from typing import Optional
 
-from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, null
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -21,13 +22,13 @@ class ContextModel(Base):
     __tablename__ = "contexts"
 
     context_id = Column(String(36), primary_key=True, index=True)
-    scenario = Column(String(50), not null, index=True)
-    name = Column(String(255), not null)
+    scenario = Column(String(50), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
     file_contexts = Column(JSON, default="[]")
     ai_sessions = Column(JSON, default="[]")
     notebooklm_context = Column(JSON, nullable=True)
     user_context = Column(JSON, default="{}")
-    metadata = Column(JSON, default="{}")
+    context_metadata = Column("metadata", JSON, default="{}")
     parent_id = Column(String(36), ForeignKey("contexts.context_id"), nullable=True)
     children_ids = Column(JSON, default="[]")
     size = Column(Integer, default=0)
@@ -62,9 +63,9 @@ class ContextModel(Base):
             "user_context": json.loads(self.user_context)
             if isinstance(self.user_context, str)
             else self.user_context,
-            "metadata": json.loads(self.metadata)
-            if isinstance(self.metadata, str)
-            else self.metadata,
+            "metadata": json.loads(self.context_metadata)
+            if isinstance(self.context_metadata, str)
+            else self.context_metadata,
             "parent_id": self.parent_id,
             "children_ids": json.loads(self.children_ids)
             if isinstance(self.children_ids, str)
@@ -93,7 +94,7 @@ class ContextModel(Base):
             user_context=json.dumps(data.get("user_context", {}))
             if isinstance(data.get("user_context"), dict)
             else data.get("user_context", {}),
-            metadata=json.dumps(data.get("metadata", {}))
+            context_metadata=json.dumps(data.get("metadata", {}))
             if isinstance(data.get("metadata"), dict)
             else data.get("metadata", {}),
             parent_id=data.get("parent_id"),
@@ -112,10 +113,10 @@ class ContextChangeLogModel(Base):
 
     log_id = Column(String(36), primary_key=True, index=True)
     context_id = Column(String(36), ForeignKey("contexts.context_id"), nullable=False, index=True)
-    change_type = Column(String(50), not null, index=True)
+    change_type = Column(String(50), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     details = Column(JSON, default="{}")
-    source = Column(String(50), not null, index=True)
+    source = Column(String(50), nullable=False, index=True)
 
     # 关系
     context = relationship("ContextModel", back_populates="changes")
@@ -139,7 +140,7 @@ class ContextTagModel(Base):
 
     tag_id = Column(Integer, primary_key=True, autoincrement=True)
     context_id = Column(String(36), ForeignKey("contexts.context_id"), nullable=False, index=True)
-    tag = Column(String(100), not null, index=True)
+    tag = Column(String(100), nullable=False, index=True)
 
     # 复合索引
     __table_args__ = (Index("ix_context_tag", "context_id", "tag"),)
@@ -151,10 +152,10 @@ class SessionModel(Base):
     __tablename__ = "sessions"
 
     session_id = Column(String(36), primary_key=True, index=True)
-    ai_type = Column(String(50), not null, index=True)
+    ai_type = Column(String(50), nullable=False, index=True)
     started_at = Column(DateTime, nullable=False, index=True)
     messages = Column(JSON, default="[]")
-    metadata = Column(JSON, default="{}")
+    session_metadata = Column("metadata", JSON, default="{}")
     context_id = Column(String(36), ForeignKey("contexts.context_id"), nullable=True, index=True)
 
     def to_dict(self) -> dict:
@@ -166,16 +167,14 @@ class SessionModel(Base):
             "messages": json.loads(self.messages)
             if isinstance(self.messages, str)
             else self.messages,
-            "metadata": json.loads(self.metadata)
-            if isinstance(self.metadata, str)
-            else self.metadata,
+            "metadata": json.loads(self.session_metadata)
+            if isinstance(self.session_metadata, str)
+            else self.session_metadata,
             "context_id": self.context_id,
         }
 
 
 # ==================== 索引定义 ====================
-
-from sqlalchemy import Index
 
 # Context 模型索引
 Index("ix_context_scenario", ContextModel.scenario)

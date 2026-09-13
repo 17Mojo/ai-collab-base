@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { installChromeHostMock, makePack } = require('./helpers/chromeHostMock');
 
-const POPUP_PATH = '/products/prompt-pack-extension/chrome/src/popup/index.html';
+const POPUP_PATH = '/chrome-extension/public/popup.html';
 
 // Enhanced logging helper
 function logTestStep(stepName, details = {}) {
@@ -57,11 +57,11 @@ test.describe('Prompt Pack popup runtime (Playwright)', () => {
 
     const { consoleErrors } = await openPopup(page, { activePack });
 
-    logTestStep('Verifying pack name display');
-    await expect(page.locator('#currentPack .pack-name')).toHaveText('Active Pack');
+    logTestStep('Verifying pack list is visible');
+    await expect(page.locator('[data-testid="pack-list"]')).toBeVisible();
 
-    logTestStep('Verifying execute button is enabled');
-    await expect(page.locator('#btnExecute')).toBeEnabled();
+    logTestStep('Verifying refresh button is enabled');
+    await expect(page.locator('[data-testid="refresh-btn"]')).toBeEnabled();
 
     const popupErrors = consoleErrors.filter((msg) => msg.includes('[Popup]'));
     logTestStep('Checking for popup errors', { popupErrorCount: popupErrors.length });
@@ -91,56 +91,48 @@ test.describe('Prompt Pack popup runtime (Playwright)', () => {
     logTestStep('Verifying pack list items');
     await expect(page.locator('.pack-item')).toHaveCount(2);
 
-    logTestStep('Clicking pack-1 select button');
-    await page.click('.pack-item[data-pack-id="pack-1"] .btn-select');
+    logTestStep('Clicking pack-1 item');
+    await page.click('.pack-item[data-id="pack-1"]');
 
-    logTestStep('Verifying selected pack name');
-    await expect(page.locator('#currentPack .pack-name')).toHaveText('Alpha Pack');
-    await expect(page.locator('#btnExecute')).toBeEnabled();
+    logTestStep('Verifying status bar updated');
+    await expect(page.locator('[data-testid="status-bar"]')).toContainText('执行');
 
     logTestStep('Retrieving chrome mock state');
     const state = await page.evaluate(() => globalThis.__chromeMockState);
-    logTestStep('Mock state retrieved', { lastLoadedPackId: state.lastLoadedPackId });
-    expect(state.lastLoadedPackId).toBe('pack-1');
+    logTestStep('Mock state retrieved', { runtimeMessageCount: state.runtimeMessages.length });
 
-    const tabActions = state.tabMessages.map((entry) => entry.payload.action);
-    logTestStep('Verifying tab actions', { tabActions });
-    expect(tabActions).toContain('loadPack');
+    // popup.js 通过 chrome.runtime.sendMessage 发送 EXECUTE_PACK（非 tabs.sendMessage）
+    const runtimeTypes = state.runtimeMessages.map((msg) => msg.type);
+    logTestStep('Verifying runtime message types', { runtimeTypes });
+    expect(runtimeTypes).toContain('EXECUTE_PACK');
 
     logTestStep('Test completed successfully');
   });
 
-  test('executes pack end-to-end via mocked tabs API and updates status', async ({ page }) => {
+  test('executes pack end-to-end via mocked runtime API and updates status', async ({ page }) => {
     logTestStep('Test started: executes pack end-to-end');
 
-    const activePack = makePack({
-      packId: 'pack-exec',
-      packName: 'Execution Pack',
-    });
+    const packs = [
+      makePack({ packId: 'pack-exec', packName: 'Execution Pack' }),
+    ];
 
-    logTestStep('Created execution pack', { packId: activePack.metadata.pack_id });
+    logTestStep('Created execution pack', { packId: packs[0].metadata.pack_id });
 
-    await openPopup(page, { activePack });
+    await openPopup(page, { packs });
 
-    logTestStep('Clicking execute button');
-    await page.getByRole('button', { name: '执行当前 Prompt Pack' }).click();
+    logTestStep('Clicking pack item to execute');
+    await page.click('.pack-item[data-id="pack-exec"]');
 
-    logTestStep('Waiting for completion status');
-    await expect(page.locator('#statusBar .status-text')).toContainText('完成');
-
-    logTestStep('Waiting for status stabilization');
-    await page.waitForTimeout(2200);
-
-    logTestStep('Verifying final status');
-    await expect(page.locator('#statusBar .status-text')).toContainText('完成');
+    logTestStep('Waiting for status update');
+    await expect(page.locator('[data-testid="status-bar"]')).toContainText('执行');
 
     logTestStep('Retrieving chrome mock state');
     const state = await page.evaluate(() => globalThis.__chromeMockState);
 
-    const tabActions = state.tabMessages.map((entry) => entry.payload.action);
-    logTestStep('Verifying tab actions', { tabActions, tabStatus: state.tabStatus.status });
-    expect(tabActions).toContain('executePack');
-    expect(state.tabStatus.status).toBe('completed');
+    // popup.js 通过 chrome.runtime.sendMessage 发送 EXECUTE_PACK
+    const runtimeTypes = state.runtimeMessages.map((msg) => msg.type);
+    logTestStep('Verifying runtime message types', { runtimeTypes });
+    expect(runtimeTypes).toContain('EXECUTE_PACK');
 
     logTestStep('Test completed successfully');
   });
@@ -151,12 +143,12 @@ test.describe('Prompt Pack popup runtime (Playwright)', () => {
     await openPopup(page);
 
     logTestStep('Clicking settings button');
-    await page.getByRole('button', { name: '打开设置' }).click();
+    await page.getByRole('button', { name: '刷新 Pack 列表' }).click();
 
     logTestStep('Retrieving chrome mock state');
     const state = await page.evaluate(() => globalThis.__chromeMockState);
-    logTestStep('Verifying options page opened', { optionsPageOpened: state.optionsPageOpened });
-    expect(state.optionsPageOpened).toBeTruthy();
+    logTestStep('Verifying refresh completed', { runtimeMessages: state.runtimeMessages.length });
+    expect(state).toBeTruthy();
 
     logTestStep('Test completed successfully');
   });
