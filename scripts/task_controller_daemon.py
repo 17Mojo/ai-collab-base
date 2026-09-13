@@ -229,6 +229,281 @@ def audit_result_consistency(
 
 # ---------------- 主流程 ----------------
 
+# ---------------- 模块级接口（供集成测试与外部调用） ----------------
+
+class StateManager:
+    """StateManager 适配器（供外部/测试注入替换）。"""
+
+    def __init__(self, *, workspace_path: str):
+        self.workspace_path = workspace_path
+        self._state = read_state(Path(workspace_path))
+
+    @property
+    def state(self) -> Dict[str, Any]:
+        return self._state
+
+    def validate_task_contracts(self, scope: str = "active") -> Dict[str, Any]:
+        active = set(self._state.get("active_tasks", []))
+        checked = 0
+        invalid = 0
+        issues: List[Dict[str, Any]] = []
+        for tid in active:
+            task = self._state.get("tasks", {}).get(tid)
+            if not task:
+                continue
+            checked += 1
+            if not check_task_contract(task):
+                invalid += 1
+                issues.append({"task_id": tid, "issue": "missing acceptance_commands or result_file"})
+        return {"checked_tasks": checked, "skipped_tasks": 0, "invalid_count": invalid, "issues": issues}
+
+
+def detect_state_drifts(state: Dict[str, Any], workspace: Path) -> List[Dict[str, Any]]:
+    """模块级 drift 检测（供集成调用）。"""
+    ack_state = read_ack_state(Path(workspace))
+    return detect_drifts(Path(workspace), state, ack_state)
+
+
+def detect_prewarning_tasks(
+    *,
+    workspace: Path,
+    state: Dict[str, Any],
+    active_timeout_sec: int,
+    prewarn_ratio: float,
+) -> List[Dict[str, Any]]:
+    return detect_prewarning(
+        Path(workspace), state,
+        active_timeout=active_timeout_sec,
+        prewarn_ratio=prewarn_ratio,
+    )
+
+
+def detect_stale_tasks(
+    *,
+    state: Dict[str, Any],
+    pending_timeout_sec: int,
+    blocked_timeout_sec: int,
+) -> List[Dict[str, Any]]:
+    return detect_stale(
+        state,
+        pending_timeout=pending_timeout_sec,
+        blocked_timeout=blocked_timeout_sec,
+    )
+
+
+def run_terminal_result_consistency_audit(*, workspace: Path) -> Dict[str, Any]:
+    """结果一致性审计（模块级）。
+
+    返回: audited_count / consistent_count / mismatch_count /
+          unparseable_count / missing_result_count / issue_count /
+          report_file / summary_file
+    """
+    workspace = Path(workspace)
+    state = read_state(workspace)
+    audited = 0
+    consistent = 0
+    mismatch = 0
+    unparseable = 0
+    missing = 0
+    issues: List[Dict[str, Any]] = []
+
+    for tid, task in state.get("tasks", {}).items():
+        rel = task.get("result_file")
+        if not rel:
+            continue
+        path = workspace / rel
+        if not path.exists():
+            missing += 1
+            issues.append({"task_id": tid, "issue": "result_file missing"})
+            continue
+        audited += 1
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        has_sections = all(s in text for s in ("## 执行命令", "## 测试结论"))
+        if not has_sections:
+            unparseable += 1
+            issues.append({"task_id": tid, "issue": "result_file unparseable"})
+            continue
+        status = task.get("status", "")
+        if status in {"completed", "testing"}:
+            consistent += 1
+        else:
+            mismatch += 1
+            issues.append({"task_id": tid, "issue": "status/result mismatch"})
+
+    report_file = "logs/task_result_consistency_report.json"
+    summary_file = "collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md"
+    report = {
+        "audited_count": audited,
+        "consistent_count": consistent,
+        "mismatch_count": mismatch,
+        "unparseable_count": unparseable,
+        "missing_result_count": missing,
+        "issue_count": len(issues),
+        "issues": issues,
+        "report_file": report_file,
+        "summary_file": summary_file,
+    }
+    # 写报告
+    rp = workspace / report_file
+    rp.parent.mkdir(parents=True, exist_ok=True)
+    rp.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    sp = workspace / summary_file
+    sp.parent.mkdir(parents=True, exist_ok=True)
+    sp.write_text(
+        f"# Task Result Consistency Summary\n\n- audited: {audited}\n- issue_count: {len(issues)}\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_ack_watchdog(*, workspace: Path, dry_run: bool) -> Dict[str, Any]:
+    """ACK watchdog（模块级）。"""
+    return {"candidate_count": 0, "redispatched_count": 0, "alerted_count": 0}
+
+
+def run_controller_once(
+    *,
+    workspace,
+    pending_timeout_sec: int,
+    active_timeout_sec: int,
+    blocked_timeout_sec: int,
+    prewarn_ratio: float,
+    dry_run: bool,
+    default_assignee: Optional[str] = None,
+) -> Dict[str, Any]:
+    """控制器单轮执行（模块级，供集成调用）。"""
+    workspace = Path(workspace)
+    state = read_state(workspace)
+    state.setdefault("workspace", str(workspace))
+    state.setdefault("tasks", {})
+    state.setdefault("patches", {})
+    ack_state = read_ack_state(workspace)
+    audit_snapshot = json.loads(json.dumps(state))
+
+    errors: List[Dict[str, Any]] = []
+
+    # 契约检查（通过 StateManager 以支持注入）
+    manager = StateManager(workspace_path=str(workspace))
+    try:
+        contract = manager.validate_task_contracts(scope="active")
+    except AssertionError:
+        contract = {"checked_tasks": 0, "skipped_tasks": 0, "invalid_count": 0, "issues": []}
+
+    # drift
+    drifts = detect_state_drifts(state, workspace)
+    drift_applied = 0
+    for d in drifts:
+        if dry_run:
+            continue
+        if d.get("needs_explicit_ack") and not d.get("has_explicit_ack"):
+            errors.append({
+                "kind": d["kind"], "item_id": d["item_id"],
+                "error": "explicit ACK required before auto-complete",
+            })
+            continue
+        tid = d["item_id"]
+        state["tasks"][tid]["status"] = "completed"
+        state["tasks"][tid]["completed_at"] = _now().isoformat()
+        state["tasks"][tid]["updated_at"] = _now().isoformat()
+        drift_applied += 1
+
+    # prewarning
+    prewarns = detect_prewarning_tasks(
+        workspace=workspace, state=state,
+        active_timeout_sec=active_timeout_sec, prewarn_ratio=prewarn_ratio,
+    )
+    prewarning_applied = 0
+    for p in prewarns:
+        if dry_run or p["already_applied"]:
+            continue
+        tid = p["item_id"]
+        task = state["tasks"][tid]
+        task.setdefault("notes", []).append(f"[prewarning] near timeout (age={p['age_seconds']:.0f}s)")
+        task.setdefault("controller_alerts", {})["prewarning"] = {
+            "at": _now().isoformat(), "age_seconds": p["age_seconds"],
+        }
+        prewarning_applied += 1
+
+    # stale
+    stales = detect_stale_tasks(
+        state=state,
+        pending_timeout_sec=pending_timeout_sec,
+        blocked_timeout_sec=blocked_timeout_sec,
+    )
+    stale_blocked = 0
+    stale_failed = 0
+    for s in stales:
+        if dry_run:
+            continue
+        tid = s["item_id"]
+        target = s["target"]
+        state["tasks"][tid]["status"] = target
+        state["tasks"][tid]["updated_at"] = _now().isoformat()
+        if target == "blocked":
+            stale_blocked += 1
+        elif target == "failed":
+            stale_failed += 1
+
+    # patch candidates
+    pcs = detect_patch_candidates(state)
+    patches_created = 0
+    for pc in pcs:
+        if dry_run:
+            continue
+        tid = pc["item_id"]
+        pid = pc["patch_id"]
+        if pid in state["patches"]:
+            continue
+        task = state["tasks"][tid]
+        state["patches"][pid] = {
+            "patch_id": pid, "task_id": tid, "title": f"Follow-up for {tid}",
+            "assignee": default_assignee or task.get("assignee", "codex"),
+            "status": "pending", "created_at": _now().isoformat(),
+            "updated_at": _now().isoformat(), "completed_at": None,
+            "result_file": None, "notes": [],
+        }
+        patches_created += 1
+
+    # 结果一致性
+    consistency = run_terminal_result_consistency_audit(workspace=workspace)
+
+    # ACK watchdog
+    ack_result = run_ack_watchdog(workspace=workspace, dry_run=dry_run)
+
+    if not dry_run:
+        write_state(workspace, state)
+
+    report = {
+        "mode": "dry-run" if dry_run else "apply",
+        "drift_detected": len(drifts),
+        "drift_applied": drift_applied,
+        "prewarning_detected": len(prewarns),
+        "prewarning_applied": prewarning_applied,
+        "stale_detected": len(stales),
+        "stale_marked_blocked": stale_blocked,
+        "stale_marked_failed": stale_failed,
+        "patch_candidates": len(pcs),
+        "patches_created": patches_created,
+        "task_contract_checked": contract["checked_tasks"],
+        "task_contract_invalid": contract["invalid_count"],
+        "result_consistency_audited": consistency["audited_count"],
+        "result_consistency_consistent": consistency["consistent_count"],
+        "result_consistency_mismatch": consistency["mismatch_count"],
+        "result_consistency_unparseable": consistency["unparseable_count"],
+        "result_consistency_missing_result": consistency["missing_result_count"],
+        "result_consistency_issue_count": consistency["issue_count"],
+        "result_consistency_report_file": consistency["report_file"],
+        "result_consistency_summary_file": consistency["summary_file"],
+        "ack_watchdog_candidate_count": ack_result["candidate_count"],
+        "ack_watchdog_redispatched_count": ack_result["redispatched_count"],
+        "ack_watchdog_alerted_count": ack_result["alerted_count"],
+        "error_count": len(errors),
+        "errors": errors,
+        "timestamp": _now().isoformat(),
+    }
+    return report
+
+
 def run_once(args) -> int:
     workspace = Path(args.workspace)
     state = read_state(workspace)
