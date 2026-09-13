@@ -28,6 +28,12 @@ ai-collab = "ai_collab.cli:main"
 dev = [
     "mypy>=1.0.0",
     "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+    "sqlalchemy>=2.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
 ]
 
 [build-system]

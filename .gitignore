@@ -103,3 +103,15 @@ popup-ui-enhancement-test.png
 .solopreneur/
 .codeartsdoer/
 .codexdoer/
+
+# Chrome Extension dependencies (per-extension)
+chrome-extension/node_modules/
+
+# SoloMap tooling
+.trae/
+.codexdoer/
+
+# Local test artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
