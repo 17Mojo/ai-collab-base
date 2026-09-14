@@ -18,6 +18,7 @@ prometheus-client>=0.19.0
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
 pytest-cov>=4.0.0
+pytest-timeout>=2.1.0  # for --timeout flag
 
 # ===== Development =====
 ruff>=0.1.0
