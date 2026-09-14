@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   python-tests:
@@ -21,13 +22,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
+          # 禁用 cache pip：避免使用陈旧的缓存依赖
+          # requirements.txt 已包含完整依赖列表（aiohttp, pydantic 等）
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-asyncio pytest-cov sqlalchemy fastapi uvicorn pydantic
-          pip install -e . 2>/dev/null || pip install -r requirements.txt
+          # 使用完整 requirements.txt（包含 aiohttp、sqlalchemy、pydantic 等）
+          pip install -r requirements.txt
+          pip install -e . 2>/dev/null || true
 
       - name: Lint (ruff)
         run: |
@@ -36,11 +39,11 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m pytest tests/unit/ -v --tb=short
+          python -m pytest tests/unit/ -v --tb=short --timeout=60
 
       - name: Run integration tests
         run: |
-          python -m pytest tests/integration/ -v --tb=short || true
+          python -m pytest tests/integration/ -v --tb=short --timeout=120 || true
 
   chrome-extension-tests:
     runs-on: ubuntu-latest
@@ -55,6 +58,7 @@ jobs:
       - name: Run adapter tests
         run: |
           cd chrome-extension
+          npm ci 2>/dev/null || npm install
           node tests/test-adapters.js 2>/dev/null || echo "adapter tests skipped"
           node tests/test-branch-executor.js 2>/dev/null || echo "branch tests skipped"
 
