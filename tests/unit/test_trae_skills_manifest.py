@@ -5,8 +5,18 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_ROOT = WORKSPACE_ROOT / ".trae" / "skills"
+
+# Skip in CI when .trae/skills directory is intentionally gitignored
+if not SKILLS_ROOT.exists():
+    pytest.skip(
+        f".trae/skills directory not present (gitignored): {SKILLS_ROOT}",
+        allow_module_level=True,
+    )
+
 REQUIRED_SKILLS = (
     "frontend-architect",
     "backend-architect",

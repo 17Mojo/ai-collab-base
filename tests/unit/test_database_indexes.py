@@ -4,10 +4,18 @@
 
 import os
 import sys
+from pathlib import Path
 
+import pytest
 from sqlalchemy import text
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "local-backend"))
+BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent / "local-backend"
+sys.path.insert(0, str(BACKEND_ROOT))
+
+# Skip when backend database doesn't exist (CI without data dir)
+DATABASE_PATH = BACKEND_ROOT / "data" / "client_tokens.db"
+if not DATABASE_PATH.exists():
+    pytest.skip(f"backend database not found at {DATABASE_PATH}", allow_module_level=True)
 
 from app.core.database import create_tables, engine, optimize_database
 
