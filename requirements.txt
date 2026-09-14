@@ -1,22 +1,24 @@
 # AI Collab Base Project Dependencies
+# Generated: 2026-09-13
+# Note: argparse, json, datetime, pathlib are Python stdlib (not needed)
 
-# FastAPI backend
+# ===== Core backend =====
 fastapi>=0.100.0
 uvicorn>=0.23.0
-sqlite3
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+sqlalchemy>=2.0.0
 
-# Chrome Extension (no Python deps)
-# Built with vanilla JS + Chrome APIs
+# ===== Runtime libs =====
+aiohttp>=3.9.0
+requests>=2.31.0
+prometheus-client>=0.19.0
 
-# CLI dependencies
-argparse
-json
-datetime
-pathlib
-
-# Testing
+# ===== Testing =====
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
 
-# Development
-python>=3.10
+# ===== Development =====
+ruff>=0.1.0
+mypy>=1.0.0
