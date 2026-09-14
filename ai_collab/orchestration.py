@@ -9,6 +9,7 @@ This module handles:
 """
 
 import json
+import shlex
 import os
 import shutil
 import subprocess
@@ -114,9 +115,13 @@ class AgentProvider:
         # CLI-based providers - check command
         if check_command:
             try:
+                # shlex 安全拆分命令字符串（如 "which codex" → ["which", "codex"]）
+                # check_command 来源是硬编码常量（见 ProviderConfig），无注入风险
+                # 但仍用 shlex 拆分并 shell=False 以彻底消除 B602 告警
+                cmd_parts = shlex.split(check_command)
                 result = subprocess.run(
-                    check_command,
-                    shell=True,
+                    cmd_parts,
+                    shell=False,
                     capture_output=True,
                     timeout=5
                 )

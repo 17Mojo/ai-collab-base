@@ -249,5 +249,5 @@ class GraphContextManager:
 
         timestamp = datetime.now().isoformat()
         hash_input = f"{query}:{timestamp}"
-        hash_value = hashlib.md5(hash_input.encode()).hexdigest()[:8]
+        hash_value = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"graph_ctx_{hash_value}"

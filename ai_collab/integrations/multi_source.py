@@ -263,7 +263,7 @@ class KnowledgeAggregator:
         """计算内容哈希"""
         # 标准化内容
         normalized = re.sub(r"\s+", " ", content.lower().strip())
-        return hashlib.md5(normalized.encode()).hexdigest()
+        return hashlib.md5(normalized.encode(), usedforsecurity=False).hexdigest()
 
     def _extract_key_info(self, content: str) -> set:
         """提取关键信息"""

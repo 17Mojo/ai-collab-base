@@ -236,7 +236,7 @@ class ContextAggregator:
 
         timestamp = datetime.now().isoformat()
         hash_input = f"{source_type}:{content[:100]}:{timestamp}"
-        hash_value = hashlib.md5(hash_input.encode()).hexdigest()[:8]
+        hash_value = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"{source_type}_{hash_value}"
 
     def _generate_context_id(self, query: str, sources: List[str]) -> str:
@@ -245,7 +245,7 @@ class ContextAggregator:
 
         timestamp = datetime.now().isoformat()
         hash_input = f"{query}:{','.join(sources)}:{timestamp}"
-        hash_value = hashlib.md5(hash_input.encode()).hexdigest()[:8]
+        hash_value = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"ctx_{hash_value}"
 
     def _weighted_selection(self, sources: List[KnowledgeSource]) -> List[KnowledgeSource]:

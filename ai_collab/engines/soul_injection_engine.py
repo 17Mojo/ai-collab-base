@@ -146,7 +146,7 @@ class SoulInjectionEngine:
     def _generate_cache_key(self, consensus: str, profile_name: str) -> str:
         """生成缓存键 (幂等性保证)"""
         content = f"{consensus}:{profile_name}"
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()
 
     def _load_default_profiles(self) -> Dict[str, SoulProfile]:
         return {
