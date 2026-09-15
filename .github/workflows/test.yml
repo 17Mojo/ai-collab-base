@@ -37,6 +37,15 @@ jobs:
           pip install ruff
           ruff check ai_collab/ src/ scripts/ 2>/dev/null || ruff check .
 
+      - name: Type check (mypy, informational)
+        # 当前 113 errors, 不阻塞 CI (渐进式收紧, 与 test.yml 约定一致)
+        # 规则: 新代码不应引入 NEW 类型错误 (warn_unused_ignores 已启用)
+        # 目标: 0 errors 后移除 continue-on-error
+        continue-on-error: true
+        run: |
+          pip install mypy
+          mypy ai_collab/ 2>&1 | tail -10
+
       - name: Run unit tests with coverage
         run: |
           pip install pytest-cov coverage

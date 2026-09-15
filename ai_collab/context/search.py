@@ -397,6 +397,7 @@ class ContextSearchEngine:
             results: 搜索结果
             scope: 搜索范围
             history: 上下文历史
+            query: 搜索查询 (BY_SOURCE 时用于读取 filters, 可选)
 
         Returns:
             过滤后的结果
@@ -430,8 +431,8 @@ class ContextSearchEngine:
             filtered = [r for r in results if r.context_id in high_confidence_items]
 
         elif scope == SearchScope.BY_SOURCE:
-            # 使用默认的源过滤（可扩展）
-            target_sources = query.filters.get("sources", [])
+            # query 可能是 None (兜底), 取 filters 安全
+            target_sources = (query.filters.get("sources", []) if query is not None else [])
             if target_sources:
                 filtered = []
                 for r in results:
