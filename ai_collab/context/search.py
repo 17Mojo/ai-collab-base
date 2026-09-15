@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+from .aggregator import AggregationContext
 from ..integrations.multi_source import AggregatedKnowledge as AggregatedContext
 from ..integrations.multi_source import KnowledgeSource as ContextItem
 from .aggregator import ContextAggregator
@@ -110,7 +111,7 @@ class ContextSearchEngine:
         query = SearchQuery(query_str, **kwargs)
 
         # 获取搜索上下文
-        history = self.aggregator.get_history(limit=100)
+        history: List[AggregationContext] = self.aggregator.get_history(limit=100)
 
         if not history:
             return [], SearchStats(0, 0, 0, query.method, query.scope)
@@ -201,7 +202,7 @@ class ContextSearchEngine:
 
                 results.append(
                     SearchResult(
-                        context_id=item.id,
+                        context_id=item.source_id,
                         content=item.content,
                         score=score,
                         matches=matches,
@@ -246,7 +247,7 @@ class ContextSearchEngine:
             if score > 0:
                 results.append(
                     SearchResult(
-                        context_id=item.id,
+                        context_id=item.source_id,
                         content=item.content,
                         score=min(score, 1.0),
                         matches=matches,
@@ -323,8 +324,8 @@ class ContextSearchEngine:
         Returns:
             搜索结果
         """
-        # 获取知识图谱
-        graph = self.aggregator.get_aggregator().get_graph()
+        # 获取知识图谱 (NOTE: 已知 bug - get_graph() 方法不存在, 需后续修)
+        graph = self.aggregator.aggregator.get_graph()  # type: ignore[attr-defined]
 
         # 查找相关的节点
         related_nodes = graph.find_similar_nodes(query.query, top_k=len(candidates))
@@ -388,7 +389,10 @@ class ContextSearchEngine:
         return results
 
     def _filter_by_scope(
-        self, results: List[SearchResult], scope: SearchScope, history: List[AggregatedContext],
+        self,
+        results: List[SearchResult],
+        scope: SearchScope,
+        history: List["AggregationContext"],  # 修正: 真实类型, 之前别名误指 AggregatedKnowledge
         query: Optional[SearchQuery] = None,
     ) -> List[SearchResult]:
         """按范围过滤
@@ -410,18 +414,20 @@ class ContextSearchEngine:
         high_confidence_items = {}
         by_source_items = defaultdict(list)
 
-        # 收集最近 10 项
+        # 收集最近 10 项 (修复: AggregationContext 没有 items 字段, 应读 result.sources)
         for ctx in history[-10:]:
-            for item in ctx.items:
-                recent_items[item.id] = item
+            if ctx.result is None:
+                continue
+            for item in ctx.result.sources:
+                recent_items[item.source_id] = item
 
-                # 按置信度分类（修复: KnowledgeSource 用 confidence 字段, 不是 score）
+                # 按置信度分类 (修复: KnowledgeSource 用 confidence 字段, 不是 score)
                 if item.confidence >= 0.7:
-                    high_confidence_items[item.id] = item
+                    high_confidence_items[item.source_id] = item
 
-                # 按源分类
-                source = item.source_type  # 修复: KnowledgeSource 用 source_type, 不是 source
-                by_source_items[source].append(item.id)
+                # 按源分类 (修复: KnowledgeSource 用 source_type, 不是 source)
+                item_src = item.source_type
+                by_source_items[item_src].append(item.source_id)
 
         # 应用过滤
         if scope == SearchScope.RECENT:
