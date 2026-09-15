@@ -287,3 +287,52 @@ See [`docs/backend-alternatives.md`](docs/backend-alternatives.md) for complete 
 
 **更新时间**: 2026-03-01
 **更新内容**: 添加 AI 协作强制规则章节
+
+---
+
+## 从 2026-09-15 覆盖率任务提炼的 3 条长期经验
+
+来自 commit `7d2cc9d`（清理 4836 行死代码 + 修复 4 个生产 bug + 新增 81 个测试用例）的实战总结，**所有 AI 协作者必读**：
+
+### 经验 1：改代码前先看测试在守护什么
+
+81 个新测试覆盖了核心模块的高风险路径：
+- `tests/unit/test_context_search.py`（30 用例）守护 `ai_collab/context/search.py`
+- `tests/unit/test_pack_executor_mvp.py`（36 用例）守护 `ai_collab/pack/pack_executor_mvp.py`
+- `tests/unit/test_consensus_engine_extra.py`（14 用例）守护 `ai_collab/engines/consensus_engine.py`
+- `tests/unit/test_workspace_guard_extra.py`（31 用例）守护 `ai_collab/workspace_guard.py`
+- `tests/unit/test_handoff_notification.py` 守护 `ai_collab/handoff_notification.py`
+- `tests/unit/test_pack_schema_validator.py` 守护 `ai_collab/pack/schema_validator.py`
+
+**强制流程**：修改任何 `ai_collab/` 下 .py 文件前，先 `grep` 相关测试文件了解守护范围；改完后**先跑相关测试**再跑全套。
+
+### 经验 2：发现字段名错配 → 系统性排查，不要只修一处
+
+2026-09-15 在 `ai_collab/context/search.py` 一次发现 3 处同类 bug：
+- `item.score` → `item.confidence`（字段不存在）
+- `item.source` → `item.source_type`（字段不存在）
+- `_filter_by_scope` 函数定义缺 `query` 参数
+
+**防御性方法**：发现一次「字段名错配」后，立即：
+1. `grep -n '\.score\|\.source\|\.\w+\b' <file>` 同文件所有属性访问
+2. 检查同模块其他文件是否同一字段错配
+3. 用 dataclass / TypedDict 明确定义，避免动态属性陷阱
+4. 考虑加 mypy 静态检查
+
+**典型陷阱**：Python 动态属性运行时才报错，要么崩溃要么**静默失效**（程序跑着但功能错）——后者最危险。
+
+### 经验 3：commit message 不撒谎，诚实标注限制
+
+原 commit message 承诺「68% → 85%+」，但实测 TOTAL 80%（受 `_cli_main.py`（2605 行 63%）、`orchestration.py`（339 行 27%）、`codex_integration.py`（393 行 41%）等 CLI/集成入口结构性限制）。
+
+**正确做法**（参考 commit `7d2cc9d` 实际写法）：
+- 关键模块覆盖率达到的如实标注（如「context/search.py: 75% → 85%」）
+- TOTAL 未达目标时**写明根因**（如「受 CLI/集成入口模块结构性限制」）
+- 区分「超额交付」与「虚假承诺」
+
+**行业惯例**：CLI 入口/编排层/集成层不适合单测覆盖，应该用 E2E 测试或显式 omit，**不该靠凑覆盖率数字掩盖结构性限制**。
+
+---
+
+**记录时间**: 2026-09-15
+**来源**: 与用户协作完成覆盖率提升任务后总结
