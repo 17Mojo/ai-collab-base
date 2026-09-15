@@ -6,6 +6,7 @@ state_manager.py 补测 - 重点覆盖 VSCode 路径解析与边界
 
 import os
 import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 from ai_collab.state_manager import (
@@ -97,16 +98,27 @@ def test_backup_dir_uses_cwd_when_workspace_none(tmp_path):
     assert out.endswith("backups")
 
 
-def test_backup_dir_fallback_to_global():
-    """workspace=None + cwd 无效 -> 全局目录"""
-    home = tempfile.mkdtemp()
-    with patch.object(VSCodeIntegration, "get_workspace_path", return_value=None), \
-         patch.object(VSCodeIntegration, "_is_valid_workspace", return_value=False), \
-         patch("os.getcwd", return_value="/"), \
-         patch("os.path.expanduser", return_value=home):
-        out = VSCodeStateManager.get_backup_dir()
-    assert "backups" in out
-    assert os.path.exists(out)
+def test_backup_dir_fallback_to_global(tmp_path):
+    """workspace=None + cwd 无效 -> 全局目录 ~/.vscode/ai-collab/backups
+
+    直接设环境变量 HOME (Unix) / USERPROFILE (Windows) 让 expanduser 自然走 tmp_path
+    """
+    import os as _os
+    fake_home = str(tmp_path / "fakehome")
+    Path(fake_home).mkdir(parents=True, exist_ok=True)
+    _os.environ["HOME"] = fake_home
+    _os.environ.pop("USERPROFILE", None)
+    try:
+        with patch.object(VSCodeIntegration, "get_workspace_path", return_value=None), \
+             patch.object(VSCodeIntegration, "_is_valid_workspace", return_value=False), \
+             patch("os.getcwd", return_value="/"):
+            out = VSCodeStateManager.get_backup_dir()
+        assert "backups" in out
+        assert _os.path.exists(out)
+        assert out.startswith(fake_home)
+    finally:
+        # 清理
+        _os.environ.pop("HOME", None)
 
 
 # ============================================================
