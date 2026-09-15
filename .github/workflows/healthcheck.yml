@@ -1,0 +1,77 @@
+name: Project Health Check
+
+on:
+  schedule:
+    # 每周一 06:00 UTC 跑一次
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "ai_collab/**"
+      - "tests/**"
+      - "scripts/project_healthcheck.py"
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov coverage mypy ruff
+          pip install -r requirements.txt 2>/dev/null || true
+
+      - name: Run healthcheck
+        run: |
+          python scripts/project_healthcheck.py > health_output.md
+          cat health_output.md
+
+      - name: Parse score
+        id: parse
+        run: |
+          # 从报告里提取总分
+          SCORE=$(grep -oP "总分: \K[0-9]+" health_output.md | head -1)
+          GRADE=$(grep -oP "总分: [0-9]+/100 \(\K[A-D][+]?" health_output.md | head -1)
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "grade=$GRADE" >> $GITHUB_OUTPUT
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report-${{ github.run_id }}
+          path: health_output.md
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == "pull_request"
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: project-health
+          message: |
+            ## Project Health Report
+
+            Score: **${{ steps.parse.outputs.score }}/100** (${{ steps.parse.outputs.grade }})
+
+            See the workflow run for full details and the artifact for the complete report.
+
+  fail-on-low-score:
+    # 分数低于 60 报警, 但不阻塞 PR (留作信息)
+    needs: health
+    if: github.event_name == "pull_request"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check score
+        run: |
+          SCORE=$(grep -oP "总分: \K[0-9]+" health_output.md | head -1)
+          if [ "$SCORE" -lt 60 ]; then
+            echo "::warning::Project health score dropped to $SCORE. Please review."
+          fi
