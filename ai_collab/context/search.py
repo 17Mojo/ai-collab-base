@@ -132,7 +132,7 @@ class ContextSearchEngine:
 
         # 过滤范围
         if query.scope != SearchScope.ALL:
-            results = self._filter_by_scope(results, query.scope, history)
+            results = self._filter_by_scope(results, query.scope, history, query)
 
         # 过滤分数
         results = [r for r in results if r.score >= query.min_score]
@@ -388,7 +388,8 @@ class ContextSearchEngine:
         return results
 
     def _filter_by_scope(
-        self, results: List[SearchResult], scope: SearchScope, history: List[AggregatedContext]
+        self, results: List[SearchResult], scope: SearchScope, history: List[AggregatedContext],
+        query: Optional[SearchQuery] = None,
     ) -> List[SearchResult]:
         """按范围过滤
 
@@ -413,12 +414,12 @@ class ContextSearchEngine:
             for item in ctx.items:
                 recent_items[item.id] = item
 
-                # 按置信度分类
-                if item.score >= 0.7:
+                # 按置信度分类（修复: KnowledgeSource 用 confidence 字段, 不是 score）
+                if item.confidence >= 0.7:
                     high_confidence_items[item.id] = item
 
                 # 按源分类
-                source = item.source
+                source = item.source_type  # 修复: KnowledgeSource 用 source_type, 不是 source
                 by_source_items[source].append(item.id)
 
         # 应用过滤
@@ -439,7 +440,7 @@ class ContextSearchEngine:
                             # 检查是否匹配目标源
                             item_id = r.context_id
                             item = recent_items.get(item_id)
-                            if item and item.source in target_sources:
+                            if item and item.source_type in target_sources:
                                 filtered.append(r)
                                 break
                 results = filtered

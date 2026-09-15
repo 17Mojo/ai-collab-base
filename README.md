@@ -8,6 +8,11 @@
 [![GitHub forks](https://img.shields.io/github/forks/17Mojo/ai-collab-base?style=for-the-badge)](https://github.com/17Mojo/ai-collab-base/network/members)
 [![GitHub license](https://img.shields.io/github/license/17Mojo/ai-collab-base?style=for-the-badge)](https://github.com/17Mojo/ai-collab-base/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)](https://python.org)
+[![Build Artifacts](https://img.shields.io/github/actions/workflow/status/17Mojo/ai-collab-base/build.yml?branch=main&label=Build&logo=github-actions&style=for-the-badge)](https://github.com/17Mojo/ai-collab-base/actions/workflows/build.yml)
+[![Test Suite](https://img.shields.io/github/actions/workflow/status/17Mojo/ai-collab-base/test.yml?branch=main&label=Tests&logo=github-actions&style=for-the-badge)](https://github.com/17Mojo/ai-collab-base/actions/workflows/test.yml)
+[![Code Quality](https://img.shields.io/github/actions/workflow/status/17Mojo/ai-collab-base/lint.yml?branch=main&label=Lint&logo=github-actions&style=for-the-badge)](https://github.com/17Mojo/ai-collab-base/actions/workflows/lint.yml)
+[![Security Scan](https://img.shields.io/github/actions/workflow/status/17Mojo/ai-collab-base/security.yml?branch=main&label=Security&logo=github-actions&style=for-the-badge)](https://github.com/17Mojo/ai-collab-base/actions/workflows/security.yml)
+[![Nightly Build](https://img.shields.io/github/actions/workflow/status/17Mojo/ai-collab-base/nightly.yml?branch=main&label=Nightly&logo=github-actions&style=for-the-badge)](https://github.com/17Mojo/ai-collab-base/actions/workflows/nightly.yml)
 
 [English](#english) | [中文文档](#中文文档)
 

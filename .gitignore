@@ -115,3 +115,14 @@ chrome-extension/node_modules/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+
+
+# Sandbox / local notifications (added 2026-09-15 for coverage task)
+.unsloth_sandbox_remap.json
+notifications/
+.claude_code_notification.json
+.codex_notification.json
+.copilot_notification.json
+.user_notification.json
+.test_tracking_history.json

@@ -114,7 +114,8 @@ class HandoffManager:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """创建交接通知"""
-        handoff_id = f"HANDOFF-{int(datetime.now().timestamp())}"
+        _now = datetime.now()
+        handoff_id = f"HANDOFF-{int(_now.timestamp() * 1000):013d}-{_now.microsecond:06d}"
 
         handoff = HandoffNotification(
             handoff_id=handoff_id,
@@ -270,7 +271,8 @@ class HandoffManager:
         from_ai = handoff["to_ai"]
         to_ai = handoff["from_ai"]
 
-        feedback_id = f"FEEDBACK-{int(datetime.now().timestamp())}"
+        _now = datetime.now()
+        feedback_id = f"FEEDBACK-{int(_now.timestamp() * 1000):013d}-{_now.microsecond:06d}"
 
         feedback_data = {
             "feedback_id": feedback_id,
