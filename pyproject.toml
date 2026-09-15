@@ -44,15 +44,38 @@ build-backend = "setuptools.build_meta"
 python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
+disallow_untyped_defs = false  # 渐进式收紧, 避免一次性大面积 fail
+
+# 字段错配防御 (来自 2026-09-15 教训: context/search.py 3 处属性错配)
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_attribute_access = true  # 关键: 抓属性访问错误
+
+# 测试目录允许更宽松（测试代码优先可读）
+[[tool.mypy.overrides]]
+module = "tests.*"
 disallow_untyped_defs = false
+warn_unused_ignores = false
 
 [tool.ruff]
 target-version = "py310"
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
-ignore = ["E402", "E501", "F402", "F821"]
+# 选集说明:
+# E/W = pycodestyle 错误/警告
+# F   = pyflakes (未使用导入、未定义变量等)
+# I   = isort (导入排序)
+# B   = bugbear (常见 bug 模式, 包括 B009 字段访问检测)
+# UP  = pyupgrade (现代化语法)
+# N   = pep8-naming (命名约定)
+select = ["E", "F", "W", "I", "B", "UP", "N"]
+# E402: module level import not at top (测试 fixtures 需要)
+# E501: line too long (长字符串注释常见)
+# F402: import 'X' shadowed by loop variable (dataclass 字段常见)
+# F821: undefined name (动态属性场景)
+# B008: function call in default argument (pytest fixtures)
+ignore = ["E402", "E501", "F402", "F821", "B008"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
