@@ -253,3 +253,30 @@ class TestStats:
         engine._search_stats.append(MagicMock())
         engine.clear_history()
         assert engine.get_search_history() == []
+
+
+
+def test_graph_method_does_not_crash():
+    """SearchMethod.GRAPH 调用不崩溃 (实际降级到 HYBRID, 见 _graph_search deprecation)"""
+    from ai_collab.context.search import ContextSearchEngine, SearchMethod
+    from unittest.mock import MagicMock
+    eng = ContextSearchEngine(aggregator=MagicMock())
+    eng.aggregator.get_history.return_value = []
+    # 不应抛异常 - 即使图谱未集成, GRAPH 方法也应能走完
+    results, stats = eng.search("anything", method=SearchMethod.GRAPH, min_score=0.0)
+    assert isinstance(results, list)
+    assert stats.total_results == 0  # 空 history
+
+
+def test_graph_search_method_is_deprecated():
+    """直接调用 _graph_search 触发 DeprecationWarning"""
+    from ai_collab.context.search import ContextSearchEngine, SearchQuery
+    from unittest.mock import MagicMock
+    eng = ContextSearchEngine(aggregator=MagicMock())
+    query = SearchQuery(query="test")
+    candidates = {}
+    import warnings
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        eng._graph_search(query, candidates)
+        assert any(issubclass(x.category, DeprecationWarning) for x in w)

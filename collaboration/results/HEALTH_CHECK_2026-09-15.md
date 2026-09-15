@@ -1,26 +1,26 @@
-# 项目体检报告 - 2026-09-15T18:30:54
+# 项目体检报告 - 2026-09-15T19:25:45
 
-> 自动生成于 `2026-09-15T18:31:19.053209` by `scripts/project_healthcheck.py`
+> 自动生成于 `2026-09-15T19:26:10.338779` by `scripts/project_healthcheck.py`
 
 
 ## 测试
 
 - ✅ **测试结果**: 2027 passed, 0 failed, 1 skipped
-- **覆盖率**: 81% (miss 3365 行)
+- **覆盖率**: 81% (miss 3366 行)
 ```
-2027 passed, 1 skipped in 22.38s
+2027 passed, 1 skipped in 22.27s
 ```
 
 ## Git 状态
 
 - **最近 commit** (10):
+  - `0f83744 ci: add weekly project healthcheck workflow`
+  - `ea98f36 fix(search): resolve 3 attr-defined warnings flagged by mypy strict mode`
+  - `7dc574e ci: add mypy to CI informational + fix search.py union-attr`
   - `6317e43 feat(scripts): add project healthcheck script and first report`
   - `5b602ff fix(test): repair backup_dir fallback test using HOME env var`
-  - `8b1dc23 test(state_manager): add VSCode path resolution and enum tests`
-  - `f017629 build: strengthen mypy and ruff rules to catch field mismatches`
-  - `13cef06 ci: add coverage gate to prevent regression at 80 percent floor`
 - **未跟踪文件**: 5 个
-- **已修改未提交**: 2 个
+- **已修改未提交**: 1 个
   - `?? claude_code_notification.json`
   - `?? codex_notification.json`
   - `?? copilot_notification.json`
@@ -30,7 +30,7 @@
 
 ## 代码规模
 
-- **生产代码**: 97 文件 / 39641 行
+- **生产代码**: 97 文件 / 39647 行
 - **测试代码**: 115 文件 / 40136 行
 - **测试/代码比**: 1.01 (✅ 健康)
 
@@ -40,8 +40,8 @@
 
 ## 静态检查
 
-- **ruff**: 1167 个问题 (⚠️)
-- **mypy**: 112 个错误 (⚠️)
+- **ruff**: 1169 个问题 (⚠️)
+- **mypy**: 111 个错误 (⚠️)
 
 ## 依赖安全
 

@@ -317,76 +317,27 @@ class ContextSearchEngine:
     ) -> List[SearchResult]:
         """图谱搜索（通过知识图谱关联）
 
+        .. deprecated::
+            此方法已废弃。KnowledgeGraph 未接入 ContextAggregator (缺 graph 属性),
+            实际调用已 fallback 到 ``_hybrid_search`` (见 search 方法)。
+            未来重新启用时需先在 ``ContextAggregator`` 中加入 graph 属性。
+
         Args:
             query: 搜索查询
             candidates: 候选项
 
         Returns:
-            搜索结果
+            等同于 ``_hybrid_search(query, candidates)`` 的结果
         """
-        # 获取知识图谱 (NOTE: 已知 bug - get_graph() 方法不存在, 需后续修)
-        graph = self.aggregator.aggregator.get_graph()  # type: ignore[attr-defined]
+        import warnings
+        warnings.warn(
+            "_graph_search is deprecated and will be removed in a future version. "
+            "It currently delegates to _hybrid_search.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._hybrid_search(query, candidates)
 
-        # 查找相关的节点
-        related_nodes = graph.find_similar_nodes(query.query, top_k=len(candidates))
-
-        # 计算关联分数
-        node_scores = {node[0]: distance for node in related_nodes}
-
-        results = []
-        query_terms = query.query.split()
-
-        for item_id, item in candidates.items():
-            if item_id in node_scores:
-                distance = node_scores[item_id]
-
-                # 距离转换为分数 (距离越小分数越高)
-                base_score = 1.0 - distance
-
-                # 包含查询词的奖励
-                matches = [term for term in query_terms if term in item.content.lower()]
-                match_bonus = len(matches) * 0.1
-
-                score = min(base_score + match_bonus, 1.0)
-
-                results.append(
-                    SearchResult(
-                        context_id=item_id,
-                        content=item.content,
-                        score=score,
-                        matches=matches,
-                        metadata=item.metadata,
-                    )
-                )
-
-        # 添加未在图谱中但包含关键词的项
-        for item_id, item in candidates.items():
-            if item_id not in node_scores:
-                content_parts = set(item.content.lower().split())
-                query_parts = set(query_terms)
-
-                # Jaccard 相似度
-                intersection = len(content_parts & query_parts)
-                union = len(content_parts | query_parts)
-
-                if intersection > 0:
-                    score = intersection / union
-
-                    matches = list(content_parts & query_parts)
-
-                    results.append(
-                        SearchResult(
-                            context_id=item_id,
-                            content=item.content,
-                            score=score,
-                            matches=matches,
-                            metadata=item.metadata,
-                        )
-                    )
-
-        results.sort(key=lambda x: x.score, reverse=True)
-
-        return results
 
     def _filter_by_scope(
         self,
