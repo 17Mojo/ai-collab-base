@@ -52,11 +52,12 @@ jobs:
           python -m pytest tests/unit/ -v --tb=short \
             --cov=ai_collab --cov-report=term --cov-report=xml --cov-report=html
 
-      - name: Coverage gate (≥80%)
-        # 防退化: 当前 TOTAL 80% (commit 7d2cc9d 之后), 不达标则 fail
-        # 关键模块已 78-94%, 80% 是底线; 调整时同步更新 CLAUDE.md
+      - name: Coverage gate (>=85 percent)
+        # 防退化: 当前 TOTAL 86 percent (commit 76944bf 之后, 加 omit 之后)
+        # 85 是底线 (略低于当前值, 留 1pp buffer 应对噪声)
+        # 调整时同步更新 CLAUDE.md
         run: |
-          coverage report --fail-under=80 || (echo "::error::Coverage below 80% threshold"; exit 1)
+          coverage report --fail-under=85 || (echo "::error::Coverage below 85 percent threshold"; exit 1)
 
       - name: Upload coverage to Codecov (optional)
         if: matrix.python-version == '3.12'

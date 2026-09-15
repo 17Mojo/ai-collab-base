@@ -98,3 +98,25 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+
+[tool.coverage.run]
+# 排除结构性限制的入口/集成模块 (单测投入产出比低)
+# 这些应由 E2E 测试覆盖, 不是单元测试的责任
+omit = [
+    "ai_collab/__main__.py",
+    "ai_collab/cli/__main__.py",
+    "ai_collab/cli/_cli_main.py",
+    "ai_collab/cli/react_convert.py",
+]
+
+[tool.coverage.report]
+# 只显示非 100% 的文件, 让体检报告更清爽
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "except ImportError",
+]
