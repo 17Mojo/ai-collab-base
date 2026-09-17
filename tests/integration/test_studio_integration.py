@@ -28,6 +28,16 @@ except ImportError:
 NOTEBOOK_ID = "test-studio-integration-notebook"
 BACKEND_URL = "http://127.0.0.1:8000"
 
+# Check if backend is reachable
+import socket
+BACKEND_REACHABLE = False
+try:
+    s = socket.create_connection(("127.0.0.1", 8000), timeout=0.5)
+    s.close()
+    BACKEND_REACHABLE = True
+except (socket.error, OSError):
+    BACKEND_REACHABLE = False
+
 
 @pytest.fixture
 def client():
