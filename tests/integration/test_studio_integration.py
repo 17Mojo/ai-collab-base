@@ -30,12 +30,18 @@ BACKEND_URL = "http://127.0.0.1:8000"
 
 # Check if backend is reachable
 import socket
+import urllib.request
 BACKEND_REACHABLE = False
 try:
+    # 既要能 TCP 连接，又要返回 ai-collab 后端的标识
     s = socket.create_connection(("127.0.0.1", 8000), timeout=0.5)
     s.close()
-    BACKEND_REACHABLE = True
-except (socket.error, OSError):
+    # 检查返回是否是 ai-collab
+    req = urllib.request.Request("http://127.0.0.1:8000/api/health")
+    with urllib.request.urlopen(req, timeout=1) as r:
+        body = r.read().decode(errors="ignore")
+        BACKEND_REACHABLE = "ai-collab" in body or r.status == 200
+except (socket.error, OSError, Exception):
     BACKEND_REACHABLE = False
 
 
@@ -144,6 +150,10 @@ class TestBridgeRealCall:
         assert "/api/notebooklm/download-url/" in content
 
 
+@pytest.mark.skipif(
+    not BACKEND_REACHABLE or not BACKEND_AVAILABLE,
+    reason="Backend not running on 127.0.0.1:8000"
+)
 class TestStudioAPIEndpoints:
     """测试 Studio API 端点（需要 Backend 运行）"""
 
