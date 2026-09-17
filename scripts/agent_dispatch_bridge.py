@@ -217,9 +217,19 @@ def dispatch_once(args) -> int:
     if not args.dry_run:
         write_dispatch_state(workspace, dispatch_state)
 
+    # NotebookLM 增强
+    notebooklm_enriched = 0
+    if args.enrich_notebooklm and not args.dry_run:
+        # dry-run 仍报告（但 0）用于测试
+        notebooklm_enriched = enrich_with_notebooklm(
+            [t for t in tasks.values() if isinstance(t, dict)],
+            mode=args.notebooklm_mode,
+        )
+
     report = {
         "candidate_count": len(candidates),
         "dispatched_count": len(dispatched),
+        "notebooklm_enriched": notebooklm_enriched,
         "already_dispatched_count": len(already),
         "reopened_count": len(reopened),
         "dispatched_tasks": dispatched,
@@ -238,13 +248,28 @@ def dispatch_once(args) -> int:
     if args.history and not args.dry_run:
         write_history(workspace, json.dumps({"event": "dispatch", "count": len(dispatched)}))
 
+    # 同时输出 key=value 摘要（用于 shell 解析）
+    print(f"mode={args.notebooklm_mode}")
+    print(f"candidate_count={report['candidate_count']}")
+    print(f"dispatched_count={report['dispatched_count']}")
+    print(f"already_dispatched_count={report['already_dispatched_count']}")
+    print(f"stale_marked_blocked={report.get('stale_marked_blocked', 0)}")
+    print(f"stale_marked_failed={report.get('stale_marked_failed', 0)}")
+    print(f"patch_candidates={report.get('patch_candidates', 0)}")
+    print(f"patches_created={report.get('patches_created', 0)}")
+    print(f"prewarning_detected={report.get('prewarning_detected', 0)}")
+    print(f"prewarning_applied={report.get('prewarning_applied', 0)}")
+    print(f"task_contract_checked={report.get('task_contract_checked', 0)}")
+    print(f"task_contract_invalid={report.get('task_contract_invalid', 0)}")
+    print(f"notebooklm_enriched={report.get('notebooklm_enriched', 0)}")
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
 
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--workspace", required=True)
+    p.add_argument("--workspace", default=".", required=False,
+                   help="Workspace path (default: current directory)")
     p.add_argument("--include-pending", action="store_true")
     p.add_argument("--redispatch", action="store_true")
     p.add_argument("--force-workspace", action="store_true")
@@ -253,6 +278,11 @@ def main() -> int:
     p.add_argument("--history")
     p.add_argument("--state")
     p.add_argument("--orders")
+    p.add_argument("--enrich-notebooklm", action="store_true",
+                   help="Enrich dispatch with NotebookLM knowledge")
+    p.add_argument("--notebooklm-mode", default="fallback",
+                   choices=["fallback", "mock", "real"],
+                   help="NotebookLM integration mode")
     args = p.parse_args()
     return dispatch_once(args)
 

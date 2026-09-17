@@ -123,7 +123,7 @@ class TestNotebookLMModeSelection:
                 "--dry-run",
                 "--enrich-notebooklm",
                 "--notebooklm-mode",
-                "MOCK",
+                "mock",
             ],
             capture_output=True,
             text=True,
