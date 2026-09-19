@@ -12,6 +12,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from ai_collab.pack.schema_v2 import (
+    BranchCondition,
     ExampleLibrary,
     PackExample,
     PackMetadata,
@@ -915,6 +916,85 @@ class TestPerformance:
 
         # 性能验证：调整50个权重应该在合理时间内完成 (<100ms)
         assert elapsed < 0.1, f"权重调整耗时 {elapsed*1000:.2f}ms，超过预期"
+
+
+class TestValidateEnhancedChecks:
+    """PromptPackV2.validate() 新增 4 项检查的守护测试"""
+
+    def _make_valid_pack(self) -> PromptPackV2:
+        """创建一个通过所有检查的合法 pack"""
+        pack = create_xiaohongshu_base()
+        pack.workflow.steps.append(
+            WorkflowStep(id="s1", name="step1", type=StepType.LOCAL)
+        )
+        return pack
+
+    def test_invalid_semver_fails(self):
+        """非 SemVer 版本格式 → validate() False"""
+        pack = self._make_valid_pack()
+        pack.metadata.version = "v1.0"
+        assert pack.validate() is False
+
+    def test_valid_semver_passes(self):
+        """合法 SemVer → 不因版本格式失败"""
+        pack = self._make_valid_pack()
+        pack.metadata.version = "2.1.3"
+        assert pack.validate() is True
+
+    def test_created_after_updated_fails(self):
+        """created_at > updated_at → validate() False"""
+        pack = self._make_valid_pack()
+        pack.metadata.created_at = datetime(2026, 9, 20)
+        pack.metadata.updated_at = datetime(2026, 9, 19)
+        assert pack.validate() is False
+
+    def test_dangling_next_step_fails(self):
+        """next_step 指向不存在的 step → validate() False"""
+        pack = self._make_valid_pack()
+        pack.workflow.steps[0].next_step = "ghost"
+        assert pack.validate() is False
+
+    def test_dangling_on_error_fails(self):
+        """on_error 指向不存在的 step → validate() False"""
+        pack = self._make_valid_pack()
+        pack.workflow.steps[0].on_error = "missing"
+        assert pack.validate() is False
+
+    def test_dangling_on_timeout_fails(self):
+        """on_timeout 指向不存在的 step → validate() False"""
+        pack = self._make_valid_pack()
+        pack.workflow.steps[0].on_timeout = "missing"
+        assert pack.validate() is False
+
+    def test_dangling_branch_target_fails(self):
+        """branches[].target_step 指向不存在的 step → validate() False"""
+        pack = self._make_valid_pack()
+        pack.workflow.steps[0].branches = [
+            BranchCondition(target_step="ghost", condition_type="contains")
+        ]
+        assert pack.validate() is False
+
+    def test_valid_step_references_pass(self):
+        """合法的 next_step / on_error / branches → validate() True"""
+        pack = self._make_valid_pack()
+        pack.workflow.steps[0].next_step = "s2"
+        pack.workflow.steps[0].on_error = "err"
+        pack.workflow.steps[0].branches = [
+            BranchCondition(target_step="s2", condition_type="contains")
+        ]
+        pack.workflow.steps.append(
+            WorkflowStep(id="s2", name="step2", type=StepType.LOCAL)
+        )
+        pack.workflow.steps.append(
+            WorkflowStep(id="err", name="error", type=StepType.LOCAL)
+        )
+        assert pack.validate() is True
+
+    def test_negative_weight_fails(self):
+        """quality_metrics 权重为负 → validate() False"""
+        pack = self._make_valid_pack()
+        pack.quality_metrics.metrics["coverage"].weight = -0.1
+        assert pack.validate() is False
 
 
 # 运行测试
