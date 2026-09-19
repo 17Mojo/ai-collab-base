@@ -102,6 +102,9 @@ class PackSchemaValidator:
     # 有效的 step 类型
     VALID_STEP_TYPES = ["local", "analysis", "generation", "validation", "fusion", "tracking"]
 
+    # 有效的目标平台 — 对齐 schema_v2.py TargetPlatform Enum
+    VALID_PLATFORM_TYPES = ["xiaohongshu", "weibo", "douyin", "bilibili", "generic"]
+
     # 必需的顶层字段 — 对齐 schema_v2.py PromptPackV2 的 9 个必需字段
     REQUIRED_TOP_LEVEL_FIELDS = [
         "metadata",
@@ -298,6 +301,20 @@ class PackSchemaValidator:
                     "$.metadata.tags", f"tags must be a list, got {type(metadata['tags']).__name__}"
                 )
 
+        # 验证 datetime 合理性：created_at <= updated_at
+        if "created_at" in metadata and "updated_at" in metadata:
+            try:
+                created = datetime.fromisoformat(str(metadata["created_at"]))
+                updated = datetime.fromisoformat(str(metadata["updated_at"]))
+                if created > updated:
+                    result.add_warning(
+                        "$.metadata",
+                        f"created_at ({metadata['created_at']}) is after updated_at ({metadata['updated_at']})",
+                        "Ensure created_at <= updated_at",
+                    )
+            except (ValueError, TypeError):
+                pass
+
     def _validate_domain(self, domain: dict[str, Any], result: ValidationResult):
         """验证 domain 字段"""
         # primary_domain 是必需的（对齐 schema_v2.py DomainPack.primary_domain 无默认值）
@@ -306,10 +323,25 @@ class PackSchemaValidator:
         elif not domain["primary_domain"]:
             result.add_error("$.domain.primary_domain", "Empty required field: primary_domain")
 
-        # target_platforms 应该是列表
+        # target_platforms 应该是列表 + 值校验
         if "target_platforms" in domain:
-            if not isinstance(domain["target_platforms"], list):
+            platforms = domain["target_platforms"]
+            if not isinstance(platforms, list):
                 result.add_error("$.domain.target_platforms", "target_platforms must be a list")
+            elif len(platforms) == 0:
+                result.add_warning(
+                    "$.domain.target_platforms",
+                    "target_platforms is empty",
+                    "Consider specifying at least one platform",
+                )
+            else:
+                for p in platforms:
+                    if p not in self.VALID_PLATFORM_TYPES:
+                        result.add_error(
+                            "$.domain.target_platforms",
+                            f"Invalid platform: {p}",
+                            f"Valid platforms: {', '.join(self.VALID_PLATFORM_TYPES)}",
+                        )
 
         # compliance_rules 应该是列表
         if "compliance_rules" in domain:
@@ -342,6 +374,25 @@ class PackSchemaValidator:
         for i, step in enumerate(steps):
             step_path = f"$.workflow.steps[{i}]"
             self._validate_step(step, step_path, result, step_ids)
+
+        # 验证步骤引用完整性（next_step / on_error / on_timeout / branches.target_step）
+        for i, step in enumerate(steps):
+            step_path = f"$.workflow.steps[{i}]"
+            for ref_field in ("next_step", "on_error", "on_timeout"):
+                if ref_field in step and step[ref_field] is not None:
+                    if step[ref_field] not in step_ids:
+                        result.add_error(
+                            f"{step_path}.{ref_field}",
+                            f"Step reference '{step[ref_field]}' not found in step ids",
+                        )
+            if "branches" in step and step["branches"] is not None:
+                for j, branch in enumerate(step["branches"]):
+                    target = branch.get("target_step") if isinstance(branch, dict) else None
+                    if target is not None and target not in step_ids:
+                        result.add_error(
+                            f"{step_path}.branches[{j}].target_step",
+                            f"Branch target_step '{target}' not found in step ids",
+                        )
 
     def _validate_step(
         self, step: dict[str, Any], path: str, result: ValidationResult, seen_ids: set
@@ -402,23 +453,49 @@ class PackSchemaValidator:
             result.add_error("$.quality_metrics.metrics", "metrics must be an object")
             return
 
-        # 验证权重总和
+        # validation_tolerance 可配置（对齐 schema_v2.py QualityMetrics.validation_tolerance）
+        try:
+            tolerance = float(metrics.get("validation_tolerance", 0.01))
+        except (TypeError, ValueError):
+            tolerance = 0.01
+
+        # 必需的 metric 字段 — 对齐 schema_v2.py QualityMetric
+        required_metric_fields = ["name", "description", "check_method", "weight"]
+
         total_weight = 0.0
         for name, metric in metrics["metrics"].items():
+            if not isinstance(metric, dict):
+                result.add_error(
+                    f"$.quality_metrics.metrics.{name}", "metric must be an object"
+                )
+                continue
+
+            for req_field in required_metric_fields:
+                if req_field not in metric:
+                    result.add_error(
+                        f"$.quality_metrics.metrics.{name}.{req_field}",
+                        f"Missing required metric field: {req_field}",
+                    )
+
             if "weight" in metric:
                 try:
-                    total_weight += float(metric["weight"])
+                    w = float(metric["weight"])
+                    if w < 0:
+                        result.add_error(
+                            f"$.quality_metrics.metrics.{name}.weight",
+                            f"Weight must be non-negative, got {w}",
+                        )
+                    total_weight += w
                 except (TypeError, ValueError):
                     result.add_warning(
                         f"$.quality_metrics.metrics.{name}.weight",
                         f"Invalid weight value: {metric['weight']}",
                     )
 
-        # 权重总和应该接近 1.0
-        if abs(total_weight - 1.0) > 0.01:
+        if abs(total_weight - 1.0) > tolerance:
             result.add_warning(
                 "$.quality_metrics.metrics",
-                f"Weight sum is {total_weight:.2f}, should be 1.0",
+                f"Weight sum is {total_weight:.2f}, should be 1.0 (tolerance={tolerance})",
                 "Adjust weights so they sum to 1.0",
             )
 
