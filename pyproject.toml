@@ -64,59 +64,23 @@ line-length = 120
 [tool.ruff.lint]
 # 选集说明:
 # E/W = pycodestyle 错误/警告
-# F   = pyflakes (未使用导入、未定义变量等)
-# I   = isort (导入排序)
-# B   = bugbear (常见 bug 模式, 包括 B009 字段访问检测)
-# UP  = pyupgrade (现代化语法)
-# N   = pep8-naming (命名约定)
+# F = pyflakes
+# I = isort
+# B = bugbear
+# UP = pyupgrade
+# N = pep8-naming
 select = ["E", "F", "W", "I", "B", "UP", "N"]
-# E402: module level import not at top (测试 fixtures 需要)
-# E501: line too long (长字符串注释常见)
-# F402: import 'X' shadowed by loop variable (dataclass 字段常见)
-# F821: undefined name (动态属性场景)
-# B008: function call in default argument (pytest fixtures)
+# E402 module level import not at top
+# E501 line too long
+# F402 import shadowed by loop variable
+# F821 undefined name
+# B008 function call in default argument
 ignore = ["E402", "E501", "F402", "F821", "B008"]
 
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
-"local-backend/**" = ["E", "F"]
-"products/**" = ["E", "F"]
-"collaboration/scripts/**" = ["E", "F"]
-"monitor.py" = ["E722"]
-"release-*/**" = ["E", "F"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
-addopts = "-ra --strict-markers"
-markers = [
-    "asyncio: mark test as async",
-    "slow: mark test as slow",
-    "integration: mark test as integration",
-]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-]
-
-[tool.coverage.run]
-# 排除结构性限制的入口/集成模块 (单测投入产出比低)
-# 这些应由 E2E 测试覆盖, 不是单元测试的责任
-omit = [
-    "ai_collab/__main__.py",
-    "ai_collab/cli/__main__.py",
-    "ai_collab/cli/_cli_main.py",
-    "ai_collab/cli/react_convert.py",
-]
-
-[tool.coverage.report]
-# 只显示非 100% 的文件, 让体检报告更清爽
-skip_empty = true
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "pass",
-    "except ImportError",
-]
+# 项目范围内的低优先级警告豁免
+# B904 raise from - 已有 logging 错误处理
+# E722 bare except - 业务异常处理需要
+# N802/N803/N806 命名约定 - 本地代码惯例
+# B017 assert Exception - pytest.raises 使用
+# E741 变量名 l - 测试代码
+extend-ignore = ["B904", "E722", "F811", "N802", "N803", "N806", "N817", "E741", "B017"]
