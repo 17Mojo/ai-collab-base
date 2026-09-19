@@ -192,23 +192,23 @@ class PackSchemaValidator:
         self._validate_top_level(data, result)
 
         # 验证 metadata
-        if "metadata" in data:
+        if data.get("metadata") is not None:
             self._validate_metadata(data["metadata"], result)
 
         # 验证 domain
-        if "domain" in data:
+        if data.get("domain") is not None:
             self._validate_domain(data["domain"], result)
 
         # 验证 workflow
-        if "workflow" in data:
+        if data.get("workflow") is not None:
             self._validate_workflow(data["workflow"], result)
 
         # 验证 quality_metrics
-        if "quality_metrics" in data:
+        if data.get("quality_metrics") is not None:
             self._validate_quality_metrics(data["quality_metrics"], result)
 
         # 验证 example_library
-        if "example_library" in data:
+        if data.get("example_library") is not None:
             self._validate_example_library(data["example_library"], result)
 
         return result
