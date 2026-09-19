@@ -9,6 +9,7 @@ Pack Schema v2.0 验证器
 import json
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -95,24 +96,27 @@ class PackSchemaValidator:
     # 有效的 Pack 类型
     VALID_PACK_TYPES = ["productivity", "creative", "analysis", "business", "education", "custom"]
 
-    # 必需的 workflow step 字段
-    REQUIRED_STEP_FIELDS = ["id", "name", "type", "description", "input_fields", "output_field"]
+    # 必需的 workflow step 字段 — 对齐 schema_v2.py WorkflowStep 的 3 个无默认值字段
+    REQUIRED_STEP_FIELDS = ["id", "name", "type"]
 
     # 有效的 step 类型
     VALID_STEP_TYPES = ["local", "analysis", "generation", "validation", "fusion", "tracking"]
 
-    # 必需的顶层字段
-    REQUIRED_TOP_LEVEL_FIELDS = ["metadata", "workflow"]
-
-    # 可选的顶层字段
-    OPTIONAL_TOP_LEVEL_FIELDS = [
+    # 必需的顶层字段 — 对齐 schema_v2.py PromptPackV2 的 9 个必需字段
+    REQUIRED_TOP_LEVEL_FIELDS = [
+        "metadata",
         "domain",
+        "workflow",
         "quality_metrics",
         "example_library",
         "generation_params",
         "optimization",
         "performance_tracking",
         "collaboration",
+    ]
+
+    # 可选的顶层字段
+    OPTIONAL_TOP_LEVEL_FIELDS = [
         "system_prompt",
         "quality_validation_rules",
         "examples",
@@ -267,18 +271,20 @@ class PackSchemaValidator:
                     f"Valid types: {', '.join(self.VALID_PACK_TYPES)}",
                 )
 
-        # 验证日期格式
+        # 验证日期格式（对齐 schema_v2.py 用 datetime.fromisoformat 解析）
         for date_field in ["created_at", "updated_at"]:
             if date_field in metadata:
                 date_val = metadata[date_field]
+                if not isinstance(date_val, str):
+                    result.add_warning(
+                        f"$.metadata.{date_field}",
+                        f"Invalid date format: {date_val} (expected ISO string)",
+                        "Use ISO format like '2026-04-13T12:00:00'",
+                    )
+                    continue
                 try:
-                    # 支持 ISO 格式
-                    if "T" in date_val:
-                        pass  # ISO format
-                    else:
-                        # 简单日期格式
-                        pass
-                except Exception:
+                    datetime.fromisoformat(date_val)
+                except (ValueError, TypeError):
                     result.add_warning(
                         f"$.metadata.{date_field}",
                         f"Invalid date format: {date_val}",
@@ -294,9 +300,11 @@ class PackSchemaValidator:
 
     def _validate_domain(self, domain: dict[str, Any], result: ValidationResult):
         """验证 domain 字段"""
-        # primary_domain 是必需的
+        # primary_domain 是必需的（对齐 schema_v2.py DomainPack.primary_domain 无默认值）
         if "primary_domain" not in domain:
-            result.add_warning("$.domain.primary_domain", "Missing primary_domain field")
+            result.add_error("$.domain.primary_domain", "Missing required field: primary_domain")
+        elif not domain["primary_domain"]:
+            result.add_error("$.domain.primary_domain", "Empty required field: primary_domain")
 
         # target_platforms 应该是列表
         if "target_platforms" in domain:
@@ -415,18 +423,36 @@ class PackSchemaValidator:
             )
 
     def _validate_example_library(self, library: dict[str, Any], result: ValidationResult):
-        """验证 example_library 字段"""
-        if "examples" not in library:
-            result.add_info("$.example_library.examples", "No examples defined")
-            return
+        """验证 example_library 字段 — 对齐 schema_v2.py ExampleLibrary"""
+        # good_examples 应该是列表
+        if "good_examples" in library:
+            if not isinstance(library["good_examples"], list):
+                result.add_error(
+                    "$.example_library.good_examples", "good_examples must be a list"
+                )
 
-        examples = library["examples"]
-        if not isinstance(examples, list):
-            result.add_error("$.example_library.examples", "examples must be a list")
-            return
+        # bad_examples 应该是列表
+        if "bad_examples" in library:
+            if not isinstance(library["bad_examples"], list):
+                result.add_error(
+                    "$.example_library.bad_examples", "bad_examples must be a list"
+                )
 
-        if len(examples) == 0:
-            result.add_info("$.example_library.examples", "Examples list is empty")
+        # few_shot_template 应该是字符串
+        if "few_shot_template" in library:
+            if not isinstance(library["few_shot_template"], str):
+                result.add_error(
+                    "$.example_library.few_shot_template",
+                    "few_shot_template must be a string",
+                )
+
+        # 信息提示：无示例
+        has_good = bool(library.get("good_examples"))
+        has_bad = bool(library.get("bad_examples"))
+        if not has_good and not has_bad:
+            result.add_info(
+                "$.example_library", "No examples defined (good_examples/bad_examples empty or absent)"
+            )
 
 
 def validate_pack(file_path: str, strict: bool = True) -> ValidationResult:
