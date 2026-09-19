@@ -1,17 +1,17 @@
 # AI platform adapter base interfaces.
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class BaseAIAdapter(ABC):
     """Base interface for AI platform adapters."""
 
-    def __init__(self, platform_name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, platform_name: str, config: dict[str, Any] | None = None):
         self.platform_name = platform_name
         self.config = config or {}
         self.is_connected = False
-        self.session_id: Optional[str] = None
+        self.session_id: str | None = None
 
     @abstractmethod
     def connect(self) -> bool:
@@ -19,19 +19,19 @@ class BaseAIAdapter(ABC):
 
     @abstractmethod
     def send_message(
-        self, message: str, context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, message: str, context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Send a message to platform."""
 
     @abstractmethod
-    def receive_message(self, timeout: int = 30) -> Optional[Dict[str, Any]]:
+    def receive_message(self, timeout: int = 30) -> dict[str, Any] | None:
         """Receive a message from platform."""
 
     @abstractmethod
     def disconnect(self) -> bool:
         """Disconnect from platform."""
 
-    def get_platform_info(self) -> Dict[str, Any]:
+    def get_platform_info(self) -> dict[str, Any]:
         return {
             "platform_name": self.platform_name,
             "is_connected": self.is_connected,
@@ -39,7 +39,7 @@ class BaseAIAdapter(ABC):
             "config": self.config,
         }
 
-    def log_action(self, action: str, details: Optional[Dict[str, Any]] = None) -> None:
+    def log_action(self, action: str, details: dict[str, Any] | None = None) -> None:
         print(f"[{self.platform_name}] {action}: {details or ''}")
 
     def __enter__(self) -> "BaseAIAdapter":

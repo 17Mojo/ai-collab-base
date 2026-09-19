@@ -9,7 +9,7 @@ Prompt资源聚合器
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
@@ -51,7 +51,7 @@ class PromptResourceAggregator:
         """确保缓存目录存在"""
         os.makedirs(self.cache_dir, exist_ok=True)
 
-    def fetch_all_prompts(self) -> List[Dict[str, Any]]:
+    def fetch_all_prompts(self) -> list[dict[str, Any]]:
         """
         从所有来源获取Prompt
 
@@ -74,7 +74,7 @@ class PromptResourceAggregator:
 
         return all_prompts
 
-    def _fetch_from_source(self, source_name: str, source_config: Dict) -> List[Dict[str, Any]]:
+    def _fetch_from_source(self, source_name: str, source_config: dict) -> list[dict[str, Any]]:
         """
         从特定来源获取Prompt
 
@@ -92,7 +92,7 @@ class PromptResourceAggregator:
         else:
             return []
 
-    def _fetch_from_github_awesome(self, config: Dict) -> List[Dict[str, Any]]:
+    def _fetch_from_github_awesome(self, config: dict) -> list[dict[str, Any]]:
         """
         从GitHub Awesome ChatGPT Prompts获取
 
@@ -135,7 +135,7 @@ class PromptResourceAggregator:
             print(f"[聚合器] GitHub获取失败: {e}")
             return []
 
-    def _fetch_from_local(self, config: Dict) -> List[Dict[str, Any]]:
+    def _fetch_from_local(self, config: dict) -> list[dict[str, Any]]:
         """
         从本地文件获取
 
@@ -155,7 +155,7 @@ class PromptResourceAggregator:
             if filename.endswith(".json"):
                 filepath = os.path.join(path, filename)
                 try:
-                    with open(filepath, "r", encoding="utf-8") as f:
+                    with open(filepath, encoding="utf-8") as f:
                         prompt_data = json.load(f)
                         prompts.append(prompt_data)
                 except Exception as e:
@@ -163,7 +163,7 @@ class PromptResourceAggregator:
 
         return prompts
 
-    def convert_to_pack(self, prompt: Dict[str, Any]) -> Dict[str, Any]:
+    def convert_to_pack(self, prompt: dict[str, Any]) -> dict[str, Any]:
         """
         将Prompt转换为Pack格式
 
@@ -208,7 +208,7 @@ class PromptResourceAggregator:
 
         return pack
 
-    def save_pack(self, pack: Dict[str, Any], filename: Optional[str] = None) -> str:
+    def save_pack(self, pack: dict[str, Any], filename: str | None = None) -> str:
         """
         保存Pack到文件
 
@@ -236,7 +236,7 @@ class PromptResourceAggregator:
         print(f"[聚合器] Pack已保存: {filepath}")
         return filepath
 
-    def batch_convert_and_save(self, prompts: List[Dict[str, Any]]) -> List[str]:
+    def batch_convert_and_save(self, prompts: list[dict[str, Any]]) -> list[str]:
         """
         批量转换并保存Pack
 
@@ -259,7 +259,7 @@ class PromptResourceAggregator:
 
         return saved_files
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         获取统计信息
 

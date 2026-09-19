@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .schema import Context, ScenarioType
 
@@ -36,7 +36,7 @@ class RecommendationScore:
     reason: str  # Reason for recommendation
     confidence: float  # Confidence level 0.0 - 1.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "score": self.score,
@@ -55,10 +55,10 @@ class Recommendation:
     title: str
     description: str
     score: RecommendationScore
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "rec_id": self.rec_id,
@@ -78,11 +78,11 @@ class RecommendationHistory:
 
     history_id: str
     context_scenario: str
-    recommendations: List[Recommendation] = field(default_factory=list)
-    accepted_ids: List[str] = field(default_factory=list)  # User accepted recommendations
+    recommendations: list[Recommendation] = field(default_factory=list)
+    accepted_ids: list[str] = field(default_factory=list)  # User accepted recommendations
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "history_id": self.history_id,
@@ -205,16 +205,16 @@ class ContextRecommender:
 
     def __init__(self):
         """Initialize recommender."""
-        self._history: List[RecommendationHistory] = []
+        self._history: list[RecommendationHistory] = []
         self._logger = logging.getLogger(__name__)
 
     def recommend_files(
         self,
         scenario: ScenarioType,
-        active_files: List[str],
-        project_files: List[str],
+        active_files: list[str],
+        project_files: list[str],
         top_n: int = 10,
-    ) -> List[Recommendation]:
+    ) -> list[Recommendation]:
         """
         Recommend files based on scenario and active files.
 
@@ -238,7 +238,7 @@ class ContextRecommender:
         )
 
         # Score each file
-        file_scores: Dict[str, float] = {}
+        file_scores: dict[str, float] = {}
         for file_path in project_files:
             if file_path in active_files:
                 continue  # Skip active files
@@ -270,9 +270,9 @@ class ContextRecommender:
     def recommend_context(
         self,
         scenario: ScenarioType,
-        user_history: List[RecommendationHistory],
+        user_history: list[RecommendationHistory],
         top_n: int = 5,
-    ) -> List[Recommendation]:
+    ) -> list[Recommendation]:
         """
         Recommend context based on user history.
 
@@ -287,7 +287,7 @@ class ContextRecommender:
         recommendations = []
 
         # Analyze accepted recommendations
-        accepted_items: Dict[str, int] = {}
+        accepted_items: dict[str, int] = {}
         for history in user_history:
             for rec_id in history.accepted_ids:
                 for rec in history.recommendations:
@@ -320,7 +320,7 @@ class ContextRecommender:
         self,
         current_context: Context,
         top_n: int = 3,
-    ) -> List[Recommendation]:
+    ) -> list[Recommendation]:
         """
         Recommend next actions based on current context.
 
@@ -357,12 +357,12 @@ class ContextRecommender:
     def get_recommendations(
         self,
         scenario: ScenarioType,
-        active_files: List[str],
-        project_files: List[str],
-        user_history: Optional[List[RecommendationHistory]] = None,
-        current_context: Optional[Context] = None,
+        active_files: list[str],
+        project_files: list[str],
+        user_history: list[RecommendationHistory] | None = None,
+        current_context: Context | None = None,
         top_n: int = 10,
-    ) -> Dict[str, List[Recommendation]]:
+    ) -> dict[str, list[Recommendation]]:
         """
         Get all recommendations.
 
@@ -398,7 +398,7 @@ class ContextRecommender:
 
         return recommendations
 
-    def accept_recommendation(self, rec_id: str, history_id: Optional[str] = None) -> None:
+    def accept_recommendation(self, rec_id: str, history_id: str | None = None) -> None:
         """
         Mark recommendation as accepted.
 
@@ -425,7 +425,7 @@ class ContextRecommender:
 
     def create_history(
         self,
-        recommendations: List[Recommendation],
+        recommendations: list[Recommendation],
         scenario: ScenarioType,
     ) -> RecommendationHistory:
         """
@@ -449,9 +449,9 @@ class ContextRecommender:
     def _calculate_file_score(
         self,
         file_path: str,
-        patterns: Dict[str, List[str]],
-        extensions: Dict[str, float],
-        active_files: List[str],
+        patterns: dict[str, list[str]],
+        extensions: dict[str, float],
+        active_files: list[str],
     ) -> float:
         """Calculate file recommendation score."""
         score = 0.0
@@ -504,7 +504,7 @@ class ContextRecommender:
 
         return " | ".join(reasons) if reasons else "Matches scenario patterns"
 
-    def _get_scenario_actions(self, scenario: ScenarioType) -> List[tuple]:
+    def _get_scenario_actions(self, scenario: ScenarioType) -> list[tuple]:
         """Get common next actions for scenario."""
         actions = {
             ScenarioType.CODING: [

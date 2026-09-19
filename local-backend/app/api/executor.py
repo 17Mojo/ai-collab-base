@@ -4,19 +4,14 @@ Pack Execution API 路由
 
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.schemas import (
-    ArtifactSchema,
-    ExecutePackRequest,
-    ExecutePackResponse,
-    ExecutionStatusResponse,
     GenerateStudioRequest,
     GenerateStudioResponse,
-    StepResultSchema,
 )
 from app.core.database import get_db
 from app.models.pack import ExecutionHistoryModel, PackModel
@@ -30,7 +25,7 @@ EXECUTION_TIMEOUT = int(os.getenv("EXECUTION_TIMEOUT", "60000"))  # 60 seconds
 
 
 @router.post("/execute-pack")
-async def execute_pack(request: Dict[str, Any], db: Session = Depends(get_db)):
+async def execute_pack(request: dict[str, Any], db: Session = Depends(get_db)):
     """
     执行指定 Pack
 
@@ -130,9 +125,9 @@ class GenerateStudioRequest:
     """Studio 产物生成请求"""
 
     content: str
-    artifacts: List[str]  # ['audio', 'video', 'slides']
+    artifacts: list[str]  # ['audio', 'video', 'slides']
     focus: str
-    notebook_id: Optional[str] = None
+    notebook_id: str | None = None
 
 
 class GenerateStudioResponse:
@@ -140,12 +135,12 @@ class GenerateStudioResponse:
 
     artifact_id: str
     status: str
-    artifacts: List[Dict[str, Any]]
-    download_urls: Dict[str, str]
+    artifacts: list[dict[str, Any]]
+    download_urls: dict[str, str]
 
 
 @router.post("/generate-studio")
-async def generate_studio(request: Dict[str, Any], db: Session = Depends(get_db)):
+async def generate_studio(request: dict[str, Any], db: Session = Depends(get_db)):
     """
     生成 Studio 产物 (Audio, Video, Slides)
 
@@ -183,8 +178,8 @@ async def generate_studio(request: Dict[str, Any], db: Session = Depends(get_db)
         )
 
     # 模拟产物生成 (实际生成需要调用 NotebookLM API)
-    generated_artifacts: List[Dict[str, Any]] = []
-    download_urls: Dict[str, str] = {}
+    generated_artifacts: list[dict[str, Any]] = []
+    download_urls: dict[str, str] = {}
 
     for artifact_type in artifacts:
         generated_artifacts.append({

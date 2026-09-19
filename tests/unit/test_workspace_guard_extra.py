@@ -9,10 +9,7 @@ ai_collab/workspace_guard.py 补测
 import subprocess
 from unittest.mock import patch
 
-import pytest
-
 from ai_collab import workspace_guard as wg
-
 
 # ============================================================
 # _normalize_path

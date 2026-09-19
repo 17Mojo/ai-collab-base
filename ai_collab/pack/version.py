@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class VersionType(Enum):
@@ -161,7 +161,7 @@ class PackVersion:
             return False
         return self.compare(other) == 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "major": self.major,
@@ -184,7 +184,7 @@ class VersionHistory:
     created_at: datetime = field(default_factory=datetime.now)
     created_by: str = "unknown"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "version_id": self.version_id,
@@ -196,7 +196,7 @@ class VersionHistory:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "VersionHistory":
+    def from_dict(cls, data: dict[str, Any]) -> "VersionHistory":
         """从字典反序列化"""
         version_data = data["version"]
         version = PackVersion(
@@ -222,7 +222,7 @@ class VersionManager:
 
     def __init__(self):
         """初始化版本管理器"""
-        self._history: Dict[str, List[VersionHistory]] = {}
+        self._history: dict[str, list[VersionHistory]] = {}
 
     def create_version(
         self,
@@ -230,7 +230,7 @@ class VersionManager:
         version_type: VersionType,
         changelog: str,
         created_by: str = "unknown",
-        base_version: Optional[PackVersion] = None,
+        base_version: PackVersion | None = None,
     ) -> PackVersion:
         """创建新版本
 
@@ -281,7 +281,7 @@ class VersionManager:
 
         return next_version
 
-    def list_versions(self, pack_id: str) -> List[VersionHistory]:
+    def list_versions(self, pack_id: str) -> list[VersionHistory]:
         """列出 Pack 的所有版本
 
         Args:
@@ -295,7 +295,7 @@ class VersionManager:
         versions.sort(key=lambda x: x.version, reverse=True)
         return versions
 
-    def get_latest_version(self, pack_id: str) -> Optional[PackVersion]:
+    def get_latest_version(self, pack_id: str) -> PackVersion | None:
         """获取最新版本
 
         Args:
@@ -309,7 +309,7 @@ class VersionManager:
             return versions[0].version
         return None
 
-    def get_version(self, pack_id: str, version_string: str) -> Optional[VersionHistory]:
+    def get_version(self, pack_id: str, version_string: str) -> VersionHistory | None:
         """获取指定版本
 
         Args:
@@ -398,8 +398,8 @@ class VersionManager:
         return True
 
     def get_version_range(
-        self, pack_id: str, min_version: Optional[str] = None, max_version: Optional[str] = None
-    ) -> List[VersionHistory]:
+        self, pack_id: str, min_version: str | None = None, max_version: str | None = None
+    ) -> list[VersionHistory]:
         """获取指定范围内的版本
 
         Args:

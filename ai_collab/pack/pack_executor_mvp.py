@@ -14,7 +14,7 @@ Prompt Pack MVP - 最小可用版本
 import asyncio
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from ai_collab.engines.consensus_engine import ConsensusEngine
 
@@ -22,7 +22,7 @@ from ai_collab.engines.consensus_engine import ConsensusEngine
 class PackExecutorMVP:
     """Pack执行器 - MVP版本"""
 
-    def __init__(self, pack_data: Dict[str, Any]):
+    def __init__(self, pack_data: dict[str, Any]):
         """
         初始化执行器
 
@@ -35,7 +35,7 @@ class PackExecutorMVP:
         self.context = {}  # 执行上下文
         self.results = []  # 执行结果
 
-    def execute(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, user_input: dict[str, Any]) -> dict[str, Any]:
         """
         执行Pack工作流
 
@@ -81,7 +81,7 @@ class PackExecutorMVP:
 
         return final_result
 
-    def _execute_step(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_step(self, step: dict[str, Any]) -> dict[str, Any]:
         """
         执行单个步骤
 
@@ -109,7 +109,7 @@ class PackExecutorMVP:
         else:
             return {"status": "skipped", "message": f"步骤类型 {step_type} 暂不支持"}
 
-    def _execute_local(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_local(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行本地处理步骤"""
         print("  📝 本地处理...")
 
@@ -132,7 +132,7 @@ class PackExecutorMVP:
             },
         }
 
-    def _execute_analysis(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_analysis(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行分析步骤"""
         print("  🔍 分析内容...")
 
@@ -153,7 +153,7 @@ class PackExecutorMVP:
 
         return {"status": "success", "step_type": "ANALYSIS", "outputs": analysis_result}
 
-    def _execute_generation(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_generation(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行生成步骤"""
         print("  ✨ 生成内容...")
 
@@ -196,7 +196,7 @@ class PackExecutorMVP:
             "outputs": {"content": generated_content, "length": len(generated_content)},
         }
 
-    def _execute_generation_with_consensus(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_generation_with_consensus(self, step: dict[str, Any]) -> dict[str, Any]:
         """
         使用共识引擎执行生成步骤
 
@@ -293,7 +293,7 @@ class PackExecutorMVP:
                 },
             }
 
-    def _apply_fusion_strategy(self, consensus_result: Dict[str, Any], strategy: str) -> str:
+    def _apply_fusion_strategy(self, consensus_result: dict[str, Any], strategy: str) -> str:
         """
         根据融合策略处理共识结果
 
@@ -332,7 +332,7 @@ class PackExecutorMVP:
             # 默认使用 concat
             return consensus_result.get("consensus", "")
 
-    def _execute_validation(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_validation(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行验证步骤"""
         print("  ✔️ 验证内容...")
 
@@ -366,7 +366,7 @@ class PackExecutorMVP:
 
         return {"status": "success", "step_type": "VALIDATION", "outputs": validation_result}
 
-    def _generate_final_result(self) -> Dict[str, Any]:
+    def _generate_final_result(self) -> dict[str, Any]:
         """生成最终结果"""
         return {
             "pack_name": self.metadata.get("pack_name", "Unknown"),
@@ -379,7 +379,7 @@ class PackExecutorMVP:
             "context": self.context,
         }
 
-    def _execute_fusion(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_fusion(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行融合步骤 - 合并多个生成结果"""
         print("  🔀 融合内容...")
 
@@ -403,7 +403,7 @@ class PackExecutorMVP:
             "outputs": {"content": fused_content, "strategy": fusion_strategy},
         }
 
-    def _execute_tracking(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_tracking(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行追踪步骤 - 记录和追踪生成内容"""
         print("  📊 追踪内容...")
 
@@ -419,7 +419,7 @@ class PackExecutorMVP:
         tracking_file = step.get("output_file", "tracking_history.json")
         try:
             try:
-                with open(tracking_file, "r", encoding="utf-8") as f:
+                with open(tracking_file, encoding="utf-8") as f:
                     history = json.load(f)
             except (OSError, json.JSONDecodeError):
                 history = {"tracking_records": []}
@@ -443,13 +443,13 @@ class PackExecutorMVP:
 # ==================== 便捷函数 ====================
 
 
-def load_pack_from_file(pack_file: str) -> Dict[str, Any]:
+def load_pack_from_file(pack_file: str) -> dict[str, Any]:
     """从文件加载Pack"""
-    with open(pack_file, "r", encoding="utf-8") as f:
+    with open(pack_file, encoding="utf-8") as f:
         return json.load(f)
 
 
-def execute_pack(pack_data: Dict[str, Any], user_input: Dict[str, Any]) -> Dict[str, Any]:
+def execute_pack(pack_data: dict[str, Any], user_input: dict[str, Any]) -> dict[str, Any]:
     """执行Pack"""
     executor = PackExecutorMVP(pack_data)
     return executor.execute(user_input)
@@ -497,7 +497,7 @@ if __name__ == "__main__":
     print(f"\n生成内容:\n{result['final_content']}")
     print(f"\n验证结果: {result['validation']}")
 
-    def _execute_fusion(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_fusion(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行融合步骤 - 合并多个生成结果"""
         print("  🔀 融合内容...")
 
@@ -547,7 +547,7 @@ if __name__ == "__main__":
             },
         }
 
-    def _execute_tracking(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_tracking(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行追踪步骤 - 记录和追踪生成内容"""
         print("  📊 追踪内容...")
 
@@ -568,7 +568,7 @@ if __name__ == "__main__":
         try:
             # 加载现有记录
             try:
-                with open(tracking_file, "r", encoding="utf-8") as f:
+                with open(tracking_file, encoding="utf-8") as f:
                     history = json.load(f)
             except (OSError, json.JSONDecodeError):
                 history = {"tracking_records": []}

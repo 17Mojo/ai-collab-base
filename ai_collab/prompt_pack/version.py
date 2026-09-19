@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class VersionBumpType(Enum):
@@ -43,8 +43,8 @@ class PackVersion:
     major: int
     minor: int
     patch: int
-    prerelease: Optional[str] = None  # e.g., "alpha", "beta", "rc1"
-    build: Optional[str] = None  # e.g., "20260302"
+    prerelease: str | None = None  # e.g., "alpha", "beta", "rc1"
+    build: str | None = None  # e.g., "20260302"
 
     def __str__(self) -> str:
         """版本字符串表示"""
@@ -56,7 +56,7 @@ class PackVersion:
         return version
 
     @classmethod
-    def parse(cls, version_str: str) -> "PackVersion":
+    def parse(cls, version_str: str) -> PackVersion:
         """解析版本字符串"""
         # 匹配 SemVer 格式: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
         pattern = r"^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9]+))?(?:\+([a-zA-Z0-9.]+))?$"
@@ -70,7 +70,7 @@ class PackVersion:
             major=int(major), minor=int(minor), patch=int(patch), prerelease=prerelease, build=build
         )
 
-    def bump(self, bump_type: VersionBumpType) -> "PackVersion":
+    def bump(self, bump_type: VersionBumpType) -> PackVersion:
         """升级版本"""
         new_version = PackVersion(
             major=self.major, minor=self.minor, patch=self.patch, prerelease=None, build=None
@@ -88,7 +88,7 @@ class PackVersion:
 
         return new_version
 
-    def compare_to(self, other: "PackVersion") -> int:
+    def compare_to(self, other: PackVersion) -> int:
         """比较版本
 
         Returns:
@@ -119,19 +119,19 @@ class PackVersion:
 
         return 0
 
-    def __lt__(self, other: "PackVersion") -> bool:
+    def __lt__(self, other: PackVersion) -> bool:
         return self.compare_to(other) < 0
 
-    def __le__(self, other: "PackVersion") -> bool:
+    def __le__(self, other: PackVersion) -> bool:
         return self.compare_to(other) <= 0
 
-    def __eq__(self, other: "PackVersion") -> bool:
+    def __eq__(self, other: PackVersion) -> bool:
         return self.compare_to(other) == 0
 
-    def __gt__(self, other: "PackVersion") -> bool:
+    def __gt__(self, other: PackVersion) -> bool:
         return self.compare_to(other) > 0
 
-    def __ge__(self, other: "PackVersion") -> bool:
+    def __ge__(self, other: PackVersion) -> bool:
         return self.compare_to(other) >= 0
 
 
@@ -141,11 +141,11 @@ class PackVersionHistory:
 
     version: PackVersion
     timestamp: datetime
-    files: List[str]  # 在此版本中的文件列表
+    files: list[str]  # 在此版本中的文件列表
     changelog: str = ""
-    migration_script: Optional[str] = None  # 迁移脚本路径
+    migration_script: str | None = None  # 迁移脚本路径
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "version": str(self.version),
@@ -162,11 +162,11 @@ class PackVersionMetadata:
 
     current_version: PackVersion
     latest_version: PackVersion
-    history: List[PackVersionHistory]
+    history: list[PackVersionHistory]
     api_version: str  # 当前 Pack API 版本
-    breaking_changes: List[str] = field(default_factory=list)  # 不向后兼容的变更列表
+    breaking_changes: list[str] = field(default_factory=list)  # 不向后兼容的变更列表
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "current_version": str(self.current_version),
@@ -200,12 +200,12 @@ class PackVersionManager:
             if not manifest_file.exists():
                 raise FileNotFoundError(f"Pack not found at {self.pack_dir}")
 
-            with open(manifest_file, "r", encoding="utf-8") as f:
+            with open(manifest_file, encoding="utf-8") as f:
                 manifest = json.load(f)
 
             return PackVersion.parse(manifest.get("version", "1.0.0"))
 
-        with open(self.version_file, "r", encoding="utf-8") as f:
+        with open(self.version_file, encoding="utf-8") as f:
             metadata = json.load(f)
             return PackVersion.parse(metadata["current_version"])
 
@@ -214,16 +214,16 @@ class PackVersionManager:
         if not self.version_file.exists():
             return self.get_current_version()
 
-        with open(self.version_file, "r", encoding="utf-8") as f:
+        with open(self.version_file, encoding="utf-8") as f:
             metadata = json.load(f)
             return PackVersion.parse(metadata["latest_version"])
 
-    def get_version_history(self) -> List[PackVersionHistory]:
+    def get_version_history(self) -> list[PackVersionHistory]:
         """获取版本历史"""
         if not self.version_file.exists():
             return []
 
-        with open(self.version_file, "r", encoding="utf-8") as f:
+        with open(self.version_file, encoding="utf-8") as f:
             metadata = json.load(f)
             history_data = metadata.get("history", [])
 
@@ -244,7 +244,7 @@ class PackVersionManager:
         self,
         bump_type: VersionBumpType,
         changelog: str = "",
-        breaking_changes: Optional[List[str]] = None,
+        breaking_changes: list[str] | None = None,
     ) -> PackVersion:
         """
         升级 Pack 版本
@@ -276,7 +276,7 @@ class PackVersionManager:
 
         # 更新 manifest 中的版本
         manifest_file = self.pack_dir / "manifest.json"
-        with open(manifest_file, "r", encoding="utf-8") as f:
+        with open(manifest_file, encoding="utf-8") as f:
             manifest = json.load(f)
 
         manifest["version"] = str(new_version)
@@ -299,7 +299,7 @@ class PackVersionManager:
 
         return new_version
 
-    def check_updates(self) -> Dict[str, Any]:
+    def check_updates(self) -> dict[str, Any]:
         """
         检查 Pack 更新
 
@@ -313,7 +313,7 @@ class PackVersionManager:
 
         metadata = {}
         if self.version_file.exists():
-            with open(self.version_file, "r", encoding="utf-8") as f:
+            with open(self.version_file, encoding="utf-8") as f:
                 version_data = json.load(f)
                 metadata = version_data
 
@@ -359,7 +359,7 @@ class PackVersionManager:
 
         # 恢复 manifest 版本
         manifest_file = self.pack_dir / "manifest.json"
-        with open(manifest_file, "r", encoding="utf-8") as f:
+        with open(manifest_file, encoding="utf-8") as f:
             manifest = json.load(f)
 
         manifest["version"] = str(version)
@@ -370,12 +370,12 @@ class PackVersionManager:
 
         return True
 
-    def get_version_metadata(self) -> Optional[PackVersionMetadata]:
+    def get_version_metadata(self) -> PackVersionMetadata | None:
         """获取版本元数据"""
         if not self.version_file.exists():
             return None
 
-        with open(self.version_file, "r", encoding="utf-8") as f:
+        with open(self.version_file, encoding="utf-8") as f:
             metadata = json.load(f)
 
         return PackVersionMetadata(

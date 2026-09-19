@@ -12,7 +12,6 @@ import secrets
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional
 
 
 @dataclass
@@ -22,7 +21,7 @@ class ClientToken:
     token: str
     client_name: str
     created_at: str
-    expires_at: Optional[str] = None
+    expires_at: str | None = None
     permissions: list = None
     is_active: bool = True
 
@@ -65,7 +64,7 @@ class TokenManager:
     管理 API 客户端的访问令牌
     """
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         """
         初始化令牌管理器
 
@@ -79,7 +78,7 @@ class TokenManager:
             base_path = Path(__file__).resolve().parent.parent.parent
             self.storage_path = base_path / "data" / "client_tokens.json"
 
-        self.tokens: Dict[str, ClientToken] = {}
+        self.tokens: dict[str, ClientToken] = {}
         self._load_from_storage()
 
     def _load_from_storage(self):
@@ -130,8 +129,8 @@ class TokenManager:
     def generate_token(
         self,
         client_name: str,
-        permissions: Optional[list] = None,
-        expires_hours: Optional[int] = None,
+        permissions: list | None = None,
+        expires_hours: int | None = None,
     ) -> str:
         """
         生成新的客户端令牌
@@ -265,7 +264,7 @@ class TokenManager:
 # ==================== 全局实例 ====================
 
 # 单例模式的令牌管理器
-_token_manager: Optional[TokenManager] = None
+_token_manager: TokenManager | None = None
 
 
 def get_token_manager() -> TokenManager:

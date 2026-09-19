@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .market_api import PackMarketAPI
 from .version import PackVersion, VersionType
@@ -43,19 +43,19 @@ class BulkOperation:
 
     operation_id: str
     operation_type: OperationType
-    pack_ids: List[str]
-    specs: List[Dict[str, Any]] = field(default_factory=list)
+    pack_ids: list[str]
+    specs: list[dict[str, Any]] = field(default_factory=list)
     status: OperationStatus = OperationStatus.PENDING
-    results: List[Dict[str, Any]] = field(default_factory=list)
-    created_at: Optional[datetime] = field(default_factory=datetime.now)
-    updated_at: Optional[datetime] = field(default_factory=datetime.now)
+    results: list[dict[str, Any]] = field(default_factory=list)
+    created_at: datetime | None = field(default_factory=datetime.now)
+    updated_at: datetime | None = field(default_factory=datetime.now)
 
     @property
     def total(self) -> int:
         """总操作数"""
         return len(self.pack_ids)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化"""
         return {
             "operation_id": self.operation_id,
@@ -69,7 +69,7 @@ class BulkOperation:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BulkOperation":
+    def from_dict(cls, data: dict[str, Any]) -> "BulkOperation":
         """反序列化"""
         created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None
         updated_at = (
@@ -99,9 +99,9 @@ class BulkOperationResult:
     succeeded: int = 0
     failed: int = 0
     cancelled: int = 0
-    results: List[Dict[str, Any]] = field(default_factory=list)
-    started_at: Optional[datetime] = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
+    results: list[dict[str, Any]] = field(default_factory=list)
+    started_at: datetime | None = field(default_factory=datetime.now)
+    completed_at: datetime | None = None
 
     @property
     def success_rate(self) -> float:
@@ -110,7 +110,7 @@ class BulkOperationResult:
             return 0.0
         return (self.succeeded / self.total) * 100
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化"""
         return {
             "operation_id": self.operation_id,
@@ -137,13 +137,13 @@ class BulkOperationEngine:
         """
         self.api = PackMarketAPI(db_path)
         self.max_workers = max_workers
-        self._operations: Dict[str, BulkOperation] = {}
+        self._operations: dict[str, BulkOperation] = {}
 
     def create_operation(
         self,
         operation_type: OperationType,
-        pack_ids: List[str],
-        specs: Optional[List[Dict[str, Any]]] = None,
+        pack_ids: list[str],
+        specs: list[dict[str, Any]] | None = None,
     ) -> BulkOperation:
         """创建批量操作
 
@@ -167,7 +167,7 @@ class BulkOperationEngine:
         self._operations[operation_id] = operation
         return operation
 
-    def get_operation(self, operation_id: str) -> Optional[BulkOperation]:
+    def get_operation(self, operation_id: str) -> BulkOperation | None:
         """获取操作
 
         Args:
@@ -179,7 +179,7 @@ class BulkOperationEngine:
         return self._operations.get(operation_id)
 
     def bulk_create(
-        self, pack_specs: List[Dict[str, Any]], parallel: bool = True
+        self, pack_specs: list[dict[str, Any]], parallel: bool = True
     ) -> BulkOperationResult:
         """批量创建 Pack
 
@@ -215,7 +215,7 @@ class BulkOperationEngine:
         return result
 
     def bulk_update_version(
-        self, pack_ids: List[str], version_bump: str, parallel: bool = True
+        self, pack_ids: list[str], version_bump: str, parallel: bool = True
     ) -> BulkOperationResult:
         """批量更新版本
 
@@ -234,7 +234,7 @@ class BulkOperationEngine:
 
         results = []
 
-        def update_one(pack_id: str) -> Dict[str, Any]:
+        def update_one(pack_id: str) -> dict[str, Any]:
             """更新单个 Pack 版本"""
             pack = self.api.get_pack(pack_id)
             if not pack.get("success"):
@@ -274,7 +274,7 @@ class BulkOperationEngine:
 
         return result
 
-    def bulk_archive(self, pack_ids: List[str], parallel: bool = True) -> BulkOperationResult:
+    def bulk_archive(self, pack_ids: list[str], parallel: bool = True) -> BulkOperationResult:
         """批量归档 Pack
 
         Args:
@@ -291,7 +291,7 @@ class BulkOperationEngine:
             operation_id=operation.operation_id, total=len(pack_ids), started_at=datetime.now()
         )
 
-        def archive_one(pack_id: str) -> Dict[str, Any]:
+        def archive_one(pack_id: str) -> dict[str, Any]:
             """归档单个 Pack"""
             listing = self.api.store.get_listing(pack_id)
             if not listing:
@@ -324,7 +324,7 @@ class BulkOperationEngine:
         return result
 
     def bulk_delete(
-        self, pack_ids: List[str], confirm_token: str, parallel: bool = True
+        self, pack_ids: list[str], confirm_token: str, parallel: bool = True
     ) -> BulkOperationResult:
         """批量删除 Pack
 
@@ -351,7 +351,7 @@ class BulkOperationEngine:
             operation_id=operation.operation_id, total=len(pack_ids), started_at=datetime.now()
         )
 
-        def delete_one(pack_id: str) -> Dict[str, Any]:
+        def delete_one(pack_id: str) -> dict[str, Any]:
             """删除单个 Pack"""
             listing = self.api.store.get_listing(pack_id)
             if not listing:
@@ -384,7 +384,7 @@ class BulkOperationEngine:
 
     def _execute_bulk_operation(
         self, operation: BulkOperation, parallel: bool
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """执行批量操作（内部方法）"""
         if operation.operation_type != OperationType.CREATE:
             raise ValueError(f"Not implemented for {operation.operation_type}")
@@ -392,7 +392,7 @@ class BulkOperationEngine:
         results = []
         pack_specs = operation.specs
 
-        def create_one(spec: Dict[str, Any]) -> Dict[str, Any]:
+        def create_one(spec: dict[str, Any]) -> dict[str, Any]:
             """创建单个 Pack"""
             try:
                 pack_id = spec.get("pack_id", "unknown")
@@ -476,7 +476,7 @@ class BulkOperationEngine:
             completed_at=None,
         )
 
-    def get_all_operations(self) -> List[Dict[str, Any]]:
+    def get_all_operations(self) -> list[dict[str, Any]]:
         """获取所有操作
 
         Returns:

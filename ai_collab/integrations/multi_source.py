@@ -8,7 +8,7 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -19,7 +19,7 @@ class KnowledgeSource:
     source_type: str  # notebooklm/file/api
     content: str
     confidence: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
 
     def __post_init__(self):
@@ -29,7 +29,7 @@ class KnowledgeSource:
         if self.source_type not in ["notebooklm", "file", "api"]:
             raise ValueError(f"Invalid source type: {self.source_type}")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "source_id": self.source_id,
@@ -41,7 +41,7 @@ class KnowledgeSource:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "KnowledgeSource":
+    def from_dict(cls, data: dict[str, Any]) -> "KnowledgeSource":
         """从字典反序列化"""
         return cls(
             source_id=data["source_id"],
@@ -58,12 +58,12 @@ class AggregatedKnowledge:
     """聚合知识"""
 
     content: str
-    sources: List[KnowledgeSource]
-    cross_validation: Dict[str, bool]
+    sources: list[KnowledgeSource]
+    cross_validation: dict[str, bool]
     overall_confidence: float
     created_at: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "content": self.content,
@@ -74,7 +74,7 @@ class AggregatedKnowledge:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AggregatedKnowledge":
+    def from_dict(cls, data: dict[str, Any]) -> "AggregatedKnowledge":
         """从字典反序列化"""
         return cls(
             content=data["content"],
@@ -90,8 +90,8 @@ class KnowledgeAggregator:
 
     def __init__(self):
         """初始化聚合引擎"""
-        self.sources: Dict[str, KnowledgeSource] = {}
-        self.aggregation_cache: Dict[str, AggregatedKnowledge] = {}
+        self.sources: dict[str, KnowledgeSource] = {}
+        self.aggregation_cache: dict[str, AggregatedKnowledge] = {}
 
     def add_source(self, source: KnowledgeSource) -> str:
         """
@@ -153,7 +153,7 @@ class KnowledgeAggregator:
 
         return aggregated
 
-    def deduplicate(self, sources: List[KnowledgeSource]) -> List[KnowledgeSource]:
+    def deduplicate(self, sources: list[KnowledgeSource]) -> list[KnowledgeSource]:
         """
         去重知识源
 
@@ -176,7 +176,7 @@ class KnowledgeAggregator:
 
         return unique_sources
 
-    def cross_validate(self, sources: List[KnowledgeSource]) -> Dict[str, bool]:
+    def cross_validate(self, sources: list[KnowledgeSource]) -> dict[str, bool]:
         """
         交叉验证知识源
 
@@ -238,13 +238,13 @@ class KnowledgeAggregator:
 
         return min(overall, 1.0)
 
-    def _select_relevant_sources(self, query: str, max_sources: int) -> List[KnowledgeSource]:
+    def _select_relevant_sources(self, query: str, max_sources: int) -> list[KnowledgeSource]:
         """选择相关源"""
         # 简单实现: 按置信度排序
         sorted_sources = sorted(self.sources.values(), key=lambda s: s.confidence, reverse=True)
         return sorted_sources[:max_sources]
 
-    def _merge_content(self, sources: List[KnowledgeSource]) -> str:
+    def _merge_content(self, sources: list[KnowledgeSource]) -> str:
         """合并内容"""
         if not sources:
             return ""
@@ -271,7 +271,7 @@ class KnowledgeAggregator:
         words = re.findall(r"\b\w{3,}\b", content.lower())
         return set(words)
 
-    def _check_consistency(self, info: set, all_info: List[set], index: int) -> bool:
+    def _check_consistency(self, info: set, all_info: list[set], index: int) -> bool:
         """检查一致性"""
         if len(all_info) < 2:
             return True
@@ -296,11 +296,11 @@ class KnowledgeAggregator:
         """获取缓存键"""
         return f"{query}:{max_sources}"
 
-    def get_source(self, source_id: str) -> Optional[KnowledgeSource]:
+    def get_source(self, source_id: str) -> KnowledgeSource | None:
         """获取知识源"""
         return self.sources.get(source_id)
 
-    def list_sources(self) -> List[KnowledgeSource]:
+    def list_sources(self) -> list[KnowledgeSource]:
         """列出所有知识源"""
         return list(self.sources.values())
 

@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ValidationSeverity(Enum):
@@ -29,7 +29,7 @@ class ValidationIssue:
     path: str  # JSON 路径
     message: str  # 问题描述
     severity: ValidationSeverity  # 严重级别
-    suggestion: Optional[str] = None  # 修复建议
+    suggestion: str | None = None  # 修复建议
 
 
 @dataclass
@@ -37,9 +37,9 @@ class ValidationResult:
     """验证结果"""
 
     is_valid: bool
-    issues: List[ValidationIssue] = field(default_factory=list)
-    pack_id: Optional[str] = None
-    pack_name: Optional[str] = None
+    issues: list[ValidationIssue] = field(default_factory=list)
+    pack_id: str | None = None
+    pack_name: str | None = None
 
     def add_error(self, path: str, message: str, suggestion: str = None):
         self.issues.append(
@@ -153,7 +153,7 @@ class PackSchemaValidator:
 
         # 解析 JSON
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
             result = ValidationResult(is_valid=False)
@@ -163,7 +163,7 @@ class PackSchemaValidator:
         # 验证数据结构
         return self.validate_data(data, str(file_path))
 
-    def validate_data(self, data: Dict[str, Any], source: str = "") -> ValidationResult:
+    def validate_data(self, data: dict[str, Any], source: str = "") -> ValidationResult:
         """
         验证 Pack 数据结构
 
@@ -206,7 +206,7 @@ class PackSchemaValidator:
 
         return result
 
-    def _validate_top_level(self, data: Dict[str, Any], result: ValidationResult):
+    def _validate_top_level(self, data: dict[str, Any], result: ValidationResult):
         """验证顶层结构"""
         # 检查必需字段
         for field in self.REQUIRED_TOP_LEVEL_FIELDS:
@@ -228,7 +228,7 @@ class PackSchemaValidator:
                         f"Remove '{key}' or check schema documentation",
                     )
 
-    def _validate_metadata(self, metadata: Dict[str, Any], result: ValidationResult):
+    def _validate_metadata(self, metadata: dict[str, Any], result: ValidationResult):
         """验证 metadata 字段"""
         # 检查必需字段
         for field in self.REQUIRED_METADATA_FIELDS:
@@ -292,7 +292,7 @@ class PackSchemaValidator:
                     "$.metadata.tags", f"tags must be a list, got {type(metadata['tags']).__name__}"
                 )
 
-    def _validate_domain(self, domain: Dict[str, Any], result: ValidationResult):
+    def _validate_domain(self, domain: dict[str, Any], result: ValidationResult):
         """验证 domain 字段"""
         # primary_domain 是必需的
         if "primary_domain" not in domain:
@@ -308,7 +308,7 @@ class PackSchemaValidator:
             if not isinstance(domain["compliance_rules"], list):
                 result.add_warning("$.domain.compliance_rules", "compliance_rules should be a list")
 
-    def _validate_workflow(self, workflow: Dict[str, Any], result: ValidationResult):
+    def _validate_workflow(self, workflow: dict[str, Any], result: ValidationResult):
         """验证 workflow 字段"""
         # steps 是必需的
         if "steps" not in workflow:
@@ -336,7 +336,7 @@ class PackSchemaValidator:
             self._validate_step(step, step_path, result, step_ids)
 
     def _validate_step(
-        self, step: Dict[str, Any], path: str, result: ValidationResult, seen_ids: set
+        self, step: dict[str, Any], path: str, result: ValidationResult, seen_ids: set
     ):
         """验证单个 workflow step"""
         # 检查必需字段
@@ -384,7 +384,7 @@ class PackSchemaValidator:
                     f"{path}.estimated_time", "estimated_time should be a number (seconds)"
                 )
 
-    def _validate_quality_metrics(self, metrics: Dict[str, Any], result: ValidationResult):
+    def _validate_quality_metrics(self, metrics: dict[str, Any], result: ValidationResult):
         """验证 quality_metrics 字段"""
         if "metrics" not in metrics:
             result.add_warning("$.quality_metrics.metrics", "Missing metrics definition")
@@ -414,7 +414,7 @@ class PackSchemaValidator:
                 "Adjust weights so they sum to 1.0",
             )
 
-    def _validate_example_library(self, library: Dict[str, Any], result: ValidationResult):
+    def _validate_example_library(self, library: dict[str, Any], result: ValidationResult):
         """验证 example_library 字段"""
         if "examples" not in library:
             result.add_info("$.example_library.examples", "No examples defined")
@@ -446,7 +446,7 @@ def validate_pack(file_path: str, strict: bool = True) -> ValidationResult:
 
 def validate_all_packs(
     directory: str = "packs/examples", strict: bool = True
-) -> Dict[str, ValidationResult]:
+) -> dict[str, ValidationResult]:
     """
     验证目录下所有 Pack 文件
 
@@ -469,7 +469,7 @@ def validate_all_packs(
     return results
 
 
-def print_validation_report(results: Dict[str, ValidationResult]):
+def print_validation_report(results: dict[str, ValidationResult]):
     """打印验证报告"""
     print("\n" + "=" * 60)
     print("Pack Schema Validation Report")

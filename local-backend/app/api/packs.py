@@ -3,7 +3,6 @@ Pack API 路由
 """
 
 import os
-from typing import Optional, Set
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
@@ -37,7 +36,7 @@ METADATA_CACHE_TTL_SECONDS = int(os.getenv("PACK_METADATA_CACHE_TTL_SECONDS", "3
 METRICS_CACHE_TTL_SECONDS = int(os.getenv("PACK_METRICS_CACHE_TTL_SECONDS", "120"))
 
 
-def _cache_key_list(skip: int, limit: int, category: Optional[str], search: Optional[str]) -> str:
+def _cache_key_list(skip: int, limit: int, category: str | None, search: str | None) -> str:
     return f"packs:list:{skip}:{limit}:{category or ''}:{search or ''}"
 
 
@@ -53,7 +52,7 @@ def _cache_key_metrics_stats(pack_id: str) -> str:
     return f"packs:metrics:stats:{pack_id}"
 
 
-def _invalidate_pack_cache(pack_id: Optional[str] = None):
+def _invalidate_pack_cache(pack_id: str | None = None):
     cache = get_cache_manager()
     cache.delete_prefix("packs:list:")
     if pack_id:
@@ -69,8 +68,8 @@ def _invalidate_pack_cache(pack_id: Optional[str] = None):
 async def list_packs(
     skip: int = 0,
     limit: int = 20,
-    category: Optional[str] = None,
-    search: Optional[str] = None,
+    category: str | None = None,
+    search: str | None = None,
     db: Session = Depends(get_db),
 ):
     """获取 Pack 列表"""
@@ -103,7 +102,7 @@ async def bulk_create_packs(payload: BulkPackCreateRequest, db: Session = Depend
     """批量创建 Pack（支持部分失败）"""
     created: list[PackResponse] = []
     errors: list[BulkErrorItem] = []
-    seen_pack_ids: Set[str] = set()
+    seen_pack_ids: set[str] = set()
 
     for idx, pack in enumerate(payload.packs):
         pack_id = pack.metadata.pack_id
@@ -337,7 +336,7 @@ async def get_pack_metadata(pack_id: str, db: Session = Depends(get_db)):
 @router.post("/{pack_id}/full")
 async def get_pack_full(
     pack_id: str,
-    client_token: Optional[str] = Header(None, alias="X-Client-Token"),
+    client_token: str | None = Header(None, alias="X-Client-Token"),
     db: Session = Depends(get_db),
 ):
     """

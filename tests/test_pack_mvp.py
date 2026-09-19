@@ -17,7 +17,7 @@ from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
 
 def load_pack(pack_file: str) -> dict:
     """加载Pack配置"""
-    with open(pack_file, "r", encoding="utf-8") as f:
+    with open(pack_file, encoding="utf-8") as f:
         return json.load(f)
 
 

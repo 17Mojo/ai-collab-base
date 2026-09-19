@@ -8,7 +8,6 @@ Pack 模板 CLI 命令
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 from ai_collab.pack.market_api import PackMarketAPI
 from ai_collab.pack.template import TemplateCategory, TemplateLibrary
@@ -17,7 +16,7 @@ from ai_collab.pack.template import TemplateCategory, TemplateLibrary
 class PackTemplateCLI:
     """Pack 模板 CLI"""
 
-    def __init__(self, template_dir: Optional[str] = None, db_path: str = "data/packs.db"):
+    def __init__(self, template_dir: str | None = None, db_path: str = "data/packs.db"):
         """初始化 CLI
 
         Args:
@@ -32,7 +31,7 @@ class PackTemplateCLI:
         """确保必要目录存在"""
         Path("data").mkdir(exist_ok=True)
 
-    def list_templates(self, category: Optional[str] = None) -> int:
+    def list_templates(self, category: str | None = None) -> int:
         """列出模板
 
         Args:
@@ -140,7 +139,7 @@ class PackTemplateCLI:
         self,
         template_id: str,
         pack_name: str,
-        parameters: Optional[dict] = None,
+        parameters: dict | None = None,
         author: str = "default_user",
     ) -> int:
         """基于模板创建 Pack

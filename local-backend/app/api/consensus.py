@@ -11,7 +11,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -23,10 +23,10 @@ class ConsensusRequest(BaseModel):
     """通识生成请求"""
 
     topic: str
-    providers: Optional[List[str]] = None
-    timeout: Optional[float] = 30.0
+    providers: list[str] | None = None
+    timeout: float | None = 30.0
     # 新增：Chrome发送的真实响应（混合模式）
-    real_responses: Optional[List[Dict[str, Any]]] = None
+    real_responses: list[dict[str, Any]] | None = None
 
 
 class RealResponseItem(BaseModel):
@@ -34,7 +34,7 @@ class RealResponseItem(BaseModel):
 
     platform: str  # 平台ID（如kimi.com, chatgpt.com）
     content: str  # AI响应内容
-    confidence: Optional[float] = 0.9
+    confidence: float | None = 0.9
 
 
 class ConsensusResponse(BaseModel):
@@ -42,7 +42,7 @@ class ConsensusResponse(BaseModel):
 
     topic: str
     consensus: str
-    sources: List[Dict[str, Any]]
+    sources: list[dict[str, Any]]
     timestamp: str
     version: str
     mode: str
@@ -51,8 +51,8 @@ class ConsensusResponse(BaseModel):
 class ProvidersResponse(BaseModel):
     """Provider 列表响应"""
 
-    providers: List[str]
-    defaults: List[str]
+    providers: list[str]
+    defaults: list[str]
 
 
 @router.post("/generate", response_model=ConsensusResponse)

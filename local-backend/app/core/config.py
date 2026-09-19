@@ -4,7 +4,6 @@
 统一管理应用配置，支持环境变量覆盖
 """
 
-from typing import List
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,7 +19,7 @@ class Settings(BaseSettings):
 
     # 安全配置
     max_request_body_size: int = Field(default=10 * 1024 * 1024, description="最大请求体大小（字节）")
-    cors_origins: List[str] = Field(
+    cors_origins: list[str] = Field(
         default=["http://localhost:*", "http://127.0.0.1:*"], description="允许的 CORS 来源"
     )
     token_expiry_hours: int = Field(default=24, description="Token 默认过期时间（小时）")
@@ -102,7 +101,7 @@ def reload_settings() -> Settings:
 
 
 # 便捷访问函数
-def get_cors_origins() -> List[str]:
+def get_cors_origins() -> list[str]:
     """获取 CORS 允许的来源"""
     return get_settings().cors_origins
 

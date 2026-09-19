@@ -4,7 +4,6 @@ pack/schema_validator.py 的最小测试覆盖
 """
 
 import json
-from pathlib import Path
 
 import pytest
 

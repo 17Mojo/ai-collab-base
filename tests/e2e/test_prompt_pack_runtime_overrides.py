@@ -7,7 +7,7 @@ Uses mock extension host to avoid chrome.storage false positives in CI
 import importlib.util
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -109,8 +109,8 @@ class ExtensionHostMock:
         self._message_handler = handler
 
     def simulate_execute_pack(
-        self, pack_id: str, runtime_overrides: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, pack_id: str, runtime_overrides: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Simulate executePack message flow
 

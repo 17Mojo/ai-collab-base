@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class PackType(Enum):
@@ -54,7 +54,7 @@ class RegexPattern:
 
     pattern: str  # 正则模式
     flags: str = ""  # 标志: 'i'=忽略大小写, 'm'=多行, 'g'=全局
-    extract_fields: Optional[Dict[str, str]] = None  # 提取字段映射 {捕获组名: 字段名}
+    extract_fields: dict[str, str] | None = None  # 提取字段映射 {捕获组名: 字段名}
 
 
 @dataclass
@@ -65,9 +65,9 @@ class BranchCondition:
     condition_type: str = 'regex_match'  # 'regex_match', 'contains', 'equals', 'threshold', 'exists'
     target_field: str = "output"  # 检查字段 (output, input, context)
     condition_value: str = ""  # 匹配值/模式 (对于 contains/equals)
-    regex_config: Optional[RegexPattern] = None  # 正则配置 (对于 regex_match)
+    regex_config: RegexPattern | None = None  # 正则配置 (对于 regex_match)
     negate: bool = False  # 否定条件 (条件不满足时跳转)
-    threshold_value: Optional[float] = None  # 阈值 (对于 threshold)
+    threshold_value: float | None = None  # 阈值 (对于 threshold)
 
 
 @dataclass
@@ -82,8 +82,8 @@ class PackMetadata:
     designer: str
     created_at: datetime
     updated_at: datetime
-    category: Optional[str] = None  # 二级分类（如：美妆、科技、美食）
-    tags: List[str] = field(default_factory=list)
+    category: str | None = None  # 二级分类（如：美妆、科技、美食）
+    tags: list[str] = field(default_factory=list)
     language: str = "zh"
     estimated_efficiency_gain: str = "80%"  # 预期效率提升
 
@@ -103,7 +103,7 @@ class QualityMetric:
 class QualityMetrics:
     """质量指标集合"""
 
-    metrics: Dict[str, QualityMetric]
+    metrics: dict[str, QualityMetric]
     normalization_method: str = "linear"  # linear, minmax, zscore
     validation_tolerance: float = 0.01  # 权重总和容差
 
@@ -116,7 +116,7 @@ class QualityMetrics:
         total = self.get_total_weight()
         return abs(total - 1.0) <= self.validation_tolerance
 
-    def get_normalized_weights(self) -> Dict[str, float]:
+    def get_normalized_weights(self) -> dict[str, float]:
         """
         获取归一化的权重
 
@@ -214,7 +214,7 @@ class QualityMetrics:
             total = self.get_total_weight()
             if total > 0:
                 scale = 1.0 / total
-                for name, metric_obj in self.metrics.items():
+                for _name, metric_obj in self.metrics.items():
                     metric_obj.weight *= scale
 
         return True
@@ -245,7 +245,7 @@ class QualityMetrics:
 
         return True
 
-    def calculate_quality_score(self, metric_scores: Dict[str, float]) -> float:
+    def calculate_quality_score(self, metric_scores: dict[str, float]) -> float:
         """
         根据指标得分计算综合质量分数
 
@@ -278,7 +278,7 @@ class GenerationParams:
     # 多样性激发
     diversity_enhancement: bool = True
     output_versions: int = 3
-    diversity_dimensions: List[str] = field(
+    diversity_dimensions: list[str] = field(
         default_factory=lambda: ["emotional_tone", "narrative_style", "feature_highlighting"]
     )
 
@@ -299,7 +299,7 @@ class ConsensusConfig:
     """共识引擎配置 - 用于多 AI 协同生成"""
 
     enabled: bool = False  # 是否启用共识引擎
-    providers: List[str] = field(default_factory=list)  # 参与的 AI provider 列表
+    providers: list[str] = field(default_factory=list)  # 参与的 AI provider 列表
     timeout: float = 30.0  # 单个 provider 超时(秒)
     min_providers: int = 2  # 最少需要成功响应的 provider 数量
     fusion_strategy: str = "concat"  # 融合策略: concat / best / weighted
@@ -315,49 +315,49 @@ class WorkflowStep:
     description: str = ""
 
     # 输入输出
-    input_fields: List[str] = field(default_factory=list)
+    input_fields: list[str] = field(default_factory=list)
     output_field: str = ""
 
     # AI 配置
-    ai_models: Optional[List[str]] = None  # ["qianwen", "zhipu", "kimi"]
+    ai_models: list[str] | None = None  # ["qianwen", "zhipu", "kimi"]
     parallel: bool = False  # 是否并行执行
 
     # 交叉验证配置
     cross_review: bool = False  # 是否启用交叉验证
-    validation_criteria: Optional[List[str]] = None
+    validation_criteria: list[str] | None = None
 
     # 融合规则
-    fusion_rules: Optional[Dict[str, Any]] = None
+    fusion_rules: dict[str, Any] | None = None
 
     # 共识引擎配置
-    consensus_config: Optional[ConsensusConfig] = None
+    consensus_config: ConsensusConfig | None = None
 
     # 预估时间
-    estimated_time: Optional[int] = None  # 秒
+    estimated_time: int | None = None  # 秒
 
     # 自动触发
     auto_trigger: bool = False
-    trigger_delay: Optional[int] = None
+    trigger_delay: int | None = None
 
     # 分支逻辑
-    next_step: Optional[str] = None  # 显式下一步 (可选)
-    branches: Optional[List[BranchCondition]] = None  # 条件分支列表
-    on_error: Optional[str] = None  # 错误处理步骤 ID
-    on_timeout: Optional[str] = None  # 超时处理步骤 ID
+    next_step: str | None = None  # 显式下一步 (可选)
+    branches: list[BranchCondition] | None = None  # 条件分支列表
+    on_error: str | None = None  # 错误处理步骤 ID
+    on_timeout: str | None = None  # 超时处理步骤 ID
 
     # 其他配置
-    config: Dict[str, Any] = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class WorkflowDefinition:
     """工作流定义"""
 
-    steps: List[WorkflowStep]
+    steps: list[WorkflowStep]
     max_parallel_steps: int = 3
     allow_parallel: bool = True
 
-    def get_step(self, step_id: str) -> Optional[WorkflowStep]:
+    def get_step(self, step_id: str) -> WorkflowStep | None:
         """获取指定步骤"""
         for step in self.steps:
             if step.id == step_id:
@@ -370,7 +370,7 @@ class PackExample:
     """Pack 示例"""
 
     id: str
-    input: Dict[str, str]
+    input: dict[str, str]
     output: str
     description: str
     score: float = 100.0
@@ -382,8 +382,8 @@ class PackExample:
 class ExampleLibrary:
     """示例库"""
 
-    good_examples: List[PackExample] = field(default_factory=list)
-    bad_examples: List[PackExample] = field(default_factory=list)
+    good_examples: list[PackExample] = field(default_factory=list)
+    bad_examples: list[PackExample] = field(default_factory=list)
     few_shot_template: str = ""
 
     def add_good_example(self, example: PackExample):
@@ -398,19 +398,19 @@ class DomainPack:
     """领域特定配置"""
 
     primary_domain: str  # 主要领域（如：小红书运营）
-    secondary_domains: List[str] = field(default_factory=list)
+    secondary_domains: list[str] = field(default_factory=list)
 
     # 目标平台
-    target_platforms: List[TargetPlatform] = field(default_factory=list)
+    target_platforms: list[TargetPlatform] = field(default_factory=list)
 
     # 用户画像
-    target_audience: Optional[str] = None
+    target_audience: str | None = None
 
     # 品牌调性
-    brand_tone: Optional[str] = None  # 如：专业、活泼、温暖
+    brand_tone: str | None = None  # 如：专业、活泼、温暖
 
     # 合规要求
-    compliance_rules: List[str] = field(default_factory=list)
+    compliance_rules: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -421,7 +421,7 @@ class OptimizationRules:
     strategy: str = "feedback_driven"  # feedback_driven, auto, manual
     auto_refine_threshold: float = 60.0  # 低于此分数自动优化
     periodic_review_days: int = 30  # 定期审查周期（天）
-    allowed_actions: List[str] = field(
+    allowed_actions: list[str] = field(
         default_factory=lambda: [
             "auto_refine_low_scoring",
             "periodic_template_optimization",
@@ -436,7 +436,7 @@ class PerformanceTracking:
     """性能追踪配置"""
 
     enabled: bool = True
-    metrics: List[str] = field(
+    metrics: list[str] = field(
         default_factory=lambda: [
             "execution_time",
             "generation_success_rate",
@@ -447,7 +447,7 @@ class PerformanceTracking:
     retention_days: int = 90
 
     # 发布后追踪
-    post_publish_tracking: Optional[Dict[str, Any]] = None
+    post_publish_tracking: dict[str, Any] | None = None
     # {
     #   "enabled": true,
     #   "delay_hours": 24,
@@ -459,9 +459,9 @@ class PerformanceTracking:
 class CollaborationConfig:
     """团队协作配置"""
 
-    shared_with: List[str] = field(default_factory=list)  # user_ids
-    edit_permission: List[str] = field(default_factory=list)
-    use_permission: List[str] = field(default_factory=list)
+    shared_with: list[str] = field(default_factory=list)  # user_ids
+    edit_permission: list[str] = field(default_factory=list)
+    use_permission: list[str] = field(default_factory=list)
     is_public: bool = False
 
 
@@ -506,7 +506,7 @@ class PromptPackV2:
     # === 质量验证规则 ===
     quality_validation_rules: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "metadata": {
@@ -638,7 +638,7 @@ class PromptPackV2:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PromptPackV2":
+    def from_dict(cls, data: dict[str, Any]) -> PromptPackV2:
         """从字典创建"""
         metadata_data = data["metadata"]
         metadata = PackMetadata(

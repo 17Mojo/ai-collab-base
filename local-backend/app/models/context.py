@@ -7,7 +7,6 @@ Context 持久化数据模型
 
 import json
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -191,7 +190,7 @@ Index("ix_session_ai_type", SessionModel.ai_type)
 Index("ix_session_started_at", SessionModel.started_at)
 
 
-def get_db_session(database_url: Optional[str] = None):
+def get_db_session(database_url: str | None = None):
     """
     获取数据库会话
 

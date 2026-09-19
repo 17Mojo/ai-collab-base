@@ -6,7 +6,7 @@ Pack Executor Core
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -15,20 +15,20 @@ class StepResult:
     id: str
     type: str
     status: str
-    output: Optional[str] = None
+    output: str | None = None
     description: str = ""
     duration_ms: int = 0
-    branches: List[Dict[str, Any]] = field(default_factory=list)
+    branches: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
 class ExecutionState:
     """执行状态"""
-    input: Dict[str, Any]
-    output: Optional[str] = None
-    steps: List[StepResult] = field(default_factory=list)
-    extracted_data: Dict[str, Any] = field(default_factory=dict)
-    current_step_id: Optional[str] = None
+    input: dict[str, Any]
+    output: str | None = None
+    steps: list[StepResult] = field(default_factory=list)
+    extracted_data: dict[str, Any] = field(default_factory=dict)
+    current_step_id: str | None = None
     iterations: int = 0
 
 
@@ -36,7 +36,7 @@ class BranchEvaluator:
     """分支条件评估器"""
 
     @staticmethod
-    def evaluate(branch: Dict[str, Any], execution: ExecutionState) -> Dict[str, Any]:
+    def evaluate(branch: dict[str, Any], execution: ExecutionState) -> dict[str, Any]:
         """评估分支条件"""
         target_field = branch.get("target_field", "output")
         target_value = BranchEvaluator._get_target_value(target_field, execution)
@@ -61,7 +61,7 @@ class BranchEvaluator:
 
                 # 提取捕获组数据
                 if matched and regex_config.get("extract_fields"):
-                    for group_name, field_name in regex_config["extract_fields"].items():
+                    for _group_name, field_name in regex_config["extract_fields"].items():
                         if match and match.groups():
                             execution.extracted_data[field_name] = match.group(1) if match.groups() else ""
 
@@ -103,14 +103,14 @@ class BranchEvaluator:
 class PackExecutor:
     """Pack 执行器"""
 
-    def __init__(self, pack_data: Dict[str, Any]):
+    def __init__(self, pack_data: dict[str, Any]):
         self.pack_data = pack_data
         self.workflow = pack_data.get("workflow", {})
         self.steps = self.workflow.get("steps", [])
         self.step_index = {step.get("id"): i for i, step in enumerate(self.steps)}
         self.max_iterations = len(self.steps) * 3
 
-    def execute(self, input_data: Dict[str, Any]) -> ExecutionState:
+    def execute(self, input_data: dict[str, Any]) -> ExecutionState:
         """执行 Pack workflow"""
         execution = ExecutionState(input=input_data)
 
@@ -163,7 +163,7 @@ class PackExecutor:
 
         return execution
 
-    def _execute_step(self, step: Dict[str, Any], execution: ExecutionState) -> StepResult:
+    def _execute_step(self, step: dict[str, Any], execution: ExecutionState) -> StepResult:
         """执行单个步骤"""
         step_id = step.get("id")
         step_type = step.get("type", "local")
@@ -199,7 +199,7 @@ class PackExecutor:
         )
 
 
-def execute_pack(pack_data: Dict[str, Any], input_data: Dict[str, Any]) -> Dict[str, Any]:
+def execute_pack(pack_data: dict[str, Any], input_data: dict[str, Any]) -> dict[str, Any]:
     """执行 Pack 并返回结果"""
     executor = PackExecutor(pack_data)
     execution = executor.execute(input_data)

@@ -11,7 +11,6 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 # 导入 prompt_pack 管理功能
 from ai_collab.prompt_pack import AITool, PackCategoryType, PackManager
@@ -57,7 +56,7 @@ from ..workspace_guard import (
 )
 
 
-def _set_workspace_env(workspace: Optional[str]):
+def _set_workspace_env(workspace: str | None):
     """统一设置工作区环境变量，避免 VSCode 注入无效路径。"""
     if workspace:
         os.environ["VSCODE_CWD"] = os.path.abspath(workspace)
@@ -1650,7 +1649,7 @@ def cmd_logs(args):
                     break
 
         if full_path and os.path.exists(full_path):
-            with open(full_path, "r", encoding="utf-8") as f:
+            with open(full_path, encoding="utf-8") as f:
                 print(f"\n{f.read()}")
         else:
             print(f"\n错误: 日志文件 '{args.log_file}' 不存在")
@@ -2009,10 +2008,10 @@ def cmd_status(args):
     return 0
 
 
-def _load_steps_from_file(file_path: str) -> List[str]:
+def _load_steps_from_file(file_path: str) -> list[str]:
     """从文本文件加载步骤（每行一个步骤）。"""
-    steps: List[str] = []
-    with open(file_path, "r", encoding="utf-8") as f:
+    steps: list[str] = []
+    with open(file_path, encoding="utf-8") as f:
         for line in f:
             step = line.strip()
             if step and not step.startswith("#"):
@@ -2023,12 +2022,12 @@ def _load_steps_from_file(file_path: str) -> List[str]:
 def _emit_plan_tasks(
     state: StateManager,
     plan: dict,
-    related_files: Optional[List[str]] = None,
+    related_files: list[str] | None = None,
     task_prefix: str = "TASK-PLAN",
-) -> List[str]:
+) -> list[str]:
     """将角色计划转换为可执行任务，避免辅助 agent 闲置。"""
     related_files = related_files or []
-    created: List[str] = []
+    created: list[str] = []
     timestamp = int(datetime.now().timestamp())
     utilization = plan.get("utilization_plan", [])
 
@@ -2079,12 +2078,12 @@ def _emit_plan_patches(
     state: StateManager,
     plan: dict,
     task_id: str,
-    related_files: Optional[List[str]] = None,
+    related_files: list[str] | None = None,
     patch_prefix: str = "PATCH-PLAN",
-) -> List[str]:
+) -> list[str]:
     """将角色计划转换为 patch 分派。"""
     related_files = related_files or []
-    created: List[str] = []
+    created: list[str] = []
     timestamp = int(datetime.now().timestamp())
     utilization = plan.get("utilization_plan", [])
 
@@ -3914,7 +3913,7 @@ def _handle_validate_command(args, workspace):
 
     # 1. JSON 语法验证
     try:
-        with open(pack_path, "r", encoding="utf-8") as f:
+        with open(pack_path, encoding="utf-8") as f:
             data = json.load(f)
         print("✓ JSON 语法正确")
     except json.JSONDecodeError as e:
@@ -4205,7 +4204,7 @@ def _handle_import_command(args, packs_root, workspace):
 
     # 验证 JSON 格式
     try:
-        with open(source_file, "r", encoding="utf-8") as f:
+        with open(source_file, encoding="utf-8") as f:
             data = json.load(f)
         print("✓ JSON 格式正确")
     except json.JSONDecodeError as e:

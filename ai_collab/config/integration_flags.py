@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import os
 from enum import Enum
-from typing import Dict
 
 
 class IntegrationMode(str, Enum):
@@ -19,7 +18,7 @@ class IntegrationMode(str, Enum):
 
 
 # Default configuration (can be overridden by environment variables)
-DEFAULT_INTEGRATION_MODES: Dict[str, IntegrationMode] = {
+DEFAULT_INTEGRATION_MODES: dict[str, IntegrationMode] = {
     "notebooklm": IntegrationMode.FALLBACK,
     "consensus_engine": IntegrationMode.FALLBACK,
     "soul_injection": IntegrationMode.FALLBACK,

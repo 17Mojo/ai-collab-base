@@ -11,11 +11,12 @@ import re
 import tempfile
 import time
 import uuid
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List
+from typing import Any
 
 
 class TaskStatus(str, Enum):
@@ -57,22 +58,22 @@ class Task:
     task_id: str
     ai_type: str
     description: str
-    files: List[str]
+    files: list[str]
     status: TaskStatus = TaskStatus.PENDING
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     completed_at: str | None = None
-    notes: List[str] = field(default_factory=list)
-    vscode_context: Dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+    vscode_context: dict[str, Any] = field(default_factory=dict)
     change_id: str | None = None
     assignee: str | None = None
     reviewer: str | None = None
     primary_skill: str | None = None
-    support_skills: List[str] = field(default_factory=list)
-    acceptance_commands: List[str] = field(default_factory=list)
+    support_skills: list[str] = field(default_factory=list)
+    acceptance_commands: list[str] = field(default_factory=list)
     result_file: str | None = None
     contract_required: bool = False
-    ownership: Dict[str, Any] = field(default_factory=dict)
+    ownership: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -82,14 +83,14 @@ class Patch:
     patch_id: str
     task_id: str
     title: str
-    files: List[str]
+    files: list[str]
     assignee: str = ""
     status: PatchStatus = PatchStatus.PENDING
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     completed_at: str | None = None
     result_file: str | None = None
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -101,7 +102,7 @@ class Conflict:
     task_id_2: str
     ai_type_1: str
     ai_type_2: str
-    overlapping_files: List[str]
+    overlapping_files: list[str]
     detected_at: str = field(default_factory=lambda: datetime.now().isoformat())
     status: str = "open"
     resolution: str | None = None
@@ -214,7 +215,7 @@ class VSCodeIntegration:
         return cwd
 
     @staticmethod
-    def get_project_config() -> Dict[str, Any]:
+    def get_project_config() -> dict[str, Any]:
         """获取项目级 AI 协作配置"""
         workspace = VSCodeIntegration.get_workspace_path()
         if not workspace:
@@ -222,7 +223,7 @@ class VSCodeIntegration:
 
         config_file = os.path.join(workspace, ".vscode", "ai-collab.json")
         if os.path.exists(config_file):
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(config_file, encoding="utf-8") as f:
                 return json.load(f)
         return {}
 
@@ -323,13 +324,13 @@ class StateManager:
         os.makedirs(os.path.dirname(state_file), exist_ok=True)
         return state_file
 
-    def _load_state(self) -> Dict[str, Any]:
+    def _load_state(self) -> dict[str, Any]:
         """加载状态文件"""
         state_file = self._get_state_file()
 
         if os.path.exists(state_file):
             try:
-                with open(state_file, "r", encoding="utf-8") as f:
+                with open(state_file, encoding="utf-8") as f:
                     loaded_state = json.load(f)
                     return self._normalize_state(loaded_state)
             except json.JSONDecodeError:
@@ -337,7 +338,7 @@ class StateManager:
 
         return self._create_initial_state()
 
-    def _normalize_state(self, loaded_state: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_state(self, loaded_state: dict[str, Any]) -> dict[str, Any]:
         """兼容旧版状态文件，补齐缺失字段。"""
         normalized = self._create_initial_state()
         now = datetime.now().isoformat()
@@ -478,7 +479,7 @@ class StateManager:
             return mapped
         return raw
 
-    def _create_initial_state(self) -> Dict[str, Any]:
+    def _create_initial_state(self) -> dict[str, Any]:
         """创建初始状态"""
         return {
             "version": "2.0.0",
@@ -578,7 +579,7 @@ class StateManager:
             with open(ops_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
-    def _atomic_write_json(self, target_file: str, payload: Dict[str, Any]):
+    def _atomic_write_json(self, target_file: str, payload: dict[str, Any]):
         """原子写 JSON，避免并发写导致状态文件损坏。"""
         directory = os.path.dirname(target_file) or "."
         os.makedirs(directory, exist_ok=True)
@@ -604,17 +605,17 @@ class StateManager:
             return -1.0
 
     def _pick_newer_task(
-        self, latest_task: Dict[str, Any], local_task: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, latest_task: dict[str, Any], local_task: dict[str, Any]
+    ) -> dict[str, Any]:
         """按 updated_at/created_at 选择更新的任务版本。"""
         latest_ts = self._to_epoch(latest_task.get("updated_at") or latest_task.get("created_at"))
         local_ts = self._to_epoch(local_task.get("updated_at") or local_task.get("created_at"))
         return local_task if local_ts >= latest_ts else latest_task
 
-    def _merge_conflicts(self, latest_conflicts: Any, local_conflicts: Any) -> List[Dict[str, Any]]:
+    def _merge_conflicts(self, latest_conflicts: Any, local_conflicts: Any) -> list[dict[str, Any]]:
         """按 conflict_id 合并冲突列表，保留无 ID 条目。"""
-        merged_by_id: Dict[str, Dict[str, Any]] = {}
-        no_id_items: List[Dict[str, Any]] = []
+        merged_by_id: dict[str, dict[str, Any]] = {}
+        no_id_items: list[dict[str, Any]] = []
 
         for conflict in latest_conflicts or []:
             if not isinstance(conflict, dict):
@@ -636,7 +637,7 @@ class StateManager:
 
         return list(merged_by_id.values()) + no_id_items
 
-    def _merge_states_with_latest(self, latest_state: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_states_with_latest(self, latest_state: dict[str, Any]) -> dict[str, Any]:
         """将本地内存状态与磁盘最新状态合并，降低并发覆盖风险。"""
         latest_norm = self._normalize_state(latest_state if isinstance(latest_state, dict) else {})
         local_norm = self._normalize_state(self.state if isinstance(self.state, dict) else {})
@@ -656,7 +657,7 @@ class StateManager:
             latest_norm.get("conflicts"), local_norm.get("conflicts")
         )
 
-        merged_tasks: Dict[str, Dict[str, Any]] = {}
+        merged_tasks: dict[str, dict[str, Any]] = {}
         all_task_ids = set((latest_norm.get("tasks") or {}).keys()) | set(
             (local_norm.get("tasks") or {}).keys()
         )
@@ -671,7 +672,7 @@ class StateManager:
                 merged_tasks[task_id] = latest_task
 
         merged["tasks"] = merged_tasks
-        merged_patches: Dict[str, Dict[str, Any]] = {}
+        merged_patches: dict[str, dict[str, Any]] = {}
         all_patch_ids = set((latest_norm.get("patches") or {}).keys()) | set(
             (local_norm.get("patches") or {}).keys()
         )
@@ -739,7 +740,7 @@ class StateManager:
             try:
                 if os.path.exists(lock_file):
                     content = ""
-                    with open(lock_file, "r", encoding="utf-8") as f:
+                    with open(lock_file, encoding="utf-8") as f:
                         content = f.read(128)
                     if content.startswith(f"{token}|"):
                         os.remove(lock_file)
@@ -750,10 +751,10 @@ class StateManager:
         """保存状态到文件（项目 + 全局）"""
         project_state_file = self._get_state_file()
         with self._file_lock(project_state_file):
-            latest_state: Dict[str, Any] = {}
+            latest_state: dict[str, Any] = {}
             if os.path.exists(project_state_file):
                 try:
-                    with open(project_state_file, "r", encoding="utf-8") as f:
+                    with open(project_state_file, encoding="utf-8") as f:
                         latest_state = json.load(f)
                 except json.JSONDecodeError:
                     latest_state = {}
@@ -785,10 +786,10 @@ class StateManager:
         """在持有项目状态锁时刷新最新状态、执行修改并落盘。"""
         state_file = self._get_state_file()
         with self._file_lock(state_file):
-            latest_state: Dict[str, Any] = {}
+            latest_state: dict[str, Any] = {}
             if os.path.exists(state_file):
                 try:
-                    with open(state_file, "r", encoding="utf-8") as f:
+                    with open(state_file, encoding="utf-8") as f:
                         latest_state = json.load(f)
                 except json.JSONDecodeError:
                     latest_state = {}
@@ -819,10 +820,10 @@ class StateManager:
         global_state_file = VSCodeStateManager.get_global_state_file()
         with self._file_lock(global_state_file):
             # 读取现有全局状态
-            global_state: Dict[str, Any] = {}
+            global_state: dict[str, Any] = {}
             if os.path.exists(global_state_file):
                 try:
-                    with open(global_state_file, "r", encoding="utf-8") as f:
+                    with open(global_state_file, encoding="utf-8") as f:
                         global_state = json.load(f)
                 except json.JSONDecodeError:
                     pass
@@ -845,17 +846,17 @@ class StateManager:
         task_id: str,
         ai_type: str,
         description: str,
-        files: List[str],
-        vscode_context: Dict[str, Any] | None = None,
+        files: list[str],
+        vscode_context: dict[str, Any] | None = None,
         change_id: str | None = None,
         assignee: str | None = None,
         reviewer: str | None = None,
         primary_skill: str | None = None,
-        support_skills: List[str] | None = None,
-        acceptance_commands: List[str] | None = None,
+        support_skills: list[str] | None = None,
+        acceptance_commands: list[str] | None = None,
         result_file: str | None = None,
         contract_required: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         注册新任务
 
@@ -892,7 +893,7 @@ class StateManager:
             contract_required=contract_required,
         )
 
-        def _mutate() -> Dict[str, Any]:
+        def _mutate() -> dict[str, Any]:
             if task_id in self.state["tasks"]:
                 raise ValueError(f"任务ID已存在: {task_id}")
             self.state["tasks"][task_id] = asdict(task)
@@ -912,7 +913,7 @@ class StateManager:
         normalized = actor.strip().lower()
         return normalized or None
 
-    def _current_task_owner(self, task: Dict[str, Any]) -> str | None:
+    def _current_task_owner(self, task: dict[str, Any]) -> str | None:
         """获取任务当前 owner。"""
         return (
             self._normalize_non_empty_str(task.get("assignee"))
@@ -920,7 +921,7 @@ class StateManager:
             or self._normalize_non_empty_str(task.get("assigned_to"))
         )
 
-    def _active_ownership_lock(self, task: Dict[str, Any]) -> Dict[str, Any] | None:
+    def _active_ownership_lock(self, task: dict[str, Any]) -> dict[str, Any] | None:
         """获取激活中的 owner lock。"""
         ownership = task.get("ownership")
         if not isinstance(ownership, dict):
@@ -940,7 +941,7 @@ class StateManager:
         self,
         *,
         task_id: str,
-        task: Dict[str, Any],
+        task: dict[str, Any],
         status: TaskStatus,
         actor: str | None,
     ) -> None:
@@ -973,7 +974,7 @@ class StateManager:
         note: str | None = None,
         reason: str | None = None,
         source: str = "tasks.takeover",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """将任务归属锁定到指定 owner，防止其他 actor 迟到写入。"""
         normalized_owner = self._normalize_actor_id(owner)
         if not normalized_owner:
@@ -981,7 +982,7 @@ class StateManager:
 
         normalized_actor = self._normalize_actor_id(actor) or normalized_owner
 
-        def _mutate() -> Dict[str, Any]:
+        def _mutate() -> dict[str, Any]:
             if task_id not in self.state["tasks"]:
                 raise ValueError(f"任务不存在: {task_id}")
 
@@ -1039,7 +1040,7 @@ class StateManager:
         note: str | None = None,
         reason: str | None = None,
         source: str = "tasks.repair_assignee",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """修复任务 assignee 元数据，并记录审计痕迹。"""
         normalized_assignee = self._normalize_actor_id(assignee)
         if not normalized_assignee:
@@ -1047,7 +1048,7 @@ class StateManager:
 
         normalized_actor = self._normalize_actor_id(actor) or "system"
 
-        def _mutate() -> Dict[str, Any]:
+        def _mutate() -> dict[str, Any]:
             if task_id not in self.state["tasks"]:
                 raise ValueError(f"任务不存在: {task_id}")
 
@@ -1101,7 +1102,7 @@ class StateManager:
         status: TaskStatus,
         note: str | None = None,
         actor: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         更新任务状态
 
@@ -1111,7 +1112,7 @@ class StateManager:
             note: 可选备注
         """
 
-        def _mutate() -> Dict[str, Any]:
+        def _mutate() -> dict[str, Any]:
             if task_id not in self.state["tasks"]:
                 raise ValueError(f"任务不存在: {task_id}")
 
@@ -1174,14 +1175,14 @@ class StateManager:
         patch_id: str,
         task_id: str,
         title: str,
-        files: List[str],
+        files: list[str],
         assignee: str = "",
         status: PatchStatus = PatchStatus.PENDING,
         note: str | None = None,
         actor: str = "system",
         source: str = "patch.create",
         reason: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """注册 patch。"""
         patches = self.state.setdefault("patches", {})
         if patch_id in patches:
@@ -1220,7 +1221,7 @@ class StateManager:
         actor: str = "system",
         source: str = "patch.update",
         reason: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """更新 patch 状态。"""
         patches = self.state.setdefault("patches", {})
         if patch_id not in patches:
@@ -1258,7 +1259,7 @@ class StateManager:
             "updated_at": patch["updated_at"],
         }
 
-    def get_patch(self, patch_id: str) -> Dict[str, Any] | None:
+    def get_patch(self, patch_id: str) -> dict[str, Any] | None:
         """获取 patch 信息。"""
         return self.state.get("patches", {}).get(patch_id)
 
@@ -1266,7 +1267,7 @@ class StateManager:
         self,
         status_filter: str | None = None,
         task_id: str | None = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """列出 patch。"""
         patches = list(self.state.get("patches", {}).values())
         if status_filter:
@@ -1276,8 +1277,8 @@ class StateManager:
         return patches
 
     def check_conflicts(
-        self, ai_type: str, files: List[str], check_mode: str = "both"
-    ) -> List[Dict[str, Any]]:
+        self, ai_type: str, files: list[str], check_mode: str = "both"
+    ) -> list[dict[str, Any]]:
         """
         检查文件冲突
 
@@ -1340,7 +1341,7 @@ class StateManager:
         return conflicts
 
     def _record_conflict(
-        self, task_id: str, conflicting_ai: str, files: List[str], check_mode: str
+        self, task_id: str, conflicting_ai: str, files: list[str], check_mode: str
     ):
         """记录冲突到问题文件"""
         task = self.state["tasks"].get(task_id)
@@ -1364,10 +1365,10 @@ class StateManager:
 
         with self._file_lock(issues_file):
             # 加载或创建问题文件
-            issues: Dict[str, Any] = {"issues": []}
+            issues: dict[str, Any] = {"issues": []}
             if os.path.exists(issues_file):
                 try:
-                    with open(issues_file, "r", encoding="utf-8") as f:
+                    with open(issues_file, encoding="utf-8") as f:
                         issues = json.load(f)
                 except (OSError, json.JSONDecodeError):
                     issues = {"issues": []}
@@ -1378,14 +1379,14 @@ class StateManager:
             issues["issues"].append(conflict_entry)
             self._atomic_write_json(issues_file, issues)
 
-    def get_task(self, task_id: str) -> Dict[str, Any] | None:
+    def get_task(self, task_id: str) -> dict[str, Any] | None:
         """获取任务信息"""
         return self.state["tasks"].get(task_id)
 
-    def _evaluate_task_contract(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    def _evaluate_task_contract(self, task: dict[str, Any]) -> dict[str, Any]:
         """评估单个任务是否满足工单契约字段。"""
-        missing_fields: List[str] = []
-        invalid_fields: List[str] = []
+        missing_fields: list[str] = []
+        invalid_fields: list[str] = []
 
         for field_name in self.TASK_CONTRACT_REQUIRED_STR_FIELDS:
             value = task.get(field_name)
@@ -1423,7 +1424,7 @@ class StateManager:
         normalized = value.strip()
         return normalized if normalized else None
 
-    def _normalize_non_empty_list(self, value: Any) -> List[str]:
+    def _normalize_non_empty_list(self, value: Any) -> list[str]:
         """标准化字符串列表，过滤空值。"""
         if not isinstance(value, list):
             return []
@@ -1460,7 +1461,7 @@ class StateManager:
         """压缩命令文本中的空白，便于在结果文件中做稳健匹配。"""
         return " ".join(str(command or "").split())
 
-    def _validate_result_artifact_for_completion(self, task_id: str, task: Dict[str, Any]):
+    def _validate_result_artifact_for_completion(self, task_id: str, task: dict[str, Any]):
         """completed 状态门禁：结果文件必须存在、具备最小章节，并覆盖验收命令。"""
         result_file = self._normalize_non_empty_str(task.get("result_file"))
         if not result_file:
@@ -1481,7 +1482,7 @@ class StateManager:
             raise ValueError(f"任务结果门禁失败: {task_id}; result_file not found: {result_file}")
 
         try:
-            with open(resolved_path, "r", encoding="utf-8") as f:
+            with open(resolved_path, encoding="utf-8") as f:
                 content = f.read()
         except OSError as exc:
             raise ValueError(
@@ -1492,7 +1493,7 @@ class StateManager:
             raise ValueError(f"任务结果门禁失败: {task_id}; result_file is empty: {result_file}")
 
         lowered = content.lower()
-        missing_sections: List[str] = []
+        missing_sections: list[str] = []
         for section_group in self.TASK_RESULT_REQUIRED_SECTION_GROUPS:
             if not any(marker.lower() in lowered for marker in section_group):
                 missing_sections.append(section_group[0])
@@ -1501,7 +1502,7 @@ class StateManager:
             missing_label = ",".join(missing_sections)
             raise ValueError(f"任务结果门禁失败: {task_id}; result_file missing sections=[{missing_label}]")
 
-        negative_hits: List[str] = []
+        negative_hits: list[str] = []
         for marker in self.TASK_RESULT_NEGATIVE_SIGNAL_MARKERS:
             if marker.lower() in lowered:
                 negative_hits.append(marker)
@@ -1514,7 +1515,7 @@ class StateManager:
         acceptance_commands = task.get("acceptance_commands")
         if isinstance(acceptance_commands, list):
             normalized_content = self._normalize_command_text(content)
-            missing_commands: List[str] = []
+            missing_commands: list[str] = []
             for command in acceptance_commands:
                 normalized_command = self._normalize_command_text(command)
                 if normalized_command and normalized_command not in normalized_content:
@@ -1551,7 +1552,7 @@ class StateManager:
                 return True
         return False
 
-    def validate_task_contract(self, task_id: str) -> Dict[str, Any]:
+    def validate_task_contract(self, task_id: str) -> dict[str, Any]:
         """
         校验单个任务工单契约。
         """
@@ -1567,7 +1568,7 @@ class StateManager:
     def validate_task_contracts(
         self,
         scope: str = "active",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         批量校验工单契约。
 
@@ -1584,7 +1585,7 @@ class StateManager:
 
         checked = 0
         skipped = 0
-        issues: List[Dict[str, Any]] = []
+        issues: list[dict[str, Any]] = []
 
         for task in tasks:
             task_id = str(task.get("task_id", ""))
@@ -1624,7 +1625,7 @@ class StateManager:
         dry_run: bool = False,
         default_change_id: str | None = None,
         reviewer: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         迁移历史任务到契约完整态，消除 legacy 分支依赖。
 
@@ -1653,10 +1654,10 @@ class StateManager:
         else:
             candidate_ids = list(self.state.get("tasks", {}).keys())
 
-        migrated_task_ids: List[str] = []
+        migrated_task_ids: list[str] = []
         already_compliant = 0
         legacy_detected = 0
-        invalid_after_migration: List[Dict[str, Any]] = []
+        invalid_after_migration: list[dict[str, Any]] = []
         changed_any = False
 
         for task_id in candidate_ids:
@@ -1762,7 +1763,7 @@ class StateManager:
             "valid": len(invalid_after_migration) == 0 and remaining_legacy == 0,
         }
 
-    def get_active_tasks(self) -> List[Dict[str, Any]]:
+    def get_active_tasks(self) -> list[dict[str, Any]]:
         """获取所有活跃任务"""
         return [
             self.state["tasks"][task_id]
@@ -1770,11 +1771,11 @@ class StateManager:
             if task_id in self.state["tasks"]
         ]
 
-    def get_all_tasks(self) -> List[Dict[str, Any]]:
+    def get_all_tasks(self) -> list[dict[str, Any]]:
         """获取所有任务"""
         return list(self.state["tasks"].values())
 
-    def get_conflicts(self, status: str | None = None) -> List[Dict[str, Any]]:
+    def get_conflicts(self, status: str | None = None) -> list[dict[str, Any]]:
         """
         获取冲突列表
 
@@ -1786,7 +1787,7 @@ class StateManager:
         if not os.path.exists(issues_file):
             return []
 
-        with open(issues_file, "r", encoding="utf-8") as f:
+        with open(issues_file, encoding="utf-8") as f:
             issues = json.load(f)
 
         conflicts = issues.get("issues", [])
@@ -1809,7 +1810,7 @@ class StateManager:
         if not os.path.exists(issues_file):
             return False
 
-        with open(issues_file, "r", encoding="utf-8") as f:
+        with open(issues_file, encoding="utf-8") as f:
             issues = json.load(f)
 
         updated = False
@@ -1832,7 +1833,7 @@ class StateManager:
 
         return updated
 
-    def clear_completed_tasks(self, days: int = 7) -> Dict[str, int]:
+    def clear_completed_tasks(self, days: int = 7) -> dict[str, int]:
         """
         清理已完成的任务
 
@@ -1840,7 +1841,7 @@ class StateManager:
             days: 保留最近几天的任务
         """
         cutoff = datetime.now().timestamp() - (days * 24 * 60 * 60)
-        to_remove: List[str] = []
+        to_remove: list[str] = []
 
         for task_id in self.state["completed_tasks"]:
             task = self.state["tasks"].get(task_id)
@@ -1874,18 +1875,18 @@ class StateManager:
             return os.path.join(self.workspace_path, "handoff_status.json")
         return "./handoff_status.json"
 
-    def _read_handoff_file(self, handoff_file: str) -> Dict[str, Any]:
+    def _read_handoff_file(self, handoff_file: str) -> dict[str, Any]:
         """读取单个交接文件。"""
         if not os.path.exists(handoff_file):
             return {}
         try:
-            with open(handoff_file, "r", encoding="utf-8") as f:
+            with open(handoff_file, encoding="utf-8") as f:
                 payload = json.load(f)
                 return payload if isinstance(payload, dict) else {}
         except json.JSONDecodeError:
             return {}
 
-    def _write_handoff_file(self, handoff_file: str, handoffs: Dict[str, Any]):
+    def _write_handoff_file(self, handoff_file: str, handoffs: dict[str, Any]):
         """原子写交接文件。"""
         os.makedirs(os.path.dirname(handoff_file) or ".", exist_ok=True)
         with self._file_lock(handoff_file):
@@ -1896,9 +1897,9 @@ class StateManager:
         from_ai: str,
         to_ai: str,
         task_description: str,
-        files: List[str] | None = None,
-        context: Dict[str, Any] | None = None,
-    ) -> Dict[str, Any]:
+        files: list[str] | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         创建交接任务
 
@@ -1937,7 +1938,7 @@ class StateManager:
 
         return handoff
 
-    def _load_handoffs(self) -> Dict[str, Any]:
+    def _load_handoffs(self) -> dict[str, Any]:
         """加载所有交接任务"""
         primary = self._get_handoff_file()
         legacy = self._get_legacy_handoff_file()
@@ -1948,7 +1949,7 @@ class StateManager:
                 return payload
         return {}
 
-    def _save_handoffs(self, handoffs: Dict[str, Any]):
+    def _save_handoffs(self, handoffs: dict[str, Any]):
         """保存交接任务"""
         primary = self._get_handoff_file()
         self._write_handoff_file(primary, handoffs)
@@ -1958,7 +1959,7 @@ class StateManager:
         if os.path.abspath(legacy) != os.path.abspath(primary) and os.path.exists(legacy):
             self._write_handoff_file(legacy, handoffs)
 
-    def get_handoff(self, handoff_id: str) -> Dict[str, Any] | None:
+    def get_handoff(self, handoff_id: str) -> dict[str, Any] | None:
         """
         获取交接任务信息
 
@@ -1971,7 +1972,7 @@ class StateManager:
         handoffs = self._load_handoffs()
         return handoffs.get(handoff_id)
 
-    def get_pending_handoffs(self, to_ai: str | None = None) -> List[Dict[str, Any]]:
+    def get_pending_handoffs(self, to_ai: str | None = None) -> list[dict[str, Any]]:
         """
         获取待处理的交接任务
 
@@ -1990,8 +1991,8 @@ class StateManager:
         return pending
 
     def acknowledge_handoff(
-        self, handoff_id: str, status: str, message: str = "", result_files: List[str] | None = None
-    ) -> Dict[str, Any]:
+        self, handoff_id: str, status: str, message: str = "", result_files: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         确认交接并更新状态（双向交接回通知）
 
@@ -2043,7 +2044,7 @@ class StateManager:
 
     def list_handoffs(
         self, status: str | None = None, from_ai: str | None = None, to_ai: str | None = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         列出交接任务
 

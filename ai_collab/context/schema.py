@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ScenarioType(Enum):
@@ -43,13 +43,13 @@ class FileContext:
     """文件上下文"""
 
     path: str  # 文件路径
-    content: Optional[str] = None  # 文件内容 (可选，节省内存)
+    content: str | None = None  # 文件内容 (可选，节省内存)
     language: str = "text"  # 文件语言/类型
     size: int = 0  # 文件大小 (bytes)
-    modified_at: Optional[datetime] = None  # 最后修改时间
-    hash: Optional[str] = None  # 内容哈希 (用于变更检测)
+    modified_at: datetime | None = None  # 最后修改时间
+    hash: str | None = None  # 内容哈希 (用于变更检测)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "path": self.path,
             "content": self.content,
@@ -67,10 +67,10 @@ class AISessionContext:
     session_id: str  # 会话 ID
     ai_type: str  # AI 类型 (claude/codex/codearts)
     started_at: datetime  # 开始时间
-    messages: List[Dict[str, Any]] = field(default_factory=list)  # 消息历史
-    metadata: Dict[str, Any] = field(default_factory=dict)  # 会话元数据
+    messages: list[dict[str, Any]] = field(default_factory=list)  # 消息历史
+    metadata: dict[str, Any] = field(default_factory=dict)  # 会话元数据
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "session_id": self.session_id,
             "ai_type": self.ai_type,
@@ -86,11 +86,11 @@ class NotebookLMContext:
 
     notebook_id: str  # Notebook ID
     notebook_name: str  # Notebook 名称
-    query_results: List[Dict[str, Any]] = field(default_factory=list)  # 查询结果
-    sources: List[str] = field(default_factory=list)  # 引用来源
-    last_updated: Optional[datetime] = None  # 最后更新时间
+    query_results: list[dict[str, Any]] = field(default_factory=list)  # 查询结果
+    sources: list[str] = field(default_factory=list)  # 引用来源
+    last_updated: datetime | None = None  # 最后更新时间
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "notebook_id": self.notebook_id,
             "notebook_name": self.notebook_name,
@@ -106,7 +106,7 @@ class ContextMetadata:
 
     created_at: datetime = field(default_factory=datetime.now)  # 创建时间
     updated_at: datetime = field(default_factory=datetime.now)  # 更新时间
-    tags: List[str] = field(default_factory=list)  # 标签
+    tags: list[str] = field(default_factory=list)  # 标签
     owner: str = "system"  # 所有者
     version: int = 1  # 版本号
 
@@ -129,15 +129,15 @@ class Context:
     name: str  # 上下文名称
 
     # 上下文内容
-    file_contexts: List[FileContext] = field(default_factory=list)  # 文件上下文
-    ai_sessions: List[AISessionContext] = field(default_factory=list)  # AI 会话
-    notebooklm_context: Optional[NotebookLMContext] = None  # NotebookLM 上下文
-    user_context: Dict[str, Any] = field(default_factory=dict)  # 用户上下文
+    file_contexts: list[FileContext] = field(default_factory=list)  # 文件上下文
+    ai_sessions: list[AISessionContext] = field(default_factory=list)  # AI 会话
+    notebooklm_context: NotebookLMContext | None = None  # NotebookLM 上下文
+    user_context: dict[str, Any] = field(default_factory=dict)  # 用户上下文
 
     # 元数据
     metadata: ContextMetadata = field(default_factory=ContextMetadata)  # 元数据
-    parent_id: Optional[str] = None  # 父上下文 ID (用于上下文链)
-    children_ids: List[str] = field(default_factory=list)  # 子上下文 ID
+    parent_id: str | None = None  # 父上下文 ID (用于上下文链)
+    children_ids: list[str] = field(default_factory=list)  # 子上下文 ID
 
     # 统计信息
     size: int = 0  # 上下文大小 (bytes)
@@ -162,11 +162,11 @@ class Context:
         self.notebooklm_context = notebooklm
         self.metadata.touch()
 
-    def get_file_by_path(self, path: str) -> Optional[FileContext]:
+    def get_file_by_path(self, path: str) -> FileContext | None:
         """根据路径获取文件"""
         return next((f for f in self.file_contexts if f.path == path), None)
 
-    def get_latest_session(self, ai_type: Optional[str] = None) -> Optional[AISessionContext]:
+    def get_latest_session(self, ai_type: str | None = None) -> AISessionContext | None:
         """获取最新的 AI 会话"""
         filtered = self.ai_sessions
         if ai_type:
@@ -175,7 +175,7 @@ class Context:
             return max(filtered, key=lambda s: s.started_at)
         return None
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """获取上下文摘要"""
         return {
             "context_id": self.context_id,
@@ -188,7 +188,7 @@ class Context:
             "updated_at": self.metadata.updated_at.isoformat(),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "context_id": self.context_id,
@@ -213,7 +213,7 @@ class Context:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Context":
+    def from_dict(cls, data: dict[str, Any]) -> "Context":
         """从字典反序列化"""
         file_contexts = [FileContext(**f) for f in data.get("file_contexts", [])]
         ai_sessions = [AISessionContext(**s) for s in data.get("ai_sessions", [])]
@@ -254,10 +254,10 @@ class ContextChangeLog:
     context_id: str  # 上下文 ID
     change_type: str  # 变更类型 (create/update/delete/file_add/file_remove/session_add)
     timestamp: datetime  # 时间戳
-    details: Dict[str, Any]  # 变更详情
+    details: dict[str, Any]  # 变更详情
     source: ContextSource  # 变更来源
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "log_id": self.log_id,
             "context_id": self.context_id,
@@ -274,8 +274,8 @@ class ContextChangeLog:
 def create_context(
     scenario: ScenarioType,
     name: str,
-    files: Optional[List[str]] = None,
-    context_id: Optional[str] = None,
+    files: list[str] | None = None,
+    context_id: str | None = None,
 ) -> Context:
     """
     创建新上下文

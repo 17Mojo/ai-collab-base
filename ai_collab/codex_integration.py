@@ -219,7 +219,7 @@ class CodexIntegration:
                     import warnings
 
                     warnings.warn(
-                        f"Failed to terminate process {proc.pid} after {timeout * 2} seconds"
+                        f"Failed to terminate process {proc.pid} after {timeout * 2} seconds", stacklevel=2
                     )
                     return False
 
@@ -227,7 +227,7 @@ class CodexIntegration:
             # 终止过程中发生异常
             import warnings
 
-            warnings.warn(f"Exception during process termination: {e}")
+            warnings.warn(f"Exception during process termination: {e}", stacklevel=2)
             return False
 
     def run_codex(

@@ -54,9 +54,12 @@ def check_tests():
     ]:
         m = re.search(pattern, last)
         if m:
-            if attr == "passed": passed = int(m.group(1))
-            elif attr == "failed": failed = int(m.group(1))
-            elif attr == "skipped": skipped = int(m.group(1))
+            if attr == "passed":
+                passed = int(m.group(1))
+            elif attr == "failed":
+                failed = int(m.group(1))
+            elif attr == "skipped":
+                skipped = int(m.group(1))
     # 单独拿覆盖率数字
     cov_rc, cov_out, _ = run("coverage report 2>&1 | tail -3")
     cov_pct = "N/A"
@@ -137,26 +140,29 @@ def check_coverage_breakdown():
                 pct = int(parts[1].rstrip("%"))
                 if pct < 80:
                     low_modules.append((parts[0], pct))
-            except: pass
+            except Exception:
+                pass
     return {"low_coverage_modules": low_modules}
 
 
 def check_static_analysis():
     """5. 静态检查状态"""
     rc, out, _ = run("ruff check ai_collab 2>&1 | tail -3")
-    ruff_status = "unknown"
     ruff_errors = 0
     for line in (out or "").split("\n"):
         if "Found" in line and "error" in line:
-            try: ruff_errors = int(line.split()[1])
-            except: pass
+            try:
+                ruff_errors = int(line.split()[1])
+            except Exception:
+                pass
     rc, out, _ = run("mypy ai_collab 2>&1 | tail -3")
-    mypy_status = "unknown"
     mypy_errors = 0
     for line in (out or "").split("\n"):
         if "Found" in line and "error" in line:
-            try: mypy_errors = int(line.split()[1])
-            except: pass
+            try:
+                mypy_errors = int(line.split()[1])
+            except Exception:
+                pass
     return {
         "ruff_errors": ruff_errors,
         "mypy_errors": mypy_errors,
@@ -217,7 +223,7 @@ def render_markdown(data):
     if g["ahead_of_origin"]:
         lines.append(f"- ⚠️ **领先 origin/main {len(g['ahead_of_origin'])} 个 commit** (未推送)")
     else:
-        lines.append(f"- ✅ 与 origin/main 同步")
+        lines.append("- ✅ 与 origin/main 同步")
 
     # 3. 代码
     lines.append(section("代码规模"))
@@ -265,9 +271,12 @@ def render_markdown(data):
     score += 30 if data["tests"]["failed"] == 0 else 0
     try:
         cov = float(data["tests"]["coverage_pct"])
-        if cov >= 80: score += 25
-        elif cov >= 70: score += 15
-    except: pass
+        if cov >= 80:
+            score += 25
+        elif cov >= 70:
+            score += 15
+    except Exception:
+        pass
     score += 20 if data["git"]["untracked_count"] == 0 else 0
     score += 15 if not data["git"]["ahead_of_origin"] else 0
     score += 10 if data["health_rules"]["claude_md_has_rules"] else 0
@@ -286,7 +295,7 @@ def render_markdown(data):
 
     lines.append("---")
     lines.append(f"\n*报告路径: `collaboration/results/HEALTH_CHECK_{data['date_stamp']}.md`*")
-    lines.append(f"*查看历史: `ls collaboration/results/HEALTH_CHECK_*.md`*")
+    lines.append("*查看历史: `ls collaboration/results/HEALTH_CHECK_*.md`*")
     return "\n".join(lines)
 
 

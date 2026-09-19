@@ -10,7 +10,7 @@ NotebookLM集成模块
 import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..config.integration_flags import IntegrationMode, get_mode
 
@@ -18,7 +18,7 @@ from ..config.integration_flags import IntegrationMode, get_mode
 class NotebookLMIntegration:
     """NotebookLM集成类"""
 
-    def __init__(self, notebook_id: Optional[str] = None):
+    def __init__(self, notebook_id: str | None = None):
         """
         初始化NotebookLM集成
 
@@ -89,7 +89,7 @@ class NotebookLMIntegration:
                 self._logger.error(f"[NotebookLM] MCP健康检查异常: {e}")
                 return False
 
-    def _query_mcp(self, topic: str, context: Optional[str] = None) -> Dict[str, Any]:
+    def _query_mcp(self, topic: str, context: str | None = None) -> dict[str, Any]:
         """
         通过 MCP 查询 NotebookLM (严格模式)
 
@@ -206,7 +206,7 @@ class NotebookLMIntegration:
             self._logger.error(f"[NotebookLM] 连接失败: {e}")
             return False
 
-    def query_knowledge(self, topic: str, context: Optional[str] = None) -> Dict[str, Any]:
+    def query_knowledge(self, topic: str, context: str | None = None) -> dict[str, Any]:
         """
         查询NotebookLM知识库
 
@@ -300,7 +300,7 @@ class NotebookLMIntegration:
 
         return enhanced_prompt
 
-    def save_result(self, content: str, metadata: Dict[str, Any]) -> bool:
+    def save_result(self, content: str, metadata: dict[str, Any]) -> bool:
         """
         保存生成结果到NotebookLM
 
@@ -336,7 +336,7 @@ class NotebookLMIntegration:
             print(f"[NotebookLM] 保存失败: {e}")
             return False
 
-    def get_recommended_packs(self, user_input: str) -> List[Dict[str, Any]]:
+    def get_recommended_packs(self, user_input: str) -> list[dict[str, Any]]:
         """
         基于NotebookLM知识推荐Pack
 
@@ -361,7 +361,7 @@ class NotebookLMIntegration:
 
         return recommended
 
-    def _analyze_intent(self, user_input: str) -> Dict[str, Any]:
+    def _analyze_intent(self, user_input: str) -> dict[str, Any]:
         """
         分析用户意图
 
@@ -382,7 +382,7 @@ class NotebookLMIntegration:
 
         return intent
 
-    def create_notebook_from_pack(self, pack: Dict[str, Any]) -> str:
+    def create_notebook_from_pack(self, pack: dict[str, Any]) -> str:
         """
         从Pack创建NotebookLM笔记本
 
@@ -419,7 +419,7 @@ class NotebookLMIntegration:
 class PackToStudioConverter:
     """Pack到NotebookLM Studio转换器"""
 
-    def convert(self, pack: Dict[str, Any]) -> Dict[str, Any]:
+    def convert(self, pack: dict[str, Any]) -> dict[str, Any]:
         """
         将Pack转换为NotebookLM Studio格式
 
@@ -441,7 +441,7 @@ class PackToStudioConverter:
 
         return studio_prompt
 
-    def _extract_prompt(self, pack: Dict[str, Any]) -> str:
+    def _extract_prompt(self, pack: dict[str, Any]) -> str:
         """提取Prompt内容"""
         prompt = ""
 
@@ -451,7 +451,7 @@ class PackToStudioConverter:
 
         return prompt.strip()
 
-    def _extract_variables(self, pack: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_variables(self, pack: dict[str, Any]) -> list[dict[str, Any]]:
         """提取变量"""
         variables = []
 
@@ -469,7 +469,7 @@ class PackToStudioConverter:
 
         return variables
 
-    def _convert_workflow(self, workflow: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _convert_workflow(self, workflow: dict[str, Any]) -> list[dict[str, Any]]:
         """转换工作流"""
         studio_workflow = []
 
@@ -489,7 +489,7 @@ class PackToStudioConverter:
 # ==================== 便捷函数 ====================
 
 
-def integrate_with_notebooklm(pack: Dict[str, Any], user_input: Dict[str, Any]) -> Dict[str, Any]:
+def integrate_with_notebooklm(pack: dict[str, Any], user_input: dict[str, Any]) -> dict[str, Any]:
     """
     将Pack执行与NotebookLM集成
 

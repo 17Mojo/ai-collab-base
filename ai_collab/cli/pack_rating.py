@@ -8,7 +8,6 @@ Pack 评价 CLI 命令
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 from ai_collab.pack.market_api import PackMarketAPI
 
@@ -34,7 +33,7 @@ class PackRatingCLI:
         pack_id: str,
         score: int,
         title: str,
-        content: Optional[str] = None,
+        content: str | None = None,
         user_id: str = "default_user",
     ) -> int:
         """添加评价

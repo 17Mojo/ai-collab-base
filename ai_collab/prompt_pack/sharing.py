@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 
 class PermissionLevel(Enum):
@@ -33,9 +33,9 @@ class Permission:
     level: PermissionLevel
     granted_at: datetime
     granted_by: str
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "user": self.user,
@@ -46,7 +46,7 @@ class Permission:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Permission":
+    def from_dict(cls, data: dict[str, Any]) -> Permission:
         """从字典创建"""
         return cls(
             user=data["user"],
@@ -65,10 +65,10 @@ class TeamInfo:
 
     name: str
     display_name: str
-    members: Set[str]
-    packs: Set[str]  # 团队可访问的 Pack 列表
+    members: set[str]
+    packs: set[str]  # 团队可访问的 Pack 列表
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -78,7 +78,7 @@ class TeamInfo:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TeamInfo":
+    def from_dict(cls, data: dict[str, Any]) -> TeamInfo:
         """从字典创建"""
         return cls(
             name=data["name"],
@@ -94,11 +94,11 @@ class PackShareInfo:
 
     pack_name: str
     owner: str
-    permissions: Dict[str, Permission]  # user -> Permission
-    teams: Dict[str, PermissionLevel]  # team_name -> PermissionLevel
+    permissions: dict[str, Permission]  # user -> Permission
+    teams: dict[str, PermissionLevel]  # team_name -> PermissionLevel
     is_public: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "pack_name": self.pack_name,
@@ -143,7 +143,7 @@ class PermissionManager:
                 is_public=False,
             )
 
-        with open(share_file, "r", encoding="utf-8") as f:
+        with open(share_file, encoding="utf-8") as f:
             data = json.load(f)
 
         permissions = {}
@@ -169,24 +169,24 @@ class PermissionManager:
         with open(share_file, "w", encoding="utf-8") as f:
             json.dump(share_info.to_dict(), f, ensure_ascii=False, indent=2)
 
-    def _load_teams(self) -> Dict[str, TeamInfo]:
+    def _load_teams(self) -> dict[str, TeamInfo]:
         """加载团队信息"""
         if not self.teams_file.exists():
             return {}
 
-        with open(self.teams_file, "r", encoding="utf-8") as f:
+        with open(self.teams_file, encoding="utf-8") as f:
             teams_data = json.load(f)
 
         return {name: TeamInfo.from_dict(data) for name, data in teams_data.items()}
 
-    def _save_teams(self, teams: Dict[str, TeamInfo]) -> None:
+    def _save_teams(self, teams: dict[str, TeamInfo]) -> None:
         """保存团队信息"""
         with open(self.teams_file, "w", encoding="utf-8") as f:
             teams_data = {name: team.to_dict() for name, team in teams.items()}
             json.dump(teams_data, f, ensure_ascii=False, indent=2)
 
     def grant_permission(
-        self, pack_name: str, user: str, level: PermissionLevel, granted_by: Optional[str] = None
+        self, pack_name: str, user: str, level: PermissionLevel, granted_by: str | None = None
     ) -> None:
         """
         授予用户权限
@@ -212,7 +212,7 @@ class PermissionManager:
         self._save_share_info(share_info)
 
     def revoke_permission(
-        self, pack_name: str, user: str, revoked_by: Optional[str] = None
+        self, pack_name: str, user: str, revoked_by: str | None = None
     ) -> bool:
         """
         撤销用户权限
@@ -274,7 +274,7 @@ class PermissionManager:
 
         return False
 
-    def get_user_permissions(self, pack_name: str, user: str = None) -> Dict[str, Any]:
+    def get_user_permissions(self, pack_name: str, user: str = None) -> dict[str, Any]:
         """
         获取用户的权限信息
 
@@ -400,7 +400,7 @@ class PermissionManager:
         self._save_share_info(share_info)
         return True
 
-    def list_accessible_packs(self, user: str = None) -> List[str]:
+    def list_accessible_packs(self, user: str = None) -> list[str]:
         """
         列出用户可访问的 Pack
 

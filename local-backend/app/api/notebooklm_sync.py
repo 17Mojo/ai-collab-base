@@ -67,7 +67,7 @@ def get_sync_status() -> SyncStatus:
     """
     try:
         if SYNC_STATUS_FILE.exists():
-            with open(SYNC_STATUS_FILE, "r") as f:
+            with open(SYNC_STATUS_FILE) as f:
                 status_data = json.load(f)
 
             return SyncStatus(
@@ -121,7 +121,7 @@ def get_files_to_sync(force: bool = False) -> list[str]:
     # 读取已同步文件列表
     synced_files = set()
     if SYNC_STATUS_FILE.exists() and not force:
-        with open(SYNC_STATUS_FILE, "r") as f:
+        with open(SYNC_STATUS_FILE) as f:
             status_data = json.load(f)
             synced_files = set(status_data.get("synced_files", []))
 
@@ -201,7 +201,7 @@ async def sync_knowledge_sources(request: SyncRequest):
         # 过滤已同步文件
         synced_files = set()
         if SYNC_STATUS_FILE.exists():
-            with open(SYNC_STATUS_FILE, "r") as f:
+            with open(SYNC_STATUS_FILE) as f:
                 status_data = json.load(f)
                 synced_files = set(status_data.get("synced_files", []))
         files_to_sync = [f for f in files_to_sync if f not in synced_files]

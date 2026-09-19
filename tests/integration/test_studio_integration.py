@@ -31,6 +31,7 @@ BACKEND_URL = "http://127.0.0.1:8000"
 # Check if backend is reachable
 import socket
 import urllib.request
+
 BACKEND_REACHABLE = False
 try:
     # 既要能 TCP 连接，又要返回 ai-collab 后端的标识
@@ -41,7 +42,7 @@ try:
     with urllib.request.urlopen(req, timeout=1) as r:
         body = r.read().decode(errors="ignore")
         BACKEND_REACHABLE = "ai-collab" in body or r.status == 200
-except (socket.error, OSError, Exception):
+except (OSError, Exception):
     BACKEND_REACHABLE = False
 
 

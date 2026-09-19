@@ -18,11 +18,6 @@ from ai_collab.handoff_notification import (
     HandoffStatus,
     HandoffType,
     _handoff_manager,
-    accept_handoff,
-    complete_handoff,
-    confirm_handoff,
-    create_handoff,
-    get_pending_handoffs,
 )
 
 
@@ -279,10 +274,16 @@ class TestConvenienceFunctions:
         monkeypatch.setattr(hn_module, "_handoff_manager", HandoffManager())
 
         from ai_collab.handoff_notification import (
-            create_handoff as ch,
             accept_handoff as ah,
+        )
+        from ai_collab.handoff_notification import (
             complete_handoff as coh,
+        )
+        from ai_collab.handoff_notification import (
             confirm_handoff as cfh,
+        )
+        from ai_collab.handoff_notification import (
+            create_handoff as ch,
         )
 
         hid = ch("a", "b", "task_handoff", "title", "desc")

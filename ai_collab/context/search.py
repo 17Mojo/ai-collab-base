@@ -9,12 +9,11 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from .aggregator import AggregationContext
 from ..integrations.multi_source import AggregatedKnowledge as AggregatedContext
 from ..integrations.multi_source import KnowledgeSource as ContextItem
-from .aggregator import ContextAggregator
+from .aggregator import AggregationContext, ContextAggregator
 
 
 class SearchMethod(Enum):
@@ -42,8 +41,8 @@ class SearchResult:
     context_id: str
     content: str
     score: float  # 相关性分数 0-1
-    matches: List[str]  # 匹配的关键词
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    matches: list[str]  # 匹配的关键词
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def relevance(self) -> str:
@@ -67,7 +66,7 @@ class SearchQuery:
     scope: SearchScope = SearchScope.ALL
     limit: int = 10
     min_score: float = 0.3
-    filters: Dict[str, Any] = field(default_factory=dict)
+    filters: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """清理查询字符串"""
@@ -88,16 +87,16 @@ class SearchStats:
 class ContextSearchEngine:
     """上下文搜索引擎"""
 
-    def __init__(self, aggregator: Optional[ContextAggregator] = None):
+    def __init__(self, aggregator: ContextAggregator | None = None):
         """初始化搜索引擎
 
         Args:
             aggregator: 上下文聚合器
         """
         self.aggregator = aggregator or ContextAggregator()
-        self._search_stats: List[SearchStats] = []
+        self._search_stats: list[SearchStats] = []
 
-    def search(self, query_str: str, **kwargs) -> Tuple[List[SearchResult], SearchStats]:
+    def search(self, query_str: str, **kwargs) -> tuple[list[SearchResult], SearchStats]:
         """执行搜索
 
         Args:
@@ -111,7 +110,7 @@ class ContextSearchEngine:
         query = SearchQuery(query_str, **kwargs)
 
         # 获取搜索上下文
-        history: List[AggregationContext] = self.aggregator.get_history(limit=100)
+        history: list[AggregationContext] = self.aggregator.get_history(limit=100)
 
         if not history:
             return [], SearchStats(0, 0, 0, query.method, query.scope)
@@ -151,7 +150,7 @@ class ContextSearchEngine:
 
         return results, stats
 
-    def _extract_candidates(self, history: List[AggregatedContext]) -> Dict[str, ContextItem]:
+    def _extract_candidates(self, history: list[AggregatedContext]) -> dict[str, ContextItem]:
         """提取候选项
 
         Args:
@@ -176,8 +175,8 @@ class ContextSearchEngine:
         return candidates
 
     def _semantic_search(
-        self, query: SearchQuery, candidates: Dict[str, ContextItem]
-    ) -> List[SearchResult]:
+        self, query: SearchQuery, candidates: dict[str, ContextItem]
+    ) -> list[SearchResult]:
         """语义搜索
 
         Args:
@@ -190,7 +189,7 @@ class ContextSearchEngine:
         results = []
         query_terms = query.query.split()
 
-        for item_id, item in candidates.items():
+        for _item_id, item in candidates.items():
             content = item.content.lower()
 
             # 计算 TF-IDF 风格的相似度
@@ -216,8 +215,8 @@ class ContextSearchEngine:
         return results
 
     def _keyword_search(
-        self, query: SearchQuery, candidates: Dict[str, ContextItem]
-    ) -> List[SearchResult]:
+        self, query: SearchQuery, candidates: dict[str, ContextItem]
+    ) -> list[SearchResult]:
         """关键词搜索
 
         Args:
@@ -230,7 +229,7 @@ class ContextSearchEngine:
         results = []
         query_terms = query.query.split()
 
-        for item_id, item in candidates.items():
+        for _item_id, item in candidates.items():
             content = item.content.lower()
 
             # 计算准确匹配的分数
@@ -260,8 +259,8 @@ class ContextSearchEngine:
         return results
 
     def _hybrid_search(
-        self, query: SearchQuery, candidates: Dict[str, ContextItem]
-    ) -> List[SearchResult]:
+        self, query: SearchQuery, candidates: dict[str, ContextItem]
+    ) -> list[SearchResult]:
         """混合搜索（语义 + 关键词）
 
         Args:
@@ -313,8 +312,8 @@ class ContextSearchEngine:
         return results
 
     def _graph_search(
-        self, query: SearchQuery, candidates: Dict[str, ContextItem]
-    ) -> List[SearchResult]:
+        self, query: SearchQuery, candidates: dict[str, ContextItem]
+    ) -> list[SearchResult]:
         """图谱搜索（通过知识图谱关联）
 
         .. deprecated::
@@ -341,11 +340,11 @@ class ContextSearchEngine:
 
     def _filter_by_scope(
         self,
-        results: List[SearchResult],
+        results: list[SearchResult],
         scope: SearchScope,
-        history: List["AggregationContext"],  # 修正: 真实类型, 之前别名误指 AggregatedKnowledge
-        query: Optional[SearchQuery] = None,
-    ) -> List[SearchResult]:
+        history: list["AggregationContext"],  # 修正: 真实类型, 之前别名误指 AggregatedKnowledge
+        query: SearchQuery | None = None,
+    ) -> list[SearchResult]:
         """按范围过滤
 
         Args:
@@ -410,7 +409,7 @@ class ContextSearchEngine:
 
         return filtered
 
-    def _calculate_tfidf_score(self, query_terms: List[str], content: str) -> float:
+    def _calculate_tfidf_score(self, query_terms: list[str], content: str) -> float:
         """计算 TF-IDF 风格的相似度
 
         Args:
@@ -446,7 +445,7 @@ class ContextSearchEngine:
 
         return min(score, 1.0)
 
-    def suggest(self, partial_query: str, limit: int = 5) -> List[str]:
+    def suggest(self, partial_query: str, limit: int = 5) -> list[str]:
         """建议查询词（基于历史查询）
 
         Args:
@@ -474,7 +473,7 @@ class ContextSearchEngine:
         # 按词频排序（需要额外的统计）
         return suggestions[:limit]
 
-    def get_search_history(self) -> List[SearchStats]:
+    def get_search_history(self) -> list[SearchStats]:
         """获取搜索历史统计
 
         Returns:

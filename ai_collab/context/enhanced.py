@@ -9,7 +9,7 @@ NotebookLM 集成模块 - 增强上下文理解
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .schema import Context, FileContext, NotebookLMContext, ScenarioType
 
@@ -80,9 +80,9 @@ class ContextEnhancer:
 
     def auto_upload_documents(
         self,
-        file_paths: List[str],
-        notebook_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        file_paths: list[str],
+        notebook_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         自动上传文档到 NotebookLM
 
@@ -119,10 +119,10 @@ class ContextEnhancer:
     def enhanced_query(
         self,
         query: str,
-        context: Optional[Context] = None,
+        context: Context | None = None,
         max_results: int = 5,
         include_related: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         增强知识检索 - 基于上下文优化查询
 
@@ -175,9 +175,9 @@ class ContextEnhancer:
     def suggest_files(
         self,
         context: Context,
-        project_files: List[str],
+        project_files: list[str],
         top_n: int = 10,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         基于当前上下文建议相关文件
 
@@ -229,9 +229,9 @@ class ContextEnhancer:
     def _simple_file_suggestion(
         self,
         context: Context,
-        project_files: List[str],
+        project_files: list[str],
         top_n: int,
-    ) -> List[str]:
+    ) -> list[str]:
         """简单的文件建议规则"""
         scenario = context.scenario
 
@@ -263,7 +263,7 @@ class ContextEnhancer:
 
         return suggested[:top_n]
 
-    def _matches_patterns(self, file_path: str, patterns: List[str]) -> bool:
+    def _matches_patterns(self, file_path: str, patterns: list[str]) -> bool:
         """检查文件路径是否匹配模式"""
         import fnmatch
         import os
@@ -285,7 +285,7 @@ class ContextEnhancer:
         self,
         context: Context,
         max_length: int = 500,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         提取上下文摘要
 
@@ -326,7 +326,7 @@ class ContextEnhancer:
 
     def merge_contexts(
         self,
-        contexts: List[Context],
+        contexts: list[Context],
         scenario: ScenarioType,
         name: str,
     ) -> Context:
@@ -384,7 +384,7 @@ class ContextEnhancer:
 class ScenarioContextBuilder:
     """场景上下文构建器"""
 
-    def __init__(self, enhancer: Optional[ContextEnhancer] = None):
+    def __init__(self, enhancer: ContextEnhancer | None = None):
         """
         初始化构建器
 
@@ -395,7 +395,7 @@ class ScenarioContextBuilder:
 
     def build_for_coding(
         self,
-        base_files: List[str],
+        base_files: list[str],
         notebooklm_query: str = "代码架构和模块关系",
     ) -> Context:
         """构建编码场景上下文"""
@@ -425,7 +425,7 @@ class ScenarioContextBuilder:
 
     def build_for_research(
         self,
-        base_files: List[str],
+        base_files: list[str],
         notebooklm_query: str = "研究背景和相关文献",
     ) -> Context:
         """构建研究场景上下文"""
@@ -455,7 +455,7 @@ class ScenarioContextBuilder:
 
     def build_for_writing(
         self,
-        base_files: List[str],
+        base_files: list[str],
         notebooklm_query: str = "写作风格和内容要求",
     ) -> Context:
         """构建写作场景上下文"""

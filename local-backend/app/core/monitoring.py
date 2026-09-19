@@ -11,7 +11,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from functools import wraps
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class PerformanceMonitor:
@@ -19,7 +19,7 @@ class PerformanceMonitor:
 
     def __init__(self):
         """初始化性能监控器"""
-        self._stats: Dict[str, Dict[str, Any]] = {}
+        self._stats: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
         self._enabled = True
 
@@ -29,7 +29,7 @@ class PerformanceMonitor:
         method: str,
         duration_ms: float,
         status_code: int,
-        error: Optional[str] = None,
+        error: str | None = None,
     ):
         """
         记录 API 调用
@@ -82,7 +82,7 @@ class PerformanceMonitor:
             else:
                 stats["successful_calls"] += 1
 
-    def get_stats(self, endpoint: Optional[str] = None) -> Dict[str, Any]:
+    def get_stats(self, endpoint: str | None = None) -> dict[str, Any]:
         """
         获取性能统计
 
@@ -118,7 +118,7 @@ class PerformanceMonitor:
 
         return result
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         获取总体摘要
 
@@ -153,7 +153,7 @@ class PerformanceMonitor:
         with self._lock:
             self._stats.clear()
 
-    def export_stats(self, output_path: Optional[str] = None) -> str:
+    def export_stats(self, output_path: str | None = None) -> str:
         """
         导出统计数据
 
@@ -305,8 +305,8 @@ class APILogger:
         self,
         method: str,
         path: str,
-        query_params: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
+        query_params: dict | None = None,
+        headers: dict | None = None,
         body_size: int = 0,
     ):
         """记录 API 请求"""
@@ -374,7 +374,7 @@ class APILogger:
             with open(self._current_log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
-    def _filter_sensitive_headers(self, headers: Dict[str, str]) -> Dict[str, str]:
+    def _filter_sensitive_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """过滤敏感头部信息"""
         sensitive_keys = {
             "authorization",

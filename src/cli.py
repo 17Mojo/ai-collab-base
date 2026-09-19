@@ -421,7 +421,7 @@ def cmd_logs(args):
                     break
 
         if full_path and os.path.exists(full_path):
-            with open(full_path, "r", encoding="utf-8") as f:
+            with open(full_path, encoding="utf-8") as f:
                 print(f"\n{f.read()}")
         else:
             print(f"\n错误: 日志文件 '{args.log_file}' 不存在")

@@ -45,7 +45,7 @@ def probe_backend(backend_url, timeout_ms):
 
 def handle_message(msg, transport):
     action = msg.get("action", "")
-    src = msg.get("source", "")
+    _src = msg.get("source", "")  # noqa: F841
 
     if action == "ping":
         return {

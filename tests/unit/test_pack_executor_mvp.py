@@ -4,7 +4,6 @@ ai_collab/pack/pack_executor_mvp.py 测试
 """
 
 import json
-import os
 
 import pytest
 
@@ -158,7 +157,7 @@ def test_analysis_with_content(capsys):
 def test_analysis_with_empty_content():
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
-    out = exe._execute_analysis({})
+    exe._execute_analysis({})
     assert exe.context["analysis_result"]["keywords"] == []
     assert "word_count" not in exe.context["analysis_result"]
 
@@ -181,7 +180,7 @@ def test_generation_default_template(capsys):
     exe.context["topic"] = "TopicX"
     exe.context["content"] = "ContentY"
     exe.context["analysis_result"] = {"keywords": ["kw1", "kw2"]}
-    out = exe._execute_generation({"template": "默认模板"})
+    exe._execute_generation({"template": "默认模板"})
     body = exe.context["generated_content"]
     assert "TopicX" in body
     assert "ContentY" in body
@@ -258,7 +257,7 @@ def test_fusion_best_strategy(capsys):
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
     exe.context["generated_content"] = "the-longest-content-here"
-    out = exe._execute_fusion({"strategy": "best"})
+    exe._execute_fusion({"strategy": "best"})
     assert exe.context["fused_content"] == "the-longest-content-here"
 
 
@@ -266,7 +265,7 @@ def test_fusion_default_strategy_falls_back(capsys):
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
     exe.context["generated_content"] = "X"
-    out = exe._execute_fusion({"strategy": "unknown-strategy"})
+    exe._execute_fusion({"strategy": "unknown-strategy"})
     assert exe.context["fused_content"] == "X"
 
 
@@ -293,7 +292,7 @@ def test_tracking_appends_to_existing_file(tmp_path, capsys):
     out_file.write_text(json.dumps({"tracking_records": [{"old": True}]}), encoding="utf-8")
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
-    out = exe._execute_tracking({"output_file": str(out_file)})
+    exe._execute_tracking({"output_file": str(out_file)})
     data = json.loads(out_file.read_text())
     assert len(data["tracking_records"]) == 2
     assert data["tracking_records"][0] == {"old": True}

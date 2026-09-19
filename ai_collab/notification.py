@@ -9,7 +9,7 @@
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class NotificationMode:
@@ -38,12 +38,12 @@ class Notification:
         mode: str = NotificationMode.BROADCAST,
         sender: str = "system",
         priority: str = Priority.NORMAL,
-        mentions: Optional[List[str]] = None,
-        direct_target: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[str] = None,
-        read_by: Optional[List[str]] = None,
+        mentions: list[str] | None = None,
+        direct_target: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        id: str | None = None,
+        timestamp: str | None = None,
+        read_by: list[str] | None = None,
     ):
         self.id = id or f"MSG-{int(datetime.now().timestamp())}"
         self.timestamp = timestamp or datetime.now().isoformat()
@@ -56,7 +56,7 @@ class Notification:
         self.metadata = metadata or {}
         self.read_by = read_by or []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -89,16 +89,16 @@ class NotificationQueue:
 
         os.makedirs(self.NOTIFICATION_DIR, exist_ok=True)
 
-    def _load_queue(self) -> List[Dict]:
+    def _load_queue(self) -> list[dict]:
         """加载消息队列"""
         try:
-            with open(self.queue_file, "r") as f:
+            with open(self.queue_file) as f:
                 data = json.load(f)
                 return data.get("messages", [])
         except (OSError, json.JSONDecodeError):
             return []
 
-    def _save_queue(self, messages: List[Dict]):
+    def _save_queue(self, messages: list[dict]):
         """保存消息队列"""
         with open(self.queue_file, "w") as f:
             json.dump({"queue_id": "QUEUE-20260226", "messages": messages}, f, indent=2)
@@ -110,7 +110,7 @@ class NotificationQueue:
         self._save_queue(messages)
         return notification.id
 
-    def get_pending(self, target_ai: str) -> List[Notification]:
+    def get_pending(self, target_ai: str) -> list[Notification]:
         """获取目标 AI 的待处理通知"""
         messages = self._load_queue()
         pending = []
@@ -157,7 +157,7 @@ class NotificationQueue:
         # 同时保存到历史
         self._save_to_history(message_id, ai)
 
-    def _get_target_list(self, mode: str, msg: Dict) -> List[str]:
+    def _get_target_list(self, mode: str, msg: dict) -> list[str]:
         """获取消息的目标列表"""
         if mode == NotificationMode.BROADCAST:
             return self.BROADCAST_TARGETS
@@ -170,7 +170,7 @@ class NotificationQueue:
     def _save_to_history(self, message_id: str, ai: str):
         """保存到历史记录"""
         try:
-            with open(self.history_file, "r") as f:
+            with open(self.history_file) as f:
                 history = json.load(f)
         except (OSError, json.JSONDecodeError):
             history = {"history": []}
@@ -210,7 +210,7 @@ class NotificationAPI:
             self._write_to_target(ai, notification, message_id)
         return message_id
 
-    def mention(self, mention_targets: List[str], content: str, priority: str = Priority.NORMAL):
+    def mention(self, mention_targets: list[str], content: str, priority: str = Priority.NORMAL):
         """
         模式2: 广播 + @提醒 - 重点提醒
         对应微信群聊：// @某某 看一下
@@ -272,7 +272,7 @@ def broadcast(content: str, priority: str = "normal"):
     return _notifier.broadcast(content, priority)
 
 
-def mention(mentions: List[str], content: str, priority: str = "normal"):
+def mention(mentions: list[str], content: str, priority: str = "normal"):
     """@提醒某人"""
     return _notifier.mention(mentions, content, priority)
 

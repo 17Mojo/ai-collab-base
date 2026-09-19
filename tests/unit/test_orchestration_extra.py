@@ -4,7 +4,6 @@ orchestration.py 补测 - 重点覆盖 enum 和数据类
 目标: 27% -> 40%+ (单测可覆盖的部分)
 """
 
-import pytest
 
 from ai_collab.orchestration import (
     AgentProvider,
@@ -13,7 +12,6 @@ from ai_collab.orchestration import (
     RoleStatus,
     StartupMode,
 )
-
 
 # ============================================================
 # Enum 值校验

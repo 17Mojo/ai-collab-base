@@ -2,20 +2,18 @@
 notification.py 的最小测试覆盖
 """
 
-import os
-import json
-import pytest
 from unittest.mock import patch
+
 from ai_collab import notification as notification_module
 from ai_collab.notification import (
     Notification,
-    NotificationMode,
-    NotificationQueue,
     NotificationAPI,
     NotificationDetector,
+    NotificationMode,
+    NotificationQueue,
     broadcast,
-    mention,
     direct,
+    mention,
 )
 
 
@@ -72,7 +70,7 @@ class TestNotificationQueue:
 
     def test_init_creates_dir(self, tmp_path):
         with patch.object(NotificationQueue, "NOTIFICATION_DIR", str(tmp_path / "notifications")):
-            q = NotificationQueue()
+            NotificationQueue()
             assert (tmp_path / "notifications").exists()
 
     def test_emit_returns_id(self, tmp_path):

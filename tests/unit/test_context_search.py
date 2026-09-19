@@ -3,7 +3,6 @@ context/search.py 的最小测试覆盖
 目标：从 35% 到 70%+ 局部覆盖率
 """
 
-from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
@@ -258,8 +257,9 @@ class TestStats:
 
 def test_graph_method_does_not_crash():
     """SearchMethod.GRAPH 调用不崩溃 (实际降级到 HYBRID, 见 _graph_search deprecation)"""
-    from ai_collab.context.search import ContextSearchEngine, SearchMethod
     from unittest.mock import MagicMock
+
+    from ai_collab.context.search import ContextSearchEngine, SearchMethod
     eng = ContextSearchEngine(aggregator=MagicMock())
     eng.aggregator.get_history.return_value = []
     # 不应抛异常 - 即使图谱未集成, GRAPH 方法也应能走完
@@ -270,8 +270,9 @@ def test_graph_method_does_not_crash():
 
 def test_graph_search_method_is_deprecated():
     """直接调用 _graph_search 触发 DeprecationWarning"""
-    from ai_collab.context.search import ContextSearchEngine, SearchQuery
     from unittest.mock import MagicMock
+
+    from ai_collab.context.search import ContextSearchEngine, SearchQuery
     eng = ContextSearchEngine(aggregator=MagicMock())
     query = SearchQuery(query="test")
     candidates = {}

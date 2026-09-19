@@ -2,7 +2,6 @@
 数据库索引验证测试
 """
 
-import os
 import sys
 from pathlib import Path
 

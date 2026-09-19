@@ -6,7 +6,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ai_collab.integrations.multi_source import (
     AggregatedKnowledge,
@@ -21,11 +21,11 @@ class AggregationContext:
 
     context_id: str
     query: str
-    sources: List[str]
-    result: Optional[AggregatedKnowledge] = None
+    sources: list[str]
+    result: AggregatedKnowledge | None = None
     created_at: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "context_id": self.context_id,
@@ -42,10 +42,10 @@ class ContextAggregator:
     def __init__(self):
         """初始化上下文聚合管理器"""
         self.aggregator = KnowledgeAggregator()
-        self.contexts: Dict[str, AggregationContext] = {}
+        self.contexts: dict[str, AggregationContext] = {}
 
     def aggregate_from_sources(
-        self, sources: List[str], context: Any, max_sources: int = 5
+        self, sources: list[str], context: Any, max_sources: int = 5
     ) -> AggregatedKnowledge:
         """
         从多个源聚合知识
@@ -91,7 +91,7 @@ class ContextAggregator:
         source_type: str,
         content: str,
         confidence: float = 0.8,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> KnowledgeSource:
         """
         从源提取知识
@@ -123,7 +123,7 @@ class ContextAggregator:
         return source
 
     def merge_knowledge(
-        self, sources: List[KnowledgeSource], strategy: str = "weighted"
+        self, sources: list[KnowledgeSource], strategy: str = "weighted"
     ) -> AggregatedKnowledge:
         """
         合并知识
@@ -172,7 +172,7 @@ class ContextAggregator:
 
         return aggregated
 
-    def create_context(self, query: str, sources: List[str]) -> str:
+    def create_context(self, query: str, sources: list[str]) -> str:
         """
         创建聚合上下文
 
@@ -214,15 +214,15 @@ class ContextAggregator:
 
         return result
 
-    def get_context(self, context_id: str) -> Optional[AggregationContext]:
+    def get_context(self, context_id: str) -> AggregationContext | None:
         """获取上下文"""
         return self.contexts.get(context_id)
 
-    def list_contexts(self) -> List[AggregationContext]:
+    def list_contexts(self) -> list[AggregationContext]:
         """列出所有上下文"""
         return list(self.contexts.values())
 
-    def get_history(self, limit: int = 10) -> List[Any]:
+    def get_history(self, limit: int = 10) -> list[Any]:
         """获取历史上下文（简化版本）
         返回最近创建的聚合上下文列表
         """
@@ -239,7 +239,7 @@ class ContextAggregator:
         hash_value = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"{source_type}_{hash_value}"
 
-    def _generate_context_id(self, query: str, sources: List[str]) -> str:
+    def _generate_context_id(self, query: str, sources: list[str]) -> str:
         """生成上下文ID"""
         import hashlib
 
@@ -248,14 +248,14 @@ class ContextAggregator:
         hash_value = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"ctx_{hash_value}"
 
-    def _weighted_selection(self, sources: List[KnowledgeSource]) -> List[KnowledgeSource]:
+    def _weighted_selection(self, sources: list[KnowledgeSource]) -> list[KnowledgeSource]:
         """加权选择"""
         # 按置信度排序
         sorted_sources = sorted(sources, key=lambda s: s.confidence, reverse=True)
         # 选择置信度 > 0.5 的源
         return [s for s in sorted_sources if s.confidence > 0.5]
 
-    def _consensus_selection(self, sources: List[KnowledgeSource]) -> List[KnowledgeSource]:
+    def _consensus_selection(self, sources: list[KnowledgeSource]) -> list[KnowledgeSource]:
         """一致性选择"""
         # 交叉验证
         validation = self.aggregator.cross_validate(sources)

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .schema import PackCategoryType
 
@@ -44,13 +44,13 @@ class PackIndexEntry:
     downloads: int = 0
     rating: float = 0.0
     review_count: int = 0
-    tags: List[str] = None
+    tags: list[str] = None
 
     def __post_init__(self):
         if self.tags is None:
             self.tags = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -79,7 +79,7 @@ class PackRegistry:
         """
         self.packs_root = Path(packs_root)
         self.index_file = self.packs_root / ".packs-index.json"
-        self.index: Dict[str, PackIndexEntry] = {}
+        self.index: dict[str, PackIndexEntry] = {}
         self._load_index()
 
     def _load_index(self):
@@ -88,7 +88,7 @@ class PackRegistry:
             self._build_index()
         else:
             try:
-                with open(self.index_file, "r", encoding="utf-8") as f:
+                with open(self.index_file, encoding="utf-8") as f:
                     index_data = json.load(f)
 
                 self.index = {}
@@ -123,7 +123,7 @@ class PackRegistry:
                 continue
 
             try:
-                with open(manifest_file, "r", encoding="utf-8") as f:
+                with open(manifest_file, encoding="utf-8") as f:
                     manifest = json.load(f)
 
                 entry = PackIndexEntry(
@@ -174,9 +174,9 @@ class PackRegistry:
     def update_pack_stats(
         self,
         pack_name: str,
-        downloads: Optional[int] = None,
-        rating: Optional[float] = None,
-        review_count: Optional[int] = None,
+        downloads: int | None = None,
+        rating: float | None = None,
+        review_count: int | None = None,
     ) -> None:
         """
         更新 Pack 统计信息
@@ -213,11 +213,11 @@ class PackRegistry:
         """刷新 Pack 索引"""
         self._build_index()
 
-    def get_all_packs(self) -> List[PackIndexEntry]:
+    def get_all_packs(self) -> list[PackIndexEntry]:
         """获取所有 Pack"""
         return list(self.index.values())
 
-    def get_packs_by_category(self, category: PackCategoryType) -> List[PackIndexEntry]:
+    def get_packs_by_category(self, category: PackCategoryType) -> list[PackIndexEntry]:
         """获取指定类别的 Pack"""
         return [entry for entry in self.index.values() if entry.category == category]
 
@@ -236,7 +236,7 @@ class PackSearchEngine:
 
     def search(
         self, query: str, sort_by: PackSortType = PackSortType.POPULARITY, limit: int = 20
-    ) -> List[PackIndexEntry]:
+    ) -> list[PackIndexEntry]:
         """
         搜索 Pack
 
@@ -275,8 +275,8 @@ class PackSearchEngine:
         return results[:limit]
 
     def _sort_results(
-        self, results: List[PackIndexEntry], sort_by: PackSortType
-    ) -> List[PackIndexEntry]:
+        self, results: list[PackIndexEntry], sort_by: PackSortType
+    ) -> list[PackIndexEntry]:
         """排序搜索结果"""
         if sort_by == PackSortType.POPULARITY:
             # 热度 = (下载次数 * 0.5 + 评分 * 10 * 0.3 + 评论数 * 0.2)
@@ -296,7 +296,7 @@ class PackSearchEngine:
         else:
             return results
 
-    def get_trending_packs(self, days: int = 7, limit: int = 10) -> List[PackIndexEntry]:
+    def get_trending_packs(self, days: int = 7, limit: int = 10) -> list[PackIndexEntry]:
         """
         获取热门 Pack
 
@@ -312,7 +312,7 @@ class PackSearchEngine:
         all_packs = self.registry.get_all_packs()
         return sorted(all_packs, key=lambda x: x.downloads, reverse=True)[:limit]
 
-    def get_recommended_packs(self, pack_name: str, limit: int = 5) -> List[PackIndexEntry]:
+    def get_recommended_packs(self, pack_name: str, limit: int = 5) -> list[PackIndexEntry]:
         """
         获取推荐 Pack
 
@@ -343,7 +343,7 @@ class PackSearchEngine:
 
     def browse_by_category(
         self, category: PackCategoryType, sort_by: PackSortType = PackSortType.POPULARITY
-    ) -> List[PackIndexEntry]:
+    ) -> list[PackIndexEntry]:
         """
         按类别浏览
 
@@ -357,7 +357,7 @@ class PackSearchEngine:
         packs = self.registry.get_packs_by_category(category)
         return self._sort_results(packs, sort_by)
 
-    def get_pack_details(self, pack_name: str) -> Optional[PackIndexEntry]:
+    def get_pack_details(self, pack_name: str) -> PackIndexEntry | None:
         """
         获取 Pack 详情
 

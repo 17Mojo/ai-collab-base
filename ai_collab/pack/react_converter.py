@@ -9,7 +9,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ReActStage(Enum):
@@ -35,11 +35,11 @@ class ReActTrace:
 
     stage: ReActStage
     timestamp: str
-    input_data: Dict[str, Any]
-    output_data: Dict[str, Any]
+    input_data: dict[str, Any]
+    output_data: dict[str, Any]
     reasoning: str
-    actions: List[str] = field(default_factory=list)
-    observations: List[str] = field(default_factory=list)
+    actions: list[str] = field(default_factory=list)
+    observations: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -47,20 +47,20 @@ class ConflictRecord:
     """Conflict record for cross-pack element reuse"""
 
     element_name: str
-    source_packs: List[str]
+    source_packs: list[str]
     conflict_type: str  # naming, semantic, compliance
     description: str
-    resolution: Optional[str] = None
+    resolution: str | None = None
 
 
 @dataclass
 class ChangeManifest:
     """Change manifest for conversion"""
 
-    inherited_elements: List[Dict[str, Any]] = field(default_factory=list)
-    new_elements: List[Dict[str, Any]] = field(default_factory=list)
-    removed_elements: List[Dict[str, Any]] = field(default_factory=list)
-    conflicts: List[ConflictRecord] = field(default_factory=list)
+    inherited_elements: list[dict[str, Any]] = field(default_factory=list)
+    new_elements: list[dict[str, Any]] = field(default_factory=list)
+    removed_elements: list[dict[str, Any]] = field(default_factory=list)
+    conflicts: list[ConflictRecord] = field(default_factory=list)
 
 
 @dataclass
@@ -69,19 +69,19 @@ class ValidationReport:
 
     schema_valid: bool = False
     compliance_valid: bool = False
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    checks: Dict[str, bool] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    checks: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
 class ConversionArtifacts:
     """Standard conversion artifacts"""
 
-    draft_pack: Dict[str, Any]
+    draft_pack: dict[str, Any]
     change_manifest: ChangeManifest
     validation_report: ValidationReport
-    traces: List[ReActTrace] = field(default_factory=list)
+    traces: list[ReActTrace] = field(default_factory=list)
 
 
 class ReActConverter:
@@ -91,10 +91,10 @@ class ReActConverter:
     """
 
     def __init__(self):
-        self.traces: List[ReActTrace] = []
-        self.current_stage: Optional[ReActStage] = None
+        self.traces: list[ReActTrace] = []
+        self.current_stage: ReActStage | None = None
 
-    def convert(self, requirement: Dict[str, Any]) -> ConversionArtifacts:
+    def convert(self, requirement: dict[str, Any]) -> ConversionArtifacts:
         """
         Convert Owner requirement to Pack draft
 
@@ -123,7 +123,7 @@ class ReActConverter:
             traces=self.traces,
         )
 
-    def _reason_stage(self, requirement: Dict[str, Any]):
+    def _reason_stage(self, requirement: dict[str, Any]):
         """Reason stage: Analyze requirement and plan conversion"""
         self.current_stage = ReActStage.REASON
 
@@ -148,7 +148,7 @@ class ReActConverter:
 
         self.traces.append(trace)
 
-    def _act_stage(self, requirement: Dict[str, Any]) -> Dict[str, Any]:
+    def _act_stage(self, requirement: dict[str, Any]) -> dict[str, Any]:
         """Act stage: Generate Pack draft"""
         self.current_stage = ReActStage.ACT
 
@@ -186,7 +186,7 @@ class ReActConverter:
 
         return draft_pack
 
-    def _observe_stage(self, draft_pack: Dict[str, Any]) -> ValidationReport:
+    def _observe_stage(self, draft_pack: dict[str, Any]) -> ValidationReport:
         """Observe stage: Validate draft pack"""
         self.current_stage = ReActStage.OBSERVE
 
@@ -235,7 +235,7 @@ class ReActConverter:
 
         return validation_report
 
-    def _generate_metadata(self, requirement: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_metadata(self, requirement: dict[str, Any]) -> dict[str, Any]:
         """Generate pack metadata"""
         return {
             "pack_id": f"draft-{datetime.now().strftime('%Y%m%d%H%M%S')}",
@@ -252,7 +252,7 @@ class ReActConverter:
             "estimated_efficiency_gain": requirement.get("efficiency_gain", "80%"),
         }
 
-    def _generate_domain(self, requirement: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_domain(self, requirement: dict[str, Any]) -> dict[str, Any]:
         """Generate domain configuration"""
         return {
             "primary_domain": requirement.get("primary_domain", "general"),
@@ -263,7 +263,7 @@ class ReActConverter:
             "compliance_rules": requirement.get("compliance_rules", []),
         }
 
-    def _generate_example_library(self, requirement: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_example_library(self, requirement: dict[str, Any]) -> dict[str, Any]:
         """Generate example library"""
         return {
             "good_examples": requirement.get("good_examples", []),
@@ -271,7 +271,7 @@ class ReActConverter:
             "few_shot_template": requirement.get("few_shot_template"),
         }
 
-    def _generate_workflow(self, requirement: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_workflow(self, requirement: dict[str, Any]) -> dict[str, Any]:
         """Generate workflow steps"""
         steps = []
 
@@ -318,7 +318,7 @@ class ReActConverter:
             "error_handling": {"retry_count": 3, "fallback_strategy": "use_default"},
         }
 
-    def _generate_quality_metrics(self, requirement: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_quality_metrics(self, requirement: dict[str, Any]) -> dict[str, Any]:
         """Generate quality metrics"""
         return {
             "metrics": {
@@ -345,7 +345,7 @@ class ReActConverter:
             "validation_tolerance": 0.01,
         }
 
-    def _generate_runtime_config(self, requirement: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_runtime_config(self, requirement: dict[str, Any]) -> dict[str, Any]:
         """Generate runtime configuration"""
         return {
             "max_execution_time": requirement.get("max_execution_time", 300),
@@ -361,7 +361,7 @@ class ReActConverter:
         }
 
     def _build_change_manifest(
-        self, requirement: Dict[str, Any], draft_pack: Dict[str, Any]
+        self, requirement: dict[str, Any], draft_pack: dict[str, Any]
     ) -> ChangeManifest:
         """Build change manifest"""
         manifest = ChangeManifest()
@@ -396,7 +396,7 @@ class ReActConverter:
 
         return manifest
 
-    def _check_compliance(self, draft_pack: Dict[str, Any]) -> List[str]:
+    def _check_compliance(self, draft_pack: dict[str, Any]) -> list[str]:
         """Check compliance rules"""
         errors = []
 
@@ -423,7 +423,7 @@ class ReActConverter:
             return ConversionStatus.BLOCKED
 
 
-def convert_requirement(requirement: Dict[str, Any]) -> ConversionArtifacts:
+def convert_requirement(requirement: dict[str, Any]) -> ConversionArtifacts:
     """
     Convert Owner requirement to Pack draft
 

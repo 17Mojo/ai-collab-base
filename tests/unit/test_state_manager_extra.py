@@ -17,7 +17,6 @@ from ai_collab.state_manager import (
     VSCodeStateManager,
 )
 
-
 # ============================================================
 # VSCodeStateManager 静态方法 - get_project_state_file
 # ============================================================

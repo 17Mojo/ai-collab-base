@@ -11,7 +11,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -56,11 +56,11 @@ class FileContextRequest(BaseModel):
     """文件上下文请求"""
 
     path: str
-    content: Optional[str] = None
+    content: str | None = None
     language: str = "text"
     size: int = 0
-    modified_at: Optional[str] = None
-    hash: Optional[str] = None
+    modified_at: str | None = None
+    hash: str | None = None
 
 
 class AISessionRequest(BaseModel):
@@ -69,8 +69,8 @@ class AISessionRequest(BaseModel):
     session_id: str
     ai_type: str
     started_at: str
-    messages: List[Dict[str, Any]] = []
-    metadata: Dict[str, Any] = {}
+    messages: list[dict[str, Any]] = []
+    metadata: dict[str, Any] = {}
 
 
 class NotebookLMRequest(BaseModel):
@@ -78,9 +78,9 @@ class NotebookLMRequest(BaseModel):
 
     notebook_id: str
     notebook_name: str
-    query_results: List[Dict[str, Any]] = []
-    sources: List[str] = []
-    last_updated: Optional[str] = None
+    query_results: list[dict[str, Any]] = []
+    sources: list[str] = []
+    last_updated: str | None = None
 
 
 class CreateContextRequest(BaseModel):
@@ -88,23 +88,23 @@ class CreateContextRequest(BaseModel):
 
     scenario: ScenarioType
     name: str
-    files: List[str] = []
-    user_context: Dict[str, Any] = {}
-    tags: List[str] = []
+    files: list[str] = []
+    user_context: dict[str, Any] = {}
+    tags: list[str] = []
 
 
 class UpdateContextRequest(BaseModel):
     """更新上下文请求"""
 
-    name: Optional[str] = None
-    user_context: Optional[Dict[str, Any]] = None
-    tags: Optional[List[str]] = None
+    name: str | None = None
+    user_context: dict[str, Any] | None = None
+    tags: list[str] | None = None
 
 
 class ScenarioDetectionRequest(BaseModel):
     """场景检测请求"""
 
-    active_files: List[str] = []
+    active_files: list[str] = []
     include_content: bool = False
 
 
@@ -117,13 +117,13 @@ class ContextResponse(BaseModel):
     context_id: str
     scenario: str
     name: str
-    file_contexts: List[Dict[str, Any]] = []
-    ai_sessions: List[Dict[str, Any]] = []
-    notebooklm_context: Optional[Dict[str, Any]] = None
-    user_context: Dict[str, Any] = {}
-    metadata: Dict[str, Any]
-    parent_id: Optional[str] = None
-    children_ids: List[str] = []
+    file_contexts: list[dict[str, Any]] = []
+    ai_sessions: list[dict[str, Any]] = []
+    notebooklm_context: dict[str, Any] | None = None
+    user_context: dict[str, Any] = {}
+    metadata: dict[str, Any]
+    parent_id: str | None = None
+    children_ids: list[str] = []
     size: int
 
 
@@ -133,7 +133,7 @@ class ScenarioDetectionResponse(BaseModel):
     scenario: str
     confidence: float
     is_confident: bool
-    evidence: List[Dict[str, Any]] = []
+    evidence: list[dict[str, Any]] = []
     explanation: str
 
 
@@ -316,9 +316,9 @@ async def get_context(context_id: str):
         db.close()
 
 
-@router.get("/list", response_model=List[ContextResponse])
+@router.get("/list", response_model=list[ContextResponse])
 async def list_contexts(
-    scenario: Optional[ScenarioType] = None,
+    scenario: ScenarioType | None = None,
     limit: int = 100,
     offset: int = 0,
 ):

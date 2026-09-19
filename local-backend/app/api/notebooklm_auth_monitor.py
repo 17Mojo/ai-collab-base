@@ -82,7 +82,7 @@ def get_auth_status() -> AuthStatus:
 
         # 然后检查 auth_info.json 文件
         if AUTH_STATE_FILE.exists():
-            with open(AUTH_STATE_FILE, "r") as f:
+            with open(AUTH_STATE_FILE) as f:
                 auth_info = json.load(f)
 
             authenticated = auth_info.get("authenticated", False)

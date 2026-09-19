@@ -6,7 +6,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ai_collab.integrations.knowledge_graph import (
     KnowledgeGraph,
@@ -23,11 +23,11 @@ class GraphContext:
 
     context_id: str
     query: str
-    relevant_nodes: List[str]
-    enriched_data: Dict[str, Any] = field(default_factory=dict)
+    relevant_nodes: list[str]
+    enriched_data: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "context_id": self.context_id,
@@ -41,7 +41,7 @@ class GraphContext:
 class GraphContextManager:
     """图谱上下文管理器"""
 
-    def __init__(self, graph: Optional[KnowledgeGraph] = None):
+    def __init__(self, graph: KnowledgeGraph | None = None):
         """
         初始化图谱上下文管理器
 
@@ -49,9 +49,9 @@ class GraphContextManager:
             graph: 知识图谱实例
         """
         self._graph = graph or KnowledgeGraph()
-        self._contexts: Dict[str, GraphContext] = {}
+        self._contexts: dict[str, GraphContext] = {}
 
-    def enrich_context(self, context: Any, max_nodes: int = 10) -> Dict[str, Any]:
+    def enrich_context(self, context: Any, max_nodes: int = 10) -> dict[str, Any]:
         """
         使用图谱增强上下文
 
@@ -112,7 +112,7 @@ class GraphContextManager:
 
     def find_relevant_knowledge(
         self, query: str, context: Any, max_depth: int = 2
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         查找相关知识
 
@@ -148,7 +148,7 @@ class GraphContextManager:
         return results
 
     def build_from_documents(
-        self, documents: List[Dict[str, Any]], extract_entities: bool = True
+        self, documents: list[dict[str, Any]], extract_entities: bool = True
     ) -> KnowledgeGraph:
         """
         从文档构建知识图谱
@@ -216,7 +216,7 @@ class GraphContextManager:
 
         return context_id
 
-    def get_context(self, context_id: str) -> Optional[GraphContext]:
+    def get_context(self, context_id: str) -> GraphContext | None:
         """获取上下文"""
         return self._contexts.get(context_id)
 
@@ -235,7 +235,7 @@ class GraphContextManager:
         else:
             return str(context)
 
-    def _extract_concepts(self, content: str) -> List[str]:
+    def _extract_concepts(self, content: str) -> list[str]:
         """提取概念"""
         # 简单实现: 提取关键词
         import re

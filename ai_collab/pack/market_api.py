@@ -7,7 +7,7 @@ Pack 市场管理接口
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .market import PackListing, PackRating, PackStatus, UserFeedback
 from .market_store import PackMarketStore
@@ -33,8 +33,8 @@ class PackMarketAPI:
         description: str,
         author: str,
         category: str,
-        tags: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        tags: list[str] | None = None,
+    ) -> dict[str, Any]:
         """创建新 Pack
 
         Args:
@@ -69,7 +69,7 @@ class PackMarketAPI:
             "message": "Pack created successfully" if success else "Failed to create pack",
         }
 
-    def get_pack(self, pack_id: str) -> Dict[str, Any]:
+    def get_pack(self, pack_id: str) -> dict[str, Any]:
         """获取 Pack 详情
 
         Args:
@@ -88,12 +88,12 @@ class PackMarketAPI:
     def update_pack(
         self,
         pack_id: str,
-        pack_name: Optional[str] = None,
-        version: Optional[str] = None,
-        description: Optional[str] = None,
-        category: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        pack_name: str | None = None,
+        version: str | None = None,
+        description: str | None = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict[str, Any]:
         """更新 Pack 信息
 
         Args:
@@ -133,7 +133,7 @@ class PackMarketAPI:
             "message": "Pack updated successfully" if success else "Failed to update pack",
         }
 
-    def delete_pack(self, pack_id: str) -> Dict[str, Any]:
+    def delete_pack(self, pack_id: str) -> dict[str, Any]:
         """删除 Pack
 
         Args:
@@ -151,12 +151,12 @@ class PackMarketAPI:
 
     def list_packs(
         self,
-        category: Optional[str] = None,
-        status: Optional[str] = None,
-        author: Optional[str] = None,
+        category: str | None = None,
+        status: str | None = None,
+        author: str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """列出 Pack（支持过滤）
 
         Args:
@@ -181,7 +181,7 @@ class PackMarketAPI:
             "count": len(listings),
         }
 
-    def search_packs(self, query: str, limit: int = 100) -> Dict[str, Any]:
+    def search_packs(self, query: str, limit: int = 100) -> dict[str, Any]:
         """搜索 Pack
 
         Args:
@@ -203,7 +203,7 @@ class PackMarketAPI:
 
     def rate_pack(
         self, pack_id: str, user_id: str, rating: int, title: str = "", content: str = ""
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """评价 Pack
 
         Args:
@@ -240,7 +240,7 @@ class PackMarketAPI:
             "message": "Rating submitted successfully" if success else "Failed to submit rating",
         }
 
-    def get_rating(self, rating_id: str) -> Dict[str, Any]:
+    def get_rating(self, rating_id: str) -> dict[str, Any]:
         """获取评价详情
 
         Args:
@@ -256,7 +256,7 @@ class PackMarketAPI:
 
         return {"success": True, "rating": rating.to_dict()}
 
-    def list_pack_ratings(self, pack_id: str, limit: int = 100) -> Dict[str, Any]:
+    def list_pack_ratings(self, pack_id: str, limit: int = 100) -> dict[str, Any]:
         """列出 Pack 评价
 
         Args:
@@ -274,7 +274,7 @@ class PackMarketAPI:
             "count": len(ratings),
         }
 
-    def delete_rating(self, rating_id: str) -> Dict[str, Any]:
+    def delete_rating(self, rating_id: str) -> dict[str, Any]:
         """删除评价
 
         Args:
@@ -294,7 +294,7 @@ class PackMarketAPI:
 
     def submit_feedback(
         self, pack_id: str, user_id: str, feedback_type: str, content: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """提交用户反馈
 
         Args:
@@ -331,7 +331,7 @@ class PackMarketAPI:
             else "Failed to submit feedback",
         }
 
-    def get_feedback(self, feedback_id: str) -> Dict[str, Any]:
+    def get_feedback(self, feedback_id: str) -> dict[str, Any]:
         """获取反馈详情
 
         Args:
@@ -348,8 +348,8 @@ class PackMarketAPI:
         return {"success": True, "feedback": feedback.to_dict()}
 
     def list_pack_feedback(
-        self, pack_id: str, feedback_type: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, pack_id: str, feedback_type: str | None = None
+    ) -> dict[str, Any]:
         """列出 Pack 反馈
 
         Args:
@@ -369,7 +369,7 @@ class PackMarketAPI:
 
     # ========== 管理员操作 ==========
 
-    def approve_pack(self, pack_id: str) -> Dict[str, Any]:
+    def approve_pack(self, pack_id: str) -> dict[str, Any]:
         """批准 Pack
 
         Args:
@@ -391,7 +391,7 @@ class PackMarketAPI:
             "message": "Pack approved successfully" if success else "Failed to approve pack",
         }
 
-    def reject_pack(self, pack_id: str) -> Dict[str, Any]:
+    def reject_pack(self, pack_id: str) -> dict[str, Any]:
         """拒绝 Pack
 
         Args:
@@ -413,7 +413,7 @@ class PackMarketAPI:
             "message": "Pack rejected successfully" if success else "Failed to reject pack",
         }
 
-    def increment_downloads(self, pack_id: str) -> Dict[str, Any]:
+    def increment_downloads(self, pack_id: str) -> dict[str, Any]:
         """增加下载次数
 
         Args:
@@ -438,7 +438,7 @@ class PackMarketAPI:
 
     # ========== 统计信息 ==========
 
-    def get_market_stats(self) -> Dict[str, Any]:
+    def get_market_stats(self) -> dict[str, Any]:
         """获取市场统计信息
 
         Returns:
@@ -470,7 +470,7 @@ class PackMarketAPI:
             },
         }
 
-    def get_pack_rating_stats(self, pack_id: str) -> Dict[str, Any]:
+    def get_pack_rating_stats(self, pack_id: str) -> dict[str, Any]:
         """获取 Pack 详细评分统计
 
         Args:
@@ -529,7 +529,7 @@ class PackMarketAPI:
 
     def get_high_quality_reviews(
         self, pack_id: str, min_rating: int = 4, limit: int = 10
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取高质量评价
 
         Args:

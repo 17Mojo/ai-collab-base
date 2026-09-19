@@ -13,7 +13,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 DEFAULT_HISTORY = "logs/task_controller_history.jsonl"
 DEFAULT_REPORT = "logs/task_controller_report.json"
@@ -28,7 +28,7 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _parse_ts(value: Optional[str]) -> Optional[datetime]:
+def _parse_ts(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
@@ -41,14 +41,14 @@ def _parse_ts(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
-def _age_seconds(updated_at: Optional[str]) -> float:
+def _age_seconds(updated_at: str | None) -> float:
     dt = _parse_ts(updated_at)
     if dt is None:
         return 0.0
     return (_now() - dt).total_seconds()
 
 
-def read_state(workspace: Path) -> Dict[str, Any]:
+def read_state(workspace: Path) -> dict[str, Any]:
     path = workspace / "logs" / "collaboration_state.json"
     if not path.exists():
         return {"tasks": {}, "patches": {}}
@@ -58,13 +58,13 @@ def read_state(workspace: Path) -> Dict[str, Any]:
         return {"tasks": {}, "patches": {}}
 
 
-def write_state(workspace: Path, state: Dict[str, Any]) -> None:
+def write_state(workspace: Path, state: dict[str, Any]) -> None:
     path = workspace / "logs" / "collaboration_state.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def read_ack_state(workspace: Path, state_path: str = "logs/agent_ack_bridge_state.json") -> Dict[str, Any]:
+def read_ack_state(workspace: Path, state_path: str = "logs/agent_ack_bridge_state.json") -> dict[str, Any]:
     path = workspace / state_path
     if not path.exists():
         return {"items": {}}
@@ -74,14 +74,14 @@ def read_ack_state(workspace: Path, state_path: str = "logs/agent_ack_bridge_sta
         return {"items": {}}
 
 
-def has_explicit_ack(task_id: str, ack_state: Dict[str, Any]) -> bool:
+def has_explicit_ack(task_id: str, ack_state: dict[str, Any]) -> bool:
     item = ack_state.get("items", {}).get(task_id)
     if not item:
         return False
     return item.get("source") == "cli-ack"
 
 
-def result_file_exists(workspace: Path, task: Dict[str, Any]) -> bool:
+def result_file_exists(workspace: Path, task: dict[str, Any]) -> bool:
     rel = task.get("result_file")
     if rel:
         return (workspace / rel).exists()
@@ -92,7 +92,7 @@ def result_file_exists(workspace: Path, task: Dict[str, Any]) -> bool:
 
 # ---------------- 契约检查 ----------------
 
-def check_task_contract(task: Dict[str, Any]) -> bool:
+def check_task_contract(task: dict[str, Any]) -> bool:
     """任务契约是否完整（含 acceptance_commands 与 result_file）。"""
     has_commands = bool(task.get("acceptance_commands"))
     has_result = bool(task.get("result_file"))
@@ -101,7 +101,7 @@ def check_task_contract(task: Dict[str, Any]) -> bool:
 
 # ---------------- drift ----------------
 
-def detect_drifts(workspace: Path, state: Dict[str, Any], ack_state: Dict[str, Any]) -> List[Dict[str, Any]]:
+def detect_drifts(workspace: Path, state: dict[str, Any], ack_state: dict[str, Any]) -> list[dict[str, Any]]:
     """检测 drift：结果文件存在但状态未闭环。"""
     drifts = []
     active = set(state.get("active_tasks", []))
@@ -126,7 +126,7 @@ def detect_drifts(workspace: Path, state: Dict[str, Any], ack_state: Dict[str, A
 
 # ---------------- stale ----------------
 
-def detect_stale(state: Dict[str, Any], *, pending_timeout: int, blocked_timeout: int) -> List[Dict[str, Any]]:
+def detect_stale(state: dict[str, Any], *, pending_timeout: int, blocked_timeout: int) -> list[dict[str, Any]]:
     """检测超时任务。"""
     stale = []
     active = set(state.get("active_tasks", []))
@@ -152,11 +152,11 @@ def detect_stale(state: Dict[str, Any], *, pending_timeout: int, blocked_timeout
 
 def detect_prewarning(
     workspace: Path,
-    state: Dict[str, Any],
+    state: dict[str, Any],
     *,
     active_timeout: int,
     prewarn_ratio: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """检测接近超时的任务（预警）。"""
     out = []
     active = set(state.get("active_tasks", []))
@@ -184,7 +184,7 @@ def detect_prewarning(
 
 # ---------------- patch candidates ----------------
 
-def detect_patch_candidates(state: Dict[str, Any]) -> List[Dict[str, Any]]:
+def detect_patch_candidates(state: dict[str, Any]) -> list[dict[str, Any]]:
     """检测需要跟进 patch 的复核结论。"""
     out = []
     patches = state.get("patches", {})
@@ -209,10 +209,10 @@ def detect_patch_candidates(state: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def audit_result_consistency(
     workspace: Path,
-    state: Dict[str, Any],
+    state: dict[str, Any],
     *,
-    snapshot: Optional[Dict[str, Any]] = None,
-) -> Tuple[int, int, List[Dict[str, Any]]]:
+    snapshot: dict[str, Any] | None = None,
+) -> tuple[int, int, list[dict[str, Any]]]:
     """审计结果一致性（优先使用本轮开始时的快照）。"""
     basis = snapshot if snapshot is not None else state
     audited = 0
@@ -239,14 +239,14 @@ class StateManager:
         self._state = read_state(Path(workspace_path))
 
     @property
-    def state(self) -> Dict[str, Any]:
+    def state(self) -> dict[str, Any]:
         return self._state
 
-    def validate_task_contracts(self, scope: str = "active") -> Dict[str, Any]:
+    def validate_task_contracts(self, scope: str = "active") -> dict[str, Any]:
         active = set(self._state.get("active_tasks", []))
         checked = 0
         invalid = 0
-        issues: List[Dict[str, Any]] = []
+        issues: list[dict[str, Any]] = []
         for tid in active:
             task = self._state.get("tasks", {}).get(tid)
             if not task:
@@ -258,7 +258,7 @@ class StateManager:
         return {"checked_tasks": checked, "skipped_tasks": 0, "invalid_count": invalid, "issues": issues}
 
 
-def detect_state_drifts(state: Dict[str, Any], workspace: Path) -> List[Dict[str, Any]]:
+def detect_state_drifts(state: dict[str, Any], workspace: Path) -> list[dict[str, Any]]:
     """模块级 drift 检测（供集成调用）。"""
     ack_state = read_ack_state(Path(workspace))
     return detect_drifts(Path(workspace), state, ack_state)
@@ -267,10 +267,10 @@ def detect_state_drifts(state: Dict[str, Any], workspace: Path) -> List[Dict[str
 def detect_prewarning_tasks(
     *,
     workspace: Path,
-    state: Dict[str, Any],
+    state: dict[str, Any],
     active_timeout_sec: int,
     prewarn_ratio: float,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     return detect_prewarning(
         Path(workspace), state,
         active_timeout=active_timeout_sec,
@@ -280,10 +280,10 @@ def detect_prewarning_tasks(
 
 def detect_stale_tasks(
     *,
-    state: Dict[str, Any],
+    state: dict[str, Any],
     pending_timeout_sec: int,
     blocked_timeout_sec: int,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     return detect_stale(
         state,
         pending_timeout=pending_timeout_sec,
@@ -291,7 +291,7 @@ def detect_stale_tasks(
     )
 
 
-def run_terminal_result_consistency_audit(*, workspace: Path) -> Dict[str, Any]:
+def run_terminal_result_consistency_audit(*, workspace: Path) -> dict[str, Any]:
     """结果一致性审计（模块级）。
 
     返回: audited_count / consistent_count / mismatch_count /
@@ -305,7 +305,7 @@ def run_terminal_result_consistency_audit(*, workspace: Path) -> Dict[str, Any]:
     mismatch = 0
     unparseable = 0
     missing = 0
-    issues: List[Dict[str, Any]] = []
+    issues: list[dict[str, Any]] = []
 
     for tid, task in state.get("tasks", {}).items():
         rel = task.get("result_file")
@@ -356,7 +356,7 @@ def run_terminal_result_consistency_audit(*, workspace: Path) -> Dict[str, Any]:
     return report
 
 
-def run_ack_watchdog(*, workspace: Path, dry_run: bool) -> Dict[str, Any]:
+def run_ack_watchdog(*, workspace: Path, dry_run: bool) -> dict[str, Any]:
     """ACK watchdog（模块级）。"""
     return {"candidate_count": 0, "redispatched_count": 0, "alerted_count": 0}
 
@@ -369,15 +369,15 @@ def run_controller_once(
     blocked_timeout_sec: int,
     prewarn_ratio: float,
     dry_run: bool,
-    default_assignee: Optional[str] = None,
-) -> Dict[str, Any]:
+    default_assignee: str | None = None,
+) -> dict[str, Any]:
     """控制器单轮执行（模块级，供集成调用）。"""
     workspace = Path(workspace)
     state = read_state(workspace)
     state.setdefault("workspace", str(workspace))
     state.setdefault("tasks", {})
     state.setdefault("patches", {})
-    errors: List[Dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
 
     # 契约检查（通过 StateManager 以支持注入）
     manager = StateManager(workspace_path=str(workspace))
@@ -513,7 +513,7 @@ def run_once(args) -> int:
     audit_snapshot = json.loads(json.dumps(state))
 
     dry_run = args.dry_run
-    errors: List[Dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
 
     # 1. drift
     drifts = detect_drifts(workspace, state, ack_state)

@@ -10,7 +10,7 @@ import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class TemplateCategory(Enum):
@@ -29,12 +29,12 @@ class PackTemplate:
     name: str
     description: str
     category: TemplateCategory
-    tags: List[str] = field(default_factory=list)
-    schema: Dict[str, Any] = field(default_factory=dict)
-    workflow_data: Dict[str, Any] = field(default_factory=dict)
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    schema: dict[str, Any] = field(default_factory=dict)
+    workflow_data: dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "template_id": self.template_id,
@@ -48,7 +48,7 @@ class PackTemplate:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PackTemplate":
+    def from_dict(cls, data: dict[str, Any]) -> "PackTemplate":
         """从字典反序列化"""
         return cls(
             template_id=data["template_id"],
@@ -69,10 +69,10 @@ class TemplateInstance:
     instance_id: str
     template_id: str
     pack_name: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     created_at: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "instance_id": self.instance_id,
@@ -86,14 +86,14 @@ class TemplateInstance:
 class TemplateLibrary:
     """模板库"""
 
-    def __init__(self, template_dir: Optional[str] = None):
+    def __init__(self, template_dir: str | None = None):
         """初始化模板库
 
         Args:
             template_dir: 模板目录（默认 templates/）
         """
         self.template_dir = template_dir or "templates"
-        self._templates: Dict[str, PackTemplate] = {}
+        self._templates: dict[str, PackTemplate] = {}
         self._ensure_template_dir()
         self._load_predefined_templates()
 
@@ -254,7 +254,7 @@ class TemplateLibrary:
             },
         )
 
-    def list_templates(self, category: Optional[TemplateCategory] = None) -> List[PackTemplate]:
+    def list_templates(self, category: TemplateCategory | None = None) -> list[PackTemplate]:
         """列出模板
 
         Args:
@@ -270,7 +270,7 @@ class TemplateLibrary:
 
         return templates
 
-    def get_template(self, template_id: str) -> Optional[PackTemplate]:
+    def get_template(self, template_id: str) -> PackTemplate | None:
         """获取模板
 
         Args:
@@ -281,7 +281,7 @@ class TemplateLibrary:
         """
         return self._templates.get(template_id)
 
-    def search_templates(self, query: str) -> List[PackTemplate]:
+    def search_templates(self, query: str) -> list[PackTemplate]:
         """搜索模板
 
         Args:
@@ -305,8 +305,8 @@ class TemplateLibrary:
         return results
 
     def create_instance(
-        self, template_id: str, pack_name: str, parameters: Optional[Dict[str, Any]] = None
-    ) -> Optional[TemplateInstance]:
+        self, template_id: str, pack_name: str, parameters: dict[str, Any] | None = None
+    ) -> TemplateInstance | None:
         """基于模板创建 Pack 实例
 
         Args:
@@ -395,7 +395,7 @@ class TemplateLibrary:
 
         return True
 
-    def get_categories(self) -> List[TemplateCategory]:
+    def get_categories(self) -> list[TemplateCategory]:
         """获取所有模板类别
 
         Returns:

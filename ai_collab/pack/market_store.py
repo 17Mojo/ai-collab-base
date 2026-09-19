@@ -10,7 +10,6 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from .market import PackListing, PackRating, PackStatus, UserFeedback
 
@@ -144,7 +143,7 @@ class PackMarketStore:
         except sqlite3.IntegrityError:
             return False
 
-    def get_listing(self, pack_id: str) -> Optional[PackListing]:
+    def get_listing(self, pack_id: str) -> PackListing | None:
         """获取 Pack 列表项
 
         Args:
@@ -234,12 +233,12 @@ class PackMarketStore:
 
     def list_listings(
         self,
-        category: Optional[str] = None,
-        status: Optional[PackStatus] = None,
-        author: Optional[str] = None,
+        category: str | None = None,
+        status: PackStatus | None = None,
+        author: str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[PackListing]:
+    ) -> list[PackListing]:
         """列出 Pack 列表项（支持过滤）
 
         Args:
@@ -296,7 +295,7 @@ class PackMarketStore:
                 for row in rows
             ]
 
-    def search_listings(self, query: str, limit: int = 100) -> List[PackListing]:
+    def search_listings(self, query: str, limit: int = 100) -> list[PackListing]:
         """搜索 Pack 列表项（支持模糊匹配）
 
         Args:
@@ -379,7 +378,7 @@ class PackMarketStore:
         except sqlite3.IntegrityError:
             return False
 
-    def get_rating(self, rating_id: str) -> Optional[PackRating]:
+    def get_rating(self, rating_id: str) -> PackRating | None:
         """获取 Pack 评价
 
         Args:
@@ -407,7 +406,7 @@ class PackMarketStore:
                 created_at=datetime.fromisoformat(row["created_at"]),
             )
 
-    def list_ratings(self, pack_id: str, limit: int = 100) -> List[PackRating]:
+    def list_ratings(self, pack_id: str, limit: int = 100) -> list[PackRating]:
         """列出 Pack 评价
 
         Args:
@@ -536,7 +535,7 @@ class PackMarketStore:
         except sqlite3.IntegrityError:
             return False
 
-    def get_feedback(self, feedback_id: str) -> Optional[UserFeedback]:
+    def get_feedback(self, feedback_id: str) -> UserFeedback | None:
         """获取用户反馈
 
         Args:
@@ -564,8 +563,8 @@ class PackMarketStore:
             )
 
     def list_feedback(
-        self, pack_id: str, feedback_type: Optional[str] = None
-    ) -> List[UserFeedback]:
+        self, pack_id: str, feedback_type: str | None = None
+    ) -> list[UserFeedback]:
         """列出用户反馈
 
         Args:

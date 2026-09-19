@@ -11,8 +11,9 @@ import json
 import os
 import threading
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 try:
     from redis import Redis
@@ -36,14 +37,14 @@ class MemoryCache:
     """内存缓存"""
 
     def __init__(self, default_ttl: int = 300, max_size: int = 1000):
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self.default_ttl = default_ttl
         self.max_size = max_size
         self._hits = 0
         self._misses = 0
         self._lock = threading.Lock()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         with self._lock:
             entry = self._cache.get(key)
             if entry is None:
@@ -56,7 +57,7 @@ class MemoryCache:
             self._hits += 1
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         with self._lock:
             if len(self._cache) >= self.max_size:
                 self._evict_oldest()
@@ -90,7 +91,7 @@ class MemoryCache:
                 del self._cache[key]
             return len(expired_keys)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         with self._lock:
             total_requests = self._hits + self._misses
             hit_rate = (self._hits / total_requests * 100) if total_requests > 0 else 0
@@ -141,7 +142,7 @@ class RedisCache:
     def _key(self, key: str) -> str:
         return f"{self.key_prefix}{key}"
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         payload = self._client.get(self._key(key))
         if payload is None:
             self._misses += 1
@@ -149,7 +150,7 @@ class RedisCache:
         self._hits += 1
         return json.loads(payload)
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         ttl_seconds = ttl or self.default_ttl
         payload = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
         return bool(self._client.setex(self._key(key), ttl_seconds, payload))
@@ -170,7 +171,7 @@ class RedisCache:
     def cleanup(self) -> int:
         return 0
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         total_requests = self._hits + self._misses
         hit_rate = (self._hits / total_requests * 100) if total_requests > 0 else 0
         return {
@@ -194,10 +195,10 @@ class CacheManager:
             self._configured_backend = "memory"
 
         self._memory = MemoryCache(default_ttl=self._default_ttl, max_size=self._max_size)
-        self._redis: Optional[RedisCache] = None
+        self._redis: RedisCache | None = None
         self._active_backend = "memory"
         self._fallback_count = 0
-        self._last_error: Optional[str] = None
+        self._last_error: str | None = None
 
         if self._configured_backend in {"redis", "auto"}:
             self._init_redis()
@@ -228,7 +229,7 @@ class CacheManager:
     def _redis_enabled(self) -> bool:
         return self._active_backend == "redis" and self._redis is not None
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         if self._redis_enabled():
             try:
                 value = self._redis.get(key)
@@ -238,7 +239,7 @@ class CacheManager:
                 self._record_fallback("get", exc)
         return self._memory.get(key)
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         memory_ok = self._memory.set(key, value, ttl)
         if self._redis_enabled():
             try:
@@ -284,7 +285,7 @@ class CacheManager:
                 self._record_fallback("cleanup", exc)
         return cleaned
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         memory_stats = self._memory.get_stats()
         redis_stats = self._redis.get_stats() if self._redis is not None else None
         active_stats = redis_stats if self._active_backend == "redis" and redis_stats else memory_stats
@@ -303,7 +304,7 @@ class CacheManager:
         }
 
 
-_global_cache_manager: Optional[CacheManager] = None
+_global_cache_manager: CacheManager | None = None
 
 
 def get_global_cache(force_reload: bool = False) -> CacheManager:
@@ -319,7 +320,7 @@ def get_cache_manager(force_reload: bool = False) -> CacheManager:
     return get_global_cache(force_reload=force_reload)
 
 
-def cached(ttl: int = 300, key_func: Optional[Callable] = None):
+def cached(ttl: int = 300, key_func: Callable | None = None):
     """函数缓存装饰器"""
 
     def decorator(func: Callable):

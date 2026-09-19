@@ -9,7 +9,7 @@ import json
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 
 class VSCodeIntegration:
@@ -20,14 +20,14 @@ class VSCodeIntegration:
         return os.environ.get("VSCODE_CWD") or os.getcwd()
 
     @staticmethod
-    def get_project_config() -> Dict[str, Any]:
+    def get_project_config() -> dict[str, Any]:
         workspace = VSCodeIntegration.get_workspace_path()
         if not workspace:
             return {}
         config_file = os.path.join(workspace, ".vscode", "ai-collab.json")
         if os.path.exists(config_file):
             try:
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     return json.load(f)
             except (OSError, json.JSONDecodeError):
                 return {}
@@ -54,7 +54,7 @@ class VSCodeOutputLogger:
         VSCodeIntegration.update_vscode_output(message, channel)
 
     @staticmethod
-    def log_activation(ai_type: str, session_id: str, rules: List[str]):
+    def log_activation(ai_type: str, session_id: str, rules: list[str]):
         """记录激活日志"""
         VSCodeOutputLogger.log(
             f"{ai_type} ACTIVATED: Session={session_id}, Rules={', '.join(rules)}",
@@ -62,7 +62,7 @@ class VSCodeOutputLogger:
         )
 
     @staticmethod
-    def log_conflict(conflict: Dict[str, Any]):
+    def log_conflict(conflict: dict[str, Any]):
         """记录冲突日志"""
         VSCodeOutputLogger.log(
             f"CONFLICT: {conflict['task_id_1']} vs {conflict['task_id_2']}, Files={conflict['overlapping_files']}",
@@ -70,7 +70,7 @@ class VSCodeOutputLogger:
         )
 
     @staticmethod
-    def log_task(task: Dict[str, Any]):
+    def log_task(task: dict[str, Any]):
         """记录任务日志"""
         VSCodeOutputLogger.log(
             f"TASK: {task['task_id']} ({task['ai_type']}), Status={task['status']}, {task['description']}",
@@ -140,7 +140,7 @@ class DevLogger:
     def _load_template(self) -> str:
         """加载日志模板"""
         if os.path.exists(self.TEMPLATE_FILE):
-            with open(self.TEMPLATE_FILE, "r", encoding="utf-8") as f:
+            with open(self.TEMPLATE_FILE, encoding="utf-8") as f:
                 return f.read()
 
         # 默认模板
@@ -302,7 +302,7 @@ class DevLogger:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"日志文件不存在: {filepath}")
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             log_content = f.read()
 
         # 查找章节位置
@@ -343,7 +343,7 @@ class DevLogger:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"日志文件不存在: {filepath}")
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             log_content = f.read()
 
         # 查找章节位置
@@ -409,7 +409,7 @@ class DevLogger:
 """,
             )
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
 
         # 替换结束时间标记
@@ -432,7 +432,7 @@ class DevLogger:
             log_name = os.path.basename(filepath)
             VSCodeOutputLogger.log(f"日志已完成: {log_name}", "AI Collab Logs")
 
-    def list_logs(self, month: str | None = None) -> List[str]:
+    def list_logs(self, month: str | None = None) -> list[str]:
         """列出日志文件"""
         logs = []
 

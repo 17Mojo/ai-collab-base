@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -44,7 +44,7 @@ class ImportValidationError:
 
         self.severity = severity
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         """转换为字典"""
         return {"field": self.field, "message": self.message, "severity": self.severity}
 
@@ -54,13 +54,13 @@ class PackExport:
     """Pack 导出数据"""
 
     pack: PackListing
-    dependencies: List[dict]
-    versions: List[dict]
+    dependencies: list[dict]
+    versions: list[dict]
     export_date: str
     export_format: ExportFormat
     schema_version: str = "2.0"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "schema_version": self.schema_version,
@@ -84,12 +84,12 @@ class PackExport:
 class ImportResult:
     """导入结果"""
 
-    pack_id: Optional[str] = None
+    pack_id: str | None = None
     success: bool = False
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    validation_errors: List[ImportValidationError] = field(default_factory=list)
-    imported_at: Optional[str] = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    validation_errors: list[ImportValidationError] = field(default_factory=list)
+    imported_at: str | None = None
 
 
 class PackImporter:
@@ -99,7 +99,7 @@ class PackImporter:
         """初始化导入器"""
         self._schema_version = "2.0"
 
-    def import_from_dict(self, data: Dict[str, Any]) -> ImportResult:
+    def import_from_dict(self, data: dict[str, Any]) -> ImportResult:
         """从字典导入
 
         Args:
@@ -178,7 +178,7 @@ class PackImporter:
 
         return self.import_from_dict(data)
 
-    def validate_import(self, data: Dict[str, Any]) -> List[ImportValidationError]:
+    def validate_import(self, data: dict[str, Any]) -> list[ImportValidationError]:
         """验证导入数据
 
         Args:
@@ -187,7 +187,7 @@ class PackImporter:
         Returns:
             验证错误列表
         """
-        errors: List[ImportValidationError] = []
+        errors: list[ImportValidationError] = []
 
         # 验证 schema version
         if "schema_version" not in data:
@@ -266,7 +266,7 @@ class PackImporter:
 
         return errors
 
-    def bulk_import(self, file_paths: List[str]) -> List[ImportResult]:
+    def bulk_import(self, file_paths: list[str]) -> list[ImportResult]:
         """批量导入
 
         Args:
@@ -288,8 +288,8 @@ class PackExporter:
     def export_pack(
         self,
         pack: PackListing,
-        dependencies: Optional[List[dict]] = None,
-        versions: Optional[List[dict]] = None,
+        dependencies: list[dict] | None = None,
+        versions: list[dict] | None = None,
         export_format: ExportFormat = ExportFormat.JSON,
     ) -> PackExport:
         """导出 Pack
@@ -321,9 +321,9 @@ class PackExporter:
         self,
         pack: PackListing,
         file_path: str,
-        dependencies: Optional[List[dict]] = None,
-        versions: Optional[List[dict]] = None,
-        export_format: Optional[ExportFormat] = None,
+        dependencies: list[dict] | None = None,
+        versions: list[dict] | None = None,
+        export_format: ExportFormat | None = None,
     ) -> bool:
         """导出 Pack 到文件
 
@@ -366,10 +366,10 @@ class PackExporter:
 
     def bulk_export(
         self,
-        packs: List[PackListing],
+        packs: list[PackListing],
         output_dir: str,
         export_format: ExportFormat = ExportFormat.JSON,
-    ) -> Dict[str, bool]:
+    ) -> dict[str, bool]:
         """批量导出
 
         Args:
@@ -397,7 +397,7 @@ class PackExporter:
 
         return results
 
-    def get_available_formats(self) -> List[ExportFormat]:
+    def get_available_formats(self) -> list[ExportFormat]:
         """获取可用的导出格式
 
         Returns:

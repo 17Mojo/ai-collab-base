@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 from .schema import AITool, PackCategoryType, PackDependencyError, PackManifest, PromptPack
 
@@ -30,7 +29,7 @@ class PackManager:
             packs_root: Packs 存储根目录
         """
         self.packs_root = Path(packs_root)
-        self._packs_cache: Dict[str, PromptPack] = {}
+        self._packs_cache: dict[str, PromptPack] = {}
 
     def load_pack(self, pack_name: str) -> PromptPack:
         """
@@ -60,7 +59,7 @@ class PackManager:
         if not manifest_path.exists():
             raise ValueError(f"Manifest not found: {manifest_path}")
 
-        with open(manifest_path, "r", encoding="utf-8") as f:
+        with open(manifest_path, encoding="utf-8") as f:
             manifest_data = json.load(f)
 
         manifest = PackManifest.from_dict(manifest_data)
@@ -70,12 +69,12 @@ class PackManager:
 
         # 加载所有 .md 和 .txt 规则文件
         for rule_file in pack_path.glob("*.md"):
-            with open(rule_file, "r", encoding="utf-8") as f:
+            with open(rule_file, encoding="utf-8") as f:
                 content = f.read()
             pack.add_rule(rule_file.name, content)
 
         for rule_file in pack_path.glob("*.txt"):
-            with open(rule_file, "r", encoding="utf-8") as f:
+            with open(rule_file, encoding="utf-8") as f:
                 content = f.read()
             pack.add_rule(rule_file.name, content)
 
@@ -84,7 +83,7 @@ class PackManager:
 
         return pack
 
-    def resolve_dependencies(self, pack: PromptPack) -> List[PromptPack]:
+    def resolve_dependencies(self, pack: PromptPack) -> list[PromptPack]:
         """
         解析 Pack 依赖关系
 
@@ -98,10 +97,10 @@ class PackManager:
             PackDependencyError: 依赖解析失败
             PackCompatibilityError: 依赖不兼容
         """
-        resolved: List[PromptPack] = []
-        visited: Set[str] = set()
+        resolved: list[PromptPack] = []
+        visited: set[str] = set()
 
-        def _resolve(pack_name: str, path: List[str]) -> PromptPack:
+        def _resolve(pack_name: str, path: list[str]) -> PromptPack:
             """递归解析依赖"""
             # 检测循环依赖
             if pack_name in path:
@@ -139,7 +138,7 @@ class PackManager:
         pack_name: str,
         tool: AITool,
         include_dependencies: bool = True,
-        token_budget: Optional[int] = None,
+        token_budget: int | None = None,
     ) -> str:
         """
         获取 Pack 及其依赖的完整上下文
@@ -156,7 +155,7 @@ class PackManager:
         # 加载主 Pack
         pack = self.load_pack(pack_name)
 
-        packs_to_render: List[PromptPack] = [pack]
+        packs_to_render: list[PromptPack] = [pack]
         if include_dependencies:
             packs_to_render.extend(self.resolve_dependencies(pack))
 
@@ -166,7 +165,7 @@ class PackManager:
             return "\n\n---\n\n".join(contexts)
 
         # 有预算时按顺序装箱，超预算则尝试压缩主 Pack 保底输出
-        selected_packs: List[PromptPack] = []
+        selected_packs: list[PromptPack] = []
         used_tokens = 0
         for candidate in packs_to_render:
             candidate_tokens = self.estimate_pack_tokens(candidate, include_dependencies=False)
@@ -183,7 +182,7 @@ class PackManager:
         contexts = [p.to_context(tool) for p in selected_packs if p.to_context(tool)]
         return "\n\n---\n\n".join(contexts)
 
-    def list_available_packs(self, category: Optional[PackCategoryType] = None) -> List[str]:
+    def list_available_packs(self, category: PackCategoryType | None = None) -> list[str]:
         """
         列出可用的 Pack
 
@@ -204,7 +203,7 @@ class PackManager:
                 continue
 
             try:
-                with open(manifest_path, "r", encoding="utf-8") as f:
+                with open(manifest_path, encoding="utf-8") as f:
                     manifest_data = json.load(f)
                 manifest = PackManifest.from_dict(manifest_data)
 
@@ -216,8 +215,8 @@ class PackManager:
         return sorted(packs)
 
     def get_best_pack(
-        self, task_description: str, tool: AITool, category: Optional[PackCategoryType] = None
-    ) -> Optional[PromptPack]:
+        self, task_description: str, tool: AITool, category: PackCategoryType | None = None
+    ) -> PromptPack | None:
         """
         智能推荐最佳 Pack（基于关键词匹配）
 
@@ -301,7 +300,7 @@ class PackManager:
         # 简单估算: 每个单词约 1.3 tokens
         total_tokens = 0
 
-        for rule_name, rule_file in pack.rules.items():
+        for _rule_name, rule_file in pack.rules.items():
             # RuleFile 对象有 content 属性
             if hasattr(rule_file, "content"):
                 content = rule_file.content
@@ -320,7 +319,7 @@ class PackManager:
 
         return total_tokens
 
-    def validate_token_budget(self, packs: List[PromptPack], budget_limit: int) -> bool:
+    def validate_token_budget(self, packs: list[PromptPack], budget_limit: int) -> bool:
         """
         验证 Pack 列表是否在 token 预算内
 
@@ -334,7 +333,7 @@ class PackManager:
         total_tokens = sum(self.estimate_pack_tokens(pack) for pack in packs)
         return total_tokens <= budget_limit
 
-    def get_remaining_budget(self, packs: List[PromptPack], total_budget: int) -> int:
+    def get_remaining_budget(self, packs: list[PromptPack], total_budget: int) -> int:
         """
         获取剩余 token 预算
 
@@ -349,8 +348,8 @@ class PackManager:
         return max(0, total_budget - used_tokens)
 
     def select_packs_within_budget(
-        self, packs: List[PromptPack], budget_limit: int
-    ) -> List[PromptPack]:
+        self, packs: list[PromptPack], budget_limit: int
+    ) -> list[PromptPack]:
         """
         选择在预算内的 Pack
 
@@ -373,8 +372,8 @@ class PackManager:
         return selected
 
     def optimize_pack_selection(
-        self, packs: List[PromptPack], budget_limit: int, target_tags: Optional[List[str]] = None
-    ) -> List[PromptPack]:
+        self, packs: list[PromptPack], budget_limit: int, target_tags: list[str] | None = None
+    ) -> list[PromptPack]:
         """
         优化 Pack 选择
 
@@ -448,7 +447,7 @@ class PackManager:
         tool: AITool,
         budget_limit: int,
         include_dependencies: bool = True,
-    ) -> Tuple[str, bool]:
+    ) -> tuple[str, bool]:
         """
         带预算验证的注入
 

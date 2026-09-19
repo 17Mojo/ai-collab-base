@@ -9,7 +9,6 @@ Pack 导入导出 CLI 命令
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 from ai_collab.pack.importer import ExportFormat, PackExporter, PackImporter
 from ai_collab.pack.market import PackListing
@@ -247,7 +246,7 @@ class PackImportExportCLI:
             print("✗ Validation FAILED")
             return 1
 
-    def list_packs(self, status_filter: Optional[str] = None) -> int:
+    def list_packs(self, status_filter: str | None = None) -> int:
         """列出可导出的 Packs
 
         Args:
@@ -326,7 +325,7 @@ class PackImportExportCLI:
 
         if error_count > 0:
             print("\nFailed files:")
-            for file_path, result in zip([str(f) for f in files], results):
+            for file_path, result in zip([str(f) for f in files], results, strict=False):
                 if not result.success:
                     print(f"  - {file_path}")
                     for err in result.errors:

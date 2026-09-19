@@ -125,7 +125,7 @@ def check_noop_pending_conflict(
 
     try:
         payload_text = payload_path.read_text(encoding="utf-8")
-    except (OSError, IOError):
+    except OSError:
         return None
 
     # Check if payload is no-op (contains "当前无待派发任务")

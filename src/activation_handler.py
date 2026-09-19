@@ -7,9 +7,10 @@
 
 import json
 import os
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, cast
 
 
 class AIType(Enum):
@@ -37,7 +38,7 @@ class VSCodeIntegration:
     """VSCode 集成辅助类."""
 
     @staticmethod
-    def get_workspace_path() -> Optional[str]:
+    def get_workspace_path() -> str | None:
         """获取当前 VSCode 工作区路径."""
         # 通过环境变量获取工作区路径
         workspace = os.environ.get("VSCODE_CWD")
@@ -57,7 +58,7 @@ class VSCodeIntegration:
         return cwd
 
     @staticmethod
-    def get_project_config() -> Dict[str, Any]:
+    def get_project_config() -> dict[str, Any]:
         """获取项目级 AI 协作配置."""
         workspace = VSCodeIntegration.get_workspace_path()
         if not workspace:
@@ -65,26 +66,26 @@ class VSCodeIntegration:
 
         config_file = os.path.join(workspace, ".vscode", "ai-collab.json")
         if os.path.exists(config_file):
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(config_file, encoding="utf-8") as f:
                 loaded = json.load(f)
                 if isinstance(loaded, dict):
-                    return cast(Dict[str, Any], loaded)
+                    return cast(dict[str, Any], loaded)
         return {}
 
     @staticmethod
-    def get_global_config() -> Dict[str, Any]:
+    def get_global_config() -> dict[str, Any]:
         """获取全局 AI 协作配置."""
         global_config_dir = os.path.expanduser("~/.vscode/ai-collab")
         config_file = os.path.join(global_config_dir, "config.json")
         if os.path.exists(config_file):
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(config_file, encoding="utf-8") as f:
                 loaded = json.load(f)
                 if isinstance(loaded, dict):
-                    return cast(Dict[str, Any], loaded)
+                    return cast(dict[str, Any], loaded)
         return {}
 
     @staticmethod
-    def save_project_config(config: Dict[str, Any]):
+    def save_project_config(config: dict[str, Any]):
         """保存项目级配置."""
         workspace = VSCodeIntegration.get_workspace_path()
         if not workspace:
@@ -113,7 +114,7 @@ class VSCodeIntegration:
             pass  # 静默失败
 
     @staticmethod
-    def get_rule_files(ai_type: AIType) -> List[str]:
+    def get_rule_files(ai_type: AIType) -> list[str]:
         """获取规则文件列表."""
         project_config = VSCodeIntegration.get_project_config()
         rules_dir = project_config.get("rulesDir", "./rules")
@@ -158,7 +159,7 @@ class ActivationHandler:
     GIT_AI_COLLAB_DIR = ".git/ai-collab"
 
     # ACK 响应模板
-    ACK_TEMPLATES: Dict[AIType, str] = {
+    ACK_TEMPLATES: dict[AIType, str] = {
         AIType.CLAUDE_CODE: "Claude Code ACK: 记忆已激活，已读取 {rules}，准备执行。",
         AIType.CODEARTS_AGENT: "CodeArts Agent ACK: 治理规则已激活，进入执行辅助模式。",
         AIType.COPILOT: "Copilot ACK: 记忆已激活，已读取 {rules}，准备执行。",
@@ -167,8 +168,8 @@ class ActivationHandler:
     def __init__(
         self,
         ai_type: AIType,
-        workspace_path: Optional[str] = None,
-        on_activated: Optional[Callable[[str, List[str], Dict[str, Any]], None]] = None,
+        workspace_path: str | None = None,
+        on_activated: Callable[[str, list[str], dict[str, Any]], None] | None = None,
     ):
         """
         初始化激活处理器
@@ -181,7 +182,7 @@ class ActivationHandler:
         self.ai_type = ai_type
         self.workspace_path = workspace_path or VSCodeIntegration.get_workspace_path()
         self.session_id = self._generate_session_id()
-        self.activation_time: Optional[datetime] = None
+        self.activation_time: datetime | None = None
         self.on_activated = on_activated
         self._ensure_directories()
 
@@ -229,8 +230,8 @@ class ActivationHandler:
         return False
 
     def activate(
-        self, mode: ActivationMode = ActivationMode.CLI, context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, mode: ActivationMode = ActivationMode.CLI, context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         执行激活流程
 
@@ -277,7 +278,7 @@ class ActivationHandler:
             "context": context,
         }
 
-    def _load_rules(self) -> List[str]:
+    def _load_rules(self) -> list[str]:
         """加载规则文件."""
         rule_paths = VSCodeIntegration.get_rule_files(self.ai_type)
 
@@ -294,7 +295,7 @@ class ActivationHandler:
 
         return loaded_rules
 
-    def _generate_ack(self, rules: List[str]) -> str:
+    def _generate_ack(self, rules: list[str]) -> str:
         """生成 ACK 消息."""
         template = self.ACK_TEMPLATES.get(self.ai_type)
         if template is None:
@@ -303,7 +304,7 @@ class ActivationHandler:
         return template.format(rules=rules_str)
 
     def _log_activation(
-        self, rules: List[str], ack_message: str, mode: ActivationMode, context: Dict[str, Any]
+        self, rules: list[str], ack_message: str, mode: ActivationMode, context: dict[str, Any]
     ):
         """记录激活日志."""
         activation_time = self.activation_time or datetime.now()
@@ -335,7 +336,7 @@ class ActivationHandler:
         with open(git_log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
-    def get_rules_content(self) -> Dict[str, str]:
+    def get_rules_content(self) -> dict[str, str]:
         """获取规则文件内容."""
         contents = {}
         rule_paths = VSCodeIntegration.get_rule_files(self.ai_type)
@@ -347,13 +348,13 @@ class ActivationHandler:
                 full_path = rule_path
 
             if os.path.exists(full_path):
-                with open(full_path, "r", encoding="utf-8") as f:
+                with open(full_path, encoding="utf-8") as f:
                     contents[os.path.basename(rule_path)] = f.read()
 
         return contents
 
     @staticmethod
-    def get_active_sessions() -> List[Dict[str, Any]]:
+    def get_active_sessions() -> list[dict[str, Any]]:
         """获取当前活跃的会话."""
         config = VSCodeIntegration.get_project_config()
         if not config:
@@ -368,7 +369,7 @@ class ActivationHandler:
         if not os.path.exists(state_file):
             return []
 
-        with open(state_file, "r", encoding="utf-8") as f:
+        with open(state_file, encoding="utf-8") as f:
             state = json.load(f)
 
         if not isinstance(state, dict):

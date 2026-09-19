@@ -7,7 +7,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # 预设风格模板
 PRESET_STYLES = {
@@ -95,7 +95,7 @@ class StyleDB:
         conn.commit()
         conn.close()
 
-    def get_all_styles(self) -> List[Dict[str, Any]]:
+    def get_all_styles(self) -> list[dict[str, Any]]:
         """获取所有风格（预设 + 自定义）"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -129,7 +129,7 @@ class StyleDB:
 
         return styles
 
-    def get_style(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_style(self, name: str) -> dict[str, Any] | None:
         """获取单个风格"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -160,7 +160,7 @@ class StyleDB:
             "updated_at": row[8],
         }
 
-    def create_style(self, style_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_style(self, style_data: dict[str, Any]) -> dict[str, Any]:
         """创建自定义风格"""
         name = style_data.get("name")
         if not name:
@@ -197,7 +197,7 @@ class StyleDB:
 
         return self.get_style(name)
 
-    def update_style(self, name: str, style_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def update_style(self, name: str, style_data: dict[str, Any]) -> dict[str, Any] | None:
         """更新自定义风格"""
         # 检查风格是否存在
         existing = self.get_style(name)

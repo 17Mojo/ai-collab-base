@@ -146,7 +146,7 @@ def main():
         print(f"Error: Requirement file not found: {args.requirement}")
         sys.exit(1)
 
-    with open(args.requirement, "r", encoding="utf-8") as f:
+    with open(args.requirement, encoding="utf-8") as f:
         requirement = json.load(f)
 
     print(f"Converting requirement: {requirement.get('name', 'Unknown')}")

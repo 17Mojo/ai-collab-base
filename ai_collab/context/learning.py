@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .schema import ScenarioType
 
@@ -40,9 +40,9 @@ class UserAction:
     item_id: str  # File path / context id
     timestamp: datetime
     context: ScenarioType
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "action_id": self.action_id,
@@ -62,10 +62,10 @@ class BehaviorPattern:
     frequency: int  # Access frequency
     last_accessed: datetime
     avg_interval: float  # Average access interval in hours
-    time_scores: Dict[int, float]  # Hour -> score
-    sequence_patterns: List[Tuple[str, float]]  # (next_item, probability)
+    time_scores: dict[int, float]  # Hour -> score
+    sequence_patterns: list[tuple[str, float]]  # (next_item, probability)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "item_id": self.item_id,
@@ -87,21 +87,21 @@ class ContextLearner:
         Args:
             max_history: Maximum number of actions to keep
         """
-        self._actions: List[UserAction] = []
-        self._patterns: Dict[str, BehaviorPattern] = {}
+        self._actions: list[UserAction] = []
+        self._patterns: dict[str, BehaviorPattern] = {}
         self._max_history = max_history
         self._logger = logging.getLogger(__name__)
 
         # Sequence tracking
-        self._sequences: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
-        self._sequence_totals: Dict[str, int] = defaultdict(int)
+        self._sequences: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self._sequence_totals: dict[str, int] = defaultdict(int)
 
     def track_action(
         self,
         action_type: ActionType,
         item_id: str,
         context: ScenarioType,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> UserAction:
         """
         Track user action.
@@ -233,7 +233,7 @@ class ContextLearner:
 
         return min(score, 1.0)
 
-    def get_top_items(self, context: ScenarioType, top_n: int = 10) -> List[Tuple[str, float]]:
+    def get_top_items(self, context: ScenarioType, top_n: int = 10) -> list[tuple[str, float]]:
         """
         Get top items by personalized score.
 
@@ -253,7 +253,7 @@ class ContextLearner:
         scores.sort(key=lambda x: x[1], reverse=True)
         return scores[:top_n]
 
-    def get_likely_next_items(self, current_item: str, top_n: int = 5) -> List[Tuple[str, float]]:
+    def get_likely_next_items(self, current_item: str, top_n: int = 5) -> list[tuple[str, float]]:
         """
         Get likely next items based on sequence patterns.
 
@@ -290,7 +290,7 @@ class ContextLearner:
         self._sequences.clear()
         self._sequence_totals.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get learning statistics."""
         return {
             "total_actions": len(self._actions),

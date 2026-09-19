@@ -168,7 +168,7 @@ class TestContextAggregatorCLIAddFromFile:
         cli = ContextAggregatorCLI()
 
         with patch("builtins.open", mock_open()) as mock_file:
-            mock_file.side_effect = IOError("Permission denied")
+            mock_file.side_effect = OSError("Permission denied")
             result = cli.add_from_file(file_path="/restricted/file.txt")
 
         assert_failure(result)
@@ -596,7 +596,7 @@ class TestContextAggregatorCLIEdgeCases:
 
         mock_aggregator = MagicMock()
         sources = []
-        for i, (st, conf) in enumerate(
+        for _i, (st, conf) in enumerate(
             [
                 ("api", 0.9),
                 ("file", 0.8),

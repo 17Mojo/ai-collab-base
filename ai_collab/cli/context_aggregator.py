@@ -15,7 +15,6 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from typing import Optional
 
 from ai_collab.context.aggregator import ContextAggregator
 
@@ -57,7 +56,7 @@ class ContextAggregatorCLI:
             return 1
 
     def aggregate(
-        self, query: str, source_type: Optional[str] = None, strategy: str = "weighted"
+        self, query: str, source_type: str | None = None, strategy: str = "weighted"
     ) -> int:
         """聚合上下文
 
@@ -187,18 +186,18 @@ class ContextAggregatorCLI:
             退出码
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
         except FileNotFoundError:
             print(f"✗ File not found: {file_path}")
             return 1
-        except IOError as e:
+        except OSError as e:
             print(f"✗ Failed to read file: {e}")
             return 1
 
         return self.add_context(source, content, confidence)
 
-    def export_context(self, context_id: Optional[str] = None) -> int:
+    def export_context(self, context_id: str | None = None) -> int:
         """导出上下文
 
         Args:

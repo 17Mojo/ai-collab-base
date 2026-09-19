@@ -14,9 +14,10 @@ import logging
 import re
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class CachedAnswer:
 
     question: str
     answer: str
-    sources: List[str] = field(default_factory=list)
+    sources: list[str] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
     ttl: int = 3600  # 默认 1 小时
     query_count: int = 0
@@ -84,7 +85,7 @@ class NotebookLMCache:
             max_entries: 最大缓存条目数
             avg_query_time_ms: 平均查询时间（毫秒，用于统计节省时间）
         """
-        self._cache: Dict[str, CachedAnswer] = {}
+        self._cache: dict[str, CachedAnswer] = {}
         self._default_ttl = default_ttl
         self._similarity_threshold = similarity_threshold
         self._max_entries = max_entries
@@ -107,7 +108,7 @@ class NotebookLMCache:
         normalized = self._normalize_question(question)
         return hashlib.md5(normalized.encode()).hexdigest()
 
-    def _find_similar_question(self, question: str) -> Optional[str]:
+    def _find_similar_question(self, question: str) -> str | None:
         """查找相似问题"""
         normalized = self._normalize_question(question)
 
@@ -124,7 +125,7 @@ class NotebookLMCache:
 
         return None
 
-    def get_exact(self, question: str) -> Optional[CachedAnswer]:
+    def get_exact(self, question: str) -> CachedAnswer | None:
         """
         精确匹配获取缓存
 
@@ -150,7 +151,7 @@ class NotebookLMCache:
             self._stats.cache_hits += 1
             return entry
 
-    def get_similar(self, question: str) -> Optional[CachedAnswer]:
+    def get_similar(self, question: str) -> CachedAnswer | None:
         """
         相似匹配获取缓存
 
@@ -182,8 +183,8 @@ class NotebookLMCache:
         self,
         question: str,
         answer: str,
-        sources: Optional[List[str]] = None,
-        ttl: Optional[int] = None,
+        sources: list[str] | None = None,
+        ttl: int | None = None,
     ) -> str:
         """
         缓存答案
@@ -233,7 +234,7 @@ class NotebookLMCache:
                 self._stats.expired_evictions += 1
             return len(expired_keys)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         with self._lock:
             self._stats.total_entries = len(self._cache)
@@ -273,7 +274,7 @@ class NotebookLMCache:
 
 
 # 全局缓存实例
-_global_cache: Optional[NotebookLMCache] = None
+_global_cache: NotebookLMCache | None = None
 
 
 def get_notebooklm_cache(
@@ -305,7 +306,7 @@ def cached_notebooklm_query(
     question: str,
     query_func: Callable,
     ttl: int = 3600,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     NotebookLM 查询缓存包装函数
 
@@ -357,7 +358,7 @@ if __name__ == "__main__":
     cache = NotebookLMCache(similarity_threshold=0.85)
 
     # 模拟查询
-    def mock_query(question: str) -> Dict[str, Any]:
+    def mock_query(question: str) -> dict[str, Any]:
         print(f"[查询] NotebookLM: '{question}'")
         return {
             "answer": f"关于 {question} 的详细回答...",

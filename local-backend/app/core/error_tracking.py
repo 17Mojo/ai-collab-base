@@ -12,7 +12,7 @@ import uuid
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -28,10 +28,10 @@ class ErrorRecord:
     error_type: str
     error_message: str
     error_category: str
-    traceback_str: Optional[str]
-    client_ip: Optional[str]
-    user_agent: Optional[str]
-    query_params: Optional[Dict[str, Any]]
+    traceback_str: str | None
+    client_ip: str | None
+    user_agent: str | None
+    query_params: dict[str, Any] | None
 
 
 class ErrorCategoryClassifier:
@@ -125,8 +125,8 @@ class ErrorAggregator:
 
     def __init__(self):
         self._lock = threading.Lock()
-        self._error_records: List[ErrorRecord] = []
-        self._error_stats: Dict[str, Dict[str, Any]] = defaultdict(
+        self._error_records: list[ErrorRecord] = []
+        self._error_stats: dict[str, dict[str, Any]] = defaultdict(
             lambda: {
                 "count": 0,
                 "first_seen": None,
@@ -135,7 +135,7 @@ class ErrorAggregator:
                 "request_ids": set(),
             }
         )
-        self._recent_errors_by_category: Dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
+        self._recent_errors_by_category: dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
 
     def record_error(self, record: ErrorRecord) -> None:
         """记录错误
@@ -164,7 +164,7 @@ class ErrorAggregator:
             if len(self._error_records) > self.MAX_RECENT_ERRORS:
                 self._error_records = self._error_records[-self.MAX_RECENT_ERRORS :]
 
-    def get_error_stats(self) -> Dict[str, Any]:
+    def get_error_stats(self) -> dict[str, Any]:
         """获取错误统计
 
         Returns:
@@ -184,7 +184,7 @@ class ErrorAggregator:
                 }
 
             # 获取Top端点
-            endpoint_errors: Dict[str, int] = defaultdict(int)
+            endpoint_errors: dict[str, int] = defaultdict(int)
             for record in self._error_records:
                 endpoint = f"{record.method} {record.path}"
                 endpoint_errors[endpoint] += 1
@@ -199,8 +199,8 @@ class ErrorAggregator:
             }
 
     def get_recent_errors(
-        self, category: Optional[str] = None, limit: int = 50
-    ) -> List[Dict[str, Any]]:
+        self, category: str | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
         """获取最近的错误
 
         Args:
@@ -222,7 +222,7 @@ class ErrorAggregator:
             # 转换为字典并限制数量
             return [asdict(r) for r in records[:limit]]
 
-    def get_error_trend(self, hours: int = 24) -> Dict[str, List[Dict[str, Any]]]:
+    def get_error_trend(self, hours: int = 24) -> dict[str, list[dict[str, Any]]]:
         """获取错误趋势
 
         Args:
@@ -233,7 +233,7 @@ class ErrorAggregator:
         """
         with self._lock:
             cutoff = datetime.now() - timedelta(hours=hours)
-            trend: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+            trend: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
             for record in self._error_records:
                 try:
@@ -256,7 +256,7 @@ class ErrorAggregator:
             # 生成趋势统计
             trend_stats = {}
             for hour, errors in sorted(trend.items()):
-                category_counts: Dict[str, int] = defaultdict(int)
+                category_counts: dict[str, int] = defaultdict(int)
                 for error in errors:
                     category_counts[error["category"]] += 1
 
@@ -314,7 +314,7 @@ class FaultArchiver:
         os.makedirs(output_dir, exist_ok=True)
 
     def archive_now(
-        self, error_stats: Dict[str, Any] = None, recent_errors: List[Dict[str, Any]] = None
+        self, error_stats: dict[str, Any] = None, recent_errors: list[dict[str, Any]] = None
     ) -> str:
         """立即归档错误数据
 
@@ -363,7 +363,7 @@ class FaultArchiver:
             time_since_last = datetime.now() - self._last_archive_time
             return time_since_last >= timedelta(hours=self.auto_archive_interval_hours)
 
-    def get_archive_summary(self) -> List[Dict[str, Any]]:
+    def get_archive_summary(self) -> list[dict[str, Any]]:
         """获取归档文件摘要
 
         Returns:
@@ -378,7 +378,7 @@ class FaultArchiver:
                 filepath = os.path.join(self.output_dir, filename)
                 stat_info = os.stat(filepath)
 
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     data = json.load(f)
 
                 summaries.append(
@@ -411,9 +411,9 @@ class ErrorTracker:
         status_code: int,
         duration_ms: float,
         error: str,
-        client_ip: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        query_params: Optional[Dict[str, Any]] = None,
+        client_ip: str | None = None,
+        user_agent: str | None = None,
+        query_params: dict[str, Any] | None = None,
         include_traceback: bool = False,
     ) -> None:
         """记录错误
@@ -459,7 +459,7 @@ class ErrorTracker:
         # 记录错误
         self.error_aggregator.record_error(record)
 
-    def check_and_archive(self) -> Optional[str]:
+    def check_and_archive(self) -> str | None:
         """检查并执行归档
 
         Returns:

@@ -5,7 +5,6 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
 
 def read_state(workspace: Path) -> dict:
@@ -186,11 +185,11 @@ def dispatch_once(args) -> int:
     dispatch_state = read_dispatch_state(workspace)
     tasks = state.get("tasks", {})
 
-    candidates: List[str] = []
-    candidate_tasks: List[dict] = []  # Task objects with status
-    dispatched: List[str] = []
-    already: List[str] = []
-    reopened: List[str] = []
+    candidates: list[str] = []
+    candidate_tasks: list[dict] = []  # Task objects with status
+    dispatched: list[str] = []
+    already: list[str] = []
+    reopened: list[str] = []
 
     for tid, task in tasks.items():
         existing = dispatch_state.get("items", {}).get(tid)

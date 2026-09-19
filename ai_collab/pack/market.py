@@ -9,7 +9,6 @@ Pack 市场数据模型
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import List
 
 
 class PackStatus(Enum):
@@ -32,12 +31,12 @@ class PackListing:
     description: str
     author: str
     category: str
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     downloads: int = 0
     rating: float = 0.0
     rating_count: int = 0
     status: PackStatus = PackStatus.PENDING
-    dependencies: List[dict] = field(default_factory=list)
+    dependencies: list[dict] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 

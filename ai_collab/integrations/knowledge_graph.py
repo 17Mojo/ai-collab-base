@@ -9,7 +9,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class NodeType(Enum):
@@ -38,8 +38,8 @@ class KnowledgeNode:
     node_id: str
     content: str
     node_type: NodeType
-    embeddings: Optional[List[float]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    embeddings: list[float] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
 
     def distance_to(self, other: "KnowledgeNode") -> float:
@@ -59,7 +59,7 @@ class KnowledgeNode:
             return 1.0
 
         # 余弦距离
-        dot_product = sum(a * b for a, b in zip(self.embeddings, other.embeddings))
+        dot_product = sum(a * b for a, b in zip(self.embeddings, other.embeddings, strict=False))
         norm_a = math.sqrt(sum(a * a for a in self.embeddings))
         norm_b = math.sqrt(sum(b * b for b in other.embeddings))
 
@@ -71,7 +71,7 @@ class KnowledgeNode:
 
         return max(0.0, min(1.0, distance))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "node_id": self.node_id,
@@ -83,7 +83,7 @@ class KnowledgeNode:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "KnowledgeNode":
+    def from_dict(cls, data: dict[str, Any]) -> "KnowledgeNode":
         """从字典反序列化"""
         return cls(
             node_id=data["node_id"],
@@ -103,7 +103,7 @@ class KnowledgeRelation:
     target_id: str
     relation_type: RelationType
     weight: float = 1.0  # 关系权重 0-1
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """验证权重"""
@@ -134,7 +134,7 @@ class KnowledgeRelation:
             metadata=self.metadata,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "source_id": self.source_id,
@@ -145,7 +145,7 @@ class KnowledgeRelation:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "KnowledgeRelation":
+    def from_dict(cls, data: dict[str, Any]) -> "KnowledgeRelation":
         """从字典反序列化"""
         return cls(
             source_id=data["source_id"],
@@ -161,9 +161,9 @@ class KnowledgeGraph:
 
     def __init__(self):
         """初始化知识图谱"""
-        self._nodes: Dict[str, KnowledgeNode] = {}
-        self._relations: Dict[str, List[KnowledgeRelation]] = defaultdict(list)
-        self._reverse_relations: Dict[str, List[KnowledgeRelation]] = defaultdict(list)
+        self._nodes: dict[str, KnowledgeNode] = {}
+        self._relations: dict[str, list[KnowledgeRelation]] = defaultdict(list)
+        self._reverse_relations: dict[str, list[KnowledgeRelation]] = defaultdict(list)
 
     # 节点操作
 
@@ -183,7 +183,7 @@ class KnowledgeGraph:
         self._nodes[node.node_id] = node
         return True
 
-    def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
+    def get_node(self, node_id: str) -> KnowledgeNode | None:
         """
         获取节点
 
@@ -230,7 +230,7 @@ class KnowledgeGraph:
 
         return True
 
-    def find_nodes_by_type(self, node_type: NodeType) -> List[KnowledgeNode]:
+    def find_nodes_by_type(self, node_type: NodeType) -> list[KnowledgeNode]:
         """
         按类型查找节点
 
@@ -242,7 +242,7 @@ class KnowledgeGraph:
         """
         return [node for node in self._nodes.values() if node.node_type == node_type]
 
-    def find_similar_nodes(self, query: str, top_k: int = 10) -> List[KnowledgeNode]:
+    def find_similar_nodes(self, query: str, top_k: int = 10) -> list[KnowledgeNode]:
         """
         查找相似节点
 
@@ -306,7 +306,7 @@ class KnowledgeGraph:
 
         return True
 
-    def get_relations(self, node_id: str, direction: str = "both") -> List[KnowledgeRelation]:
+    def get_relations(self, node_id: str, direction: str = "both") -> list[KnowledgeRelation]:
         """
         获取节点的关系
 
@@ -354,7 +354,7 @@ class KnowledgeGraph:
 
     # 图谱遍历算法
 
-    def bfs(self, start_id: str, max_depth: int = 2) -> List[KnowledgeNode]:
+    def bfs(self, start_id: str, max_depth: int = 2) -> list[KnowledgeNode]:
         """
         广度优先搜索
 
@@ -394,7 +394,7 @@ class KnowledgeGraph:
 
         return result
 
-    def dfs(self, start_id: str, max_depth: int = 2) -> List[KnowledgeNode]:
+    def dfs(self, start_id: str, max_depth: int = 2) -> list[KnowledgeNode]:
         """
         深度优先搜索
 
@@ -430,7 +430,7 @@ class KnowledgeGraph:
         _dfs(start_id, 0)
         return result
 
-    def get_shortest_path(self, source: str, target: str) -> List[str]:
+    def get_shortest_path(self, source: str, target: str) -> list[str]:
         """
         获取最短路径
 
@@ -473,7 +473,7 @@ class KnowledgeGraph:
 
     # 节点重要性计算
 
-    def calculate_pagerank(self, damping: float = 0.85, iterations: int = 100) -> Dict[str, float]:
+    def calculate_pagerank(self, damping: float = 0.85, iterations: int = 100) -> dict[str, float]:
         """
         计算 PageRank
 
@@ -517,7 +517,7 @@ class KnowledgeGraph:
 
         return pagerank
 
-    def calculate_betweenness(self) -> Dict[str, float]:
+    def calculate_betweenness(self) -> dict[str, float]:
         """
         计算介数中心性
 
@@ -548,7 +548,7 @@ class KnowledgeGraph:
 
         return betweenness
 
-    def find_key_nodes(self, top_k: int = 5) -> List[Tuple[str, float]]:
+    def find_key_nodes(self, top_k: int = 5) -> list[tuple[str, float]]:
         """
         查找关键节点
 
@@ -596,7 +596,7 @@ class KnowledgeGraph:
         lines.append("}")
         return "\n".join(lines)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "nodes": [node.to_dict() for node in self._nodes.values()],
@@ -608,7 +608,7 @@ class KnowledgeGraph:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "KnowledgeGraph":
+    def from_dict(cls, data: dict[str, Any]) -> "KnowledgeGraph":
         """从字典反序列化"""
         graph = cls()
 

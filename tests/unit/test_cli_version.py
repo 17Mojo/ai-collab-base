@@ -201,7 +201,7 @@ class TestPackVersionManager:
         assert new_version.patch == 1
 
         # Verify manifest was updated
-        with open(sample_pack_dir / "manifest.json", "r", encoding="utf-8") as f:
+        with open(sample_pack_dir / "manifest.json", encoding="utf-8") as f:
             manifest = json.load(f)
             assert manifest["version"] == "1.0.1"
 
@@ -284,7 +284,7 @@ class TestPackVersionManager:
         assert success is True
 
         # Verify manifest was updated
-        with open(sample_pack_dir / "manifest.json", "r", encoding="utf-8") as f:
+        with open(sample_pack_dir / "manifest.json", encoding="utf-8") as f:
             manifest = json.load(f)
             assert manifest["version"] == "1.0.1"
 

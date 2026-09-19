@@ -309,7 +309,7 @@ def demo_sync_mechanisms():
 
     global_file = os.path.expanduser("~/.vscode/ai-collab/collaboration_state.json")
     if os.path.exists(global_file):
-        with open(global_file, "r") as f:
+        with open(global_file) as f:
             global_state = json.load(f)
         print(f"  追踪的工作区数量: {len(global_state)}")
         for workspace, data in global_state.items():

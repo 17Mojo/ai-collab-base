@@ -30,7 +30,7 @@ class TestPackWorkflow:
         if not os.path.exists(pack_path):
             pytest.skip("示例 Pack 文件不存在")
 
-        with open(pack_path, "r", encoding="utf-8") as f:
+        with open(pack_path, encoding="utf-8") as f:
             pack_data = json.load(f)
 
         assert "metadata" in pack_data
@@ -53,7 +53,7 @@ class TestPackWorkflow:
         if not os.path.exists(pack_path):
             pytest.skip("示例 Pack 文件不存在")
 
-        with open(pack_path, "r", encoding="utf-8") as f:
+        with open(pack_path, encoding="utf-8") as f:
             pack_data = json.load(f)
 
         # 反序列化为对象
@@ -78,7 +78,7 @@ class TestPackWorkflow:
         if not os.path.exists(pack_path):
             pytest.skip("示例 Pack 文件不存在")
 
-        with open(pack_path, "r", encoding="utf-8") as f:
+        with open(pack_path, encoding="utf-8") as f:
             pack_data = json.load(f)
 
         pack = PromptPackV2.from_dict(pack_data)
@@ -128,7 +128,7 @@ class TestChromeExtensionFiles:
             "manifest.json",
         )
 
-        with open(manifest_path, "r", encoding="utf-8") as f:
+        with open(manifest_path, encoding="utf-8") as f:
             manifest = json.load(f)
 
         assert manifest["manifest_version"] == 3
@@ -182,7 +182,7 @@ class TestChromeExtensionFiles:
             "error-recovery.js",
         )
 
-        with open(error_recovery_path, "r", encoding="utf-8") as F:
+        with open(error_recovery_path, encoding="utf-8") as F:
             content = F.read()
 
         # 检查关键恢复策略
@@ -221,7 +221,7 @@ class TestChromeExtensionFiles:
             "enhanced-message-handler.js",
         )
 
-        with open(handler_path, "r", encoding="utf-8") as F:
+        with open(handler_path, encoding="utf-8") as F:
             content = F.read()
 
         assert "retryQueue" in content, "缺少重试队列"
@@ -259,7 +259,7 @@ class TestChromeExtensionFiles:
             "storage-manager.js",
         )
 
-        with open(storage_path, "r", encoding="utf-8") as F:
+        with open(storage_path, encoding="utf-8") as F:
             content = F.read()
 
         assert "AES-GCM" in content, "缺少 AES-GCM 加密算法"
@@ -281,7 +281,7 @@ class TestChromeExtensionFiles:
             "storage-manager.js",
         )
 
-        with open(storage_path, "r", encoding="utf-8") as F:
+        with open(storage_path, encoding="utf-8") as F:
             content = F.read()
 
         assert "getStorageInfo" in content, "缺少存储信息获取方法"
@@ -301,7 +301,7 @@ class TestChromeExtensionFiles:
             "manifest.json",
         )
 
-        with open(manifest_path, "r", encoding="utf-8") as F:
+        with open(manifest_path, encoding="utf-8") as F:
             manifest = json.load(F)
 
         # 获取 content scripts
@@ -343,7 +343,7 @@ class TestChromeExtensionFiles:
             "index.js",
         )
 
-        with open(index_path, "r", encoding="utf-8") as F:
+        with open(index_path, encoding="utf-8") as F:
             content = F.read()
 
         assert "detectPlatform" in content, "缺少平台检测函数"
@@ -363,7 +363,7 @@ class TestChromeExtensionFiles:
             "index.js",
         )
 
-        with open(index_path, "r", encoding="utf-8") as F:
+        with open(index_path, encoding="utf-8") as F:
             content = F.read()
 
         assert "try {" in content, "缺少 try 块"
@@ -400,7 +400,7 @@ class TestChromeExtensionFiles:
             "index.js",
         )
 
-        with open(background_path, "r", encoding="utf-8") as f:
+        with open(background_path, encoding="utf-8") as f:
             content = f.read()
 
         assert "const STORAGE_SCHEMA_VERSION = 2;" in content
@@ -422,7 +422,7 @@ class TestChromeExtensionFiles:
             "options.js",
         )
 
-        with open(options_path, "r", encoding="utf-8") as f:
+        with open(options_path, encoding="utf-8") as f:
             content = f.read()
 
         assert "action: 'getSettings'" in content

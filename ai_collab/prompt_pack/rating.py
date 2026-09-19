@@ -14,7 +14,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -34,7 +34,7 @@ class Review:
         if not 1 <= self.rating <= 5:
             raise ValueError("Rating must be between 1 and 5")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -48,7 +48,7 @@ class Review:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Review":
+    def from_dict(cls, data: dict[str, Any]) -> Review:
         """从字典创建"""
         return cls(
             id=data["id"],
@@ -69,9 +69,9 @@ class RatingSummary:
     pack_name: str
     average_rating: float
     total_reviews: int
-    rating_distribution: Dict[int, int] = field(default_factory=dict)
+    rating_distribution: dict[int, int] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "pack_name": self.pack_name,
@@ -102,18 +102,18 @@ class RatingSystem:
         """获取 Pack 评价文件路径"""
         return self.reviews_dir / f"{pack_name}.json"
 
-    def _load_reviews(self, pack_name: str) -> Dict[str, Review]:
+    def _load_reviews(self, pack_name: str) -> dict[str, Review]:
         """加载 Pack 的所有评价"""
         reviews_file = self._get_reviews_file(pack_name)
         if not reviews_file.exists():
             return {}
 
-        with open(reviews_file, "r", encoding="utf-8") as f:
+        with open(reviews_file, encoding="utf-8") as f:
             reviews_data = json.load(f)
 
         return {review_id: Review.from_dict(data) for review_id, data in reviews_data.items()}
 
-    def _save_reviews(self, pack_name: str, reviews: Dict[str, Review]) -> None:
+    def _save_reviews(self, pack_name: str, reviews: dict[str, Review]) -> None:
         """保存 Pack 的所有评价"""
         reviews_file = self._get_reviews_file(pack_name)
 
@@ -207,7 +207,7 @@ class RatingSystem:
 
         return True
 
-    def get_reviews(self, pack_name: str) -> List[Review]:
+    def get_reviews(self, pack_name: str) -> list[Review]:
         """
         获取 Pack 的所有评价
 
@@ -220,7 +220,7 @@ class RatingSystem:
         reviews = self._load_reviews(pack_name)
         return sorted(reviews.values(), key=lambda r: r.created_at, reverse=True)
 
-    def get_user_reviews(self, user: str) -> List[Review]:
+    def get_user_reviews(self, user: str) -> list[Review]:
         """
         获取用户的所有评价
 
@@ -305,7 +305,7 @@ class RatingSystem:
         self._save_reviews(pack_name, reviews)
         return True
 
-    def get_top_reviews(self, pack_name: str, limit: int = 10) -> List[Review]:
+    def get_top_reviews(self, pack_name: str, limit: int = 10) -> list[Review]:
         """
         获取热门评价（按有用性排序）
 
@@ -342,7 +342,7 @@ class RatingSystem:
             # 忽略错误（商店可能不可用）
             pass
 
-    def export_reviews(self, pack_name: str) -> Dict[str, Any]:
+    def export_reviews(self, pack_name: str) -> dict[str, Any]:
         """
         导出 Pack 评价数据
 
@@ -361,7 +361,7 @@ class RatingSystem:
             "reviews": [review.to_dict() for review in reviews.values()],
         }
 
-    def import_reviews(self, data: Dict[str, Any]) -> int:
+    def import_reviews(self, data: dict[str, Any]) -> int:
         """
         导入 Pack 评价数据
 

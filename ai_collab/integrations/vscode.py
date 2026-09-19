@@ -7,7 +7,7 @@ VSCode 集成辅助模块
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # 向上查找工作区标记的最大层数（避免误命中上层无关目录）
 MAX_WORKSPACE_SEARCH_DEPTH = 3
@@ -37,7 +37,7 @@ class VSCodeIntegration:
         return os.path.isdir(resolved)
 
     @staticmethod
-    def get_workspace_path() -> Optional[str]:
+    def get_workspace_path() -> str | None:
         """
         获取当前 VSCode 工作区路径
 
@@ -74,7 +74,7 @@ class VSCodeIntegration:
         return cwd
 
     @staticmethod
-    def get_project_config() -> Dict[str, Any]:
+    def get_project_config() -> dict[str, Any]:
         """
         获取项目级 AI 协作配置
 
@@ -88,14 +88,14 @@ class VSCodeIntegration:
         config_file = os.path.join(workspace, ".vscode", "ai-collab.json")
         if os.path.exists(config_file):
             try:
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 return {}
         return {}
 
     @staticmethod
-    def get_global_config() -> Dict[str, Any]:
+    def get_global_config() -> dict[str, Any]:
         """
         获取全局 AI 协作配置
 
@@ -106,14 +106,14 @@ class VSCodeIntegration:
         config_file = os.path.join(global_config_dir, "config.json")
         if os.path.exists(config_file):
             try:
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 return {}
         return {}
 
     @staticmethod
-    def save_project_config(config: Dict[str, Any]):
+    def save_project_config(config: dict[str, Any]):
         """
         保存项目级配置
 
@@ -134,7 +134,7 @@ class VSCodeIntegration:
         try:
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
-        except IOError as e:
+        except OSError as e:
             raise ValueError(f"无法保存配置文件: {e}")
 
     @staticmethod
@@ -159,7 +159,7 @@ class VSCodeIntegration:
             pass
 
     @staticmethod
-    def get_rule_files(ai_type: str, rules_dir: str = "./rules") -> List[str]:
+    def get_rule_files(ai_type: str, rules_dir: str = "./rules") -> list[str]:
         """
         获取规则文件列表
 

@@ -184,7 +184,7 @@ class TestVSCodeIntegration:
 
         # Mock expanduser and make file unreadable
         with patch("os.path.expanduser", return_value=str(vscode_dir.parent)):
-            with patch("builtins.open", side_effect=IOError("Permission denied")):
+            with patch("builtins.open", side_effect=OSError("Permission denied")):
                 result = VSCodeIntegration.get_global_config()
                 assert result == {}
 

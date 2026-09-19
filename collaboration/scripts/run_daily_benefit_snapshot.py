@@ -5,10 +5,9 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 
-def read_jsonl(path: Path) -> List[dict]:
+def read_jsonl(path: Path) -> list[dict]:
     if not path.exists():
         return []
     items = []

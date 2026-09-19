@@ -6,7 +6,6 @@ Tests for VSCode extension pack list functionality with mock backend.
 
 import json
 from pathlib import Path
-from typing import Dict
 
 
 def test_vscode_extension_package():
@@ -138,7 +137,7 @@ def test_tree_view_data_structure():
     print("✅ Tree view data structure is valid")
 
 
-def generate_test_report() -> Dict:
+def generate_test_report() -> dict:
     """Generate test report."""
     return {
         "timestamp": "2026-03-07T08:40:00+08:00",

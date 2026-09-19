@@ -7,7 +7,7 @@ in critical paths like task dispatch, state management, and CLI operations.
 
 import time
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -216,7 +216,7 @@ def test_longrun_harness_performance(tmp_path):
     assert elapsed < 2.0, f"Longrun harness bootstrap took {elapsed:.3f}s, threshold is 2.0s"
 
 
-def generate_perf_report(results: Dict[str, float]) -> str:
+def generate_perf_report(results: dict[str, float]) -> str:
     """Generate a performance report in markdown format."""
     lines = [
         "# Performance Baseline Report",

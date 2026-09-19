@@ -260,7 +260,7 @@ class TestFaultArchiver:
         assert os.path.exists(filepath)
 
         # 验证文件内容
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
 
         assert data["error_stats"]["total_errors"] == 5

@@ -43,7 +43,7 @@ def benchmark_api_endpoints(base_url: str = "http://127.0.0.1:8000") -> dict:
         times: list[float] = []
 
         # 测试 5 次
-        for i in range(5):
+        for _i in range(5):
             try:
                 start = time.time()
                 urllib.request.urlopen(url, timeout=5)

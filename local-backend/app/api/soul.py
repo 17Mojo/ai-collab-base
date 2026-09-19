@@ -11,7 +11,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -27,7 +27,7 @@ class SoulInjectRequest(BaseModel):
 
     consensus: str
     profile_name: str = "luoyonghao"
-    timeout: Optional[float] = 30.0
+    timeout: float | None = 30.0
 
 
 class StylePromptRequest(BaseModel):
@@ -44,7 +44,7 @@ class StylePromptResponse(BaseModel):
     original_prompt: str
     styled_prompt: str
     profile_name: str
-    style_characteristics: Dict[str, Any]
+    style_characteristics: dict[str, Any]
 
 
 class SoulInjectResponse(BaseModel):
@@ -53,38 +53,38 @@ class SoulInjectResponse(BaseModel):
     success: bool
     original_consensus: str
     personalized_content: str
-    soul_profile: Dict[str, Any]
+    soul_profile: dict[str, Any]
     timestamp: str
     mode: str
-    strategies_applied: Optional[int] = None
+    strategies_applied: int | None = None
 
 
 class ProfilesResponse(BaseModel):
     """灵魂画像列表响应"""
 
-    profiles: List[str]
-    defaults: Dict[str, str]
+    profiles: list[str]
+    defaults: dict[str, str]
 
 
 class StyleCreateRequest(BaseModel):
     """创建自定义风格请求"""
 
     name: str
-    display_name: Optional[str] = None
-    prefix: Optional[str] = ""
-    suffix: Optional[str] = ""
-    tone: Optional[str] = ""
-    keywords: Optional[List[str]] = []
+    display_name: str | None = None
+    prefix: str | None = ""
+    suffix: str | None = ""
+    tone: str | None = ""
+    keywords: list[str] | None = []
 
 
 class StyleUpdateRequest(BaseModel):
     """更新自定义风格请求"""
 
-    display_name: Optional[str] = None
-    prefix: Optional[str] = None
-    suffix: Optional[str] = None
-    tone: Optional[str] = None
-    keywords: Optional[List[str]] = None
+    display_name: str | None = None
+    prefix: str | None = None
+    suffix: str | None = None
+    tone: str | None = None
+    keywords: list[str] | None = None
 
 
 class StyleResponse(BaseModel):
@@ -95,16 +95,16 @@ class StyleResponse(BaseModel):
     prefix: str
     suffix: str
     tone: str
-    keywords: List[str]
+    keywords: list[str]
     is_preset: bool
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 class StylesListResponse(BaseModel):
     """风格列表响应"""
 
-    styles: List[StyleResponse]
+    styles: list[StyleResponse]
     total: int
 
 

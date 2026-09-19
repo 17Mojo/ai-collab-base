@@ -10,7 +10,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from .version import PackVersion
 
@@ -51,7 +51,7 @@ class PackDependency:
         except Exception as e:
             raise ValueError(f"Invalid version range '{self.version_range}': {e}")
 
-    def _parse_range(self) -> List[Tuple[ComparisonOperator, str]]:
+    def _parse_range(self) -> list[tuple[ComparisonOperator, str]]:
         """解析版本范围
 
         Returns:
@@ -84,7 +84,7 @@ class PackDependency:
 
         return result
 
-    def _parse_single_range(self, expr: str) -> Tuple[ComparisonOperator, str]:
+    def _parse_single_range(self, expr: str) -> tuple[ComparisonOperator, str]:
         """解析单个范围表达式"""
         expr = expr.strip()
 
@@ -196,7 +196,7 @@ class PackDependency:
 
         return False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "name": self.name,
@@ -206,7 +206,7 @@ class PackDependency:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PackDependency":
+    def from_dict(cls, data: dict[str, Any]) -> "PackDependency":
         """从字典反序列化"""
         return cls(
             name=data["name"],
@@ -222,7 +222,7 @@ class DependencyNode:
 
     pack_id: str
     version: str
-    dependencies: List[PackDependency] = field(default_factory=list)
+    dependencies: list[PackDependency] = field(default_factory=list)
     resolved: bool = False
     depth: int = 0
 
@@ -231,14 +231,14 @@ class DependencyNode:
         if dep not in self.dependencies:
             self.dependencies.append(dep)
 
-    def requires(self, dep_name: str) -> Optional[PackDependency]:
+    def requires(self, dep_name: str) -> PackDependency | None:
         """获取指定名称的依赖"""
         for dep in self.dependencies:
             if dep.name == dep_name:
                 return dep
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "pack_id": self.pack_id,
@@ -254,11 +254,11 @@ class DependencyResult:
     """依赖解析结果"""
 
     success: bool
-    resolved: List[DependencyNode]
-    conflicts: List[Dict[str, Any]]
-    errors: List[str]
+    resolved: list[DependencyNode]
+    conflicts: list[dict[str, Any]]
+    errors: list[str]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """序列化为字典"""
         return {
             "success": self.success,
@@ -272,7 +272,7 @@ class DependencyResolver:
     """依赖解析器"""
 
     def __init__(self):
-        self._registry: Dict[str, List[PackVersion]] = defaultdict(list)  # 可用的 Pack 版本
+        self._registry: dict[str, list[PackVersion]] = defaultdict(list)  # 可用的 Pack 版本
         self._logger = None
 
     def register_version(self, pack_id: str, version: str) -> None:
@@ -297,9 +297,9 @@ class DependencyResolver:
         """
         result = DependencyResult(success=True, resolved=[root], conflicts=[], errors=[])
 
-        resolved_dicts: Dict[str, str] = {root.pack_id: root.version}
-        visited: Set[str] = set()
-        stack: List[Tuple[DependencyNode, int]] = [(root, 0)]
+        resolved_dicts: dict[str, str] = {root.pack_id: root.version}
+        visited: set[str] = set()
+        stack: list[tuple[DependencyNode, int]] = [(root, 0)]
 
         while stack:
             current, depth = stack.pop()
@@ -356,8 +356,8 @@ class DependencyResolver:
         return result
 
     def _check_conflict(
-        self, dep: PackDependency, resolved: Dict[str, str]
-    ) -> Optional[Dict[str, Any]]:
+        self, dep: PackDependency, resolved: dict[str, str]
+    ) -> dict[str, Any] | None:
         """检查冲突"""
         if dep.name not in resolved:
             return None
@@ -373,7 +373,7 @@ class DependencyResolver:
 
         return None
 
-    def _find_compatible_version(self, pack_id: str, version_range: str) -> Optional[PackVersion]:
+    def _find_compatible_version(self, pack_id: str, version_range: str) -> PackVersion | None:
         """查找兼容版本
 
         Args:
@@ -395,7 +395,7 @@ class DependencyResolver:
 
         return None
 
-    def detect_conflicts(self, graph: List[DependencyNode]) -> List[Dict[str, Any]]:
+    def detect_conflicts(self, graph: list[DependencyNode]) -> list[dict[str, Any]]:
         """检测依赖冲突
 
         Args:
@@ -405,7 +405,7 @@ class DependencyResolver:
             冲突列表
         """
         conflicts = []
-        version_map: Dict[str, List[str]] = defaultdict(list)
+        version_map: dict[str, list[str]] = defaultdict(list)
 
         # 收集所有版本要求
         for node in graph:
@@ -428,7 +428,7 @@ class DependencyResolver:
 
         return conflicts
 
-    def _intersect_ranges(self, ranges: List[str]) -> Optional[str]:
+    def _intersect_ranges(self, ranges: list[str]) -> str | None:
         """计算版本范围交集
 
         Args:
@@ -459,7 +459,7 @@ class DependencyResolver:
         """
         return dep.is_compatible_with(version)
 
-    def topo_sort(self, graph: List[DependencyNode]) -> List[DependencyNode]:
+    def topo_sort(self, graph: list[DependencyNode]) -> list[DependencyNode]:
         """拓扑排序，确定加载顺序
 
         Args:
@@ -469,8 +469,8 @@ class DependencyResolver:
             拓扑排序后的节点列表
         """
         # 构建邻接表
-        adj: Dict[str, List[str]] = {}
-        in_degree: Dict[str, int] = {}
+        adj: dict[str, list[str]] = {}
+        in_degree: dict[str, int] = {}
 
         for node in graph:
             in_degree[node.pack_id] = node.depth
@@ -479,7 +479,7 @@ class DependencyResolver:
         # 使用深度作为拓扑排序依据
         return sorted(graph, key=lambda x: x.depth)
 
-    def get_install_order(self, root: DependencyNode) -> List[str]:
+    def get_install_order(self, root: DependencyNode) -> list[str]:
         """获取安装顺序
 
         Args:

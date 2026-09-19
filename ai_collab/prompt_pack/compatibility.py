@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .version import PackVersion, create_version_manager
 
@@ -44,8 +44,8 @@ class CompatibilityIssue:
     issue_type: BreakingChangeType
     description: str
     severity: str  # low, medium, high, critical
-    affected_apis: List[str]
-    migration_path: Optional[str] = None
+    affected_apis: list[str]
+    migration_path: str | None = None
 
 
 @dataclass
@@ -55,20 +55,20 @@ class CompatibilityReport:
     source_version: PackVersion
     target_version: PackVersion
     status: CompatibilityStatus
-    issues: List[CompatibilityIssue]
+    issues: list[CompatibilityIssue]
     summary: str
-    recommendations: List[str]
+    recommendations: list[str]
     timestamp: datetime
 
     def is_compatible(self) -> bool:
         """检查是否兼容"""
         return self.status in [CompatibilityStatus.COMPATIBLE, CompatibilityStatus.MINOR_UPDATE]
 
-    def get_critical_issues(self) -> List[CompatibilityIssue]:
+    def get_critical_issues(self) -> list[CompatibilityIssue]:
         """获取关键问题"""
         return [issue for issue in self.issues if issue.severity == "critical"]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "source_version": str(self.source_version),
@@ -103,7 +103,7 @@ class CompatibilityChecker:
         }
 
     def check_compatibility(
-        self, source_version: PackVersion, target_version: PackVersion, breaking_changes: List[str]
+        self, source_version: PackVersion, target_version: PackVersion, breaking_changes: list[str]
     ) -> CompatibilityReport:
         """
         检查版本兼容性
@@ -116,7 +116,7 @@ class CompatibilityChecker:
         Returns:
             兼容性报告
         """
-        issues: List[CompatibilityIssue] = []
+        issues: list[CompatibilityIssue] = []
 
         # 分析版本跳跃
         if target_version.major > source_version.major:
@@ -165,9 +165,9 @@ class CompatibilityChecker:
 
     def _create_minor_update_issues(
         self, source: PackVersion, target: PackVersion
-    ) -> List[CompatibilityIssue]:
+    ) -> list[CompatibilityIssue]:
         """创建次版本更新问题"""
-        issues: List[CompatibilityIssue] = []
+        issues: list[CompatibilityIssue] = []
 
         # 检查常见的次版本变更
         issues.append(
@@ -184,7 +184,7 @@ class CompatibilityChecker:
 
     def _analyze_breaking_change(
         self, change: str, source: PackVersion, target: PackVersion
-    ) -> Optional[CompatibilityIssue]:
+    ) -> CompatibilityIssue | None:
         """
         分析破坏性变更
 
@@ -231,7 +231,7 @@ class CompatibilityChecker:
         return None
 
     def _determine_status(
-        self, source: PackVersion, target: PackVersion, issues: List[CompatibilityIssue]
+        self, source: PackVersion, target: PackVersion, issues: list[CompatibilityIssue]
     ) -> CompatibilityStatus:
         """确定兼容性状态"""
         # 如果没有问题，完全兼容
@@ -252,10 +252,10 @@ class CompatibilityChecker:
         return CompatibilityStatus.MINOR_UPDATE
 
     def _generate_recommendations(
-        self, source: PackVersion, target: PackVersion, issues: List[CompatibilityIssue]
-    ) -> List[str]:
+        self, source: PackVersion, target: PackVersion, issues: list[CompatibilityIssue]
+    ) -> list[str]:
         """生成升级建议"""
-        recommendations: List[str] = []
+        recommendations: list[str] = []
 
         if not issues:
             recommendations.append(f"安全升级到 {target}（完全兼容）")
@@ -304,8 +304,8 @@ class DependencyValidator:
         self.pack_manager = pack_manager
 
     def validate_dependencies(
-        self, pack_name: str, required_version: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, pack_name: str, required_version: str | None = None
+    ) -> dict[str, Any]:
         """
         验证 Pack 依赖
 
@@ -372,7 +372,7 @@ class DependencyValidator:
             "message": "All dependencies valid" if all_valid else "Some dependencies are invalid",
         }
 
-    def check_dependency_conflicts(self, pack_names: List[str]) -> Dict[str, List[str]]:
+    def check_dependency_conflicts(self, pack_names: list[str]) -> dict[str, list[str]]:
         """
         检查依赖冲突
 
@@ -382,10 +382,10 @@ class DependencyValidator:
         Returns:
             依赖冲突字典 {pack_name: [conflicting_packs]}
         """
-        conflicts: Dict[str, List[str]] = {}
+        conflicts: dict[str, list[str]] = {}
 
         # 收集所有依赖
-        all_dependencies: Dict[str, List[str]] = {}
+        all_dependencies: dict[str, list[str]] = {}
         for pack_name in pack_names:
             try:
                 pack = self.pack_manager.load_pack(pack_name)
@@ -394,7 +394,7 @@ class DependencyValidator:
                 all_dependencies[pack_name] = []
 
         # 查找冲突（不同 Pack 依赖同一依赖但需要不同版本）
-        dependency_versions: Dict[str, Dict[str, str]] = {}  # dependency -> {pack -> version}
+        dependency_versions: dict[str, dict[str, str]] = {}  # dependency -> {pack -> version}
 
         for pack_name, deps in all_dependencies.items():
             for dep_name in deps:
@@ -427,7 +427,7 @@ class DependencyValidator:
 
 def check_pack_compatibility(
     pack_name: str, target_version: str, workspace: str = "."
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     检查 Pack 兼容性（便捷函数）
 

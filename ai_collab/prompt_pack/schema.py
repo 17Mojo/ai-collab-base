@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class PackCategoryType(Enum):
@@ -59,16 +59,16 @@ class PackManifest:
     updated_at: datetime
 
     # 依赖关系
-    dependencies: List[str] = field(default_factory=list)  # 其他 pack 名称
+    dependencies: list[str] = field(default_factory=list)  # 其他 pack 名称
 
     # AI 工具兼容性
-    compatible_tools: List[AITool] = field(default_factory=list)
+    compatible_tools: list[AITool] = field(default_factory=list)
 
     # 元数据
-    tags: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -85,7 +85,7 @@ class PackManifest:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PackManifest":
+    def from_dict(cls, data: dict[str, Any]) -> PackManifest:
         """从字典创建"""
         return cls(
             name=data["name"],
@@ -114,10 +114,10 @@ class PromptPack:
     manifest: PackManifest
 
     # 核心规则文件
-    rules: Dict[str, RuleFile] = field(default_factory=dict)  # filename -> RuleFile
+    rules: dict[str, RuleFile] = field(default_factory=dict)  # filename -> RuleFile
 
     # Pack 根目录
-    root_path: Optional[Path] = None
+    root_path: Path | None = None
 
     def add_rule(self, filename: str, content: str, priority: int = 100, enabled: bool = True):
         """添加规则文件"""
@@ -125,7 +125,7 @@ class PromptPack:
             filename=filename, content=content, priority=priority, enabled=enabled
         )
 
-    def get_rules_content(self, tool: Optional[AITool] = None) -> List[str]:
+    def get_rules_content(self, tool: AITool | None = None) -> list[str]:
         """
         获取规则内容列表（按优先级排序）
 

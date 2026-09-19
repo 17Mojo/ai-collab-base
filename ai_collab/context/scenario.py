@@ -10,7 +10,6 @@
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from .schema import ScenarioType
 
@@ -31,7 +30,7 @@ class ScenarioScore:
 
     scenario: ScenarioType
     score: float  # 总分 (0-1)
-    evidence: List[ScenarioEvidence] = field(default_factory=list)  # 证据列表
+    evidence: list[ScenarioEvidence] = field(default_factory=list)  # 证据列表
 
 
 class ScenarioDetector:
@@ -108,7 +107,7 @@ class ScenarioDetector:
         },
     }
 
-    def __init__(self, root_dir: Optional[str] = None):
+    def __init__(self, root_dir: str | None = None):
         """
         初始化场景检测器
 
@@ -118,7 +117,7 @@ class ScenarioDetector:
         self.root_dir = Path(root_dir) if root_dir else Path.cwd()
 
     def detect(
-        self, active_files: Optional[List[str]] = None, include_content: bool = False
+        self, active_files: list[str] | None = None, include_content: bool = False
     ) -> ScenarioScore:
         """
         检测当前场景
@@ -141,8 +140,8 @@ class ScenarioDetector:
         return max(scores, key=lambda s: s.score)
 
     def detect_all(
-        self, active_files: Optional[List[str]] = None, include_content: bool = False
-    ) -> List[ScenarioScore]:
+        self, active_files: list[str] | None = None, include_content: bool = False
+    ) -> list[ScenarioScore]:
         """
         检测所有场景的分数
 
@@ -164,8 +163,8 @@ class ScenarioDetector:
     def _calculate_scenario_score(
         self,
         scenario: ScenarioType,
-        rules: Dict,
-        active_files: Optional[List[str]],
+        rules: dict,
+        active_files: list[str] | None,
         include_content: bool,
     ) -> ScenarioScore:
         """
@@ -181,7 +180,7 @@ class ScenarioDetector:
             场景评分
         """
         score = ScenarioScore(scenario=scenario, score=0.0)
-        evidence_list: List[ScenarioEvidence] = []
+        evidence_list: list[ScenarioEvidence] = []
 
         # 1. 目录分析 (30%)
         dir_score = self._analyze_directories(scenario, rules, evidence_list)
@@ -211,7 +210,7 @@ class ScenarioDetector:
         return score
 
     def _analyze_directories(
-        self, scenario: ScenarioType, rules: Dict, evidence_list: List[ScenarioEvidence]
+        self, scenario: ScenarioType, rules: dict, evidence_list: list[ScenarioEvidence]
     ) -> float:
         """分析目录结构"""
         target_dirs = rules.get("directories", [])
@@ -238,9 +237,9 @@ class ScenarioDetector:
     def _analyze_files(
         self,
         scenario: ScenarioType,
-        rules: Dict,
-        active_files: Optional[List[str]],
-        evidence_list: List[ScenarioEvidence],
+        rules: dict,
+        active_files: list[str] | None,
+        evidence_list: list[ScenarioEvidence],
     ) -> float:
         """分析文件"""
         file_patterns = rules.get("files", [])
@@ -289,9 +288,9 @@ class ScenarioDetector:
     def _analyze_content(
         self,
         scenario: ScenarioType,
-        rules: Dict,
-        active_files: Optional[List[str]],
-        evidence_list: List[ScenarioEvidence],
+        rules: dict,
+        active_files: list[str] | None,
+        evidence_list: list[ScenarioEvidence],
     ) -> float:
         """分析文件内容"""
         patterns = rules.get("patterns", [])
@@ -307,7 +306,7 @@ class ScenarioDetector:
                 continue
 
             try:
-                with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(full_path, encoding="utf-8", errors="ignore") as f:
                     content = f.read()
                     file_matches = 0
                     for pattern in patterns:
@@ -340,9 +339,9 @@ class ScenarioDetector:
     def _analyze_patterns(
         self,
         scenario: ScenarioType,
-        rules: Dict,
-        active_files: Optional[List[str]],
-        evidence_list: List[ScenarioEvidence],
+        rules: dict,
+        active_files: list[str] | None,
+        evidence_list: list[ScenarioEvidence],
     ) -> float:
         """仅基于文件名模式分析 (不读取内容)"""
         patterns = rules.get("patterns", [])
@@ -393,7 +392,7 @@ class ScenarioDetector:
         is_confident = result.score >= threshold
         return result.scenario, result.score, is_confident
 
-    def explain_detection(self, scores: List[ScenarioScore]) -> str:
+    def explain_detection(self, scores: list[ScenarioScore]) -> str:
         """
         解释检测结果
 
@@ -421,8 +420,8 @@ class ScenarioDetector:
 
 
 def detect_current_scenario(
-    root_dir: Optional[str] = None,
-    active_files: Optional[List[str]] = None,
+    root_dir: str | None = None,
+    active_files: list[str] | None = None,
 ) -> ScenarioScore:
     """
     检测当前场景
@@ -439,10 +438,10 @@ def detect_current_scenario(
 
 
 def get_best_scenario_match(
-    root_dir: Optional[str] = None,
-    active_files: Optional[List[str]] = None,
+    root_dir: str | None = None,
+    active_files: list[str] | None = None,
     threshold: float = 0.75,
-) -> Optional[ScenarioType]:
+) -> ScenarioType | None:
     """
     获取最佳匹配场景
 

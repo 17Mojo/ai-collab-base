@@ -8,7 +8,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 DEFAULT_DB_PATH = "data/contexts.db"
 
@@ -19,7 +19,7 @@ class ContextStore:
     def __init__(self, db_path: str = DEFAULT_DB_PATH):
         self._db_path = Path(db_path)
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._init_db()
 
     def _init_db(self):
@@ -65,7 +65,7 @@ class ContextStore:
             self._conn.row_factory = sqlite3.Row
         return self._conn
 
-    def save(self, context_data: Dict[str, Any]) -> str:
+    def save(self, context_data: dict[str, Any]) -> str:
         """
         保存 Context
 
@@ -145,7 +145,7 @@ class ContextStore:
         conn.commit()
         return context_id
 
-    def get(self, context_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, context_id: str) -> dict[str, Any] | None:
         """获取 Context"""
         conn = self._get_conn()
         row = conn.execute(
@@ -160,10 +160,10 @@ class ContextStore:
 
     def list_contexts(
         self,
-        scenario: Optional[str] = None,
+        scenario: str | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """列出 Context"""
         conn = self._get_conn()
 
@@ -190,7 +190,7 @@ class ContextStore:
         conn.commit()
         return cursor.rowcount > 0
 
-    def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """搜索 Context"""
         conn = self._get_conn()
         rows = conn.execute(
@@ -201,7 +201,7 @@ class ContextStore:
         ).fetchall()
         return [self._row_to_dict(row) for row in rows]
 
-    def count(self, scenario: Optional[str] = None) -> int:
+    def count(self, scenario: str | None = None) -> int:
         """统计 Context 数量"""
         conn = self._get_conn()
         if scenario:
@@ -213,7 +213,7 @@ class ContextStore:
             row = conn.execute("SELECT COUNT(*) as cnt FROM contexts").fetchone()
         return row["cnt"] if row else 0
 
-    def _row_to_dict(self, row: sqlite3.Row) -> Dict[str, Any]:
+    def _row_to_dict(self, row: sqlite3.Row) -> dict[str, Any]:
         """将数据库行转换为字典"""
         return {
             "context_id": row["context_id"],

@@ -10,7 +10,7 @@ import threading
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from fastapi import HTTPException, Request, status
 
@@ -28,12 +28,12 @@ class RateLimiter:
         """
         self.default_limit = default_limit
         self.window_seconds = window_seconds
-        self._requests: Dict[str, List[Tuple[float, bool]]] = defaultdict(list)
+        self._requests: dict[str, list[tuple[float, bool]]] = defaultdict(list)
         self._lock = threading.Lock()
 
     def is_allowed(
-        self, identifier: str, limit: Optional[int] = None, window_seconds: Optional[int] = None
-    ) -> Tuple[bool, Dict[str, int]]:
+        self, identifier: str, limit: int | None = None, window_seconds: int | None = None
+    ) -> tuple[bool, dict[str, int]]:
         """
         检查是否允许请求
 
@@ -101,7 +101,7 @@ class RateLimiter:
 
             return cleaned
 
-    def get_stats(self, identifier: str) -> Dict[str, Any]:
+    def get_stats(self, identifier: str) -> dict[str, Any]:
         """
         获取特定标识符的统计信息
 
@@ -148,11 +148,11 @@ class BruteForceProtection:
         """
         self.max_attempts = max_attempts
         self.block_duration = timedelta(minutes=block_duration_minutes)
-        self._attempts: Dict[str, List[Tuple[float, bool]]] = defaultdict(list)
-        self._blocked_until: Dict[str, float] = {}
+        self._attempts: dict[str, list[tuple[float, bool]]] = defaultdict(list)
+        self._blocked_until: dict[str, float] = {}
         self._lock = threading.Lock()
 
-    def record_attempt(self, identifier: str, success: bool) -> Dict[str, Any]:
+    def record_attempt(self, identifier: str, success: bool) -> dict[str, Any]:
         """
         记录登录/认证尝试
 
@@ -270,7 +270,7 @@ class IPBlacklist:
 
     def __init__(self):
         """初始化 IP 黑名单"""
-        self._blacklist: Dict[str, Dict[str, Any]] = {}
+        self._blacklist: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
         self._storage_file = os.path.join(
             os.path.dirname(__file__), "..", "..", "data", "ip_blacklist.json"
@@ -281,7 +281,7 @@ class IPBlacklist:
         """从文件加载黑名单"""
         if os.path.exists(self._storage_file):
             try:
-                with open(self._storage_file, "r", encoding="utf-8") as f:
+                with open(self._storage_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self._blacklist = data.get("blacklist", {})
             except Exception:
@@ -298,7 +298,7 @@ class IPBlacklist:
                 ensure_ascii=False,
             )
 
-    def add_ip(self, ip_address: str, reason: str, duration_hours: Optional[int] = None) -> bool:
+    def add_ip(self, ip_address: str, reason: str, duration_hours: int | None = None) -> bool:
         """
         添加 IP 到黑名单
 
@@ -368,7 +368,7 @@ class IPBlacklist:
 
             return True
 
-    def get_blacklisted_ips(self) -> List[Dict[str, Any]]:
+    def get_blacklisted_ips(self) -> list[dict[str, Any]]:
         """
         获取所有黑名单 IP
 
@@ -380,7 +380,7 @@ class IPBlacklist:
             now = datetime.now()
             valid_entries = []
 
-            for ip, entry in self._blacklist.items():
+            for _ip, entry in self._blacklist.items():
                 if entry["is_permanent"] or not entry.get("expires_at"):
                     valid_entries.append(entry)
                 else:

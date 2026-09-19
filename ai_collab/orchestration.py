@@ -9,13 +9,13 @@ This module handles:
 """
 
 import json
-import shlex
 import os
+import shlex
 import shutil
 import subprocess
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class BindingStatus(Enum):
@@ -81,14 +81,14 @@ class AgentProvider:
         }
     }
 
-    def __init__(self, provider_id: str, config: Dict[str, Any]):
+    def __init__(self, provider_id: str, config: dict[str, Any]):
         self.provider_id = provider_id
         self.name = config.get("name", provider_id)
         self.connection_status = ProviderConnectionStatus.UNAVAILABLE
         self.supports_sub_agent = config.get("supports_sub_agent", False)
         self.model_variants = config.get("model_variants", [])
         self.capabilities = config.get("capabilities", [])
-        self.last_check: Optional[datetime] = None
+        self.last_check: datetime | None = None
 
     def check_availability(self) -> bool:
         """Check if provider is available"""
@@ -136,7 +136,7 @@ class AgentProvider:
         self.last_check = datetime.now()
         return False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "provider_name": self.name,
@@ -155,10 +155,10 @@ class OrchestrationRole:
         self,
         role_id: str,
         display_name: str,
-        duties: List[str],
-        required_capabilities: List[str],
+        duties: list[str],
+        required_capabilities: list[str],
         raci_role: str = "C",
-        binding: Optional[Dict[str, Any]] = None
+        binding: dict[str, Any] | None = None
     ):
         self.role_id = role_id
         self.display_name = display_name
@@ -170,14 +170,14 @@ class OrchestrationRole:
             "model_variant": None,
             "status": RoleStatus.DORMANT.value
         }
-        self.created_at: Optional[datetime] = None
-        self.activated_at: Optional[datetime] = None
+        self.created_at: datetime | None = None
+        self.activated_at: datetime | None = None
 
     def is_active(self) -> bool:
         """Check if role is active"""
         return self.binding.get("status") == RoleStatus.ACTIVE.value
 
-    def activate(self, provider: str, model_variant: Optional[str] = None):
+    def activate(self, provider: str, model_variant: str | None = None):
         """Activate role with provider binding"""
         self.binding["provider"] = provider
         self.binding["model_variant"] = model_variant
@@ -188,7 +188,7 @@ class OrchestrationRole:
         """Deactivate role"""
         self.binding["status"] = RoleStatus.DORMANT.value
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "role_id": self.role_id,
@@ -232,15 +232,15 @@ class OrchestrationConfig:
         "C.RUN": "AGENT_TEST"
     }
 
-    def __init__(self, workspace_path: Optional[str] = None):
+    def __init__(self, workspace_path: str | None = None):
         self.workspace_path = workspace_path or os.getcwd()
         self.config_dir = os.path.join(self.workspace_path, "config")
         self.config_file = os.path.join(self.config_dir, "agent-orchestration.json")
         self.template_file = os.path.join(self.config_dir, "agent-orchestration.template.json")
 
-        self.config: Dict[str, Any] = {}
-        self.providers: Dict[str, AgentProvider] = {}
-        self.roles: Dict[str, OrchestrationRole] = {}
+        self.config: dict[str, Any] = {}
+        self.providers: dict[str, AgentProvider] = {}
+        self.roles: dict[str, OrchestrationRole] = {}
 
         # Ensure config directory exists
         os.makedirs(self.config_dir, exist_ok=True)
@@ -256,7 +256,7 @@ class OrchestrationConfig:
                 self._create_default_config()
 
         try:
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 self.config = json.load(f)
 
             # Parse roles
@@ -286,7 +286,7 @@ class OrchestrationConfig:
                 self.providers[provider_id] = provider
 
             return True
-        except (json.JSONDecodeError, IOError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             print(f"Error loading config: {e}")
             return False
 
@@ -307,7 +307,7 @@ class OrchestrationConfig:
                 json.dump(self.config, f, ensure_ascii=False, indent=2)
 
             return True
-        except IOError as e:
+        except OSError as e:
             print(f"Error saving config: {e}")
             return False
 
@@ -385,7 +385,7 @@ class OrchestrationConfig:
         return status == BindingStatus.UNINITIALIZED or \
                not self.config.get("cold_start_config", {}).get("wizard_completed", False)
 
-    def detect_providers(self) -> Dict[str, AgentProvider]:
+    def detect_providers(self) -> dict[str, AgentProvider]:
         """Detect available agent providers"""
         self.providers = {}
 
@@ -396,7 +396,7 @@ class OrchestrationConfig:
 
         return self.providers
 
-    def get_available_providers(self) -> List[AgentProvider]:
+    def get_available_providers(self) -> list[AgentProvider]:
         """Get list of available providers"""
         return [
             provider for provider in self.providers.values()
@@ -406,7 +406,7 @@ class OrchestrationConfig:
             ]
         ]
 
-    def add_history_event(self, event: str, details: Dict[str, Any]):
+    def add_history_event(self, event: str, details: dict[str, Any]):
         """Add event to history"""
         self.config["history"].append({
             "timestamp": datetime.now().isoformat(),
@@ -455,7 +455,7 @@ class OrchestrationConfig:
 
         return True
 
-    def get_role_for_command(self, command_prefix: str) -> Optional[OrchestrationRole]:
+    def get_role_for_command(self, command_prefix: str) -> OrchestrationRole | None:
         """Get role for a command prefix"""
         command_prefixes = self.config.get("command_prefixes", {})
 
@@ -476,8 +476,8 @@ class OrchestrationConfig:
         self,
         role_id: str,
         display_name: str,
-        duties: List[str],
-        required_capabilities: List[str],
+        duties: list[str],
+        required_capabilities: list[str],
         raci_role: str = "C"
     ) -> OrchestrationRole:
         """Add a new role"""
@@ -495,7 +495,7 @@ class OrchestrationConfig:
 
         return role
 
-    def activate_role(self, role_id: str, provider: str, model_variant: Optional[str] = None):
+    def activate_role(self, role_id: str, provider: str, model_variant: str | None = None):
         """Activate a role with provider binding"""
         role = self.roles.get(role_id)
         if not role:
@@ -710,7 +710,7 @@ class ColdStartWizard:
                     })
 
 
-def check_cold_start(workspace_path: Optional[str] = None) -> Optional[ColdStartWizard]:
+def check_cold_start(workspace_path: str | None = None) -> ColdStartWizard | None:
     """Check if cold start is needed and return wizard if so"""
     config = OrchestrationConfig(workspace_path)
     config.load()
@@ -721,7 +721,7 @@ def check_cold_start(workspace_path: Optional[str] = None) -> Optional[ColdStart
     return None
 
 
-def get_orchestration_config(workspace_path: Optional[str] = None) -> OrchestrationConfig:
+def get_orchestration_config(workspace_path: str | None = None) -> OrchestrationConfig:
     """Get orchestration configuration (load or create)"""
     config = OrchestrationConfig(workspace_path)
     config.load()

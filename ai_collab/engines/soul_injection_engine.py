@@ -26,7 +26,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 import aiohttp
 
@@ -52,7 +52,7 @@ class SoulServiceError(Exception):
         self,
         message: str,
         error_code: SoulServiceErrorCode,
-        original_error: Optional[Exception] = None,
+        original_error: Exception | None = None,
     ):
         super().__init__(message)
         self.error_code = error_code
@@ -67,9 +67,9 @@ class SoulProfile:
     style: str
     method: str
     viewpoint: str
-    keywords: List[str]
+    keywords: list[str]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "style": self.style,
@@ -122,7 +122,7 @@ class SoulInjectionEngine:
 
     def __init__(self):
         self.profiles = self._load_default_profiles()
-        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.cache: dict[str, dict[str, Any]] = {}
         self._logger = logging.getLogger(__name__)
 
         self._mode = get_mode("soul_injection")
@@ -130,7 +130,7 @@ class SoulInjectionEngine:
         self._mock_reason = f"SoulInjectionEngine运行在{self._mode.value}模式"
 
         # 注入策略链
-        self.strategies: List[InjectionStrategy] = [
+        self.strategies: list[InjectionStrategy] = [
             StyleInjectionStrategy(),
             MethodInjectionStrategy(),
             ViewpointInjectionStrategy(),
@@ -148,7 +148,7 @@ class SoulInjectionEngine:
         content = f"{consensus}:{profile_name}"
         return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()
 
-    def _load_default_profiles(self) -> Dict[str, SoulProfile]:
+    def _load_default_profiles(self) -> dict[str, SoulProfile]:
         return {
             "luoyonghao": SoulProfile(
                 name="罗永浩风格",
@@ -179,7 +179,7 @@ class SoulInjectionEngine:
         profile_name: str = "luoyonghao",
         timeout: float = 30.0,
         max_retries: int = 3,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         统一注入入口：按模式路由到 mock/real (支持异步)
 
@@ -235,7 +235,7 @@ class SoulInjectionEngine:
 
         return result
 
-    def inject_soul_mock(self, consensus: str, profile_name: str = "luoyonghao") -> Dict[str, Any]:
+    def inject_soul_mock(self, consensus: str, profile_name: str = "luoyonghao") -> dict[str, Any]:
         """
         Mock 链路：稳定输出用于回退
 
@@ -274,7 +274,7 @@ class SoulInjectionEngine:
         profile_name: str = "luoyonghao",
         timeout: float = 30.0,
         max_retries: int = 3,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         REAL 链路：真实注入链路适配 (带超时和重试)
 
@@ -352,7 +352,7 @@ class SoulInjectionEngine:
 
     async def _call_external_ai_service(
         self, consensus: str, profile: SoulProfile, timeout: float = 30.0, max_retries: int = 3
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         调用外部 AI 服务进行风格转换 (带超时和重试)
 
@@ -482,7 +482,7 @@ class SoulInjectionEngine:
         return content
 
     def add_custom_profile(
-        self, name: str, style: str, method: str, viewpoint: str, keywords: List[str]
+        self, name: str, style: str, method: str, viewpoint: str, keywords: list[str]
     ) -> bool:
         try:
             self.profiles[name] = SoulProfile(name, style, method, viewpoint, keywords)
@@ -490,17 +490,17 @@ class SoulInjectionEngine:
         except Exception:
             return False
 
-    def list_profiles(self) -> List[str]:
+    def list_profiles(self) -> list[str]:
         return list(self.profiles.keys())
 
-    def get_profile(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_profile(self, name: str) -> dict[str, Any] | None:
         profile = self.profiles.get(name)
         return profile.to_dict() if profile else None
 
 
 async def inject_soul(
     consensus: str, profile_name: str = "luoyonghao", timeout: float = 30.0, max_retries: int = 3
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """便捷函数 (异步)"""
     engine = SoulInjectionEngine()
     return await engine.inject_soul(consensus, profile_name, timeout, max_retries)

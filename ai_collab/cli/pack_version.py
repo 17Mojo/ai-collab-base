@@ -8,7 +8,6 @@ Pack 版本管理 CLI 命令
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 from ai_collab.pack.market_api import PackMarketAPI
 from ai_collab.pack.version import PackVersion, VersionManager, VersionType
@@ -17,7 +16,7 @@ from ai_collab.pack.version import PackVersion, VersionManager, VersionType
 class PackVersionCLI:
     """Pack 版本管理 CLI"""
 
-    def __init__(self, db_path: str = "data/packs.db", manager: Optional[VersionManager] = None):
+    def __init__(self, db_path: str = "data/packs.db", manager: VersionManager | None = None):
         """初始化 CLI
 
         Args:

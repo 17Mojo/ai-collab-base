@@ -5,7 +5,6 @@
 """
 
 from datetime import datetime
-from typing import List, Optional
 
 
 def make_pack_metadata(
@@ -14,8 +13,8 @@ def make_pack_metadata(
     description: str = "Test pack",
     version: str = "1.0.0",
     designer: str = "test",
-    category: Optional[str] = None,
-    tags: Optional[List[str]] = None,
+    category: str | None = None,
+    tags: list[str] | None = None,
 ):
     """创建有效的 PackMetadata 对象"""
     from ai_collab.pack.schema_v2 import PackMetadata, PackType
@@ -39,8 +38,8 @@ def make_workflow_step(
     name: str,
     step_type: str = "local",
     description: str = "",
-    input_fields: Optional[List[str]] = None,
-    output_field: Optional[str] = None,
+    input_fields: list[str] | None = None,
+    output_field: str | None = None,
 ):
     """创建 WorkflowStep 对象"""
     from ai_collab.pack.schema_v2 import StepType, WorkflowStep
@@ -64,7 +63,7 @@ def make_workflow_step(
     )
 
 
-def make_workflow(steps: Optional[List] = None):
+def make_workflow(steps: list | None = None):
     """创建 WorkflowDefinition 对象"""
     from ai_collab.pack.schema_v2 import WorkflowDefinition
 
@@ -133,7 +132,7 @@ def make_collaboration():
 
 
 def make_full_pack(
-    pack_id: str, pack_name: str, description: str = "Test pack", steps: Optional[List] = None
+    pack_id: str, pack_name: str, description: str = "Test pack", steps: list | None = None
 ):
     """创建完整的 PromptPackV2 对象"""
     from ai_collab.pack.schema_v2 import PromptPackV2

@@ -79,7 +79,7 @@ def test_full_workflow():
 
     # 检查追踪记录
     if os.path.exists("test_tracking_history.json"):
-        with open("test_tracking_history.json", "r", encoding="utf-8") as f:
+        with open("test_tracking_history.json", encoding="utf-8") as f:
             tracking = json.load(f)
         print("\n📊 追踪记录:")
         print(f"   总记录数: {len(tracking['tracking_records'])}")

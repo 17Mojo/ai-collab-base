@@ -38,7 +38,7 @@ class PackBulkCLI:
         print(f"Loading pack specs from {specs_path}...")
 
         try:
-            with open(specs_path, "r", encoding="utf-8") as f:
+            with open(specs_path, encoding="utf-8") as f:
                 pack_specs = json.load(f)
         except FileNotFoundError:
             print(f"✗ File not found: {specs_path}")

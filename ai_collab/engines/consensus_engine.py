@@ -24,7 +24,7 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..config.integration_flags import IntegrationMode, get_mode
 
@@ -34,7 +34,7 @@ class AIProvider:
     """AI Provider 配置"""
 
     name: str
-    client: Optional[Any] = None
+    client: Any | None = None
     timeout: float = 30.0
     max_retries: int = 3
     enabled: bool = True
@@ -45,13 +45,13 @@ class ConsensusEngine:
 
     def __init__(self):
         # 可插拔 provider 配置
-        self.providers: Dict[str, AIProvider] = {
+        self.providers: dict[str, AIProvider] = {
             "chatgpt": AIProvider(name="chatgpt", timeout=30.0),
             "claude": AIProvider(name="claude", timeout=30.0),
             "kimi": AIProvider(name="kimi", timeout=30.0),
             "qianwen": AIProvider(name="qianwen", timeout=30.0),
         }
-        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.cache: dict[str, dict[str, Any]] = {}
         self._logger = logging.getLogger(__name__)
 
         self._mode = get_mode("consensus_engine")
@@ -85,7 +85,7 @@ class ConsensusEngine:
             p.client is not None for p in enabled_providers
         )
 
-    async def generate_consensus(self, topic: str) -> Dict[str, Any]:
+    async def generate_consensus(self, topic: str) -> dict[str, Any]:
         """生成通识内容"""
         if topic in self.cache:
             return self.cache[topic]
@@ -121,11 +121,11 @@ class ConsensusEngine:
         self.cache[topic] = result
         return result
 
-    async def _query_multiple_ais(self, topic: str) -> List[Dict[str, Any]]:
+    async def _query_multiple_ais(self, topic: str) -> list[dict[str, Any]]:
         """兼容旧接口，默认走 mock 响应"""
         return await self._query_multiple_ais_mock(topic)
 
-    async def _query_multiple_ais_mock(self, topic: str) -> List[Dict[str, Any]]:
+    async def _query_multiple_ais_mock(self, topic: str) -> list[dict[str, Any]]:
         """模拟多 AI 并发查询"""
         await asyncio.sleep(0)
         return [
@@ -146,7 +146,7 @@ class ConsensusEngine:
             },
         ]
 
-    async def _query_multiple_ais_real(self, topic: str) -> List[Dict[str, Any]]:
+    async def _query_multiple_ais_real(self, topic: str) -> list[dict[str, Any]]:
         """
         真实链路查询（支持超时、失败回退、结果归一）
 
@@ -201,7 +201,7 @@ class ConsensusEngine:
         self._logger.info(f"[Consensus] 成功获取 {len(successful_results)}/{len(tasks)} 个响应")
         return successful_results
 
-    async def _query_single_provider(self, topic: str, provider: AIProvider) -> Dict[str, Any]:
+    async def _query_single_provider(self, topic: str, provider: AIProvider) -> dict[str, Any]:
         """
         查询单个 provider (带超时和重试)
 
@@ -241,7 +241,7 @@ class ConsensusEngine:
             f"Provider {provider.name} failed after {provider.max_retries} retries"
         )
 
-    async def _call_provider_api(self, topic: str, provider: AIProvider) -> Dict[str, Any]:
+    async def _call_provider_api(self, topic: str, provider: AIProvider) -> dict[str, Any]:
         """
         调用 provider API (支持 async/sync 兼容)
 
@@ -286,7 +286,7 @@ class ConsensusEngine:
             # 失败时返回模拟响应
             return await self._mock_provider_response(topic, provider)
 
-    async def _mock_provider_response(self, topic: str, provider: AIProvider) -> Dict[str, Any]:
+    async def _mock_provider_response(self, topic: str, provider: AIProvider) -> dict[str, Any]:
         """
         生成模拟 provider 响应
 
@@ -306,7 +306,7 @@ class ConsensusEngine:
             "confidence": 0.9,
         }
 
-    def _normalize_client_response(self, response: Any, provider: AIProvider) -> Dict[str, Any]:
+    def _normalize_client_response(self, response: Any, provider: AIProvider) -> dict[str, Any]:
         """
         归一化 client 响应格式
 
@@ -340,7 +340,7 @@ class ConsensusEngine:
             "confidence": 0.9,
         }
 
-    def _normalize_response(self, response: Dict[str, Any], provider_name: str) -> Dict[str, Any]:
+    def _normalize_response(self, response: dict[str, Any], provider_name: str) -> dict[str, Any]:
         """
         归一化响应格式
 
@@ -359,7 +359,7 @@ class ConsensusEngine:
             "provider": provider_name,
         }
 
-    def _extract_consensus(self, responses: List[Dict[str, Any]]) -> str:
+    def _extract_consensus(self, responses: list[dict[str, Any]]) -> str:
         """提取共识内容"""
         return "\n\n".join(response["response"] for response in responses)
 
@@ -371,7 +371,7 @@ class ConsensusEngine:
             return "共识内容存在不确定性，需要进一步验证"
         return consensus
 
-    def get_consensus_summary(self, result: Dict[str, Any]) -> str:
+    def get_consensus_summary(self, result: dict[str, Any]) -> str:
         """获取通识摘要"""
         summary = f"""
 # 通识摘要
@@ -393,7 +393,7 @@ class ConsensusEngine:
         return summary
 
 
-async def generate_consensus(topic: str) -> Dict[str, Any]:
+async def generate_consensus(topic: str) -> dict[str, Any]:
     """生成通识便捷函数"""
     engine = ConsensusEngine()
     return await engine.generate_consensus(topic)

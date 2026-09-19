@@ -14,7 +14,7 @@ import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ReceiptErrorCategory(Enum):
@@ -86,7 +86,7 @@ def should_retry_receipt_error(
     return attempt < config.max_attempts
 
 
-def get_error_suggestion(category: ReceiptErrorCategory) -> Optional[str]:
+def get_error_suggestion(category: ReceiptErrorCategory) -> str | None:
     """获取错误处理建议。"""
     suggestions = {
         ReceiptErrorCategory.RESULT_FILE_NOT_FOUND: "请确认 result_file 路径存在并可访问",
@@ -125,7 +125,7 @@ def write_json(path: Path, data: Any) -> None:
 
 # ---------------- 门禁 ----------------
 
-def check_result_file(workspace: Path, task: Dict[str, Any]) -> Optional[str]:
+def check_result_file(workspace: Path, task: dict[str, Any]) -> str | None:
     """检查结果文件；返回错误消息（None 表示通过）。"""
     rel = task.get("result_file")
     if not rel:
@@ -142,7 +142,7 @@ def check_result_file(workspace: Path, task: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def check_acceptance_mismatch(workspace: Path, task: Dict[str, Any]) -> Optional[str]:
+def check_acceptance_mismatch(workspace: Path, task: dict[str, Any]) -> str | None:
     """检查结果文件中的执行命令与 acceptance_commands 是否一致。
 
     返回错误消息（None 表示一致或无 acceptance_commands 约定）。
@@ -172,7 +172,7 @@ def check_acceptance_mismatch(workspace: Path, task: Dict[str, Any]) -> Optional
     return None
 
 
-def check_open_patch(state: Dict[str, Any], task_id: str) -> bool:
+def check_open_patch(state: dict[str, Any], task_id: str) -> bool:
     """是否存在 open patch。"""
     for p in state.get("patches", {}).values():
         if p.get("task_id") == task_id and p.get("status") not in {"completed", "merged", "cancelled"}:
@@ -180,7 +180,7 @@ def check_open_patch(state: Dict[str, Any], task_id: str) -> bool:
     return False
 
 
-def has_explicit_ack(ack_state: Dict[str, Any], task_id: str) -> bool:
+def has_explicit_ack(ack_state: dict[str, Any], task_id: str) -> bool:
     item = ack_state.get("items", {}).get(task_id)
     if not item:
         return False
@@ -204,9 +204,9 @@ def run_receipt(args) -> int:
 
     tasks = state.get("tasks", {})
     candidate_count = 0
-    completed: List[str] = []
-    skipped: List[Dict[str, Any]] = []
-    errors: List[Dict[str, Any]] = []
+    completed: list[str] = []
+    skipped: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
 
     for tid, task in tasks.items():
         if task.get("status") != "testing":

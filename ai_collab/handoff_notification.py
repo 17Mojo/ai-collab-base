@@ -16,7 +16,7 @@
 import json
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class HandoffStatus(Enum):
@@ -50,11 +50,11 @@ class HandoffNotification:
         handoff_type: str,
         title: str,
         description: str,
-        files: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        files: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         status: str = HandoffStatus.PENDING.value,
-        created_at: Optional[str] = None,
-        updated_at: Optional[str] = None,
+        created_at: str | None = None,
+        updated_at: str | None = None,
     ):
         self.handoff_id = handoff_id
         self.from_ai = from_ai
@@ -68,7 +68,7 @@ class HandoffNotification:
         self.created_at = created_at or datetime.now().isoformat()
         self.updated_at = updated_at or datetime.now().isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "handoff_id": self.handoff_id,
@@ -110,8 +110,8 @@ class HandoffManager:
         handoff_type: str,
         title: str,
         description: str,
-        files: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        files: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """创建交接通知"""
         _now = datetime.now()
@@ -162,7 +162,7 @@ class HandoffManager:
         return True
 
     def complete_handoff(
-        self, handoff_id: str, by_ai: str, feedback: str, result_files: Optional[List[str]] = None
+        self, handoff_id: str, by_ai: str, feedback: str, result_files: list[str] | None = None
     ) -> bool:
         """完成交接并发送回馈"""
         handoff = self._load_handoff(handoff_id)
@@ -204,7 +204,7 @@ class HandoffManager:
 
         return True
 
-    def get_pending_handoffs(self, for_ai: str) -> List[Dict[str, Any]]:
+    def get_pending_handoffs(self, for_ai: str) -> list[dict[str, Any]]:
         """获取待处理的交接"""
         import os
 
@@ -213,7 +213,7 @@ class HandoffManager:
         for filename in os.listdir(self.HANDOFF_DIR):
             if filename.endswith(".json"):
                 handoff_file = os.path.join(self.HANDOFF_DIR, filename)
-                with open(handoff_file, "r", encoding="utf-8") as f:
+                with open(handoff_file, encoding="utf-8") as f:
                     handoff = json.load(f)
 
                 if handoff["to_ai"] == for_ai and handoff["status"] in [
@@ -224,16 +224,16 @@ class HandoffManager:
 
         return handoffs
 
-    def _load_handoff(self, handoff_id: str) -> Optional[Dict[str, Any]]:
+    def _load_handoff(self, handoff_id: str) -> dict[str, Any] | None:
         """加载交接"""
         handoff_file = self._get_handoff_file(handoff_id)
         try:
-            with open(handoff_file, "r", encoding="utf-8") as f:
+            with open(handoff_file, encoding="utf-8") as f:
                 return json.load(f)
         except (OSError, json.JSONDecodeError):
             return None
 
-    def _save_handoff(self, handoff: Dict[str, Any]):
+    def _save_handoff(self, handoff: dict[str, Any]):
         """保存交接"""
         handoff_file = self._get_handoff_file(handoff["handoff_id"])
         with open(handoff_file, "w", encoding="utf-8") as f:
@@ -245,7 +245,7 @@ class HandoffManager:
 
         # 加载现有通知
         try:
-            with open(target_file, "r", encoding="utf-8") as f:
+            with open(target_file, encoding="utf-8") as f:
                 data = json.load(f)
         except (OSError, json.JSONDecodeError):
             data = {"pending_handoffs": []}
@@ -265,7 +265,7 @@ class HandoffManager:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def _send_feedback(
-        self, handoff: Dict[str, Any], feedback: str, result_files: Optional[List[str]]
+        self, handoff: dict[str, Any], feedback: str, result_files: list[str] | None
     ):
         """发送回馈通知"""
         from_ai = handoff["to_ai"]
@@ -288,7 +288,7 @@ class HandoffManager:
         feedback_file = f"{self.HANDOFF_DIR}/{to_ai}_feedback.json"
 
         try:
-            with open(feedback_file, "r", encoding="utf-8") as f:
+            with open(feedback_file, encoding="utf-8") as f:
                 feedback_list = json.load(f)
         except (OSError, json.JSONDecodeError):
             feedback_list = {"feedbacks": []}
@@ -313,8 +313,8 @@ def create_handoff(
     handoff_type: str,
     title: str,
     description: str,
-    files: Optional[List[str]] = None,
-    metadata: Optional[Dict[str, Any]] = None,
+    files: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> str:
     """创建交接通知"""
     return _handoff_manager.create_handoff(
@@ -328,7 +328,7 @@ def accept_handoff(handoff_id: str, by_ai: str) -> bool:
 
 
 def complete_handoff(
-    handoff_id: str, by_ai: str, feedback: str, result_files: Optional[List[str]] = None
+    handoff_id: str, by_ai: str, feedback: str, result_files: list[str] | None = None
 ) -> bool:
     """完成交接并发送回馈"""
     return _handoff_manager.complete_handoff(handoff_id, by_ai, feedback, result_files)
@@ -339,7 +339,7 @@ def confirm_handoff(handoff_id: str, by_ai: str) -> bool:
     return _handoff_manager.confirm_handoff(handoff_id, by_ai)
 
 
-def get_pending_handoffs(for_ai: str) -> List[Dict[str, Any]]:
+def get_pending_handoffs(for_ai: str) -> list[dict[str, Any]]:
     """获取待处理的交接"""
     return _handoff_manager.get_pending_handoffs(for_ai)
 
