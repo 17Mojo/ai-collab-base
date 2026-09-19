@@ -51,6 +51,11 @@
       background: #0f3460;
     }
 
+    .pack-item:focus-visible {
+      outline: 2px solid #e94560;
+      outline-offset: 2px;
+    }
+
     .pack-name {
       font-weight: 500;
       margin-bottom: 4px;
@@ -82,6 +87,15 @@
 
     .btn:hover {
       background: #ff6b6b;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
     }
 
     .panel {
@@ -140,6 +154,15 @@
       background: #ff6b6b;
     }
 
+    .btn-primary:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
     .btn-primary:disabled {
       background: #555;
       cursor: not-allowed;
@@ -168,11 +191,11 @@
   </style>
 </head>
 <body>
-  <div class="header">
+  <header class="header">
     <h1>Prompt Pack</h1>
-  </div>
+  </header>
 
-  <div class="content">
+  <main class="content">
     <ul class="pack-list" id="packList" data-testid="pack-list">
       <!-- Pack 列表将由 JS 动态填充 -->
       <li class="pack-item">
@@ -183,8 +206,8 @@
     <button class="btn" id="refreshBtn" data-testid="refresh-btn">刷新 Pack 列表</button>
 
     <!-- Studio 产物生成面板 -->
-    <div id="studio-panel" class="panel" data-testid="studio-panel">
-      <h3>Studio 产物生成</h3>
+    <section id="studio-panel" class="panel" data-testid="studio-panel" aria-labelledby="studio-panel-title">
+      <h3 id="studio-panel-title">Studio 产物生成</h3>
       <div class="studio-options">
         <label><input type="checkbox" id="studio-audio" data-testid="studio-audio" /> Audio 播客</label>
         <label><input type="checkbox" id="studio-video" data-testid="studio-video" /> Video 视频</label>
@@ -194,13 +217,13 @@
         <input type="text" id="studio-focus-text" data-testid="studio-focus-text" placeholder="生成主题焦点（可选）" />
       </div>
       <button id="generate-studio-btn" class="btn-primary" data-testid="generate-studio-btn" disabled>生成 Studio 产物</button>
-      <div id="studio-status" class="status-area" data-testid="studio-status"></div>
-    </div>
-  </div>
+      <div id="studio-status" class="status-area" data-testid="studio-status" role="status" aria-live="polite"></div>
+    </section>
+  </main>
 
-  <div class="status" id="status" data-testid="status-bar">
+  <footer class="status" id="status" data-testid="status-bar">
     状态: 就绪
-  </div>
+  </footer>
 
   <script src="popup.js"></script>
 </body>
