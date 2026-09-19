@@ -1,9 +1,13 @@
 """UI accessibility hard-gate tests for extension surfaces.
 
 新架构下（chrome-extension/）的 a11y 守护点：
-- Chrome Popup HTML: chrome-extension/public/popup.html（lang/charset/viewport/title/buttons/data-testid/语义标签）
-- Chrome Popup CSS: popup.html 使用内联 <style>，无独立 styles.css；按真实现状检查 :hover / :disabled
+- Chrome Popup HTML: chrome-extension/public/popup.html（lang/charset/viewport/title/buttons/data-testid/语义标签 <header>/<main>/<section>/<footer>）
+- Chrome Popup CSS: popup.html 使用内联 <style>，无独立 styles.css；按真实现状检查 :hover / :focus-visible / :active / :disabled
 - VSCode Extension: products/vscode-extension/ 已重构为 native_host.py（无 package.json）
+
+历史变更：
+- 2026-09-19 6700c70：硬门禁仅留基线（lang/charset/viewport/title/buttons/testids + :hover/:disabled），语义标签作软告警
+- 2026-09-19 本次：popup.html 已改用 <header>/<main>/<section>/<footer> + aria-labelledby + role="status" aria-live="polite"，并补 :focus-visible / :active 样式 → 硬门禁回填语义标签与键盘焦点
 """
 
 from __future__ import annotations
@@ -29,7 +33,7 @@ def _extract_inline_style(html_content: str) -> str | None:
 
 
 def _chrome_html_check() -> tuple[list[str], list[str]]:
-    """硬门禁只覆盖必要项；语义标签作为软告警，通过 recommendations 上报。"""
+    """硬门禁：基线 + 语义标签（popup.html 已用 <header>/<main>/<section>/<footer>）"""
     if not CHROME_POPUP_HTML.exists():
         return ["file_missing"], []
 
@@ -41,6 +45,10 @@ def _chrome_html_check() -> tuple[list[str], list[str]]:
         "has_title": "<title>" in html_content,
         "has_buttons": "<button" in html_content,
         "has_testids": "data-testid=" in html_content,
+        "has_header_landmark": "<header" in html_content,
+        "has_main_landmark": "<main" in html_content,
+        "has_section_landmark": "<section" in html_content,
+        "has_footer_landmark": "<footer" in html_content,
     }
     semantic_elements = ["<header", "<footer", "<main", "<nav", "<section", "<article"]
     found_semantic = [element for element in semantic_elements if element in html_content]
@@ -49,7 +57,7 @@ def _chrome_html_check() -> tuple[list[str], list[str]]:
 
 
 def _chrome_css_check() -> list[str]:
-    """popup.html 使用内联 <style>，无独立 styles.css；从 HTML 提取 style 块检查"""
+    """popup.html 使用内联 <style>；检查 :hover / :focus-visible / :active / :disabled"""
     if not CHROME_POPUP_HTML.exists():
         return ["file_missing"]
 
@@ -60,6 +68,8 @@ def _chrome_css_check() -> list[str]:
 
     checks = {
         "has_hover_styles": ":hover" in css_content,
+        "has_focus_styles": ":focus-visible" in css_content,
+        "has_active_styles": ":active" in css_content,
         "has_disabled_styles": ":disabled" in css_content,
     }
     return _failed_checks(checks)
@@ -115,7 +125,7 @@ def generate_accessibility_report() -> dict[str, Any]:
         "Implement visual regression tests with Playwright snapshots",
         "Add keyboard-only navigation test cases",
         "Run screen-reader regression checks in release checklist",
-        "Add :focus / :active styles to popup.html inline <style> for keyboard a11y",
+        "Consider adding :focus-visible to interactive <li class='pack-item'> if/when they become focusable (currently <li> are not tab-focusable)",
     ]
     if semantic_missing:
         recommendations.append(
