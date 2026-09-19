@@ -234,6 +234,17 @@ class TestValidateMetadata:
         # 不应有 tags 相关错误
         assert not any("tags" in i.message and i.severity == ValidationSeverity.ERROR for i in r.issues)
 
+    def test_created_at_after_updated_at_warns(self, minimal_valid_pack):
+        """created_at > updated_at → warning"""
+        minimal_valid_pack["metadata"]["created_at"] = "2026-01-10T00:00:00"
+        minimal_valid_pack["metadata"]["updated_at"] = "2026-01-01T00:00:00"
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "created_at" in i.message and "after" in i.message
+            and i.severity == ValidationSeverity.WARNING
+            for i in r.issues
+        )
+
 
 # ======================= domain 校验 =======================
 
@@ -262,12 +273,38 @@ class TestValidateDomain:
     def test_valid_domain(self, minimal_valid_pack):
         minimal_valid_pack["domain"] = {
             "primary_domain": "x",
-            "target_platforms": ["web"],
+            "target_platforms": ["generic"],
             "compliance_rules": ["r1"],
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         domain_issues = [i for i in r.issues if i.path.startswith("$.domain")]
         assert len(domain_issues) == 0
+
+    def test_invalid_platform_value_errors(self, minimal_valid_pack):
+        """target_platforms 含无效值 → error"""
+        minimal_valid_pack["domain"] = {
+            "primary_domain": "x",
+            "target_platforms": ["facebook"],
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "Invalid platform: facebook" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_empty_target_platforms_warns(self, minimal_valid_pack):
+        """target_platforms 空列表 → warning（schema_v2.py 默认值是空列表，合法但建议有平台）"""
+        minimal_valid_pack["domain"] = {
+            "primary_domain": "x",
+            "target_platforms": [],
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "target_platforms is empty" in i.message
+            and i.severity == ValidationSeverity.WARNING
+            for i in r.issues
+        )
 
 
 # ======================= workflow 校验 =======================
@@ -287,6 +324,57 @@ class TestValidateWorkflow:
         minimal_valid_pack["workflow"]["steps"] = []
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any("steps cannot be empty" in i.message for i in r.issues)
+
+    def test_dangling_next_step_errors(self, minimal_valid_pack):
+        """next_step 指向不存在的 step → error"""
+        minimal_valid_pack["workflow"]["steps"][0]["next_step"] = "nonexistent"
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "Step reference 'nonexistent' not found" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_dangling_on_error_errors(self, minimal_valid_pack):
+        """on_error 指向不存在的 step → error"""
+        minimal_valid_pack["workflow"]["steps"][0]["on_error"] = "missing_handler"
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "Step reference 'missing_handler' not found" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_dangling_branch_target_step_errors(self, minimal_valid_pack):
+        """branches[].target_step 指向不存在的 step → error"""
+        minimal_valid_pack["workflow"]["steps"][0]["branches"] = [
+            {"target_step": "ghost", "condition_type": "contains"}
+        ]
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "Branch target_step 'ghost' not found" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_valid_step_references(self, minimal_valid_pack):
+        """合法的 next_step / on_error / branches.target_step → 无引用 error"""
+        s1 = minimal_valid_pack["workflow"]["steps"][0]
+        s1["next_step"] = "s2"
+        s1["on_error"] = "err"
+        s1["branches"] = [{"target_step": "s2", "condition_type": "contains"}]
+        minimal_valid_pack["workflow"]["steps"].append(
+            {"id": "s2", "name": "step2", "type": "local"}
+        )
+        minimal_valid_pack["workflow"]["steps"].append(
+            {"id": "err", "name": "error_handler", "type": "local"}
+        )
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        ref_errors = [
+            i for i in r.issues
+            if "not found" in i.message and i.severity == ValidationSeverity.ERROR
+        ]
+        assert len(ref_errors) == 0
 
 
 class TestValidateStep:
@@ -371,13 +459,55 @@ class TestValidateQualityMetrics:
     def test_valid_metrics(self, minimal_valid_pack):
         minimal_valid_pack["quality_metrics"] = {
             "metrics": {
-                "a": {"weight": 0.6},
-                "b": {"weight": 0.4},
+                "a": {"name": "a", "description": "d", "check_method": "c", "weight": 0.6},
+                "b": {"name": "b", "description": "d", "check_method": "c", "weight": 0.4},
             }
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         qm_issues = [i for i in r.issues if i.path.startswith("$.quality_metrics")]
         assert len(qm_issues) == 0
+
+    def test_metric_missing_required_field_errors(self, minimal_valid_pack):
+        """metric 缺 name/description/check_method → error"""
+        minimal_valid_pack["quality_metrics"] = {
+            "metrics": {"a": {"weight": 1.0}}
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "Missing required metric field: name" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_negative_weight_errors(self, minimal_valid_pack):
+        """权重为负 → error"""
+        minimal_valid_pack["quality_metrics"] = {
+            "metrics": {
+                "a": {"name": "a", "description": "d", "check_method": "c", "weight": -0.5},
+                "b": {"name": "b", "description": "d", "check_method": "c", "weight": 1.5},
+            }
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "non-negative" in i.message and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_validation_tolerance_configurable(self, minimal_valid_pack):
+        """自定义 validation_tolerance → 不假阴性"""
+        minimal_valid_pack["quality_metrics"] = {
+            "metrics": {
+                "a": {"name": "a", "description": "d", "check_method": "c", "weight": 0.6},
+                "b": {"name": "b", "description": "d", "check_method": "c", "weight": 0.5},
+            },
+            "validation_tolerance": 0.15,
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        weight_warnings = [
+            i for i in r.issues
+            if "Weight sum" in i.message and i.severity == ValidationSeverity.WARNING
+        ]
+        assert len(weight_warnings) == 0
 
 
 # ======================= example_library 校验 =======================
