@@ -41,17 +41,29 @@ def test_state_file_uses_cwd_when_workspace_none(tmp_path):
     assert str(tmp_path) in out
 
 
-def test_state_file_falls_back_to_global_dir():
-    """workspace=None 且 cwd 无效 -> 用 ~/.vscode/ai-collab/"""
-    home = tempfile.mkdtemp()
-    with patch.object(VSCodeIntegration, "get_workspace_path", return_value=None), \
-         patch.object(VSCodeIntegration, "get_project_config", return_value={"stateFile": "x.json"}), \
-         patch.object(VSCodeIntegration, "_is_valid_workspace", return_value=False), \
-         patch("os.getcwd", return_value="/"), \
-         patch("os.path.expanduser", return_value=home):
-        out = VSCodeStateManager.get_project_state_file()
-    assert "ai-collab" in out
-    assert "collaboration_state.json" in out
+def test_state_file_falls_back_to_global_dir(tmp_path):
+    """workspace=None 且 cwd 无效 -> 用 ~/.vscode/ai-collab/collaboration_state.json
+
+    与 test_backup_dir_fallback_to_global 同模式：通过设置 HOME 环境变量
+    让 os.path.expanduser("~") 自然走到 tmp_path/fakehome，从而拼出
+    tmp_path/fakehome/.vscode/ai-collab/collaboration_state.json
+    """
+    import os as _os
+    fake_home = str(tmp_path / "fakehome")
+    Path(fake_home).mkdir(parents=True, exist_ok=True)
+    _os.environ["HOME"] = fake_home
+    _os.environ.pop("USERPROFILE", None)
+    try:
+        with patch.object(VSCodeIntegration, "get_workspace_path", return_value=None), \
+             patch.object(VSCodeIntegration, "get_project_config", return_value={"stateFile": "x.json"}), \
+             patch.object(VSCodeIntegration, "_is_valid_workspace", return_value=False), \
+             patch("os.getcwd", return_value="/"):
+            out = VSCodeStateManager.get_project_state_file()
+        assert "collaboration_state.json" in out
+        assert out.startswith(fake_home), f"应在 {fake_home} 下，实际={out}"
+        assert ".vscode" in out and "ai-collab" in out, f"未走全局目录，实际={out}"
+    finally:
+        _os.environ.pop("HOME", None)
 
 
 # ============================================================
