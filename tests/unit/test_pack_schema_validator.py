@@ -20,7 +20,7 @@ from ai_collab.pack.schema_validator import (
 
 @pytest.fixture
 def minimal_valid_pack():
-    """最小合法 pack"""
+    """最小合法 pack — 对齐 schema_v2.py PromptPackV2 的 9 个必需顶层字段"""
     return {
         "metadata": {
             "pack_id": "test-pack",
@@ -31,6 +31,9 @@ def minimal_valid_pack():
             "designer": "me",
             "created_at": "2026-01-01T00:00:00",
             "updated_at": "2026-01-02T00:00:00",
+        },
+        "domain": {
+            "primary_domain": "test",
         },
         "workflow": {
             "steps": [
@@ -44,6 +47,21 @@ def minimal_valid_pack():
                 }
             ]
         },
+        "quality_metrics": {
+            "metrics": {
+                "m1": {
+                    "name": "m1",
+                    "description": "metric",
+                    "check_method": "check",
+                    "weight": 1.0,
+                }
+            }
+        },
+        "example_library": {},
+        "generation_params": {},
+        "optimization": {},
+        "performance_tracking": {},
+        "collaboration": {},
     }
 
 
@@ -220,10 +238,13 @@ class TestValidateMetadata:
 # ======================= domain 校验 =======================
 
 class TestValidateDomain:
-    def test_missing_primary_domain_warns(self, minimal_valid_pack):
+    def test_missing_primary_domain_errors(self, minimal_valid_pack):
         minimal_valid_pack["domain"] = {}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        assert any("primary_domain" in i.message for i in r.issues)
+        assert any(
+            "primary_domain" in i.message and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
 
     def test_target_platforms_not_list(self, minimal_valid_pack):
         minimal_valid_pack["domain"] = {"primary_domain": "x", "target_platforms": "web"}
@@ -362,20 +383,55 @@ class TestValidateQualityMetrics:
 # ======================= example_library 校验 =======================
 
 class TestValidateExampleLibrary:
-    def test_missing_examples_info(self, minimal_valid_pack):
+    def test_no_examples_info(self, minimal_valid_pack):
+        """example_library 无 good/bad examples → info 提示"""
         minimal_valid_pack["example_library"] = {}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        assert any("examples" in i.message and i.severity == ValidationSeverity.INFO for i in r.issues)
+        assert any(
+            "No examples" in i.message and i.severity == ValidationSeverity.INFO
+            for i in r.issues
+        )
 
-    def test_examples_not_list(self, minimal_valid_pack):
-        minimal_valid_pack["example_library"] = {"examples": "x"}
+    def test_good_examples_not_list_errors(self, minimal_valid_pack):
+        """good_examples 非 list → error"""
+        minimal_valid_pack["example_library"] = {"good_examples": "x"}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        assert any("examples must be a list" in i.message for i in r.issues)
+        assert any(
+            "good_examples must be a list" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
 
-    def test_empty_examples_info(self, minimal_valid_pack):
-        minimal_valid_pack["example_library"] = {"examples": []}
+    def test_bad_examples_not_list_errors(self, minimal_valid_pack):
+        """bad_examples 非 list → error"""
+        minimal_valid_pack["example_library"] = {"bad_examples": 123}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        assert any("empty" in i.message.lower() for i in r.issues)
+        assert any(
+            "bad_examples must be a list" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_few_shot_template_not_str_errors(self, minimal_valid_pack):
+        """few_shot_template 非 str → error"""
+        minimal_valid_pack["example_library"] = {"few_shot_template": 123}
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "few_shot_template must be a string" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+
+    def test_valid_example_library(self, minimal_valid_pack):
+        """合法 example_library → 无 example_library 路径的 error"""
+        minimal_valid_pack["example_library"] = {
+            "good_examples": [{"id": "g1"}],
+            "bad_examples": [{"id": "b1"}],
+            "few_shot_template": "tpl",
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        el_issues = [i for i in r.issues if i.path.startswith("$.example_library")]
+        assert len(el_issues) == 0
 
 
 # ======================= 便捷函数 =======================
