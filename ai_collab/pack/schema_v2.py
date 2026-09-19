@@ -10,6 +10,7 @@ Prompt Pack v2.0 Schema
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -822,22 +823,54 @@ class PromptPackV2:
         )
 
     def validate(self) -> bool:
-        """验证 Pack 结构完整性"""
+        """验证 Pack 结构完整性
+
+        检查项：
+        1. pack_id / pack_name 非空
+        2. workflow.steps 非空
+        3. 步骤 ID 唯一性
+        4. 质量指标权重总和 ≈ 1.0（容差内）
+        5. SemVer 版本格式（x.y.z）
+        6. datetime 合理性（created_at <= updated_at）
+        7. 步骤引用完整性（next_step / on_error / on_timeout / branches.target_step 指向存在的 step）
+        8. quality_metrics 权重非负
+        """
         if not self.metadata.pack_id or not self.metadata.pack_name:
             return False
 
         if not self.workflow.steps:
             return False
 
-        # 验证步骤 ID 唯一性
         step_ids = [step.id for step in self.workflow.steps]
         if len(step_ids) != len(set(step_ids)):
             return False
 
-        # 验证质量指标权重总和
         total_weight = self.quality_metrics.get_total_weight()
         if abs(total_weight - 1.0) > self.quality_metrics.validation_tolerance:
             return False
+
+        if not re.match(r"^\d+\.\d+\.\d+$", self.metadata.version):
+            return False
+
+        if self.metadata.created_at > self.metadata.updated_at:
+            return False
+
+        step_id_set = set(step_ids)
+        for step in self.workflow.steps:
+            if step.next_step is not None and step.next_step not in step_id_set:
+                return False
+            if step.on_error is not None and step.on_error not in step_id_set:
+                return False
+            if step.on_timeout is not None and step.on_timeout not in step_id_set:
+                return False
+            if step.branches is not None:
+                for branch in step.branches:
+                    if branch.target_step not in step_id_set:
+                        return False
+
+        for metric in self.quality_metrics.metrics.values():
+            if metric.weight < 0:
+                return False
 
         return True
 
