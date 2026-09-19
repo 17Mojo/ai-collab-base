@@ -2,11 +2,13 @@
 Pack API 路由
 """
 
+import logging
 import os
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from ai_collab.pack.schema_validator import PackSchemaValidator, ValidationSeverity
 from app.api.schemas import (
     BulkErrorItem,
     BulkExecutionCreateRequest,
@@ -61,6 +63,35 @@ def _invalidate_pack_cache(pack_id: str | None = None):
         cache.delete_prefix(_cache_key_metrics_stats(pack_id))
 
 
+logger = logging.getLogger(__name__)
+_pack_validator = PackSchemaValidator(strict=True)
+
+
+def _validate_pack_data(pack_data: dict) -> tuple[int, int]:
+    """非阻断式验证 pack 数据，返回 (error_count, warning_count)。
+
+    验证结果通过 response header 暴露给调用方，不阻断请求。
+    """
+    result = _pack_validator.validate_data(pack_data)
+    errors = [i for i in result.issues if i.severity == ValidationSeverity.ERROR]
+    warnings = [i for i in result.issues if i.severity == ValidationSeverity.WARNING]
+    if errors:
+        logger.warning(
+            "Pack validation failed for %s: %s",
+            result.pack_id or "unknown",
+            "; ".join(f"{e.path}: {e.message}" for e in errors),
+        )
+    return len(errors), len(warnings)
+
+
+def _attach_validation_headers(
+    response: Response, error_count: int, warning_count: int
+) -> None:
+    """把验证结果附加到 response header。"""
+    response.headers["X-Pack-Validation-Errors"] = str(error_count)
+    response.headers["X-Pack-Validation-Warnings"] = str(warning_count)
+
+
 # ==================== Pack CRUD ====================
 
 
@@ -98,11 +129,15 @@ async def list_packs(
 
 
 @router.post("/bulk/create", response_model=BulkPackCreateResponse)
-async def bulk_create_packs(payload: BulkPackCreateRequest, db: Session = Depends(get_db)):
+async def bulk_create_packs(
+    payload: BulkPackCreateRequest, response: Response, db: Session = Depends(get_db)
+):
     """批量创建 Pack（支持部分失败）"""
     created: list[PackResponse] = []
     errors: list[BulkErrorItem] = []
     seen_pack_ids: set[str] = set()
+    total_val_errors = 0
+    total_val_warnings = 0
 
     for idx, pack in enumerate(payload.packs):
         pack_id = pack.metadata.pack_id
@@ -133,6 +168,11 @@ async def bulk_create_packs(payload: BulkPackCreateRequest, db: Session = Depend
                 break
             continue
 
+        pack_data = pack.model_dump()
+        err_count, warn_count = _validate_pack_data(pack_data)
+        total_val_errors += err_count
+        total_val_warnings += warn_count
+
         db_pack = PackModel(
             pack_id=pack.metadata.pack_id,
             pack_name=pack.metadata.pack_name,
@@ -143,13 +183,15 @@ async def bulk_create_packs(payload: BulkPackCreateRequest, db: Session = Depend
             category=pack.metadata.category,
             tags=pack.metadata.tags,
             language=pack.metadata.language,
-            pack_data=pack.model_dump(),
+            pack_data=pack_data,
         )
 
         db.add(db_pack)
         db.commit()
         db.refresh(db_pack)
         created.append(PackResponse.model_validate(db_pack))
+
+    _attach_validation_headers(response, total_val_errors, total_val_warnings)
 
     if created:
         _invalidate_pack_cache()
@@ -194,7 +236,7 @@ async def bulk_get_packs(payload: BulkPackGetRequest, db: Session = Depends(get_
 
 
 @router.post("/", response_model=PackResponse, status_code=status.HTTP_201_CREATED)
-async def create_pack(pack: PackCreate, db: Session = Depends(get_db)):
+async def create_pack(pack: PackCreate, response: Response, db: Session = Depends(get_db)):
     """创建 Pack"""
     # 检查是否已存在
     existing = db.query(PackModel).filter(PackModel.pack_id == pack.metadata.pack_id).first()
@@ -207,6 +249,10 @@ async def create_pack(pack: PackCreate, db: Session = Depends(get_db)):
 
     # 创建 Pack 数据
     pack_data = pack.model_dump()
+
+    # 非阻断式 schema 验证
+    err_count, warn_count = _validate_pack_data(pack_data)
+    _attach_validation_headers(response, err_count, warn_count)
 
     # 创建数据库记录
     db_pack = PackModel(
@@ -401,7 +447,9 @@ async def get_pack_full(
 
 
 @router.put("/{pack_id}", response_model=PackResponse)
-async def update_pack(pack_id: str, pack_update: PackUpdate, db: Session = Depends(get_db)):
+async def update_pack(
+    pack_id: str, pack_update: PackUpdate, response: Response, db: Session = Depends(get_db)
+):
     """更新 Pack"""
     pack = (
         db.query(PackModel)
@@ -425,6 +473,10 @@ async def update_pack(pack_id: str, pack_update: PackUpdate, db: Session = Depen
     current_data = pack.pack_data or {}
     current_data.update(update_data)
     pack.pack_data = current_data
+
+    # 非阻断式 schema 验证
+    err_count, warn_count = _validate_pack_data(current_data)
+    _attach_validation_headers(response, err_count, warn_count)
 
     db.commit()
     db.refresh(pack)

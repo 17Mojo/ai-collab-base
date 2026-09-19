@@ -41,6 +41,8 @@ class PackMetadataSchema(BaseModel):
     tags: list[str] = []
     language: str = "zh"
     estimated_efficiency_gain: str = "80%"
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 class WorkflowStepSchema(BaseModel):
@@ -68,9 +70,13 @@ class PackCreate(BaseModel):
 
     metadata: PackMetadataSchema
     workflow: dict[str, Any]
+    domain: dict[str, Any] | None = None
     quality_metrics: dict[str, Any] | None = None
     example_library: dict[str, Any] | None = None
     generation_params: dict[str, Any] | None = None
+    optimization: dict[str, Any] | None = None
+    performance_tracking: dict[str, Any] | None = None
+    collaboration: dict[str, Any] | None = None
     system_prompt: str | None = ""
 
 
