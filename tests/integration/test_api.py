@@ -294,6 +294,119 @@ class TestPackAPI:
         assert data["missing"] == ["test-bulk-get-missing"]
 
 
+class TestPackValidationHeaders:
+    """Pack schema 验证 header 接入测试（非阻断式）"""
+
+    @staticmethod
+    def _make_full_pack_data(pack_id: str = "test-val-full-001") -> dict:
+        """构造完整合法 pack 数据（9 字段 + 非空 steps）"""
+        return {
+            "metadata": {
+                "pack_id": pack_id,
+                "pack_name": "完整验证测试 Pack",
+                "version": "1.0.0",
+                "type": "custom",
+                "description": "完整数据验证",
+                "designer": "Test",
+                "created_at": "2026-09-20T12:00:00",
+                "updated_at": "2026-09-20T12:00:00",
+            },
+            "domain": {"primary_domain": "generic"},
+            "workflow": {"steps": [{"id": "s1", "name": "步骤1", "type": "local"}]},
+            "quality_metrics": {"metrics": {}},
+            "example_library": {},
+            "generation_params": {},
+            "optimization": {},
+            "performance_tracking": {},
+            "collaboration": {},
+        }
+
+    def test_create_pack_validation_headers_present(self):
+        """创建 pack 时 response header 包含验证结果"""
+        pack_data = {
+            "metadata": {
+                "pack_id": "test-val-header-001",
+                "pack_name": "Header 测试",
+                "version": "1.0.0",
+                "type": "custom",
+                "description": "header",
+                "designer": "Test",
+            },
+            "workflow": {"steps": []},
+        }
+        response = client.post("/api/packs", json=pack_data)
+        assert response.status_code == 201
+        assert "x-pack-validation-errors" in response.headers
+        assert "x-pack-validation-warnings" in response.headers
+
+    def test_create_pack_incomplete_data_has_errors(self):
+        """不完整 pack 数据（缺 domain + 空 steps）验证 errors > 0"""
+        pack_data = {
+            "metadata": {
+                "pack_id": "test-val-incomplete-001",
+                "pack_name": "不完整 Pack",
+                "version": "1.0.0",
+                "type": "custom",
+                "description": "incomplete",
+                "designer": "Test",
+            },
+            "workflow": {"steps": []},
+        }
+        response = client.post("/api/packs", json=pack_data)
+        assert response.status_code == 201
+        assert int(response.headers["x-pack-validation-errors"]) > 0
+
+    def test_create_pack_full_data_no_errors(self):
+        """完整合法 pack 数据验证 errors = 0"""
+        pack_data = self._make_full_pack_data("test-val-full-001")
+        response = client.post("/api/packs", json=pack_data)
+        assert response.status_code == 201
+        assert int(response.headers["x-pack-validation-errors"]) == 0
+
+    def test_bulk_create_validation_headers_present(self):
+        """批量创建时 response header 包含验证结果"""
+        payload = {
+            "packs": [
+                {
+                    "metadata": {
+                        "pack_id": "test-val-bulk-001",
+                        "pack_name": "Bulk Val 1",
+                        "version": "1.0.0",
+                        "type": "custom",
+                        "description": "bulk val",
+                        "designer": "Test",
+                    },
+                    "workflow": {"steps": []},
+                },
+            ],
+        }
+        response = client.post("/api/packs/bulk/create", json=payload)
+        assert response.status_code == 200
+        assert "x-pack-validation-errors" in response.headers
+        assert int(response.headers["x-pack-validation-errors"]) > 0
+
+    def test_update_pack_validation_headers_present(self):
+        """更新时 response header 包含验证结果"""
+        pack_data = {
+            "metadata": {
+                "pack_id": "test-val-update-001",
+                "pack_name": "Update Val",
+                "version": "1.0.0",
+                "type": "custom",
+                "description": "update val",
+                "designer": "Test",
+            },
+            "workflow": {"steps": []},
+        }
+        client.post("/api/packs", json=pack_data)
+
+        update_data = {"description": "更新后的描述"}
+        response = client.put("/api/packs/test-val-update-001", json=update_data)
+        assert response.status_code == 200
+        assert "x-pack-validation-errors" in response.headers
+        assert int(response.headers["x-pack-validation-errors"]) > 0
+
+
 class TestExecutionAPI:
     """执行历史 API 测试"""
 
