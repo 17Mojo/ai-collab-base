@@ -44,7 +44,7 @@
       "source.fixAll": "explicit"
     }
   },
-  "python.defaultInterpreterPath": "/Users/raymondna/anaconda3/bin/python",
+  "python.defaultInterpreterPath": "/Users/raymondna/miniforge3/bin/python3",
   "python.terminal.activateEnvironment": true,
   "python.languageServer": "Pylance",
   "files.associations": {
