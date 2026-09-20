@@ -307,6 +307,42 @@ class TestQualityMetrics:
         normalized = metrics.get_normalized_weights()
         assert normalized == {"m1": 0.0}
 
+    def test_get_normalized_weights_zscore_std_zero(self):
+        """测试 Z-score 归一化 std==0 边缘 case（所有权重相同）"""
+        metrics = QualityMetrics(
+            metrics={
+                "m1": QualityMetric(
+                    name="m1", description="指标1", check_method="check1", weight=0.5
+                ),
+                "m2": QualityMetric(
+                    name="m2", description="指标2", check_method="check2", weight=0.5
+                ),
+            },
+            normalization_method="zscore",
+        )
+
+        normalized = metrics.get_normalized_weights()
+        assert normalized == {"m1": 0.5, "m2": 0.5}
+
+    def test_get_normalized_weights_unknown_method(self):
+        """测试未知归一化方法走 else 分支"""
+        metrics = QualityMetrics(
+            metrics={
+                "m1": QualityMetric(
+                    name="m1", description="指标1", check_method="check1", weight=0.3
+                ),
+                "m2": QualityMetric(
+                    name="m2", description="指标2", check_method="check2", weight=0.7
+                ),
+            },
+            normalization_method="unknown",
+        )
+
+        normalized = metrics.get_normalized_weights()
+        assert abs(sum(normalized.values()) - 1.0) < 0.01
+        assert abs(normalized["m1"] - 0.3) < 0.01
+        assert abs(normalized["m2"] - 0.7) < 0.01
+
     def test_adjust_weight_success(self):
         """测试权重调整 - 成功"""
         metrics = QualityMetrics(
@@ -993,7 +1029,10 @@ class TestValidateEnhancedChecks:
     def test_negative_weight_fails(self):
         """quality_metrics 权重为负 → validate() False"""
         pack = self._make_valid_pack()
+        # 设置负权重，同时调整另一个 metric 补偿以保持总权重 = 1.0
+        # 否则 validate() 会在总权重检查（line 848-850）时提前返回 False
         pack.quality_metrics.metrics["coverage"].weight = -0.1
+        pack.quality_metrics.metrics["distinctiveness"].weight = 0.65
         assert pack.validate() is False
 
 
