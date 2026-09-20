@@ -105,7 +105,7 @@ AGENT_OPS       运维部署      I (Informed)
 
 ```bash
 # CLI 方式
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 
 # 或通过 /menu 技能
 /menu cold-start
@@ -170,9 +170,9 @@ C.RUN → Triggers AGENT_TEST (or custom mapping)
 Use `/menu` skill or CLI commands:
 
 ```bash
-python3 -m src.cli orchestration status
-python3 -m src.cli orchestration cold-start
-python3 -m src.cli orchestration roles activate --role-id AGENT_EXEC --provider claude_code
+python3 -m ai_collab.cli orchestration status
+python3 -m ai_collab.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration roles activate --role-id AGENT_EXEC --provider claude_code
 ```
 
 ## Common Commands

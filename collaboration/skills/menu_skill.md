@@ -55,10 +55,10 @@
 
 **CLI 命令映射**:
 ```bash
-python3 -m src.cli orchestration roles list
-python3 -m src.cli orchestration roles add --role-id AGENT_PERF --display-name "性能优化师" --duties "性能测试" "负载分析"
-python3 -m src.cli orchestration roles activate --role-id AGENT_PERF --provider gemini_cli
-python3 -m src.cli orchestration roles deactivate --role-id AGENT_PERF
+python3 -m ai_collab.cli orchestration roles list
+python3 -m ai_collab.cli orchestration roles add --role-id AGENT_PERF --display-name "性能优化师" --duties "性能测试" "负载分析"
+python3 -m ai_collab.cli orchestration roles activate --role-id AGENT_PERF --provider gemini_cli
+python3 -m ai_collab.cli orchestration roles deactivate --role-id AGENT_PERF
 ```
 
 **交互流程**:
@@ -74,8 +74,8 @@ python3 -m src.cli orchestration roles deactivate --role-id AGENT_PERF
 
 **CLI 命令映射**:
 ```bash
-python3 -m src.cli orchestration bind
-python3 -m src.cli orchestration roles activate --role-id <ID> --provider <PROVIDER> --model-variant <VARIANT>
+python3 -m ai_collab.cli orchestration bind
+python3 -m ai_collab.cli orchestration roles activate --role-id <ID> --provider <PROVIDER> --model-variant <VARIANT>
 ```
 
 **SubAgent 模式说明**:
@@ -90,7 +90,7 @@ python3 -m src.cli orchestration roles activate --role-id <ID> --provider <PROVI
 **CLI 命令映射**:
 ```bash
 # 查看当前映射
-python3 -m src.cli orchestration status
+python3 -m ai_collab.cli orchestration status
 
 # 自定义命令需通过配置文件编辑
 # 或使用 CLI 快捷方式（待实现）
@@ -127,9 +127,9 @@ python3 -m src.cli orchestration status
 
 **CLI 命令映射**:
 ```bash
-python3 -m src.cli orchestration snapshot list
-python3 -m src.cli orchestration snapshot create --note "备份说明"
-python3 -m src.cli orchestration snapshot rollback --snapshot-id snap_001
+python3 -m ai_collab.cli orchestration snapshot list
+python3 -m ai_collab.cli orchestration snapshot create --note "备份说明"
+python3 -m ai_collab.cli orchestration snapshot rollback --snapshot-id snap_001
 ```
 
 **快照触发类型**:
@@ -161,7 +161,7 @@ python3 -m src.cli orchestration snapshot rollback --snapshot-id snap_001
 
 **CLI 命令映射**:
 ```bash
-python3 -m src.cli orchestration detect
+python3 -m ai_collab.cli orchestration detect
 ```
 
 **检测结果展示**:
@@ -179,7 +179,7 @@ python3 -m src.cli orchestration detect
 
 **CLI 命令映射**:
 ```bash
-python3 -m src.cli orchestration history --limit 20
+python3 -m ai_collab.cli orchestration history --limit 20
 ```
 
 **事件类型**:
@@ -233,7 +233,7 @@ python3 -m src.cli orchestration history --limit 20
 ## 技能实现方式
 
 **方案 A: CLI 包装**
-- 技能内部调用 `python3 -m src.cli orchestration ...` 命令
+- 技能内部调用 `python3 -m ai_collab.cli orchestration ...` 命令
 - 解析命令输出并格式化显示
 - 适用于 VSCode Extension 环境
 

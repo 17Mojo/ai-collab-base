@@ -43,7 +43,7 @@
 **推荐配置**:
 ```bash
 # 冷启动选择
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 # 选择 [1] 单 Agent 模式
 
 # 角色绑定
@@ -76,7 +76,7 @@ AGENT_TEST → 休眠
 **推荐配置**:
 ```bash
 # 冷启动选择
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 # 选择 [2] SubAgent 模式
 
 # 角色绑定
@@ -110,7 +110,7 @@ AGENT_TEST → Claude Code (Haiku)
 **推荐配置**:
 ```bash
 # 冷启动选择
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 # 选择 [3] 多 Agent 模式
 
 # 角色绑定

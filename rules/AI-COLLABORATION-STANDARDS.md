@@ -319,24 +319,24 @@ A.ACK|task=TASK-002|status=blocked|result=
 
 ```bash
 # 查看角色状态
-python3 -m src.cli orchestration status
+python3 -m ai_collab.cli orchestration status
 
 # 冷启动配置
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 
 # 检测 Agent 服务商
-python3 -m src.cli orchestration detect
+python3 -m ai_collab.cli orchestration detect
 
 # 角色管理
-python3 -m src.cli orchestration roles list
-python3 -m src.cli orchestration roles activate --role-id AGENT_EXEC --provider claude_code
+python3 -m ai_collab.cli orchestration roles list
+python3 -m ai_collab.cli orchestration roles activate --role-id AGENT_EXEC --provider claude_code
 
 # 快照管理
-python3 -m src.cli orchestration snapshot create --note "备份"
-python3 -m src.cli orchestration snapshot rollback --snapshot-id snap_001
+python3 -m ai_collab.cli orchestration snapshot create --note "备份"
+python3 -m ai_collab.cli orchestration snapshot rollback --snapshot-id snap_001
 
 # 查看历史
-python3 -m src.cli orchestration history --limit 20
+python3 -m ai_collab.cli orchestration history --limit 20
 ```
 
 ### 10.3 更新记录

@@ -231,16 +231,16 @@
 
 ```bash
 # 查看当前状态
-python3 -m src.cli orchestration status
+python3 -m ai_collab.cli orchestration status
 
 # 冷启动配置
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 
 # 检测 Agent 服务商
-python3 -m src.cli orchestration detect
+python3 -m ai_collab.cli orchestration detect
 
 # 角色管理
-python3 -m src.cli orchestration roles list
+python3 -m ai_collab.cli orchestration roles list
 ```
 
 ---

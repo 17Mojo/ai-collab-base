@@ -84,7 +84,7 @@ pip install -r requirements.txt
 
 ```bash
 # CLI 方式配置角色绑定
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 ```
 
 #### 4. 启动后端服务
@@ -153,28 +153,28 @@ ai-collab-base/
 
 ```bash
 # 查看当前角色绑定状态
-python3 -m src.cli orchestration status
+python3 -m ai_collab.cli orchestration status
 
 # 冷启动配置
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 
 # 检测可用 Agent 服务商
-python3 -m src.cli orchestration detect
+python3 -m ai_collab.cli orchestration detect
 
 # 角色管理
-python3 -m src.cli orchestration roles list
-python3 -m src.cli orchestration roles activate --role-id AGENT_EXEC --provider claude_code
-python3 -m src.cli orchestration roles deactivate --role-id AGENT_EXEC
+python3 -m ai_collab.cli orchestration roles list
+python3 -m ai_collab.cli orchestration roles activate --role-id AGENT_EXEC --provider claude_code
+python3 -m ai_collab.cli orchestration roles deactivate --role-id AGENT_EXEC
 
 # 快照管理
-python3 -m src.cli orchestration snapshot create --note "备份"
-python3 -m src.cli orchestration snapshot rollback --snapshot-id snap_001
+python3 -m ai_collab.cli orchestration snapshot create --note "备份"
+python3 -m ai_collab.cli orchestration snapshot rollback --snapshot-id snap_001
 
 # 查看变更历史
-python3 -m src.cli orchestration history --limit 20
+python3 -m ai_collab.cli orchestration history --limit 20
 
 # 系统状态
-python3 -m src.cli status --verbose
+python3 -m ai_collab.cli status --verbose
 ```
 
 ### 📖 详细文档
@@ -299,7 +299,7 @@ cd ai-collab-base
 pip install -r requirements.txt
 
 # Cold start configuration
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 
 # Start backend
 cd local-backend

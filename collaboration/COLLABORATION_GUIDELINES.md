@@ -80,7 +80,7 @@
 项目首次使用需执行冷启动配置：
 
 ```bash
-python3 -m src.cli orchestration cold-start
+python3 -m ai_collab.cli orchestration cold-start
 ```
 
 或通过 `/menu` 触发。
