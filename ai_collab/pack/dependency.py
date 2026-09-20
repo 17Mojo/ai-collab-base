@@ -57,7 +57,7 @@ class PackDependency:
         Returns:
             操作符和版本号列表
         """
-        result = []
+        result: list[tuple[ComparisonOperator, str]] = []
 
         # 处理 OR 操作符 |
         or_parts = self.version_range.split("|")

@@ -8,6 +8,7 @@ Pack 模板 CLI 命令
 
 import sys
 from pathlib import Path
+from typing import Any
 
 from ai_collab.pack.market_api import PackMarketAPI
 from ai_collab.pack.template import TemplateCategory, TemplateLibrary
@@ -61,7 +62,7 @@ class PackTemplateCLI:
             return 0
 
         # 按类别分组显示
-        grouped = {}
+        grouped: dict[str, list[Any]] = {}
         for template in templates:
             cat = template.category.value
             if cat not in grouped:
@@ -161,13 +162,19 @@ class PackTemplateCLI:
 
         print(f"Creating pack '{pack_name}' from template '{template_id}'...")
 
+        # 获取模板的 category
+        template_obj = self.library.get_template(template_id)
+        template_category = (
+            template_obj.category.value if template_obj else "general"
+        )
+
         # 创建 Pack
         result = self.api.create_pack(
             pack_name=pack_name,
             version="1.0.0",
             description=f"Created from template: {template_id}",
             author=author,
-            category=self.library.get_template(template_id).category.value,
+            category=template_category,
         )
 
         if result["success"]:

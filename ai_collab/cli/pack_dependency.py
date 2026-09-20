@@ -104,8 +104,8 @@ class PackDependencyCLI:
             update_data["dependencies"].append(dep.to_dict())
 
         # 更新 Pack
-        result = self.api.update_pack_version(
-            pack_id, update_data["version"], dependencies=update_data["dependencies"]
+        result = self.api.update_pack(
+            pack_id, version=update_data["version"]
         )
 
         if result["success"]:
@@ -263,8 +263,8 @@ class PackDependencyCLI:
             return 1
 
         # 更新 Pack
-        result = self.api.update_pack_version(
-            pack_id, pack.get("version", "1.0.0"), dependencies=new_deps
+        result = self.api.update_pack(
+            pack_id, version=pack.get("version", "1.0.0")
         )
 
         if result["success"]:

@@ -12,6 +12,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -49,11 +50,12 @@ def _get_cwd(hook_input: dict) -> Path:
     return Path(".")
 
 
-def _load_json(path: Path) -> dict:
+def _load_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        loaded_json: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return loaded_json
     except json.JSONDecodeError:
         return {}
 
@@ -210,7 +212,7 @@ def _read_state_drift(state_file: Path, workspace: Path, *, current_agent: str =
 
             hinted_result = _resolve_existing_path(workspace, patch.get("result_file"))
             task_id = str(patch.get("task_id", "")).strip()
-            expected_result = (
+            expected_result_path: Path | None = (
                 workspace / "collaboration" / "results" / f"RESULT_{task_id}.md"
                 if task_id
                 else None
