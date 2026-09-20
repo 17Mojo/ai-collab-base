@@ -42,7 +42,7 @@ class ValidationResult:
     pack_id: str | None = None
     pack_name: str | None = None
 
-    def add_error(self, path: str, message: str, suggestion: str = None):
+    def add_error(self, path: str, message: str, suggestion: str | None = None):
         self.issues.append(
             ValidationIssue(
                 path=path, message=message, severity=ValidationSeverity.ERROR, suggestion=suggestion
@@ -50,7 +50,7 @@ class ValidationResult:
         )
         self.is_valid = False
 
-    def add_warning(self, path: str, message: str, suggestion: str = None):
+    def add_warning(self, path: str, message: str, suggestion: str | None = None):
         self.issues.append(
             ValidationIssue(
                 path=path,
@@ -370,7 +370,7 @@ class PackSchemaValidator:
             return
 
         # 验证每个 step
-        step_ids = set()
+        step_ids: set[str] = set()
         for i, step in enumerate(steps):
             step_path = f"$.workflow.steps[{i}]"
             self._validate_step(step, step_path, result, step_ids)
@@ -560,7 +560,7 @@ def validate_all_packs(
     Returns:
         Dict[str, ValidationResult]: 文件路径到验证结果的映射
     """
-    results = {}
+    results: dict[str, ValidationResult] = {}
     pack_dir = Path(directory)
 
     if not pack_dir.exists():

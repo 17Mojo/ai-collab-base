@@ -146,7 +146,7 @@ class PromptResourceAggregator:
             Prompt列表
         """
         path = config["path"]
-        prompts = []
+        prompts: list[dict[str, Any]] = []
 
         if not os.path.exists(path):
             return prompts
@@ -269,13 +269,13 @@ class PromptResourceAggregator:
         prompts = self.fetch_all_prompts()
 
         # 按来源统计
-        by_source = {}
+        by_source: dict[str, int] = {}
         for prompt in prompts:
             source = prompt.get("source", "unknown")
             by_source[source] = by_source.get(source, 0) + 1
 
         # 按类别统计
-        by_category = {}
+        by_category: dict[str, int] = {}
         for prompt in prompts:
             category = prompt.get("category", "general")
             by_category[category] = by_category.get(category, 0) + 1

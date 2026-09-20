@@ -277,7 +277,7 @@ def run_spawn_agent_guard(
     report_rel = str(resolved["report"])
     history_rel = str(resolved["history"])
 
-    report = {
+    report: dict[str, Any] = {
         "timestamp": timestamp,
         "actor": actor_normalized,
         "mode": mode,

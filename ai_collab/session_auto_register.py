@@ -239,12 +239,16 @@ def _collect_codex_runtime_candidates(
     observed_at = ""
     for key in ("last_run_at", "last_synced_at", "last_plan_at"):
         candidate = str(runtime.get(key) or "").strip()
-        if _parse_iso(candidate):
-            if not observed_at or _parse_iso(candidate) >= _parse_iso(observed_at):
+        candidate_ts = _parse_iso(candidate)
+        if candidate_ts:
+            current_ts = _parse_iso(observed_at)
+            if not current_ts or candidate_ts >= current_ts:
                 observed_at = candidate
 
     seen_at = _parse_iso(observed_at)
-    if seen_at is None or seen_at < (_now() - max_age):
+    if seen_at is None:
+        return []
+    if seen_at < (_now() - max_age):
         return []
 
     return [

@@ -125,7 +125,9 @@ class PackVersion:
     def __le__(self, other: PackVersion) -> bool:
         return self.compare_to(other) <= 0
 
-    def __eq__(self, other: PackVersion) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PackVersion):
+            return NotImplemented
         return self.compare_to(other) == 0
 
     def __gt__(self, other: PackVersion) -> bool:
@@ -264,9 +266,10 @@ class PackVersionManager:
         history = self.get_version_history()
 
         # 记录当前版本的文件列表
-        current_files = list(self.pack_dir.glob("*"))
-        current_files = [
-            f.name for f in current_files if f.is_file() and not f.name.startswith(".")
+        current_files: list[str] = [
+            f.name
+            for f in self.pack_dir.glob("*")
+            if f.is_file() and not f.name.startswith(".")
         ]
 
         history_entry = PackVersionHistory(

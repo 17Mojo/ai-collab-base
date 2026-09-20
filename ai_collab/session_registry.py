@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .ack_protocol import SUPPORTED_ASSIGNEES
 
@@ -232,9 +232,10 @@ def register_session(
     )
 
     payload, sessions = _load_state(state_file)
-    existing = (
-        sessions.get(normalized_session_id)
-        if isinstance(sessions.get(normalized_session_id), dict)
+    existing_session = sessions.get(normalized_session_id)
+    existing: dict[str, Any] = (
+        cast(dict[str, Any], existing_session)
+        if isinstance(existing_session, dict)
         else {}
     )
     now = datetime.now().isoformat()
