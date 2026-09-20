@@ -9,11 +9,11 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, cast
+from typing import Any
 
 from ..integrations.multi_source import AggregatedKnowledge as AggregatedContext
 from ..integrations.multi_source import KnowledgeSource as ContextItem
-from .aggregator import AggregationContext, ContextAggregator
+from .aggregator import ContextAggregator
 
 
 class SearchMethod(Enum):

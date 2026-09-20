@@ -24,7 +24,7 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 from ..config.integration_flags import IntegrationMode, get_mode
 
