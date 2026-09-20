@@ -320,3 +320,128 @@ class TestBuildPreflightRequest:
         })
         assert "foo.py" in result["files"]
         assert "bar.py" in result["files"]
+
+
+
+class TestExtractExplicitFiles:
+    """_extract_explicit_files 覆盖测试"""
+
+    def test_files_from_tool_input_list(self, tmp_path: Path) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _extract_explicit_files
+        files, source = _extract_explicit_files(
+            {"files": ["foo.py", "bar.py"]},
+            "no files here",
+            tmp_path,
+        )
+        assert "foo.py" in files
+        assert "bar.py" in files
+        assert source == "tool_input.files"
+
+    def test_files_from_tool_input_paths(self, tmp_path: Path) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _extract_explicit_files
+        files, source = _extract_explicit_files(
+            {"paths": ["test.py"]},
+            "",
+            tmp_path,
+        )
+        assert files == ["test.py"]
+        assert source == "tool_input.paths"
+
+    def test_files_from_tool_input_scope_string(self, tmp_path: Path) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _extract_explicit_files
+        files, source = _extract_explicit_files(
+            {"scope": "foo.py bar.py"},
+            "",
+            tmp_path,
+        )
+        assert "foo.py" in files
+        assert source == "tool_input.scope"
+
+    def test_files_from_prompt_line(self, tmp_path: Path) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _extract_explicit_files
+        files, source = _extract_explicit_files(
+            {},
+            "Edit files: foo.py",
+            tmp_path,
+        )
+        assert "foo.py" in files
+        assert source == "prompt"
+
+    def test_files_from_action_hint(self, tmp_path: Path) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _extract_explicit_files
+        files, source = _extract_explicit_files(
+            {},
+            "Edit src/foo.py",
+            tmp_path,
+        )
+        assert "src/foo.py" in files
+        assert source == "prompt"
+
+    def test_negative_hint_skipped(self, tmp_path: Path) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _extract_explicit_files
+        files, source = _extract_explicit_files(
+            {},
+            "DO NOT touch src/foo.py",
+            tmp_path,
+        )
+        assert files == []
+        assert source == "missing"
+
+    def test_no_files_found(self, tmp_path: Path) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _extract_explicit_files
+        files, source = _extract_explicit_files({}, "no file info here", tmp_path)
+        assert files == []
+        assert source == "missing"
+
+
+class TestIsInternalReadOnlyParent:
+    """_is_internal_read_only_parent 覆盖测试"""
+
+    def test_read_only_false(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _is_internal_read_only_parent
+        assert _is_internal_read_only_parent("TASK-INTERNAL-1", False) is False
+
+    def test_internal_prefix_match(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _is_internal_read_only_parent
+        # INTERNAL_PARENT_PREFIXES = ("INTERNAL-CODEX-",)
+        assert _is_internal_read_only_parent("INTERNAL-CODEX-PARALLEL-12345", True) is True
+
+    def test_non_internal_task(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _is_internal_read_only_parent
+        assert _is_internal_read_only_parent("TASK-NORMAL-1", True) is False
+
+    def test_empty_task_id(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _is_internal_read_only_parent
+        assert _is_internal_read_only_parent("", True) is False
+        assert _is_internal_read_only_parent(None, True) is False
+
+
+class TestParseBool:
+    """_parse_bool 覆盖测试"""
+
+    def test_parse_bool_true_values(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _parse_bool
+        for val in ["true", "True", "TRUE", "1", "yes"]:
+            assert _parse_bool(val) is True
+
+    def test_parse_bool_false_values(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _parse_bool
+        for val in ["false", "False", "FALSE", "0", "no"]:
+            assert _parse_bool(val) is False
+
+    def test_parse_bool_none_for_invalid(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _parse_bool
+        assert _parse_bool("maybe") is None
+        assert _parse_bool("") is None
+        assert _parse_bool(None) is None
+
+
+class TestDenyOutput:
+    """_deny_output 覆盖测试"""
+
+    def test_deny_output_structure(self) -> None:
+        from ai_collab.hooks.spawn_agent_preflight import _deny_output
+        result = _deny_output("test reason")
+        assert result["hookSpecificOutput"]["hookEventName"] == "PreToolUse"
+        assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+        assert result["hookSpecificOutput"]["permissionDecisionReason"] == "test reason"

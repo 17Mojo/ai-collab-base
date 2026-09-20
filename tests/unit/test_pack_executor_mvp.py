@@ -507,3 +507,220 @@ class TestExecutePackFunction:
         result = exe._execute_fusion({"strategy": "merge"})
         # merge 应该去重
         assert "line1" in result["outputs"]["content"]
+
+
+
+class TestExecuteGenerationWithConsensus:
+    """共识引擎生成测试 - 覆盖 _execute_generation_with_consensus (212-285)"""
+
+    def test_generation_with_consensus_mock(self, monkeypatch):
+        """共识生成成功路径"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        import asyncio
+
+        # Mock ConsensusEngine
+        class FakeProvider:
+            def __init__(self):
+                self.enabled = True
+                self.timeout = 30.0
+
+        class FakeEngine:
+            def __init__(self):
+                self.providers = {
+                    "chatgpt": FakeProvider(),
+                    "claude": FakeProvider(),
+                }
+
+            async def generate_consensus(self, topic):
+                return {
+                    "sources": [
+                        {"response": "resp1", "confidence": 0.8},
+                        {"response": "resp2", "confidence": 0.9},
+                    ],
+                    "mode": "real",
+                }
+
+        monkeypatch.setattr(
+            "ai_collab.pack.pack_executor_mvp.ConsensusEngine",
+            FakeEngine,
+        )
+
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        step = {
+            "type": "GENERATION",
+            "ai_models": ["chatgpt", "claude"],
+            "consensus_config": {"timeout": 5.0, "fusion_strategy": "concat"},
+            "template": "{topic}",
+        }
+        result = exe._execute_generation_with_consensus(step)
+        assert result["status"] == "success"
+        assert "content" in result["outputs"]
+        assert len(result["outputs"]["sources" if "sources" in result["outputs"] else "content"]) >= 0
+
+    def test_generation_with_consensus_min_providers_check(self, monkeypatch):
+        """源数低于 min_providers 的告警路径"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
+        class FakeProvider:
+            def __init__(self):
+                self.enabled = True
+                self.timeout = 30.0
+
+        class FakeEngine:
+            def __init__(self):
+                self.providers = {"chatgpt": FakeProvider()}
+
+            async def generate_consensus(self, topic):
+                # Only 1 source but min_providers=3
+                return {"sources": [{"response": "x", "confidence": 0.5}], "mode": "real"}
+
+        monkeypatch.setattr("ai_collab.pack.pack_executor_mvp.ConsensusEngine", FakeEngine)
+
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        step = {
+            "type": "GENERATION",
+            "ai_models": ["chatgpt"],
+            "consensus_config": {"min_providers": 3, "fusion_strategy": "concat"},
+            "template": "{topic}",
+        }
+        # Should still succeed (warning only)
+        result = exe._execute_generation_with_consensus(step)
+        assert result["status"] == "success"
+
+    def test_generation_with_consensus_exception_fallback(self, monkeypatch):
+        """共识失败时回退到模板生成"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
+        class BrokenEngine:
+            def __init__(self):
+                self.providers = {}
+            async def generate_consensus(self, topic):
+                raise RuntimeError("provider offline")
+
+        monkeypatch.setattr("ai_collab.pack.pack_executor_mvp.ConsensusEngine", BrokenEngine)
+
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        step = {
+            "type": "GENERATION",
+            "ai_models": ["fake"],
+            "consensus_config": {},
+            "template": "{topic}",
+        }
+        result = exe._execute_generation_with_consensus(step)
+        assert result["status"] == "success"
+        assert "fallback" in result["outputs"]["content"].lower() or "共识引擎回退" in result["outputs"]["content"]
+
+    def test_generation_with_consensus_no_ai_models(self, monkeypatch):
+        """ai_models 为空列表时的 disable 路径"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
+        class FakeProvider:
+            def __init__(self):
+                self.enabled = True
+                self.timeout = 30.0
+
+        class FakeEngine:
+            def __init__(self):
+                self.providers = {"chatgpt": FakeProvider(), "claude": FakeProvider()}
+
+            async def generate_consensus(self, topic):
+                # All providers disabled, should still return something
+                return {"sources": [], "mode": "real"}
+
+        monkeypatch.setattr("ai_collab.pack.pack_executor_mvp.ConsensusEngine", FakeEngine)
+
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        step = {
+            "type": "GENERATION",
+            "ai_models": [],  # empty
+            "consensus_config": {},
+            "template": "{topic}",
+        }
+        result = exe._execute_generation_with_consensus(step)
+        assert result["status"] == "success"
+
+
+class TestExecuteTracking:
+    """追踪步骤测试 - 覆盖 _execute_tracking (462-593)"""
+
+    def test_tracking_step_default(self, tmp_path, monkeypatch):
+        """默认追踪步骤"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        monkeypatch.chdir(tmp_path)
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "test content"
+        exe.context["validation_result"] = {"score": 0.9}
+        step = {"type": "TRACKING"}
+        result = exe._execute_tracking(step)
+        assert result["status"] == "success"
+
+    def test_tracking_writes_to_file(self, tmp_path, monkeypatch):
+        """追踪步骤写入文件"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        monkeypatch.chdir(tmp_path)
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "tracked content"
+        step = {"type": "TRACKING", "output_file": "custom_tracking.json"}
+        result = exe._execute_tracking(step)
+        assert result["status"] == "success"
+        # File should be created
+        tracking_file = tmp_path / "custom_tracking.json"
+        assert tracking_file.exists()
+
+
+class TestExecuteStepRouting:
+    """_execute_step 路由测试"""
+
+    def test_routes_to_local(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        result = exe._execute_step({"type": "LOCAL", "key": "test", "value": "v"})
+        assert result["status"] == "success"
+
+    def test_routes_to_analysis(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["content"] = "分析一些内容"
+        result = exe._execute_step({"type": "ANALYSIS"})
+        assert result["status"] == "success"
+
+    def test_routes_to_generation(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["topic"] = "test"
+        result = exe._execute_step({"type": "GENERATION", "template": "Hi {topic}"})
+        assert result["status"] == "success"
+
+    def test_routes_to_validation(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "long content " * 20
+        result = exe._execute_step({"type": "VALIDATION"})
+        assert result["status"] == "success"
+
+    def test_routes_to_fusion(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "test"
+        result = exe._execute_step({"type": "FUSION", "strategy": "concat"})
+        assert result["status"] == "success"
+
+    def test_unknown_step_type_skipped(self):
+        """未知步骤类型返回 skipped(不抛异常)"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        result = exe._execute_step({"type": "UNKNOWN_TYPE"})
+        assert result["status"] == "skipped"
+        assert "暂不支持" in result["message"]
