@@ -1,0 +1,10 @@
+# Hermes Configuration (添加自 TASK-P0-CONSENSUS-ENGINE-001)
+engines:
+  consensus:
+    enabled: true
+    max_concurrent: 5
+    global_timeout: 60
+    retry:
+      max_retries: 3
+      backoff: exponential
+    fallback_mode: partial
