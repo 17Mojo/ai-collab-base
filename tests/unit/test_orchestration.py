@@ -492,3 +492,77 @@ class TestOrchestrationColdStartWizard:
         cfg.update_binding_status()
         # 没有 role 时为 UNINITIALIZED
         assert cfg.get_binding_status().value in ("active", "minimal", "partial", "uninitialized")
+
+
+
+class TestOrchestrationSaveDefaultConfig:
+    """_create_default_config + load full paths 覆盖"""
+
+    def test_create_default_config_then_load(self, tmp_path):
+        """create_default_config 创建默认配置 + load 读取"""
+        from ai_collab.orchestration import OrchestrationConfig
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        # 强制创建默认配置(无文件存在)
+        cfg._create_default_config()
+        # 验证 config 有 roles 等字段
+        assert "roles" in cfg.config
+
+    def test_load_with_provider_registry(self, tmp_path):
+        """load() 解析 provider_registry"""
+        from ai_collab.orchestration import OrchestrationConfig
+        import json
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        # 手动写一个完整的 config 文件
+        config_data = {
+            "roles": {},
+            "provider_registry": {
+                "test_provider": {
+                    "name": "TestProvider",
+                    "connection_status": "connected",
+                    "last_check": "2026-01-01T00:00:00"
+                }
+            },
+            "binding_status": "active"
+        }
+        cfg_file = cfg.config_file
+        with open(cfg_file, "w", encoding="utf-8") as f:
+            json.dump(config_data, f)
+        # load 应解析 provider_registry
+        assert cfg.load() is True
+        assert "test_provider" in cfg.providers
+        assert cfg.providers["test_provider"].last_check is not None
+
+    def test_load_handles_OSError(self, tmp_path, monkeypatch):
+        """load() 文件读取异常"""
+        from ai_collab.orchestration import OrchestrationConfig
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        # write OK first
+        with open(cfg.config_file, "w") as f:
+            f.write('{"roles": {}}')
+
+        def broken_open(*args, **kwargs):
+            raise OSError("disk failure")
+        monkeypatch.setattr("builtins.open", broken_open)
+        # Should return False
+        assert cfg.load() is False
+
+    def test_save_OSError_returns_false(self, tmp_path, monkeypatch):
+        """save() 写入异常"""
+        from ai_collab.orchestration import OrchestrationConfig
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+
+        def broken_open(*args, **kwargs):
+            raise OSError("disk full")
+        monkeypatch.setattr("builtins.open", broken_open)
+        # Should return False on error
+        assert cfg.save() is False
+
+    def test_save_with_providers(self, tmp_path):
+        """save() 序列化 providers"""
+        from ai_collab.orchestration import OrchestrationConfig
+        from datetime import datetime
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg.providers["test_p"] = type("P", (), {})()
+        cfg.providers["test_p"].to_dict = lambda: {"name": "test"}
+        # Should not raise
+        assert cfg.save() is True

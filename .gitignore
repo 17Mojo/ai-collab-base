@@ -126,3 +126,7 @@ notifications/
 .copilot_notification.json
 .user_notification.json
 .test_tracking_history.json
+
+# Coverage reports
+coverage.xml
+.coverage.*.lock
