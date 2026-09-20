@@ -9,7 +9,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 from ..integrations.multi_source import AggregatedKnowledge as AggregatedContext
 from ..integrations.multi_source import KnowledgeSource as ContextItem
@@ -342,7 +342,7 @@ class ContextSearchEngine:
         self,
         results: list[SearchResult],
         scope: SearchScope,
-        history: list["AggregationContext"],  # 修正: 真实类型, 之前别名误指 AggregatedKnowledge
+        history: list[AggregatedContext],
         query: SearchQuery | None = None,
     ) -> list[SearchResult]:
         """按范围过滤
@@ -364,11 +364,11 @@ class ContextSearchEngine:
         high_confidence_items = {}
         by_source_items = defaultdict(list)
 
-        # 收集最近 10 项 (修复: AggregationContext 没有 items 字段, 应读 result.sources)
+        # 收集最近 10 项 (AggregatedContext = AggregatedKnowledge, 有 sources 字段)
         for ctx in history[-10:]:
-            if ctx.result is None:
+            if not isinstance(ctx, AggregatedContext):
                 continue
-            for item in ctx.result.sources:
+            for item in ctx.sources:
                 recent_items[item.source_id] = item
 
                 # 按置信度分类 (修复: KnowledgeSource 用 confidence 字段, 不是 score)

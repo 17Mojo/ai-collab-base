@@ -72,9 +72,10 @@ class BulkOperation:
     def from_dict(cls, data: dict[str, Any]) -> "BulkOperation":
         """反序列化"""
         created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None
+        updated_at_raw = data.get("updated_at")
         updated_at = (
-            datetime.fromisoformat(data.get("updated_at", data.get("created_at")))
-            if data.get("updated_at")
+            datetime.fromisoformat(str(updated_at_raw))
+            if updated_at_raw
             else None
         )
 

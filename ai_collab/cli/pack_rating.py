@@ -200,7 +200,7 @@ class PackRatingCLI:
             print("✗ Failed to delete rating")
             return 1
 
-    def stats(self, pack_id: str = None) -> int:
+    def stats(self, pack_id: str | None = None) -> int:
         """获取评分统计信息
 
         Args:

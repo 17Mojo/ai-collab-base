@@ -172,9 +172,11 @@ class PackBulkCLI:
         print(f"Failed: {result.failed}")
         print(f"Success Rate: {result.success_rate:.2f}%")
 
-        if result.completed_at:
+        if result.completed_at is not None and result.started_at is not None:
             elapsed = (result.completed_at - result.started_at).total_seconds()
             print(f"Elapsed Time: {elapsed:.2f}s")
+        else:
+            print("Elapsed Time: N/A")
 
         print()
 
@@ -248,9 +250,11 @@ class PackBulkCLI:
         print(f"Failed: {result.failed}")
         print(f"Success Rate: {result.success_rate:.2f}%")
 
-        if result.completed_at:
+        if result.completed_at is not None and result.started_at is not None:
             elapsed = (result.completed_at - result.started_at).total_seconds()
             print(f"Elapsed Time: {elapsed:.2f}s")
+        else:
+            print("Elapsed Time: N/A")
 
         # 显示详细结果
         if result.results and result.failed > 0:

@@ -276,8 +276,8 @@ class ScenarioDetector:
             matched_count += len(matches)
 
         # 获取相关文件总数
-        for file_path in self.root_dir.rglob("*"):  # type: Path
-            if file_path.is_file():
+        for project_file in self.root_dir.rglob("*"):  # type: Path
+            if project_file.is_file():
                 total_count += 1
 
         if total_count > 0:

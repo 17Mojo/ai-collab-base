@@ -219,7 +219,7 @@ def _read_state_drift(state_file: Path, workspace: Path, *, current_agent: str =
             )
 
             if hinted_result is not None or (
-                expected_result is not None and expected_result.exists()
+                expected_result_path is not None and expected_result_path.exists()
             ):
                 drifts.append(f"patch {patch_id} ({status})")
 

@@ -192,7 +192,7 @@ class ConsensusEngine:
                 self._logger.warning(f"[Consensus] Provider {provider_name} 失败: {result}")
             elif result is not None and isinstance(result, dict):
                 # 归一化结果格式
-                normalized = self._normalize_response(cast(dict[str, Any], result), provider_name)
+                normalized = self._normalize_response(result, provider_name)
                 successful_results.append(normalized)
 
         if not successful_results:

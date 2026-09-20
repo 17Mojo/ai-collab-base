@@ -26,7 +26,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import aiohttp
 
@@ -400,7 +400,8 @@ class SoulInjectionEngine:
                         if response.status == 200:
                             result = await response.json()
                             if "personalized_content" in result:
-                                return result["personalized_content"]
+                                content_value = cast(str, result["personalized_content"])
+                                return content_value
                             else:
                                 raise SoulServiceError(
                                     "响应格式错误: 缺少 personalized_content",

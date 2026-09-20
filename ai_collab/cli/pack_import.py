@@ -82,7 +82,7 @@ class PackImportExportCLI:
             if path.suffix == ".json":
                 data = json.loads(content)
             else:
-                import yaml
+                import yaml  # type: ignore[import-untyped]
 
                 data = yaml.safe_load(content)
 

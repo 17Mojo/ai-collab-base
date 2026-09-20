@@ -78,12 +78,12 @@ class PackDependency:
         if len(and_parts) > 1:
             # 多个 AND 条件:每个都解析
             for and_part in and_parts:
-                result.extend(self._parse_single_range(and_part))
+                result.append(self._parse_single_range(and_part))
             return result
 
         # 解析单个范围
         for range_expr in and_parts:
-            result.extend(self._parse_single_range(range_expr))
+            result.append(self._parse_single_range(range_expr))
 
         return result
 

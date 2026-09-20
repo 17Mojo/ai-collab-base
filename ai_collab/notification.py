@@ -9,7 +9,7 @@
 
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 
 class NotificationMode:
@@ -89,12 +89,13 @@ class NotificationQueue:
 
         os.makedirs(self.NOTIFICATION_DIR, exist_ok=True)
 
-    def _load_queue(self) -> list[dict]:
+    def _load_queue(self) -> list[dict[str, Any]]:
         """加载消息队列"""
         try:
             with open(self.queue_file) as f:
-                data = json.load(f)
-                return data.get("messages", [])
+                data: dict[str, Any] = json.load(f)
+                messages = data.get("messages", [])
+                return cast(list[dict[str, Any]], messages)
         except (OSError, json.JSONDecodeError):
             return []
 

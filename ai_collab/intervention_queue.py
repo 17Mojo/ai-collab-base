@@ -6,7 +6,7 @@ import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from .ack_protocol import SUPPORTED_ASSIGNEES, load_json, write_json
@@ -584,7 +584,8 @@ def render_intervention_summary_markdown(
         mode="summary",
         summary_file=summary_file,
     )
-    return (workspace / report["summary_file"]).read_text(encoding="utf-8")
+    summary_path_str = cast(str, report["summary_file"])
+    return str((workspace / summary_path_str).read_text(encoding="utf-8"))
 
 
 def run_intervention_queue_summary(

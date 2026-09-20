@@ -367,7 +367,12 @@ if __name__ == "__main__":
     coding_context.add_ai_session(session)
 
     print(f"\n会话数量: {len(coding_context.ai_sessions)}")
-    print(f"最新会话: {coding_context.get_latest_session().session_id}")
+    # 类型守卫: get_latest_session 可能返回 None
+    latest_session_obj: Any = coding_context.get_latest_session()
+    if latest_session_obj is not None:
+        print(f"\n最新会话: {latest_session_obj.session_id}")
+    else:
+        print("\n最新会话: None")
 
     # 序列化
     print(f"\n序列化大小: {len(json.dumps(coding_context.to_dict()).encode())} bytes")

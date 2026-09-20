@@ -229,7 +229,8 @@ class HandoffManager:
         handoff_file = self._get_handoff_file(handoff_id)
         try:
             with open(handoff_file, encoding="utf-8") as f:
-                return json.load(f)
+                loaded: dict[str, Any] = json.load(f)
+                return loaded
         except (OSError, json.JSONDecodeError):
             return None
 

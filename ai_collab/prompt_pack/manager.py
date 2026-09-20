@@ -110,7 +110,11 @@ class PackManager:
 
             if pack_name in visited:
                 # 已经解析过
-                return self._packs_cache.get(pack_name)
+                cached = self._packs_cache.get(pack_name)
+                if cached is not None:
+                    return cached
+                # 缓存丢失,重新加载
+                return self.load_pack(pack_name)
 
             # 加载 Pack
             sub_pack = self.load_pack(pack_name)

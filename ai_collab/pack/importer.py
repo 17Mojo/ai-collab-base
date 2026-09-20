@@ -13,7 +13,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from .market import PackListing
 
@@ -77,7 +77,8 @@ class PackExport:
 
     def to_yaml(self) -> str:
         """转换为 YAML"""
-        return yaml.dump(self.to_dict(), default_flow_style=False, allow_unicode=True)
+        dumped: str = yaml.dump(self.to_dict(), default_flow_style=False, allow_unicode=True)
+        return dumped
 
 
 @dataclass

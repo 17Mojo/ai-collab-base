@@ -44,7 +44,7 @@ class PackIndexEntry:
     downloads: int = 0
     rating: float = 0.0
     review_count: int = 0
-    tags: list[str] = None
+    tags: list[str] | None = None
 
     def __post_init__(self):
         if self.tags is None:
@@ -264,7 +264,7 @@ class PackSearchEngine:
                 continue
 
             # 匹配标签
-            if any(query_lower in tag.lower() for tag in entry.tags):
+            if entry.tags and any(query_lower in tag.lower() for tag in entry.tags):
                 results.append(entry)
                 continue
 

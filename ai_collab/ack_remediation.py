@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .ack_protocol import (
     is_explicit_ack_source,
@@ -195,7 +195,7 @@ def run_ack_remediation(
         build_summary_markdown(
             report=report,
             flagged_tasks=flagged_tasks,
-            already_flagged_tasks=report["already_flagged_tasks"],
+            already_flagged_tasks=cast(list[dict[str, Any]], report["already_flagged_tasks"]),
         ),
         encoding="utf-8",
     )

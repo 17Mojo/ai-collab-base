@@ -137,15 +137,15 @@ class PackExecutorMVP:
         print("  🔍 分析内容...")
 
         # MVP版本：简单分析
-        analysis_result = {"keywords": [], "sentiment": "neutral", "category": "general"}
+        analysis_result: dict[str, Any] = {"keywords": [], "sentiment": "neutral", "category": "general"}
 
         # 从上下文获取内容
         content = self.context.get("content", "")
         if content:
             # 简单关键词提取（MVP版本）
             words = content.split()
-            analysis_result["keywords"] = words[:5]  # 取前5个词
-            analysis_result["word_count"] = len(words)
+            analysis_result["keywords"] = cast(list[str], words[:5])  # 取前5个词
+            analysis_result["word_count"] = int(len(words))
             print(f"     - 关键词: {analysis_result['keywords'][:3]}")
             print(f"     - 字数: {analysis_result['word_count']}")
 
