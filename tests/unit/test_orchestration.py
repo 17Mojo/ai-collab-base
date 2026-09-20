@@ -167,3 +167,193 @@ class TestOrchestrationConfig:
         assert "A.RUN" in prefixes
         assert "X.RUN" in prefixes
         assert "C.RUN" in prefixes
+
+
+
+class TestAgentProviderCheckAvailability:
+    def test_claude_code_always_available(self):
+        p_obj = AgentProvider("claude_code", {})
+        assert p_obj.check_availability() is True
+        assert p_obj.connection_status.value == "connected"
+        assert p_obj.last_check is not None
+
+    def test_codearts_agent_available_when_vscode(self, monkeypatch):
+        monkeypatch.setenv("VSCODE_PID", "12345")
+        p_obj = AgentProvider("codearts_agent", {})
+        assert p_obj.check_availability() is True
+
+    def test_codearts_agent_unavailable_without_vscode(self, monkeypatch):
+        monkeypatch.delenv("VSCODE_PID", raising=False)
+        monkeypatch.delenv("CODEARTS_SESSION", raising=False)
+        p_obj = AgentProvider("codearts_agent", {})
+        assert p_obj.check_availability() is False
+        assert p_obj.connection_status.value == "unavailable"
+
+    def test_cli_provider_detected_via_which(self, monkeypatch):
+        class FakeResult:
+            returncode = 0
+            stdout = b"/usr/bin/codex"
+            stderr = b""
+        monkeypatch.setattr(
+            "ai_collab.orchestration.subprocess.run",
+            lambda *a, **kw: FakeResult()
+        )
+        p_obj = AgentProvider("codex_cli", {})
+        assert p_obj.check_availability() is True
+        assert p_obj.connection_status.value == "detected"
+
+    def test_cli_provider_unavailable_when_which_fails(self, monkeypatch):
+        class FakeResult:
+            returncode = 1
+            stdout = b""
+            stderr = b"not found"
+        monkeypatch.setattr(
+            "ai_collab.orchestration.subprocess.run",
+            lambda *a, **kw: FakeResult()
+        )
+        p_obj = AgentProvider("codex_cli", {})
+        assert p_obj.check_availability() is False
+
+    def test_cli_provider_handles_timeout(self, monkeypatch):
+        import subprocess as sp_mod
+        def fake_run(*a, **kw):
+            raise sp_mod.TimeoutExpired(cmd="x", timeout=5)
+        monkeypatch.setattr("ai_collab.orchestration.subprocess.run", fake_run)
+        p_obj = AgentProvider("codex_cli", {})
+        assert p_obj.check_availability() is False
+
+    def test_unknown_provider_unavailable(self):
+        p_obj = AgentProvider("totally_unknown_xyz", {})
+        assert p_obj.check_availability() is False
+
+
+class TestOrchestrationConfigLifecycle:
+    def test_create_default_config_and_load(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        assert cfg.load() is True
+        assert os.path.exists(cfg.config_file)
+
+    def test_save_and_reload(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg.roles["AGENT_EXEC"] = OrchestrationRole(
+            role_id="AGENT_EXEC",
+            display_name="执行",
+            duties=["实现"],
+            required_capabilities=["code"],
+            raci_role="R",
+        )
+        cfg.roles["AGENT_EXEC"].activate("claude_code", "sonnet")
+        assert cfg.save() is True
+        assert os.path.exists(cfg.config_file)
+        cfg2 = OrchestrationConfig(workspace_path=str(tmp_path))
+        assert cfg2.load() is True
+        assert "AGENT_EXEC" in cfg2.roles
+
+    def test_save_creates_file(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg.config["custom_field"] = "value"
+        assert cfg.save() is True
+
+    def test_load_handles_invalid_json(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg_file = cfg.config_file
+        with open(cfg_file, "w", encoding="utf-8") as f:
+            f.write("{invalid json")
+        result = cfg.load()
+        assert result is False
+
+
+class TestOrchestrationConfigStatus:
+    def test_get_binding_status_initially_uninitialized(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        assert cfg.get_binding_status() == BindingStatus.UNINITIALIZED
+
+    def test_update_binding_status_minimal(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg.roles["R1"] = OrchestrationRole(
+            role_id="R1", display_name="d", duties=["d"],
+            required_capabilities=["d"], raci_role="R",
+        )
+        cfg.roles["R1"].activate("claude_code")
+        cfg.update_binding_status()
+        assert cfg.config["binding_status"] == BindingStatus.MINIMAL.value
+
+    def test_update_binding_status_partial(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        for i in range(3):
+            rid = f"R{i}"
+            cfg.roles[rid] = OrchestrationRole(
+                role_id=rid, display_name="d", duties=["d"],
+                required_capabilities=["d"], raci_role="R",
+            )
+        cfg.roles["R0"].activate("claude_code")
+        cfg.roles["R1"].activate("claude_code")
+        cfg.update_binding_status()
+        assert cfg.config["binding_status"] == BindingStatus.PARTIAL.value
+
+    def test_update_binding_status_active(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        for rid in ["R1", "R2"]:
+            cfg.roles[rid] = OrchestrationRole(
+                role_id=rid, display_name="d", duties=["d"],
+                required_capabilities=["d"], raci_role="R",
+            )
+            cfg.roles[rid].activate("claude_code")
+        cfg.update_binding_status()
+        assert cfg.config["binding_status"] == BindingStatus.ACTIVE.value
+
+    def test_is_cold_start_needed_initial(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        assert cfg.is_cold_start_needed() is True
+
+    def test_is_cold_start_not_needed_after_wizard(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg.config["binding_status"] = BindingStatus.ACTIVE.value
+        cfg.config["cold_start_config"] = {"wizard_completed": True}
+        assert cfg.is_cold_start_needed() is False
+
+
+class TestOrchestrationConfigProviders:
+    def test_detect_providers(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        providers = cfg.detect_providers()
+        assert "claude_code" in providers
+
+    def test_get_available_providers_filters(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg.providers["p1"] = AgentProvider("p1", {})
+        cfg.providers["p1"].connection_status = ProviderConnectionStatus.CONNECTED
+        cfg.providers["p2"] = AgentProvider("p2", {})
+        cfg.providers["p2"].connection_status = ProviderConnectionStatus.UNAVAILABLE
+        available = cfg.get_available_providers()
+        assert len(available) == 1
+        assert available[0].provider_id == "p1"
+
+
+class TestOrchestrationConfigHistory:
+    def test_add_history_event(self, tmp_path):
+        cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        cfg.config["history"] = []
+        cfg.add_history_event("test_event", {"key": "value"})
+        assert len(cfg.config["history"]) == 1
+        assert cfg.config["history"][0]["event"] == "test_event"
+
+
+class TestOrchestrationRoleActivate:
+    def test_activate_sets_timestamp(self):
+        role = OrchestrationRole(
+            role_id="R", display_name="d", duties=["d"],
+            required_capabilities=["d"], raci_role="R",
+        )
+        assert role.activated_at is None
+        role.activate("claude_code")
+        assert role.activated_at is not None
+
+    def test_to_dict_with_none_timestamps(self):
+        role = OrchestrationRole(
+            role_id="R", display_name="d", duties=["d"],
+            required_capabilities=["d"], raci_role="R",
+        )
+        d = role.to_dict()
+        assert d["created_at"] is None
+        assert d["activated_at"] is None

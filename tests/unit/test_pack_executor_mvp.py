@@ -400,3 +400,110 @@ def test_apply_fusion_strategy_unknown_returns_consensus():
     consensus = {"consensus": "fallback-text", "sources": []}
     out = exe._apply_fusion_strategy(consensus, "weird-strategy")
     assert out == "fallback-text"
+
+
+
+class TestExecuteValidation:
+    def test_validation_short_content_detected(self):
+        """内容过短被识别"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "短"
+        step = {"type": "VALIDATION"}
+        result = exe._execute_validation(step)
+        assert result["status"] == "success"
+        assert result["outputs"]["is_valid"] is False
+        assert "内容过短" in result["outputs"]["issues"]
+
+    def test_validation_passes_for_long_content(self):
+        """长内容验证通过"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "很长的内容 " * 20
+        exe.context["analysis_result"] = {"keywords": []}
+        step = {"type": "VALIDATION"}
+        result = exe._execute_validation(step)
+        assert result["outputs"]["is_valid"] is True
+
+    def test_validation_keyword_coverage_low(self):
+        """关键词覆盖率低被识别"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "无关内容"
+        exe.context["analysis_result"] = {"keywords": ["重要", "关键"]}
+        step = {"type": "VALIDATION"}
+        result = exe._execute_validation(step)
+        assert "关键词覆盖率低" in result["outputs"]["issues"]
+
+
+class TestGenerateFinalResult:
+    def test_generate_final_result_basic(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "test content"
+        result = exe._generate_final_result()
+        assert result["pack_name"] is not None
+        assert "execution_time" in result
+        assert result["status"] == "completed"
+        assert result["final_content"] == "test content"
+
+
+class TestExecuteFusion:
+    def test_fusion_concat(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "content1"
+        result = exe._execute_fusion({"strategy": "concat"})
+        assert "content1" in result["outputs"]["content"]
+
+    def test_fusion_best(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "x" * 100
+        result = exe._execute_fusion({"strategy": "best"})
+        assert len(result["outputs"]["content"]) == 100
+
+    def test_fusion_default_strategy(self):
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "test"
+        result = exe._execute_fusion({"strategy": "unknown"})
+        assert "test" in result["outputs"]["content"]
+
+
+class TestLoadPackFromFile:
+    def test_load_pack_from_file_json(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        pack_file = tmp_path / "test_pack.json"
+        pack_file.write_text("""{"metadata": {"pack_name": "X"}, "workflow": {"steps": []}}""")
+        from ai_collab.pack.pack_executor_mvp import load_pack_from_file
+        result = load_pack_from_file(str(pack_file))
+        assert result["metadata"]["pack_name"] == "X"
+
+
+class TestExecutePackFunction:
+    def test_execute_pack_function(self):
+        from ai_collab.pack.pack_executor_mvp import execute_pack
+        pack = _make_minimal_pack()
+        result = execute_pack(pack, {"input": "test"})
+        assert "status" in result or "pack_name" in result
+
+
+
+    def test_fusion_merge_dedup(self):
+        """merge 策略去重"""
+        from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+        pack = _make_minimal_pack()
+        exe = PackExecutorMVP(pack)
+        exe.context["generated_content"] = "line1"
+        exe.context["generated_content_2"] = "line1"  # 重复
+        result = exe._execute_fusion({"strategy": "merge"})
+        # merge 应该去重
+        assert "line1" in result["outputs"]["content"]

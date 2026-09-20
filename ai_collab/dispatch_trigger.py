@@ -244,7 +244,7 @@ def check_payload_freshness(
         # Parse payload timestamp
         payload_time = datetime.fromisoformat(payload_generated_at.replace("Z", "+00:00"))
     except (ValueError, TypeError):
-        result_payload_1 = {
+        result = {
             "is_fresh": False,
             "age_minutes": None,
             "dispatch_generated_at": None,
@@ -252,14 +252,14 @@ def check_payload_freshness(
             "fix_command": None,
         }
         if record_stats:
-            get_freshness_stats().record_check(result_payload_1)
-        return result_payload_1
+            get_freshness_stats().record_check(result)
+        return result
 
     # Read dispatch report
     try:
         report_path = Path(dispatch_report_path)
         if not report_path.exists():
-            result_payload_2 = {
+            result = {
                 "is_fresh": False,
                 "age_minutes": None,
                 "dispatch_generated_at": None,
@@ -267,13 +267,13 @@ def check_payload_freshness(
                 "fix_command": refresh_command,
             }
             if record_stats:
-                get_freshness_stats().record_check(result_payload_2)
-            return result_payload_2
+                get_freshness_stats().record_check(result)
+            return result
 
         report_data = json.loads(report_path.read_text(encoding="utf-8"))
         dispatch_generated_at = report_data.get("generated_at")
         if not dispatch_generated_at:
-            result_payload_3 = {
+            result = {
                 "is_fresh": False,
                 "age_minutes": None,
                 "dispatch_generated_at": None,
@@ -281,13 +281,13 @@ def check_payload_freshness(
                 "fix_command": refresh_command,
             }
             if record_stats:
-                get_freshness_stats().record_check(result_payload_3)
-            return result_payload_3
+                get_freshness_stats().record_check(result)
+            return result
 
         # Parse dispatch timestamp
         dispatch_time = datetime.fromisoformat(dispatch_generated_at.replace("Z", "+00:00"))
     except (json.JSONDecodeError, ValueError, TypeError) as exc:
-        result_payload_4 = {
+        result = {
             "is_fresh": False,
             "age_minutes": None,
             "dispatch_generated_at": None,
@@ -295,16 +295,16 @@ def check_payload_freshness(
             "fix_command": refresh_command,
         }
         if record_stats:
-            get_freshness_stats().record_check(result_payload_4)
-        return result_payload_4
+            get_freshness_stats().record_check(result)
+        return result
 
     # Calculate age difference
     age_delta = abs(payload_time - dispatch_time)
     age_minutes = age_delta.total_seconds() / 60.0
     is_fresh = age_minutes <= threshold_minutes
 
-    # Build result
-    result: dict[str, Any] = {
+    # Build result (no-redef ignored: each try/except defines result locally)
+    result: dict[str, Any] = {  # type: ignore[no-redef]
         "is_fresh": is_fresh,
         "age_minutes": round(age_minutes, 2),
         "payload_generated_at": payload_generated_at,
@@ -325,9 +325,9 @@ def check_payload_freshness(
         result["fix_command"] = refresh_command
 
     if record_stats:
-        get_freshness_stats().record_check(result_payload_4)
+        get_freshness_stats().record_check(result)
 
-    return result_payload_4
+    return result
 
 
 class FreshnessStats:
