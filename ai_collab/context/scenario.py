@@ -114,7 +114,7 @@ class ScenarioDetector:
         Args:
             root_dir: 项目根目录 (默认为当前工作目录)
         """
-        self.root_dir = Path(root_dir) if root_dir else Path.cwd()
+        self.root_dir: Path = Path(root_dir) if root_dir else Path.cwd()
 
     def detect(
         self, active_files: list[str] | None = None, include_content: bool = False

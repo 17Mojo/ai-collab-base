@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 SECTION_HEADING = re.compile(r"^##\s+发送给\s+`[^`]+`\s+\(`(?P<assignee>[^`]+)`\)\s*$")
 

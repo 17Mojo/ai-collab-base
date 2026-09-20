@@ -110,7 +110,7 @@ class ContextSearchEngine:
         query = SearchQuery(query_str, **kwargs)
 
         # 获取搜索上下文
-        history: list[AggregationContext] = self.aggregator.get_history(limit=100)
+        history: list[AggregatedContext] = self.aggregator.get_history(limit=100)
 
         if not history:
             return [], SearchStats(0, 0, 0, query.method, query.scope)
@@ -396,8 +396,8 @@ class ContextSearchEngine:
                         if r.context_id in source_val:
                             # 检查是否匹配目标源
                             item_id = r.context_id
-                            item = recent_items.get(item_id)
-                            if item and item.source_type in target_sources:
+                            item_raw = recent_items.get(item_id)
+                            if item_raw is not None and item_raw.source_type in target_sources:
                                 filtered.append(r)
                                 break
                 results = filtered
