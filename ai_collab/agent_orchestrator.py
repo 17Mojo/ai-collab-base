@@ -259,6 +259,7 @@ class AgentOrchestrator:
         if not config_path.exists():
             return {}
         try:
-            return json.loads(config_path.read_text(encoding="utf-8"))
+            loaded: dict[str, Any] = json.loads(config_path.read_text(encoding="utf-8"))
+            return loaded
         except json.JSONDecodeError:
             return {}

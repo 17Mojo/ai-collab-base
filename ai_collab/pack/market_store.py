@@ -271,7 +271,7 @@ class PackMarketStore:
                 params.append(author)
 
             query += " ORDER BY updated_at DESC LIMIT ? OFFSET ?"
-            params.extend([limit, offset])
+            params.extend([int(limit), int(offset)])
 
             cursor.execute(query, params)
             rows = cursor.fetchall()

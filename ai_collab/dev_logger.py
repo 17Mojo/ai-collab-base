@@ -28,7 +28,8 @@ class VSCodeIntegration:
         if os.path.exists(config_file):
             try:
                 with open(config_file, encoding="utf-8") as f:
-                    return json.load(f)
+                    loaded: dict[str, Any] = json.load(f)
+                    return loaded
             except (OSError, json.JSONDecodeError):
                 return {}
         return {}

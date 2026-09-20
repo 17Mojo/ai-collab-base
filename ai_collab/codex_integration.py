@@ -520,7 +520,8 @@ class CodexIntegration:
     def _read_runtime(self) -> dict[str, Any]:
         if self.runtime_file.exists():
             try:
-                return json.loads(self.runtime_file.read_text(encoding="utf-8"))
+                loaded: dict[str, Any] = json.loads(self.runtime_file.read_text(encoding="utf-8"))
+                return loaded
             except json.JSONDecodeError:
                 return {}
         return {}
@@ -586,7 +587,8 @@ class CodexIntegration:
         if not path.exists():
             return {}
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            loaded: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+            return loaded
         except json.JSONDecodeError:
             return {}
 

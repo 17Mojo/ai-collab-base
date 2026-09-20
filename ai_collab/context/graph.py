@@ -6,7 +6,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from ai_collab.integrations.knowledge_graph import (
     KnowledgeGraph,
@@ -69,7 +69,7 @@ class GraphContextManager:
         relevant_nodes = self._graph.find_similar_nodes(query, top_k=max_nodes)
 
         # 构建增强数据
-        enriched_data = {
+        enriched_data: dict[str, Any] = {
             "query": query,
             "relevant_nodes": [
                 {
@@ -88,7 +88,8 @@ class GraphContextManager:
         for node_id, score in key_nodes:
             node = self._graph.get_node(node_id)
             if node:
-                enriched_data["key_nodes"].append(
+                key_nodes_list: list[dict[str, Any]] = cast(list[dict[str, Any]], enriched_data["key_nodes"])
+                key_nodes_list.append(
                     {"node_id": node_id, "content": node.content, "importance": score}
                 )
 
@@ -99,7 +100,8 @@ class GraphContextManager:
             for relation in relations[:3]:  # 每个节点最多3个关系
                 target_node = self._graph.get_node(relation.target_id)
                 if target_node:
-                    enriched_data["relations"].append(
+                    relations_list: list[dict[str, Any]] = cast(list[dict[str, Any]], enriched_data["relations"])
+                    relations_list.append(
                         {
                             "source": node.content[:30],
                             "target": target_node.content[:30],
@@ -227,11 +229,13 @@ class GraphContextManager:
     def _extract_query(self, context: Any) -> str:
         """从上下文提取查询"""
         if isinstance(context, dict):
-            return context.get("query", context.get("content", ""))
+            return str(context.get("query", context.get("content", "")))
         elif hasattr(context, "query"):
-            return context.query
+            val = getattr(context, "query", "")
+            return val if isinstance(val, str) else str(val)
         elif hasattr(context, "content"):
-            return context.content
+            val = getattr(context, "content", "")
+            return val if isinstance(val, str) else str(val)
         else:
             return str(context)
 

@@ -16,7 +16,10 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, TypeVar, cast
+
+
+T = TypeVar("T")
 
 
 class TaskStatus(str, Enum):
@@ -224,7 +227,8 @@ class VSCodeIntegration:
         config_file = os.path.join(workspace, ".vscode", "ai-collab.json")
         if os.path.exists(config_file):
             with open(config_file, encoding="utf-8") as f:
-                return json.load(f)
+                loaded: dict[str, Any] = json.load(f)
+                return loaded
         return {}
 
     @staticmethod
@@ -322,7 +326,7 @@ class StateManager:
 
         # 确保目录存在
         os.makedirs(os.path.dirname(state_file), exist_ok=True)
-        return state_file
+        return str(state_file)
 
     def _load_state(self) -> dict[str, Any]:
         """加载状态文件"""
@@ -331,7 +335,7 @@ class StateManager:
         if os.path.exists(state_file):
             try:
                 with open(state_file, encoding="utf-8") as f:
-                    loaded_state = json.load(f)
+                    loaded_state: dict[str, Any] = json.load(f)
                     return self._normalize_state(loaded_state)
             except json.JSONDecodeError:
                 return self._create_initial_state()
@@ -779,10 +783,10 @@ class StateManager:
     def _commit_state_transaction(
         self,
         *,
-        mutate: Callable[[], Any],
+        mutate: Callable[[], T],
         output_message: str | None = None,
         output_channel: str = "AI Collab Tasks",
-    ) -> Any:
+    ) -> T:
         """在持有项目状态锁时刷新最新状态、执行修改并落盘。"""
         state_file = self._get_state_file()
         with self._file_lock(state_file):
@@ -896,10 +900,11 @@ class StateManager:
         def _mutate() -> dict[str, Any]:
             if task_id in self.state["tasks"]:
                 raise ValueError(f"任务ID已存在: {task_id}")
-            self.state["tasks"][task_id] = asdict(task)
+            task_dict: dict[str, Any] = asdict(task)
+            self.state["tasks"][task_id] = task_dict
             if task_id not in self.state["active_tasks"]:
                 self.state["active_tasks"].append(task_id)
-            return asdict(task)
+            return task_dict
 
         return self._commit_state_transaction(
             mutate=_mutate,
@@ -1261,7 +1266,9 @@ class StateManager:
 
     def get_patch(self, patch_id: str) -> dict[str, Any] | None:
         """获取 patch 信息。"""
-        return self.state.get("patches", {}).get(patch_id)
+        patches = cast(dict[str, Any], self.state.get("patches", {}))
+        result = patches.get(patch_id)
+        return cast(dict[str, Any], result) if result is not None else None
 
     def list_patches(
         self,
@@ -1381,7 +1388,9 @@ class StateManager:
 
     def get_task(self, task_id: str) -> dict[str, Any] | None:
         """获取任务信息"""
-        return self.state["tasks"].get(task_id)
+        tasks = cast(dict[str, Any], self.state["tasks"])
+        result = tasks.get(task_id)
+        return cast(dict[str, Any], result) if result is not None else None
 
     def _evaluate_task_contract(self, task: dict[str, Any]) -> dict[str, Any]:
         """评估单个任务是否满足工单契约字段。"""
@@ -1790,12 +1799,12 @@ class StateManager:
         with open(issues_file, encoding="utf-8") as f:
             issues = json.load(f)
 
-        conflicts = issues.get("issues", [])
+        conflicts_raw: list[Any] = issues.get("issues", [])
 
         if status:
-            conflicts = [c for c in conflicts if c.get("status") == status]
+            conflicts_raw = [c for c in conflicts_raw if c.get("status") == status]
 
-        return conflicts
+        return cast(list[dict[str, Any]], conflicts_raw)
 
     def resolve_conflict(self, conflict_id: str, resolution: str) -> bool:
         """
@@ -2040,7 +2049,7 @@ class StateManager:
             "AI Collab Handoff",
         )
 
-        return handoff
+        return cast(dict[str, Any], handoff)
 
     def list_handoffs(
         self, status: str | None = None, from_ai: str | None = None, to_ai: str | None = None

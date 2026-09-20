@@ -14,7 +14,7 @@ Prompt Pack MVP - 最小可用版本
 import asyncio
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from ai_collab.engines.consensus_engine import ConsensusEngine
 
@@ -32,8 +32,8 @@ class PackExecutorMVP:
         self.pack = pack_data
         self.metadata = pack_data.get("metadata", {})
         self.workflow = pack_data.get("workflow", {})
-        self.context = {}  # 执行上下文
-        self.results = []  # 执行结果
+        self.context: dict[str, Any] = {}  # 执行上下文
+        self.results: list[dict[str, Any]] = []  # 执行结果
 
     def execute(self, user_input: dict[str, Any]) -> dict[str, Any]:
         """
@@ -306,31 +306,31 @@ class PackExecutorMVP:
         """
         sources = consensus_result.get("sources", [])
         if not sources:
-            return consensus_result.get("consensus", "")
+            return str(consensus_result.get("consensus", ""))
 
         if strategy == "concat":
             # 拼接所有来源的响应
-            return "\n\n---\n\n".join(s.get("response", "") for s in sources)
+            return "\n\n---\n\n".join(cast(str, s.get("response", "")) for s in sources)
 
         elif strategy == "best":
             # 选择置信度最高的响应
             best = max(sources, key=lambda s: s.get("confidence", 0))
-            return best.get("response", "")
+            return str(best.get("response", ""))
 
         elif strategy == "weighted":
             # 按置信度加权拼接（置信度高的排在前面）
             sorted_sources = sorted(
                 sources, key=lambda s: s.get("confidence", 0), reverse=True
             )
-            parts = []
+            parts: list[str] = []
             for s in sorted_sources:
                 weight = s.get("confidence", 0)
-                parts.append(f"[置信度: {weight:.2f}] {s.get('response', '')}")
+                parts.append(f"[置信度: {weight:.2f}] {cast(str, s.get('response', ''))}")
             return "\n\n---\n\n".join(parts)
 
         else:
             # 默认使用 concat
-            return consensus_result.get("consensus", "")
+            return str(consensus_result.get("consensus", ""))
 
     def _execute_validation(self, step: dict[str, Any]) -> dict[str, Any]:
         """执行验证步骤"""
@@ -339,12 +339,12 @@ class PackExecutorMVP:
         # MVP版本：简单验证
         generated_content = self.context.get("generated_content", "")
 
-        validation_result = {"is_valid": True, "issues": [], "score": 0.8}  # 默认分数
+        validation_result: dict[str, Any] = {"is_valid": True, "issues": [], "score": 0.8}  # 默认分数
 
         # 检查长度
         if len(generated_content) < 50:
             validation_result["issues"].append("内容过短")
-            validation_result["score"] -= 0.2
+            validation_result["score"] = cast(float, validation_result["score"]) - 0.2
 
         # 检查关键词
         keywords = self.context.get("analysis_result", {}).get("keywords", [])
@@ -352,7 +352,7 @@ class PackExecutorMVP:
             keyword_count = sum(1 for kw in keywords if kw in generated_content)
             if keyword_count < len(keywords) * 0.5:
                 validation_result["issues"].append("关键词覆盖率低")
-                validation_result["score"] -= 0.1
+                validation_result["score"] = cast(float, validation_result["score"]) - 0.1
 
         if validation_result["issues"]:
             validation_result["is_valid"] = False
@@ -446,7 +446,8 @@ class PackExecutorMVP:
 def load_pack_from_file(pack_file: str) -> dict[str, Any]:
     """从文件加载Pack"""
     with open(pack_file, encoding="utf-8") as f:
-        return json.load(f)
+        loaded: dict[str, Any] = json.load(f)
+        return loaded
 
 
 def execute_pack(pack_data: dict[str, Any], user_input: dict[str, Any]) -> dict[str, Any]:

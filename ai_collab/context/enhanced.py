@@ -9,6 +9,7 @@ NotebookLM 集成模块 - 增强上下文理解
 
 import logging
 from datetime import datetime
+import uuid
 from typing import Any
 
 from .schema import Context, FileContext, NotebookLMContext, ScenarioType
@@ -97,7 +98,7 @@ class ContextEnhancer:
             self._logger.warning("NotebookLM integration not available")
             return {"uploaded": 0, "errors": ["NotebookLM not available"]}
 
-        results = {"uploaded": 0, "errors": [], "source_ids": []}
+        results: dict[str, Any] = {"uploaded": 0, "errors": [], "source_ids": []}
         for file_path in file_paths:
             try:
                 if hasattr(self._notebooklm, "add_source"):
@@ -296,7 +297,7 @@ class ContextEnhancer:
         Returns:
             摘要字典
         """
-        summary = {
+        summary: dict[str, Any] = {
             "context_id": context.context_id,
             "scenario": context.scenario.value,
             "name": context.name,
@@ -400,7 +401,7 @@ class ScenarioContextBuilder:
     ) -> Context:
         """构建编码场景上下文"""
         context = Context(
-            context_id=None,
+            context_id=str(uuid.uuid4()),
             scenario=ScenarioType.CODING,
             name="Coding Context",
         )
@@ -430,7 +431,7 @@ class ScenarioContextBuilder:
     ) -> Context:
         """构建研究场景上下文"""
         context = Context(
-            context_id=None,
+            context_id=str(uuid.uuid4()),
             scenario=ScenarioType.RESEARCH,
             name="Research Context",
         )
@@ -460,7 +461,7 @@ class ScenarioContextBuilder:
     ) -> Context:
         """构建写作场景上下文"""
         context = Context(
-            context_id=None,
+            context_id=str(uuid.uuid4()),
             scenario=ScenarioType.WRITING,
             name="Writing Context",
         )
