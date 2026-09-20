@@ -836,14 +836,20 @@ class TestModuleMainBlock:
         import subprocess
         import sys
         import os
-        # PYTHONPATH 需要包含 ai_collab 父目录
+        # 从 test 目录向上 3 级到 proj/,再下降到模块
+        proj_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        module_path = os.path.join(proj_root, "ai_collab", "pack", "pack_executor_mvp.py")
         env = os.environ.copy()
-        env["PYTHONPATH"] = "."
+        env["PYTHONPATH"] = proj_root
         result = subprocess.run(
-            [sys.executable, "ai_collab/pack/pack_executor_mvp.py"],
+            [sys.executable, module_path],
             capture_output=True, text=True, timeout=30,
+            cwd=proj_root,
             env=env,
         )
         # __main__ 块会打印 === Prompt Pack MVP 测试 ===
+        if "Prompt Pack MVP" not in result.stdout:
+            print(f"STDOUT: {result.stdout[:500]}")
+            print(f"STDERR: {result.stderr[:500]}")
         assert "Prompt Pack MVP" in result.stdout
 
