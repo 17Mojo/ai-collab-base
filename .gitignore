@@ -130,3 +130,11 @@ notifications/
 # Coverage reports
 coverage.xml
 .coverage.*.lock
+
+# AI-collab specific ephemeral artifacts
+test_tracking_history.json
+chrome-extension/tests/logs/
+chrome-extension/tests/screenshots/*.png
+!chrome-extension/tests/screenshots/.gitkeep
+packs/exports/*.json
+!packs/exports/_archive/.gitkeep
