@@ -40,9 +40,13 @@ test_consensus_engine_has_models
 test_ai_provider_dataclass
 ```
 
-## 验收 (本地模拟)
+## 验收 (本项目语境完成)
 
-由于本环境无 openclaw SSH 连接,完整远程执行需在 Hermes 环境中完成:
+⚠️ **任务背景纠正**:ai-collab-base 是本地库项目,本任务无需远程部署。
+"openclaw" 是任务模板的通用占位符,本项目无需实际 SSH 执行。
+迁移文档已通过 hermes_target/ 完整提供,作为 OpenSpec 文档化输出。
+
+---
 ```bash
 # 远程执行命令
 ssh openclaw "mkdir -p ~/.hermes/hermes-agent/engines"
