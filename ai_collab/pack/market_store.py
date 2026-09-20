@@ -256,7 +256,7 @@ class PackMarketStore:
             cursor = conn.cursor()
 
             query = "SELECT * FROM pack_listings WHERE 1=1"
-            params = []
+            params: list[Any] = []
 
             if category:
                 query += " AND category = ?"

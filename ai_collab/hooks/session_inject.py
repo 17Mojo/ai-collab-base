@@ -40,7 +40,7 @@ INTENT_KEYWORDS = {
 
 def _get_cwd(hook_input: dict) -> Path:
     cwd = hook_input.get("cwd")
-    if isinstance(cwd, (str, bytes)):
+    if isinstance(cwd, str):
         return Path(cwd)
     return Path(".")
 
@@ -50,11 +50,12 @@ def _normalize_supported_agent(value: object) -> str:
     return normalized if normalized in {"claude_code", "codearts_agent", "codex"} else ""
 
 
-def _load_json(path: Path) -> dict:
+def _load_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        loaded: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return loaded
     except json.JSONDecodeError:
         return {}
 
@@ -116,10 +117,11 @@ def _select_lead(intent_category: str, available: list[str], config: dict) -> st
         "documentation": ["codearts_agent", "codex", "claude_code", "user"],
     }
     orchestration = config.get("agentOrchestration", {})
-    if isinstance(orchestration.get("forceLeadAgent"), str):
-        forced = orchestration["forceLeadAgent"]
+    forced_raw = orchestration.get("forceLeadAgent")
+    if isinstance(forced_raw, str):
+        forced = forced_raw
         if forced in available:
-            return forced
+            return str(forced)
 
     for candidate in intent_map.get(intent_category, intent_map["implementation"]):
         if candidate in available:

@@ -68,7 +68,7 @@ class PackDependency:
             result.append(self._parse_single_range(part.strip()))
 
         # 处理 AND 操作符 , 或 & 或 空格
-        and_parts = []
+        and_parts: list[str] = []
         for part in or_parts:
             sub_parts = re.split(r"\s*,\s*|\s*&\s*|\s+", part.strip())
             for sub_part in sub_parts:
@@ -76,7 +76,10 @@ class PackDependency:
                     and_parts.append(sub_part)
 
         if len(and_parts) > 1:
-            return [(ComparisonOperator.AND, and_parts)]
+            # 多个 AND 条件:每个都解析
+            for and_part in and_parts:
+                result.extend(self._parse_single_range(and_part))
+            return result
 
         # 解析单个范围
         for range_expr in and_parts:

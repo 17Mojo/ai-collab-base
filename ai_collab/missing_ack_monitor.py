@@ -124,8 +124,9 @@ def collect_missing_ack_candidates(
             )
             continue
 
-        existing_bridge = (
-            bridged_items.get(task_id) if isinstance(bridged_items.get(task_id), dict) else {}
+        existing_bridge_raw = bridged_items.get(task_id)
+        existing_bridge: dict[str, Any] = (
+            existing_bridge_raw if isinstance(existing_bridge_raw, dict) else {}
         )
         if requires_explicit_ack(assignee):
             if has_ack_evidence(

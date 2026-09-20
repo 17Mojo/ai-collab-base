@@ -170,7 +170,8 @@ def run_terminal_result_consistency_audit(
             continue
 
         result_file = str(task.get("result_file") or "").strip()
-        ownership = task.get("ownership") if isinstance(task.get("ownership"), dict) else {}
+        ownership_raw = task.get("ownership")
+        ownership: dict[str, Any] = ownership_raw if isinstance(ownership_raw, dict) else {}
         entry = TerminalResultAuditEntry(
             task_id=current_task_id,
             state_status=state_status,

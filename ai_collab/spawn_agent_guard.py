@@ -6,7 +6,7 @@ import json
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .state_manager import TaskStatus
 
@@ -141,17 +141,21 @@ def resolve_spawn_agent_guard_config(
         if isinstance(value, list):
             resolved[key] = [str(item) for item in value if str(item).strip()]
 
-    resolved["allowedLeadAgents"] = [
-        _normalize_actor(item) for item in resolved["allowedLeadAgents"] if _normalize_actor(item)
+    _allowed_lead: list[object] = list(cast(list[object], resolved["allowedLeadAgents"]))
+    _allowed_lead = [
+        _normalize_actor(item) for item in _allowed_lead if _normalize_actor(item)
     ]
+    resolved["allowedLeadAgents"] = _allowed_lead
+    _protected_paths_raw: list[object] = list(cast(list[object], resolved["protectedPaths"]))
     resolved["protectedPaths"] = [
         _normalize_workspace_path(workspace, item)
-        for item in resolved["protectedPaths"]
+        for item in _protected_paths_raw
         if _normalize_workspace_path(workspace, item)
     ]
+    _protected_prefixes_raw: list[object] = list(cast(list[object], resolved["protectedPrefixes"]))
     resolved["protectedPrefixes"] = [
         _normalize_prefix(workspace, item)
-        for item in resolved["protectedPrefixes"]
+        for item in _protected_prefixes_raw
         if _normalize_prefix(workspace, item)
     ]
     return resolved

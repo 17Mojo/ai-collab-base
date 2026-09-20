@@ -274,7 +274,7 @@ class PermissionManager:
 
         return False
 
-    def get_user_permissions(self, pack_name: str, user: str = None) -> dict[str, Any]:
+    def get_user_permissions(self, pack_name: str, user: str | None = None) -> dict[str, Any]:
         """
         获取用户的权限信息
 
@@ -400,7 +400,7 @@ class PermissionManager:
         self._save_share_info(share_info)
         return True
 
-    def list_accessible_packs(self, user: str = None) -> list[str]:
+    def list_accessible_packs(self, user: str | None = None) -> list[str]:
         """
         列出用户可访问的 Pack
 

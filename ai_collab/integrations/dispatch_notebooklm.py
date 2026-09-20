@@ -324,7 +324,7 @@ def enrich_dispatch_payload(
         (增强后的任务列表, 增强统计信息)
     """
     enriched_tasks: list[dict[str, Any]] = []
-    stats = {
+    stats: dict[str, Any] = {
         "total": len(candidates),
         "enriched": 0,
         "failed": 0,

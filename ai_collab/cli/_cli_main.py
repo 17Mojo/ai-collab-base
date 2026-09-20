@@ -65,7 +65,7 @@ def _set_workspace_env(workspace: str | None):
 def _as_int(value: object, fallback: int) -> int:
     """安全转换整数配置值。"""
     try:
-        return int(value)
+        return int(str(value))
     except (TypeError, ValueError):
         return fallback
 
@@ -449,11 +449,12 @@ def _generate_trigger_payload_files(
     }
 
 
-def _read_json_if_exists(path: Path) -> dict | None:
+def _read_json_if_exists(path: Path) -> dict[str, Any] | None:
     try:
         if not path.exists():
             return None
-        return json.loads(path.read_text(encoding="utf-8"))
+        loaded: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return loaded
     except (json.JSONDecodeError, OSError):
         return None
 

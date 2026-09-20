@@ -303,7 +303,7 @@ def check_payload_freshness(
     is_fresh = age_minutes <= threshold_minutes
 
     # Build result
-    result = {
+    result: dict[str, Any] = {
         "is_fresh": is_fresh,
         "age_minutes": round(age_minutes, 2),
         "payload_generated_at": payload_generated_at,

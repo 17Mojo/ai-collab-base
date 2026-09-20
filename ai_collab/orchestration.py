@@ -15,7 +15,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 
 class BindingStatus(Enum):
@@ -92,7 +92,8 @@ class AgentProvider:
 
     def check_availability(self) -> bool:
         """Check if provider is available"""
-        config = self.PROVIDER_DETECTORS.get(self.provider_id, {})
+        config_raw = self.PROVIDER_DETECTORS.get(self.provider_id, {})
+        config: dict[str, Any] = config_raw if isinstance(config_raw, dict) else {}
         check_command = config.get("check_command")
 
         # Claude Code is always available when this code is running
@@ -389,7 +390,8 @@ class OrchestrationConfig:
         """Detect available agent providers"""
         self.providers = {}
 
-        for provider_id, config in AgentProvider.PROVIDER_DETECTORS.items():
+        detectors = cast(dict[str, dict[str, Any]], AgentProvider.PROVIDER_DETECTORS)
+        for provider_id, config in detectors.items():
             provider = AgentProvider(provider_id, config)
             provider.check_availability()
             self.providers[provider_id] = provider
