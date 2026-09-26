@@ -464,5 +464,64 @@ python3 -m ai_collab.cli sessions handoff
 
 ---
 
-**更新时间**: 2026-05-14  
-**更新内容**: 协议 v3.0 - 动态角色编排架构
+## 十四、并发工作区安全
+
+> **新增日期**: 2026-09-26  
+> **触发样本**: 2026-09-26 并行冲突事件（分支漂移 + 基线过期 + 归属不清 + 测试污染）  
+> **技术设计**: `docs/CONCURRENT_GUARD_DESIGN.md`  
+> **服务层实现**: `ai_collab/concurrent_guard.py`
+
+### 14.1 工作区独占原则
+
+- 同一 git working tree 同一时刻**至多一个 Agent 处于写模式**
+- 多 Agent 并行时，各自使用**独立 worktree**（`git worktree add`）或**独立 clone**
+- 共享工作区仅允许**只读**操作（inspect / 分析）
+- **禁止**在未确认归属的情况下执行 `git add -A` / `git checkout -- .` / `git reset --hard`
+
+### 14.2 分支约定
+
+- 每个任务在**声明的分支**上进行，写入任务文件 `branch` 字段
+- 提交前必须校验 `git rev-parse --abbrev-ref HEAD` == 声明分支
+- 禁止在未声明的分支上提交
+- **检测信号**: `concurrent_guard.detect_branch_drift(workspace, expected_branch)`
+
+### 14.3 基线声明
+
+- 任务开始时记录 `baseline_commit`（`gitF rev-parse HEAD`）
+- 提交前校验 `watch_paths` 未被他人推进（`baseline_commit..HEAD` 区间无变更）
+- 基线过期时先 rebase / 重新核实，禁止直接提交
+- **检测信号**: `concurrent_guard.detect_baseline_staleness(workspace, baseline_commit, watch_paths)`
+
+### 14.4 归属标记
+
+- 未提交改动通过**会话标记**（`.ai_collab_session.json`）关联 owner
+- 提交前区分「本会话改动」vs「他人改动」
+- **初始实现**: mtime 启发式（文件 mtime 早于会话开始时间 → 判定为 foreign）— 定位为**软警告**，不阻断
+- **后续增强**: `.ai_collab_session.json` 记录会话上下文与预期工作区状态，提供真证归属判断
+- **检测信号**: `concurrent_guard.detect_foreign_changes(workspace, session_started_at)`
+
+### 14.5 门禁分层
+
+按既有门禁分层原则（硬门禁对齐真证，软警告承载启发式）：
+
+| 信号 | 性质 | 门禁等级 | 可阻断 |
+|------|------|---------|--------|
+| 分支漂移（G1） | git 真证 | **硬门禁** | ✅ |
+| 基线过期（G2） | git 真证 | **硬门禁** | ✅ |
+| 归属不清（G3） | mtime 启发式 | **软警告** | ❌ |
+| 测试污染（G4） | pytest 配置 | 测试层修复 | ❌ |
+
+### 14.6 综合风险评级
+
+`concurrent_guard.assess_concurrent_risk()` 综合三信号输出风险等级：
+
+| 条件 | risk_level | allowed |
+|------|-----------|---------|
+| 任一硬门禁信号触发 | high | False |
+| 仅软警告信号 | medium | True |
+| 无信号 | low | True |
+
+---
+
+**更新时间**: 2026-09-26  
+**更新内容**: 协议 v3.0 - 动态角色编排架构；新增第十四章「并发工作区安全」
