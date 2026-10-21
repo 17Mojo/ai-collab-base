@@ -19,7 +19,6 @@ from pathlib import Path
 
 import pytest
 
-import ai_collab.state_manager as state_manager
 from ai_collab.state_manager import (
     FileStatus,
     StateManager,

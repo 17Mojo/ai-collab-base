@@ -105,14 +105,12 @@ class TestBaseAIAdapterContract:
 
     def test_subclass_must_implement_abstract_methods(self):
         """子类必须实现所有 abstractmethod"""
-        from abc import ABC
+        import pytest
+
         from ai_collab.adapters.base_adapter import BaseAIAdapter
-        # 尝试实例化直接失败
-        try:
+        # 抽象基类不可直接实例化
+        with pytest.raises(TypeError):
             BaseAIAdapter("test")
-            assert False, "Should not instantiate abstract class"
-        except TypeError:
-            pass  # expected
 
     def test_concrete_subclass_minimal(self):
         """最小具体子类可实例化"""
@@ -197,9 +195,7 @@ class TestBaseAIAdapterContract:
 
     def test_exception_classes(self):
         """异常类层次结构"""
-        from ai_collab.adapters.base_adapter import (
-            AIAdapterError, ConnectionError, MessageError, TimeoutError
-        )
+        from ai_collab.adapters.base_adapter import AIAdapterError, ConnectionError, MessageError, TimeoutError
         # AIAdapterError 是基类
         assert issubclass(ConnectionError, AIAdapterError)
         assert issubclass(MessageError, AIAdapterError)

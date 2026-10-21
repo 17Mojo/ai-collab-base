@@ -449,9 +449,9 @@ class TestContextEnhancerEnhancedQuery:
 
     def test_enhanced_query_with_context_scenario_hint(self, monkeypatch):
         """带 context 时生成 scenario hint"""
+
         from ai_collab.context.enhanced import ContextEnhancer
         from ai_collab.context.schema import Context, ScenarioType
-        from datetime import datetime
 
         class FakeNB:
             def query_knowledge(self, topic):
@@ -534,9 +534,9 @@ class TestContextEnhancerExtractContextSummary:
 
     def test_extract_context_summary_with_files(self):
         """带文件上下文的摘要提取"""
+
         from ai_collab.context.enhanced import ContextEnhancer
-        from ai_collab.context.schema import Context, ScenarioType, FileContext
-        from datetime import datetime
+        from ai_collab.context.schema import Context, FileContext, ScenarioType
 
         enhancer = ContextEnhancer()
         ctx = Context(context_id="ctx-1", scenario=ScenarioType.CODING, name="test")

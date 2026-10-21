@@ -270,6 +270,7 @@ class TestNotebookLMCheckMCPHealth:
     def test_check_mcp_health_empty_result_real_mode_raises(self, monkeypatch):
         """REAL 模式下健康检查返回空 → 抛 ConnectionError"""
         import builtins
+
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
         # 设置 builtin 返回 falsy 值(空)
@@ -278,15 +279,14 @@ class TestNotebookLMCheckMCPHealth:
             raising=False
         )
         integration = NotebookLMIntegration()
-        try:
+        with pytest.raises(ConnectionError) as exc_info:
             integration._check_mcp_health()
-            assert False, "Should have raised"
-        except ConnectionError as e:
-            assert "空结果" in str(e) or "MCP 健康检查" in str(e)
+        assert "空结果" in str(exc_info.value) or "MCP 健康检查" in str(exc_info.value)
 
     def test_check_mcp_health_not_authenticated_real_mode(self, monkeypatch):
         """REAL 模式下未认证 → 抛 ConnectionError"""
         import builtins
+
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
         monkeypatch.setattr(
@@ -295,15 +295,14 @@ class TestNotebookLMCheckMCPHealth:
             raising=False
         )
         integration = NotebookLMIntegration()
-        try:
+        with pytest.raises(ConnectionError) as exc_info:
             integration._check_mcp_health()
-            assert False, "Should have raised"
-        except ConnectionError as e:
-            assert "未认证" in str(e) or "authenticated" in str(e).lower()
+        assert "未认证" in str(exc_info.value) or "authenticated" in str(exc_info.value).lower()
 
     def test_check_mcp_health_exception_real_mode(self, monkeypatch):
         """REAL 模式下异常 → 抛 ConnectionError"""
         import builtins
+
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
         def raising_func():
@@ -313,15 +312,14 @@ class TestNotebookLMCheckMCPHealth:
             raising=False
         )
         integration = NotebookLMIntegration()
-        try:
+        with pytest.raises(ConnectionError) as exc_info:
             integration._check_mcp_health()
-            assert False, "Should have raised"
-        except ConnectionError as e:
-            assert "异常" in str(e) or "tool failure" in str(e)
+        assert "异常" in str(exc_info.value) or "tool failure" in str(exc_info.value)
 
     def test_check_mcp_health_authenticated_success(self, monkeypatch):
         """认证成功返回 True"""
         import builtins
+
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "fallback")
         monkeypatch.setattr(
@@ -339,6 +337,7 @@ class TestNotebookLMQueryMCP:
     def test_query_mcp_no_answer_in_result(self, monkeypatch):
         """REAL 模式下 result 缺少 answer → ConnectionError"""
         import builtins
+
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
         monkeypatch.setattr(
@@ -352,15 +351,14 @@ class TestNotebookLMQueryMCP:
             raising=False
         )
         integration = NotebookLMIntegration(notebook_id="nb-1")
-        try:
+        with pytest.raises(ConnectionError) as exc_info:
             integration._query_mcp("test")
-            assert False, "Should have raised"
-        except ConnectionError as e:
-            assert "answer" in str(e).lower() or "格式错误" in str(e)
+        assert "answer" in str(exc_info.value).lower() or "格式错误" in str(exc_info.value)
 
     def test_query_mcp_no_answer_in_result_fallback_raises(self, monkeypatch):
         """FALLBACK 模式下 result 缺少 answer 仍 raise (不分模式)"""
         import builtins
+
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "fallback")
         monkeypatch.setattr(
@@ -374,11 +372,8 @@ class TestNotebookLMQueryMCP:
             raising=False
         )
         integration = NotebookLMIntegration()
-        try:
+        with pytest.raises(ConnectionError):
             integration._query_mcp("test")
-            assert False, "Should have raised"
-        except ConnectionError:
-            pass
 
 
 class TestNotebookLMGetRecommendedPacks:
@@ -420,12 +415,11 @@ class TestPackToStudioConverterExtra:
         assert result["workflow"] == []
 
     def test_convert_missing_metadata_raises(self):
-        """缺失 metadata 字段 - 当前代码会抛 KeyError(已记录)"""
+        """缺失 metadata 字段 → 抛 KeyError（metadata 为必填, 未做兜底）"""
         from ai_collab.integrations.notebooklm import PackToStudioConverter
         converter = PackToStudioConverter()
         pack = {"workflow": {"steps": [{"name": "S1", "type": "GENERATION", "template": "Hello"}]}}
-        try:
-            result = converter.convert(pack)
-            # 如果 keyError 没处理,应该会抛
-        except Exception:
-            pass  # expected
+        # convert() 直接取 pack["metadata"]["pack_name"], 缺失时抛 KeyError
+        with pytest.raises(KeyError) as exc_info:
+            converter.convert(pack)
+        assert "metadata" in str(exc_info.value)
