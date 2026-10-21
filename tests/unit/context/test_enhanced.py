@@ -431,3 +431,153 @@ class TestContextEnhancerIntegration:
         # Extract summary
         summary = enhancer.extract_context_summary(merged)
         assert summary["file_count"] == 2
+
+
+
+class TestContextEnhancerEnhancedQuery:
+    """enhanced_query 完整路径覆盖 (78-80, 97-118)"""
+
+    def test_enhanced_query_without_notebooklm(self):
+        """无 NotebookLM 时返回 error"""
+        from ai_collab.context.enhanced import ContextEnhancer
+        enhancer = ContextEnhancer()  # 无 notebooklm
+        result = enhancer.enhanced_query("test query")
+        # 降级契约: 无 backend 时不得抛异常, 且原样回传 query + 空结果 + error 标记
+        assert result["error"] == "NotebookLM not available"
+        assert result["results"] == []
+        assert result["enhanced_query"] == "test query"
+
+    def test_enhanced_query_with_context_scenario_hint(self, monkeypatch):
+        """带 context 时生成 scenario hint"""
+        from ai_collab.context.enhanced import ContextEnhancer
+        from ai_collab.context.schema import Context, ScenarioType
+        from datetime import datetime
+
+        class FakeNB:
+            def query_knowledge(self, topic):
+                return {
+                    "sources": [{"title": "Doc1"}, {"title": "Doc2"}],
+                    "response": "Answer text",
+                    "mode": "real",
+                }
+
+        enhancer = ContextEnhancer(notebooklm_integration=FakeNB())
+        ctx = Context(
+            context_id="ctx-1",
+            scenario=ScenarioType.CODING,
+            name="test",
+        )
+        result = enhancer.enhanced_query("how to test", context=ctx, include_related=True)
+        assert "在coding场景中" in result["enhanced_query"]
+        assert result["source_count"] == 2
+        assert "related_topics" in result
+
+    def test_enhanced_query_error_in_notebooklm_result(self, monkeypatch):
+        """notebooklm 返回 error 时传播"""
+        from ai_collab.context.enhanced import ContextEnhancer
+
+        class FakeNB:
+            def query_knowledge(self, topic):
+                return {"error": "service unavailable"}
+
+        enhancer = ContextEnhancer(notebooklm_integration=FakeNB())
+        result = enhancer.enhanced_query("test")
+        assert result["error"] == "service unavailable"
+        assert result["results"] == []
+
+    def test_enhanced_query_exception_handled(self, monkeypatch):
+        """notebooklm 抛异常时优雅处理"""
+        from ai_collab.context.enhanced import ContextEnhancer
+
+        class BrokenNB:
+            def query_knowledge(self, topic):
+                raise RuntimeError("network error")
+
+        enhancer = ContextEnhancer(notebooklm_integration=BrokenNB())
+        result = enhancer.enhanced_query("test")
+        assert "error" in result
+        assert "network error" in result["error"]
+
+
+class TestContextEnhancerSuggestFiles:
+    """suggest_files 完整路径覆盖 (139-174)"""
+
+    def test_suggest_files_without_notebooklm(self):
+        """无 NotebookLM 时返回空建议"""
+        from ai_collab.context.enhanced import ContextEnhancer
+        from ai_collab.context.schema import Context, ScenarioType
+        enhancer = ContextEnhancer()
+        ctx = Context(context_id="ctx-1", scenario=ScenarioType.CODING, name="test")
+        suggestions = enhancer.suggest_files(ctx, ["src/main.py"])
+        assert isinstance(suggestions, list)
+
+    def test_suggest_files_with_patterns(self, monkeypatch):
+        """带 patterns 的 suggest_files"""
+        from ai_collab.context.enhanced import ContextEnhancer
+        from ai_collab.context.schema import Context, ScenarioType
+
+        class FakeNB:
+            def query_knowledge(self, topic):
+                return {"response": "test", "sources": [], "mode": "real"}
+
+        enhancer = ContextEnhancer(notebooklm_integration=FakeNB())
+        ctx = Context(context_id="ctx-1", scenario=ScenarioType.CODING, name="test")
+        # 给 context 添加 file_contexts
+        from ai_collab.context.schema import FileContext
+        ctx.add_file(FileContext(path="src/main.py", language="python", size=100))
+        suggestions = enhancer.suggest_files(ctx, ["src/main.py", "src/utils.py"])
+        assert isinstance(suggestions, list)
+
+
+class TestContextEnhancerExtractContextSummary:
+    """extract_context_summary 完整路径覆盖 (212-214, 226-228)"""
+
+    def test_extract_context_summary_with_files(self):
+        """带文件上下文的摘要提取"""
+        from ai_collab.context.enhanced import ContextEnhancer
+        from ai_collab.context.schema import Context, ScenarioType, FileContext
+        from datetime import datetime
+
+        enhancer = ContextEnhancer()
+        ctx = Context(context_id="ctx-1", scenario=ScenarioType.CODING, name="test")
+        ctx.add_file(FileContext(path="src/main.py", language="python", size=500))
+        ctx.add_file(FileContext(path="src/utils.py", language="python", size=300))
+        summary = enhancer.extract_context_summary(ctx)
+        assert "file_count" in summary
+        assert summary["file_count"] == 2
+
+    def test_extract_context_summary_error_fallback(self):
+        """错误时返回原始 context"""
+        from ai_collab.context.enhanced import ContextEnhancer
+        from ai_collab.context.schema import Context, ScenarioType
+
+        class BrokenNB:
+            def query_knowledge(self, topic):
+                raise RuntimeError("nb error")
+
+        enhancer = ContextEnhancer(notebooklm_integration=BrokenNB())
+        ctx = Context(context_id="ctx-1", scenario=ScenarioType.CODING, name="test")
+        summary = enhancer.extract_context_summary(ctx)
+        # Should not raise - just return basic summary
+        assert "context_id" in summary
+
+
+class TestScenarioContextBuilderDetectLanguage:
+    """ScenarioContextBuilder._detect_language 完整路径覆盖"""
+
+    def test_detect_language_python(self):
+        from ai_collab.context.enhanced import ScenarioContextBuilder
+        builder = ScenarioContextBuilder()
+        assert builder._detect_language("main.py") == "python"
+
+    def test_detect_language_js(self):
+        from ai_collab.context.enhanced import ScenarioContextBuilder
+        builder = ScenarioContextBuilder()
+        assert builder._detect_language("app.js") in ("javascript", "typescript")
+        assert builder._detect_language("app.ts") == "typescript"
+
+    def test_detect_language_other(self):
+        from ai_collab.context.enhanced import ScenarioContextBuilder
+        builder = ScenarioContextBuilder()
+        assert builder._detect_language("README.md") == "markdown"
+        assert builder._detect_language("unknown.xyz") == "text"  # fallback to text
