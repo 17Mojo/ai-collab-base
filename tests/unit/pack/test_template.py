@@ -119,9 +119,9 @@ class TestTemplateLibrary:
     """测试 TemplateLibrary 类"""
 
     @pytest.fixture
-    def library(self):
-        """创建模板库实例"""
-        return TemplateLibrary()
+    def library(self, tmp_path):
+        """创建模板库实例 (隔离到 tmp_path, 避免 add_template 污染仓库根目录)"""
+        return TemplateLibrary(template_dir=str(tmp_path))
 
     def test_predefined_templates_loaded(self, library):
         """测试预定义模板已加载"""
@@ -275,9 +275,9 @@ class TestTemplateLibraryIntegration:
     """测试模板库集成场景"""
 
     @pytest.fixture
-    def library(self):
-        """创建模板库实例"""
-        return TemplateLibrary()
+    def library(self, tmp_path):
+        """创建模板库实例 (隔离到 tmp_path, 避免 add_template 污染仓库根目录)"""
+        return TemplateLibrary(template_dir=str(tmp_path))
 
     def test_complete_template_workflow(self, library):
         """测试完整模板工作流"""
@@ -367,9 +367,9 @@ class TestTemplateEdgeCases:
     """测试模板边缘情况"""
 
     @pytest.fixture
-    def library(self):
-        """创建模板库实例"""
-        return TemplateLibrary()
+    def library(self, tmp_path):
+        """创建模板库实例 (隔离到 tmp_path, 避免 mkdir 污染仓库根目录)"""
+        return TemplateLibrary(template_dir=str(tmp_path))
 
     def test_empty_search(self, library):
         """测试空搜索"""
