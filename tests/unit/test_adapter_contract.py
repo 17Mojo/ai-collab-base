@@ -97,3 +97,114 @@ def test_codearts_adapter_contract_exposes_pull_and_heartbeat(tmp_path: Path):
     assert heartbeat["session_registered"] is True
     assert heartbeat["session_id"] == "codearts-main"
     assert heartbeat["open_intervention_count"] == 1
+
+
+
+class TestBaseAIAdapterContract:
+    """BaseAIAdapter 接口契约测试 - 覆盖 base_adapter.py (11-50)"""
+
+    def test_subclass_must_implement_abstract_methods(self):
+        """子类必须实现所有 abstractmethod"""
+        from abc import ABC
+        from ai_collab.adapters.base_adapter import BaseAIAdapter
+        # 尝试实例化直接失败
+        try:
+            BaseAIAdapter("test")
+            assert False, "Should not instantiate abstract class"
+        except TypeError:
+            pass  # expected
+
+    def test_concrete_subclass_minimal(self):
+        """最小具体子类可实例化"""
+        from ai_collab.adapters.base_adapter import BaseAIAdapter
+
+        class MinimalAdapter(BaseAIAdapter):
+            def connect(self) -> bool:
+                self.is_connected = True
+                return True
+            def send_message(self, message, context=None):
+                return {"sent": True, "msg": message}
+            def receive_message(self, timeout=30):
+                return {"received": True}
+            def disconnect(self) -> bool:
+                self.is_connected = False
+                return True
+
+        adapter = MinimalAdapter("test_platform")
+        assert adapter.platform_name == "test_platform"
+        assert adapter.is_connected is False
+        assert adapter.session_id is None
+        assert adapter.config == {}
+
+    def test_get_platform_info(self):
+        """get_platform_info 返回完整信息"""
+        from ai_collab.adapters.base_adapter import BaseAIAdapter
+
+        class TestAdapter(BaseAIAdapter):
+            def connect(self): return True
+            def send_message(self, message, context=None): return {}
+            def receive_message(self, timeout=30): return None
+            def disconnect(self): return True
+
+        adapter = TestAdapter("chatgpt", {"api_key": "sk-123"})
+        info = adapter.get_platform_info()
+        assert info["platform_name"] == "chatgpt"
+        assert info["is_connected"] is False
+        assert info["config"] == {"api_key": "sk-123"}
+
+    def test_log_action(self, capsys):
+        """log_action 打印 action + details"""
+        from ai_collab.adapters.base_adapter import BaseAIAdapter
+
+        class TestAdapter(BaseAIAdapter):
+            def connect(self): return True
+            def send_message(self, message, context=None): return {}
+            def receive_message(self, timeout=30): return None
+            def disconnect(self): return True
+
+        adapter = TestAdapter("claude")
+        adapter.log_action("send", {"to": "user"})
+        captured = capsys.readouterr()
+        assert "[claude]" in captured.out
+        assert "send" in captured.out
+        assert "user" in captured.out
+
+    def test_context_manager_protocol(self):
+        """__enter__/__exit__ 实现 context manager"""
+        from ai_collab.adapters.base_adapter import BaseAIAdapter
+
+        class TestAdapter(BaseAIAdapter):
+            def __init__(self, name):
+                super().__init__(name)
+                self.connected_count = 0
+                self.disconnected_count = 0
+            def connect(self):
+                self.connected_count += 1
+                self.is_connected = True
+                return True
+            def send_message(self, message, context=None): return {}
+            def receive_message(self, timeout=30): return None
+            def disconnect(self):
+                self.disconnected_count += 1
+                self.is_connected = False
+                return True
+
+        with TestAdapter("test") as adapter:
+            assert adapter.connected_count == 1
+            assert adapter.is_connected is True
+        assert adapter.disconnected_count == 1
+        assert adapter.is_connected is False
+
+    def test_exception_classes(self):
+        """异常类层次结构"""
+        from ai_collab.adapters.base_adapter import (
+            AIAdapterError, ConnectionError, MessageError, TimeoutError
+        )
+        # AIAdapterError 是基类
+        assert issubclass(ConnectionError, AIAdapterError)
+        assert issubclass(MessageError, AIAdapterError)
+        assert issubclass(TimeoutError, AIAdapterError)
+        # 可实例化
+        assert isinstance(ConnectionError("test"), AIAdapterError)
+        assert isinstance(MessageError("test"), AIAdapterError)
+        assert isinstance(TimeoutError("test"), AIAdapterError)
