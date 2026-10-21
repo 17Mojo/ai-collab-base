@@ -307,6 +307,39 @@ class ConsensusConfig:
 
 
 @dataclass
+class ReviewWorkflow:
+    """审查工作流配置 - 融合 AI-Pair 的审查模式 (ARCHITECTURE.md v2.1)
+
+    用于在 WorkflowStep 上挂载多 Provider 代码/输出审查流程,
+    支持 auto / semi-auto / manual 三种模式。
+    """
+
+    mode: str = "auto"  # auto / semi-auto / manual
+    providers: list[str] = field(default_factory=list)  # 审查 Provider 列表
+    timeout: float = 60.0  # 单个 Provider 超时(秒)
+    min_providers: int = 2  # 最少成功响应数
+    require_approval: bool = True  # 半自动模式是否需要确认
+    quality_gates: list[str] = field(default_factory=list)  # 质量门禁
+    output_format: str = "markdown"  # 输出格式
+    fusion_strategy: str = "concat"  # 融合策略: concat / best / weighted
+
+    def __post_init__(self) -> None:
+        """参数合法性校验 - 防止下游 Provider 调度静默异常。"""
+        allowed_modes = {"auto", "semi-auto", "manual"}
+        if self.mode not in allowed_modes:
+            raise ValueError(
+                f"Invalid ReviewWorkflow.mode={self.mode!r}, "
+                f"expected one of {sorted(allowed_modes)}"
+            )
+        if self.timeout <= 0:
+            raise ValueError(f"ReviewWorkflow.timeout must be > 0, got {self.timeout}")
+        if self.min_providers < 1:
+            raise ValueError(
+                f"ReviewWorkflow.min_providers must be >= 1, got {self.min_providers}"
+            )
+
+
+@dataclass
 class WorkflowStep:
     """工作流步骤定义"""
 
@@ -332,6 +365,9 @@ class WorkflowStep:
 
     # 共识引擎配置
     consensus_config: ConsensusConfig | None = None
+
+    # AI-Pair 审查工作流配置 (ARCHITECTURE.md v2.1 1.5 节)
+    review_workflow: ReviewWorkflow | None = None
 
     # 预估时间
     estimated_time: int | None = None  # 秒
@@ -555,6 +591,18 @@ class PromptPackV2:
                         }
                         if step.consensus_config
                         else None,
+                        "review_workflow": {
+                            "mode": step.review_workflow.mode,
+                            "providers": step.review_workflow.providers,
+                            "timeout": step.review_workflow.timeout,
+                            "min_providers": step.review_workflow.min_providers,
+                            "require_approval": step.review_workflow.require_approval,
+                            "quality_gates": step.review_workflow.quality_gates,
+                            "output_format": step.review_workflow.output_format,
+                            "fusion_strategy": step.review_workflow.fusion_strategy,
+                        }
+                        if step.review_workflow
+                        else None,
                         "estimated_time": step.estimated_time,
                         "auto_trigger": step.auto_trigger,
                         "trigger_delay": step.trigger_delay,
@@ -689,6 +737,18 @@ class PromptPackV2:
                     fusion_strategy=step["consensus_config"].get("fusion_strategy", "concat"),
                 )
                 if step.get("consensus_config")
+                else None,
+                review_workflow=ReviewWorkflow(
+                    mode=step["review_workflow"].get("mode", "auto"),
+                    providers=step["review_workflow"].get("providers", []),
+                    timeout=step["review_workflow"].get("timeout", 60.0),
+                    min_providers=step["review_workflow"].get("min_providers", 2),
+                    require_approval=step["review_workflow"].get("require_approval", True),
+                    quality_gates=step["review_workflow"].get("quality_gates", []),
+                    output_format=step["review_workflow"].get("output_format", "markdown"),
+                    fusion_strategy=step["review_workflow"].get("fusion_strategy", "concat"),
+                )
+                if step.get("review_workflow")
                 else None,
                 estimated_time=step.get("estimated_time"),
                 auto_trigger=step.get("auto_trigger", False),

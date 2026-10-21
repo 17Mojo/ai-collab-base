@@ -20,6 +20,7 @@ from ai_collab.pack.schema_v2 import (
     PromptPackV2,
     QualityMetric,
     QualityMetrics,
+    ReviewWorkflow,
     StepType,
     WorkflowDefinition,
     WorkflowStep,
@@ -294,21 +295,8 @@ class TestQualityMetrics:
         normalized = metrics.get_normalized_weights()
         assert abs(sum(normalized.values()) - 1.0) < 0.01
 
-    def test_get_normalized_weights_zero_total(self):
-        """测试零总权重归一化"""
-        metrics = QualityMetrics(
-            metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.0
-                ),
-            }
-        )
-
-        normalized = metrics.get_normalized_weights()
-        assert normalized == {"m1": 0.0}
-
-    def test_get_normalized_weights_zscore_std_zero(self):
-        """测试 Z-score 归一化 std==0 边缘 case（所有权重相同）"""
+    def test_get_normalized_weights_zscore_equal_weights(self):
+        """zscore 归一化 - 所有权重相等（std=0 边界）"""
         metrics = QualityMetrics(
             metrics={
                 "m1": QualityMetric(
@@ -324,24 +312,36 @@ class TestQualityMetrics:
         normalized = metrics.get_normalized_weights()
         assert normalized == {"m1": 0.5, "m2": 0.5}
 
-    def test_get_normalized_weights_unknown_method(self):
-        """测试未知归一化方法走 else 分支"""
+    def test_get_normalized_weights_unknown_method_falls_back(self):
+        """未知 normalization_method → 回退到 total 归一化"""
         metrics = QualityMetrics(
             metrics={
                 "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.3
+                    name="m1", description="指标1", check_method="check1", weight=0.4
                 ),
                 "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.7
+                    name="m2", description="指标2", check_method="check2", weight=0.6
                 ),
             },
             normalization_method="unknown",
         )
 
         normalized = metrics.get_normalized_weights()
-        assert abs(sum(normalized.values()) - 1.0) < 0.01
-        assert abs(normalized["m1"] - 0.3) < 0.01
-        assert abs(normalized["m2"] - 0.7) < 0.01
+        assert abs(normalized["m1"] - 0.4) < 0.01
+        assert abs(normalized["m2"] - 0.6) < 0.01
+
+    def test_get_normalized_weights_zero_total(self):
+        """测试零总权重归一化"""
+        metrics = QualityMetrics(
+            metrics={
+                "m1": QualityMetric(
+                    name="m1", description="指标1", check_method="check1", weight=0.0
+                ),
+            }
+        )
+
+        normalized = metrics.get_normalized_weights()
+        assert normalized == {"m1": 0.0}
 
     def test_adjust_weight_success(self):
         """测试权重调整 - 成功"""
@@ -539,6 +539,40 @@ class TestPromptPackV2:
         assert restored.metadata.pack_id == pack.metadata.pack_id
         assert restored.metadata.pack_name == pack.metadata.pack_name
 
+    def test_full_pack_roundtrip_symmetry(self):
+        """完整 pack to_dict → from_dict → to_dict 双向对称
+
+        守护序列化/反序列化对称性：带非空 good_examples / bad_examples /
+        workflow steps / system_prompt 的完整 pack 两次 to_dict 应完全相等。
+        """
+        pack = create_xiaohongshu_base()
+        pack.workflow.steps.append(WorkflowStep(id="s1", name="step1", type=StepType.LOCAL))
+        pack.example_library.add_good_example(
+            PackExample(
+                id="good_1",
+                input="优秀输入",
+                output="优秀输出",
+                description="正例",
+                score=0.95,
+            )
+        )
+        pack.example_library.add_bad_example(
+            PackExample(
+                id="bad_1",
+                input="糟糕输入",
+                output="糟糕输出",
+                description="反例",
+                score=0.2,
+            )
+        )
+        pack.system_prompt = "测试提示词"
+
+        dict_1 = pack.to_dict()
+        restored = PromptPackV2.from_dict(dict_1)
+        dict_2 = restored.to_dict()
+
+        assert dict_1 == dict_2
+
     def test_pack_validation(self):
         """测试 Pack 验证"""
         pack = create_xiaohongshu_base()
@@ -648,6 +682,24 @@ class TestPromptPackV2:
         assert pack.metadata.category == "测试分类"
         assert "tag1" in pack.metadata.tags
         assert pack.system_prompt == "测试提示词"
+
+    def test_pack_from_dict_with_bad_examples(self):
+        """from_dict 反序列化非空 bad_examples（覆盖 add_bad_example 路径）"""
+        data = create_xiaohongshu_base().to_dict()
+        data["example_library"]["bad_examples"] = [
+            {
+                "id": "bad_1",
+                "input": "输入",
+                "output": "输出",
+                "description": "反例描述",
+                "score": 0.3,
+            }
+        ]
+
+        pack = PromptPackV2.from_dict(data)
+
+        assert len(pack.example_library.bad_examples) == 1
+        assert pack.example_library.bad_examples[0].id == "bad_1"
 
     def test_all_pack_types(self):
         """测试所有 Pack 类型"""
@@ -1029,11 +1081,222 @@ class TestValidateEnhancedChecks:
     def test_negative_weight_fails(self):
         """quality_metrics 权重为负 → validate() False"""
         pack = self._make_valid_pack()
-        # 设置负权重，同时调整另一个 metric 补偿以保持总权重 = 1.0
-        # 否则 validate() 会在总权重检查（line 848-850）时提前返回 False
         pack.quality_metrics.metrics["coverage"].weight = -0.1
-        pack.quality_metrics.metrics["distinctiveness"].weight = 0.65
         assert pack.validate() is False
+
+    def test_negative_weight_with_valid_total_fails(self):
+        """权重总和 ≈ 1.0 但含负权重 → validate() False
+
+        覆盖检查 8（权重非负）而非检查 4（总和≈1.0）：
+        coverage -0.25 + distinctiveness 0.80 + 其余 0.45 = 1.0，
+        总和通过但 coverage 为负，直达 933。
+        """
+        pack = self._make_valid_pack()
+        pack.quality_metrics.metrics["coverage"].weight = -0.25
+        pack.quality_metrics.metrics["distinctiveness"].weight = 0.80
+        assert pack.validate() is False
+
+
+class TestReviewWorkflow:
+    """ReviewWorkflow 测试 - 守护 ARCHITECTURE.md v2.1 1.5 节扩展"""
+
+    def test_default_values(self):
+        """默认值 - auto 模式 / 默认 2 providers / markdown 输出"""
+        rw = ReviewWorkflow()
+        assert rw.mode == "auto"
+        assert rw.providers == []
+        assert rw.timeout == 60.0
+        assert rw.min_providers == 2
+        assert rw.require_approval is True
+        assert rw.quality_gates == []
+        assert rw.output_format == "markdown"
+        assert rw.fusion_strategy == "concat"
+
+    def test_custom_values(self):
+        """自定义字段全部生效"""
+        rw = ReviewWorkflow(
+            mode="semi-auto",
+            providers=["claude", "codex", "copilot"],
+            timeout=120.0,
+            min_providers=3,
+            require_approval=False,
+            quality_gates=["ruff", "mypy", "coverage>=80"],
+            output_format="json",
+            fusion_strategy="weighted",
+        )
+        assert rw.mode == "semi-auto"
+        assert rw.providers == ["claude", "codex", "copilot"]
+        assert rw.timeout == 120.0
+        assert rw.min_providers == 3
+        assert rw.require_approval is False
+        assert rw.quality_gates == ["ruff", "mypy", "coverage>=80"]
+        assert rw.output_format == "json"
+        assert rw.fusion_strategy == "weighted"
+
+    @pytest.mark.parametrize("mode", ["auto", "semi-auto", "manual"])
+    def test_valid_modes_accepted(self, mode):
+        """三种合法模式都应通过校验"""
+        rw = ReviewWorkflow(mode=mode)
+        assert rw.mode == mode
+
+    @pytest.mark.parametrize(
+        "mode",
+        ["AUTOMATIC", "auto/", "", "Automatic", None, "  ", "semi-auto-extra"],
+    )
+    def test_invalid_modes_rejected(self, mode):
+        """非法模式必须显式报错（防止静默降级到错误调度）"""
+        with pytest.raises(ValueError, match="Invalid ReviewWorkflow.mode"):
+            ReviewWorkflow(mode=mode)  # type: ignore[arg-type]
+
+    @pytest.mark.parametrize("timeout", [0, -1, -60.0, -0.001])
+    def test_non_positive_timeout_rejected(self, timeout):
+        """timeout 必须 > 0,否则 Provider 调度会无限等待"""
+        with pytest.raises(ValueError, match="timeout must be > 0"):
+            ReviewWorkflow(timeout=timeout)
+
+    @pytest.mark.parametrize("min_providers", [0, -1, -100])
+    def test_invalid_min_providers_rejected(self, min_providers):
+        """min_providers 必须 >= 1"""
+        with pytest.raises(ValueError, match="min_providers must be >= 1"):
+            ReviewWorkflow(min_providers=min_providers)
+
+
+class TestWorkflowStepReviewWorkflow:
+    """WorkflowStep.review_workflow 字段与序列化往返"""
+
+    def test_step_without_review_workflow(self):
+        """缺省 review_workflow 时保持向后兼容"""
+        step = WorkflowStep(id="s1", name="S1", type=StepType.GENERATION)
+        assert step.review_workflow is None
+
+    def test_step_with_review_workflow_attached(self):
+        """挂载 review_workflow 不影响其它字段"""
+        rw = ReviewWorkflow(mode="semi-auto", providers=["claude", "codex"])
+        step = WorkflowStep(
+            id="s2",
+            name="S2",
+            type=StepType.VALIDATION,
+            review_workflow=rw,
+        )
+        assert step.review_workflow is rw
+        assert step.review_workflow.mode == "semi-auto"
+
+    def test_review_workflow_roundtrip_in_pack_to_dict(self):
+        """Pack.to_dict() 必须包含 review_workflow 子结构"""
+        pack = self._make_pack_with_review()
+        d = pack.to_dict()
+        step_d = d["workflow"]["steps"][0]
+        assert step_d["review_workflow"] is not None
+        assert step_d["review_workflow"]["mode"] == "semi-auto"
+        assert step_d["review_workflow"]["providers"] == ["claude", "codex"]
+        assert step_d["review_workflow"]["timeout"] == 90.0
+        assert step_d["review_workflow"]["min_providers"] == 2
+
+    def test_review_workflow_roundtrip_in_pack_from_dict(self):
+        """Pack.from_dict() 必须重建 ReviewWorkflow 实例"""
+        d = self._make_pack_dict_with_review()
+        pack = PromptPackV2.from_dict(d)
+        rw = pack.workflow.steps[0].review_workflow
+        assert isinstance(rw, ReviewWorkflow)
+        assert rw.mode == "semi-auto"
+        assert rw.providers == ["claude", "codex"]
+        assert rw.timeout == 90.0
+
+    def test_review_workflow_optional_in_from_dict(self):
+        """缺省 review_workflow 字段时 from_dict 不应崩溃"""
+        d = self._make_pack_dict_with_review()
+        del d["workflow"]["steps"][0]["review_workflow"]
+        pack = PromptPackV2.from_dict(d)
+        assert pack.workflow.steps[0].review_workflow is None
+
+    # --- helpers ---
+
+    @staticmethod
+    def _make_pack_with_review() -> PromptPackV2:
+        rw = ReviewWorkflow(
+            mode="semi-auto",
+            providers=["claude", "codex"],
+            timeout=90.0,
+        )
+        step = WorkflowStep(
+            id="s1",
+            name="ReviewStep",
+            type=StepType.VALIDATION,
+            review_workflow=rw,
+        )
+        from ai_collab.pack.schema_v2 import (
+            CollaborationConfig,
+            DomainPack,
+            GenerationParams,
+            OptimizationRules,
+            PerformanceTracking,
+        )
+
+        return PromptPackV2(
+            metadata=PackMetadata(
+                pack_id="review-pack",
+                pack_name="Review Pack",
+                version="2.1.0",
+                type=PackType.PRODUCTIVITY,
+                description="d",
+                designer="t",
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+            ),
+            domain=DomainPack(primary_domain="x"),
+            workflow=WorkflowDefinition(steps=[step]),
+            quality_metrics=QualityMetrics(
+                metrics={
+                    "a": QualityMetric(
+                        name="a", description="d", check_method="c", weight=1.0
+                    )
+                }
+            ),
+            example_library=ExampleLibrary(),
+            generation_params=GenerationParams(),
+            optimization=OptimizationRules(),
+            performance_tracking=PerformanceTracking(),
+            collaboration=CollaborationConfig(),
+        )
+
+    @staticmethod
+    def _make_pack_dict_with_review() -> dict:
+        return {
+            "metadata": {
+                "pack_id": "review-pack",
+                "pack_name": "Review Pack",
+                "version": "2.1.0",
+                "type": "productivity",
+                "description": "d",
+                "designer": "t",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            },
+            "domain": {"primary_domain": "x"},
+            "workflow": {
+                "steps": [
+                    {
+                        "id": "s1",
+                        "name": "ReviewStep",
+                        "type": "validation",
+                        "review_workflow": {
+                            "mode": "semi-auto",
+                            "providers": ["claude", "codex"],
+                            "timeout": 90.0,
+                            "min_providers": 2,
+                            "require_approval": True,
+                            "quality_gates": [],
+                            "output_format": "markdown",
+                            "fusion_strategy": "concat",
+                        },
+                    }
+                ]
+            },
+            "quality_metrics": {
+                "metrics": {"a": {"description": "d", "check_method": "c", "weight": 1.0}}
+            },
+            "example_library": {"good_examples": [], "bad_examples": []},
+        }
 
 
 # 运行测试
