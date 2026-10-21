@@ -87,7 +87,12 @@ def test_full_workflow():
         print(f"   最新ID: {latest['execution_id']}")
         print(f"   验证分数: {latest['validation_score']}")
 
-    return result
+    # --- 断言（原先是裸 return，只为触发覆盖率）---
+    assert result["status"] == "completed"
+    # 每个 step 均有结果且步骤级状态为 success
+    assert len(result["results"]) == len(full_pack["workflow"]["steps"])
+    assert all(step["status"] == "success" for step in result["results"])
+    assert result["final_content"].strip()
 
 
 def test_fusion_strategies():

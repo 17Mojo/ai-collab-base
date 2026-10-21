@@ -82,7 +82,18 @@ def test_ai_collab_intro_pack():
         if validation.get("issues"):
             print(f"   问题: {', '.join(validation['issues'])}")
 
-    return result
+    # --- 断言（原先是裸 return，只为触发覆盖率）---
+    assert result["status"] == "completed"
+    assert result["pack_name"] == "AI协作系统介绍文案生成器"
+    # 每个 workflow step 都应产出结果（步骤级 status 取值为 "success"）
+    assert len(result["results"]) == len(pack["workflow"]["steps"])
+    assert all(step["status"] == "success" for step in result["results"])
+    # 生成阶段应产出非空文案
+    assert result["final_content"].strip()
+    # 验证阶段通过
+    validation = result["validation"]
+    assert validation["is_valid"] is True
+    assert 0.0 <= validation["score"] <= 1.0
 
 
 def test_simple_pack():
@@ -127,7 +138,10 @@ def test_simple_pack():
     print(f"   状态: {result['status']}")
     print(f"   生成内容长度: {len(result.get('final_content', ''))}字符")
 
-    return result
+    # --- 断言（原先是裸 return，只为触发覆盖率）---
+    assert result["status"] == "completed"
+    assert len(result["results"]) == len(simple_pack["workflow"]["steps"])
+    assert result["final_content"].strip()
 
 
 def main():
