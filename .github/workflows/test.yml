@@ -33,14 +33,18 @@ jobs:
           pip install -e . 2>/dev/null || true
 
       - name: Lint (ruff)
+        # 只检查主源码目录。src/ 已于 6030087 删除——此前把 src/ 写在这里，
+        # 目录缺失会使 ruff 退出码非零，进而触发 `|| ruff check .` 回退到全仓
+        # 检查，把 tests/ 与 hermes_target/ 的历史遗留错误也算进来，导致本步骤
+        # 失败并遮蔽后续的覆盖率门禁。
         run: |
           pip install ruff
-          ruff check ai_collab/ src/ scripts/ 2>/dev/null || ruff check .
+          ruff check ai_collab/ scripts/
 
       - name: Type check (mypy, informational)
-        # 当前 113 errors, 不阻塞 CI (渐进式收紧, 与 test.yml 约定一致)
-        # 规则: 新代码不应引入 NEW 类型错误 (warn_unused_ignores 已启用)
-        # 目标: 0 errors 后移除 continue-on-error
+        # mypy 已清零（Success: no issues found in 99 source files），
+        # 阻塞式门禁见 mypy-gate.yml。此处保留为信息性输出，
+        # continue-on-error 暂留以防上游 mypy 版本升级引入新告警。
         continue-on-error: true
         run: |
           pip install mypy
