@@ -24,13 +24,15 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, cast
+from enum import Enum
+from typing import Any
 
 # Hermes 适配: 使用 hermes 自带 logger
-from hermes.logger import log
+
 
 # 模拟 IntegrationMode 枚举(Hermes 内部使用)
-class IntegrationMode:
+# 需为真枚举: 调用方会访问 .value(如 self._mode.value), 普通类的字符串常量没有该属性
+class IntegrationMode(str, Enum):
     MOCK = "mock"
     FALLBACK = "fallback"
     REAL = "real"
@@ -56,14 +58,14 @@ class ConsensusEngine:
 
     def __init__(self):
         # 可插拔 provider 配置
-        self.models: dict[str, AIProvider] = {}  # Hermes 适配: providers → models
-        # 兼容旧名(可平滑迁移)
-        self.providers: dict[str, AIProvider] = {}
+        self.models: dict[str, AIProvider] = {  # Hermes 适配: providers → models
             "chatgpt": AIProvider(name="chatgpt", timeout=30.0),
             "claude": AIProvider(name="claude", timeout=30.0),
             "kimi": AIProvider(name="kimi", timeout=30.0),
             "qianwen": AIProvider(name="qianwen", timeout=30.0),
         }
+        # 兼容旧名(可平滑迁移) - 与 models 指向同一 dict, 注册任一侧双方均可见
+        self.providers: dict[str, AIProvider] = self.models
         self.cache: dict[str, dict[str, Any]] = {}
         self._logger = logging.getLogger(__name__)
 

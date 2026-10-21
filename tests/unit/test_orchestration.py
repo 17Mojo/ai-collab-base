@@ -376,7 +376,8 @@ class TestOrchestrationConfigSnapshots:
         from ai_collab.orchestration import OrchestrationConfig
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
-        sid = cfg.create_snapshot(trigger="auto_pre_change", note="test note")
+        # create_snapshot 有副作用(写入 snapshots), 返回的 id 本用例不需要
+        cfg.create_snapshot(trigger="auto_pre_change", note="test note")
         snap = cfg.config["snapshots"][0]
         assert snap["trigger"] == "auto_pre_change"
         assert snap["note"] == "test note"
@@ -425,7 +426,7 @@ class TestOrchestrationConfigRoleCommands:
 
     def test_add_role(self, tmp_path):
         """添加 role"""
-        from ai_collab.orchestration import OrchestrationConfig, OrchestrationRole
+        from ai_collab.orchestration import OrchestrationConfig
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
         role = cfg.add_role(
@@ -464,7 +465,7 @@ class TestOrchestrationConfigRoleCommands:
 class TestOrchestrationColdStartWizard:
     def test_cold_start_wizard_basic(self, tmp_path):
         """ColdStartWizard 基本构造"""
-        from ai_collab.orchestration import OrchestrationConfig, ColdStartWizard
+        from ai_collab.orchestration import ColdStartWizard, OrchestrationConfig
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         wizard = ColdStartWizard(cfg)
         assert wizard is not None
@@ -473,7 +474,7 @@ class TestOrchestrationColdStartWizard:
 
     def test_cold_start_wizard_run_returns_bool(self, tmp_path):
         """ColdStartWizard.run 返回 bool"""
-        from ai_collab.orchestration import OrchestrationConfig, ColdStartWizard
+        from ai_collab.orchestration import ColdStartWizard, OrchestrationConfig
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         wizard = ColdStartWizard(cfg)
         # run() 可能返回 True/False(取决于环境),只要不抛异常
@@ -482,7 +483,7 @@ class TestOrchestrationColdStartWizard:
 
     def test_complete_cold_start_via_config(self, tmp_path):
         """通过 config 完成冷启动状态设置"""
-        from ai_collab.orchestration import OrchestrationConfig, StartupMode, ColdStartWizard
+        from ai_collab.orchestration import OrchestrationConfig
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
         cfg.update_binding_status()
@@ -509,8 +510,9 @@ class TestOrchestrationSaveDefaultConfig:
 
     def test_load_with_provider_registry(self, tmp_path):
         """load() 解析 provider_registry"""
-        from ai_collab.orchestration import OrchestrationConfig
         import json
+
+        from ai_collab.orchestration import OrchestrationConfig
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         # 手动写一个完整的 config 文件
         config_data = {
@@ -559,8 +561,8 @@ class TestOrchestrationSaveDefaultConfig:
 
     def test_save_with_providers(self, tmp_path):
         """save() 序列化 providers"""
+
         from ai_collab.orchestration import OrchestrationConfig
-        from datetime import datetime
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.providers["test_p"] = type("P", (), {})()
         cfg.providers["test_p"].to_dict = lambda: {"name": "test"}

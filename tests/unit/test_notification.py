@@ -280,7 +280,7 @@ class TestNotificationAPIDirect:
 
     def test_direct_writes_to_target_file(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        from ai_collab.notification import NotificationAPI, Priority
+        from ai_collab.notification import NotificationAPI
         api = NotificationAPI()
         api.direct("claude_code", "秘密消息")
         # Check notification file was written
@@ -304,7 +304,7 @@ class TestNotificationAPIMention:
 class TestNotificationAPIWriteTarget:
     def test_write_to_target_creates_file(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        from ai_collab.notification import NotificationAPI, Notification, Priority
+        from ai_collab.notification import Notification, NotificationAPI, Priority
         api = NotificationAPI()
         notification = Notification(
             content="test",

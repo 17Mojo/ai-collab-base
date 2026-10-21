@@ -515,8 +515,8 @@ class TestExecuteGenerationWithConsensus:
 
     def test_generation_with_consensus_mock(self, monkeypatch):
         """共识生成成功路径"""
+
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
-        import asyncio
 
         # Mock ConsensusEngine
         class FakeProvider:
@@ -802,8 +802,6 @@ class TestPackExecutorMVPModule:
 
     def test_main_block_executes_successfully(self, tmp_path, monkeypatch, capsys):
         """__main__ 块作为独立脚本运行"""
-        import runpy
-        import sys
         # 临时替换 argv 模拟 __main__
         # 直接调用 execute_pack 函数路径,不执行整个 __main__
         from ai_collab.pack.pack_executor_mvp import execute_pack
@@ -833,9 +831,9 @@ class TestModuleMainBlock:
 
     def test_main_block_executes_via_subprocess(self):
         """用 subprocess 执行模块触发 __main__ 块"""
+        import os
         import subprocess
         import sys
-        import os
         # 从 test 目录向上 3 级到 proj/,再下降到模块
         proj_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         module_path = os.path.join(proj_root, "ai_collab", "pack", "pack_executor_mvp.py")

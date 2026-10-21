@@ -1,7 +1,6 @@
 """Hermes ConsensusEngine 单元测试。"""
-import pytest
 
-from hermes_agent.engines import ConsensusEngine, AIProvider
+from hermes_agent.engines import AIProvider, ConsensusEngine
 
 
 def test_consensus_engine_imports():
