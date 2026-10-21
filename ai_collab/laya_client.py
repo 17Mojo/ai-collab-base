@@ -81,7 +81,12 @@ class LayaClient:
             raise LayaConnectionError(f"Laya request failed: {exc}") from exc
         if response.status_code >= 400:
             raise LayaHTTPError(response.status_code, response.text)
-        return response.json()
+        data = response.json()
+        # requests.json() 返回 Any；若服务返回 list/标量，下游会拿到违反
+        # 声明类型的值并在远处神秘失败（CLAUDE.md 经验 2：静默失效最危险）
+        if not isinstance(data, dict):
+            raise LayaError(f"Laya returned non-object JSON: {type(data).__name__}")
+        return data
 
     def predict(
         self,

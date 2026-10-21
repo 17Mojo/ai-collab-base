@@ -9,17 +9,20 @@ from ai_collab.laya_client import (
     PREDICT_PATH,
     LayaClient,
     LayaConnectionError,
+    LayaError,
     LayaHTTPError,
     decide,
     detect_model,
 )
 
+_UNSET = object()  # 区分"未传 payload"与"显式传 null"
 
-def _mock_response(status_code: int, json_payload=None, text: str = "") -> MagicMock:
+
+def _mock_response(status_code: int, json_payload=_UNSET, text: str = "") -> MagicMock:
     mock = MagicMock()
     mock.status_code = status_code
     mock.text = text
-    mock.json.return_value = json_payload if json_payload is not None else {}
+    mock.json.return_value = {} if json_payload is _UNSET else json_payload
     return mock
 
 
@@ -139,6 +142,18 @@ class TestLayaClientErrors:
         mock_post = MagicMock(return_value=_mock_response(400, text="bad request"))
         monkeypatch.setattr("ai_collab.laya_client.requests.post", mock_post)
         with pytest.raises(LayaHTTPError):
+            LayaClient().predict(state="x", questions={})
+
+    @pytest.mark.parametrize(
+        "payload",
+        [[{"choice": "a"}], "plain string", 42, None],
+        ids=["list", "str", "int", "null"],
+    )
+    def test_non_object_json_raises_laya_error(self, monkeypatch, payload):
+        """服务返回非 dict JSON 时显式报错, 而非让违反类型的值流向下游"""
+        mock_post = MagicMock(return_value=_mock_response(200, payload))
+        monkeypatch.setattr("ai_collab.laya_client.requests.post", mock_post)
+        with pytest.raises(LayaError, match="non-object JSON"):
             LayaClient().predict(state="x", questions={})
 
 
