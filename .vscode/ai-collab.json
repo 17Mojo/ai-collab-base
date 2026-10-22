@@ -20,8 +20,19 @@
     "AGENT_TEST"
   ],
   "commandPrefixes": {
-    "A.RUN": "AGENT_ARCH",
-    "X.RUN": "AGENT_EXEC",
+    "A.RUN": "AGENT_EXEC",
+    "X.RUN": "AGENT_ARCH",
     "C.RUN": "AGENT_TEST"
+  },
+  "sessionOrchestration": {
+    "codeartsAdapter": {
+      "enabled": true,
+      "bridgeCommand": "python3 scripts/codearts_bridge_deliver.py --workspace {workspace} --event-file {event_file} --artifact-file {artifact_file} --intervention-id {intervention_id} --session-id {session_id} --assignee {assignee} --reason-code {reason_code}",
+      "deliveryStatusOnSuccess": "queued_for_delivery",
+      "report": "logs/codearts_adapter_report.json",
+      "history": "logs/codearts_adapter_history.jsonl",
+      "summary": "collaboration/monitoring/CODEARTS_ADAPTER_SUMMARY_latest.md",
+      "eventDir": "collaboration/monitoring/codearts_pull_events"
+    }
   }
 }
