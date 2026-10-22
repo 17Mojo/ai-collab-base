@@ -233,12 +233,56 @@ skipped_in_flight_ids: ['intervention-fd04852f...']
 > 同一条 intervention 重投一次，在 CodeArts 那边建出一个个新会话，
 > 并发改同一个工作区（实测 22:01 一次、22:55 又一次）。
 
+**重派时会重新武装在途项**：跳过是「默认不重投」，但「ACK watchdog 判定
+要重派」是一个**明确的**再发一次决定——这时如果不做重新武装，payload 刷新了
+却送不出去，派单链路在最后一步断掉。所以 watchdog 判定 `redispatch` 时会
+把该执行方的在途 intervention 重新武装成待投递，报告里给出：
+
+```text
+rearmed_count: 1
+rearmed_by_assignee: {'codearts_agent': ['intervention-...']}
+```
+
+只动在途项：终态不动，失败项不动（本来就会自动重试），别家执行方不动。
+**只告警不重派时不碰**——那是运维决定要不要重投。
+
 运维确实需要重投时，显式开口子：
 
 ```bash
 python3 -m ai_collab.cli sessions codearts-pull --force-redeliver
 python3 -m ai_collab.cli sessions health --force-redeliver
 ```
+
+### payload 必须带任务契约（重要）
+
+派单 payload 的任务块必须自带**任务契约**，不能只有「任务 ID + 改状态的命令」：
+
+```markdown
+### TASK-P0-XXX-001
+
+**任务描述**: <description>
+**涉及文件**: `<file>`
+**结果文件**（必须写）: `<result_file>`
+**change_id**: `<change_id>`
+**角色**: `AGENT_EXEC`（codearts_agent）
+**任务工单**: `collaboration/tasks/TASK-P0-XXX-001.md`
+
+#### 执行步骤
+1. 先把状态翻成 implementing
+2. 按任务描述实现，产出结果文件
+3. 逐条跑验收命令
+4. 写完结果文件后回一行 ACK
+```
+
+> ⚠️ **这一段是踩过坑才加的**（2026-10-22 真机实测）：payload 之前只有
+> 任务 ID、改状态的命令和验收命令，**没有描述、没有结果文件路径**。
+> 接收方只能从任务 ID 和验收命令里的文件名反推要做什么。
+> 实测中 CodeArts 为此花了 5 分 27 秒、61 个回合翻仓库，
+> **一个交付文件都没产出**。
+>
+> 任务记录里本来就有 `description` / `files` / `result_file` / `change_id` /
+> `assignee_role`——`scripts/agent_dispatch_bridge.py` 的
+> `_task_contract_lines()` 负责把它们渲染进任务块。
 
 ### kernel 响应格式不统一（排查时必读）
 
@@ -326,9 +370,11 @@ git commit -m "..."
 | 用途 | 路径 |
 |------|------|
 | 桥接实现 | `scripts/codearts_bridge_deliver.py` |
-| 派单桥接 | `scripts/agent_dispatch_bridge.py` |
+| 派单桥接（任务契约渲染） | `scripts/agent_dispatch_bridge.py` |
 | 前缀收敛 | `ai_collab/role_prefix.py` |
 | CodeArts adapter | `ai_collab/adapters/codearts_adapter.py` |
+| 干预队列（在途/重新武装） | `ai_collab/intervention_queue.py` |
+| ACK watchdog（重派判定） | `ai_collab/ack_watchdog.py` |
 | 编排配置 | `config/agent-orchestration.json` |
 | Adapter 配置 | `.vscode/ai-collab.json` |
 | 桥接测试 | `tests/unit/test_codearts_bridge_deliver.py` |
@@ -336,6 +382,8 @@ git commit -m "..."
 
 ---
 
-**更新时间**: 2026-10-22
+**更新时间**: 2026-10-23
 **维护者**: Claude Code (AGENT_ARCH)
 **变更说明**: 全链路重写。原文档描述的手工 JSON payload 流程已废弃。
+2026-10-23 补充真机实测结论：在途不重复投递、重派时重新武装、
+payload 必须带任务契约、kernel 响应格式不统一。
