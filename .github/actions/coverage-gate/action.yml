@@ -1,0 +1,42 @@
+name: Coverage Gate
+description: >
+  覆盖率门禁的唯一事实源。阈值与测量方法都定义在这里，
+  test.yml 与 mypy-gate.yml 共用，避免两套口径互相掩盖真实回归。
+
+# 为什么需要这个 composite action
+# --------------------------
+# 2026-09 时本仓库同时存在两个覆盖率门禁：
+#   - test.yml:        coverage report --fail-under=85
+#   - mypy-gate.yml:   解析 coverage.xml 的 line-rate，阈值 80
+# 两者阈值不同（85 / 80）、测量方法不同（语句覆盖 / 行覆盖），互不知情。
+# 结果是宽松的那一套把严格的那一套完全掩盖——覆盖率从 87% 跌到 83% 时
+# 只有 test.yml 会红，而它当时正好被自己的 ruff 步骤故障遮住，
+# 真实回归静默通过了一个版本。
+#
+# 现在两个工作流都调用本 action：同一阈值、同一测量方法、同一处可改。
+# 保留双工作流而不是只留一个，是有意的：2026-09-20 的 commit 01f67c2
+# 正是因为 test.yml 自身步骤故障而让门禁整体失效，
+# 单一工作流承载单一门禁仍然有单点故障风险。
+
+inputs:
+  threshold:
+    description: 最低覆盖率百分比（语句覆盖口径）
+    required: false
+    default: "85"
+
+runs:
+  using: composite
+  steps:
+    - name: Check coverage threshold
+      shell: bash
+      run: |
+        THRESHOLD="${{ inputs.threshold }}"
+        echo "::group::覆盖率门禁（阈值 ${THRESHOLD}%）"
+        echo "测量方法: coverage report --fail-under（语句覆盖口径，与 coverage.xml 的 line-rate 不同）"
+        if coverage report --fail-under="${THRESHOLD}"; then
+          echo "Coverage gate (>=${THRESHOLD}%) - PASS"
+        else
+          echo "::error::Coverage below ${THRESHOLD} percent threshold"
+          exit 1
+        fi
+        echo "::endgroup::"

@@ -57,11 +57,10 @@ jobs:
             --cov=ai_collab --cov-report=term --cov-report=xml --cov-report=html
 
       - name: Coverage gate (>=85 percent)
-        # 防退化: 当前 TOTAL 86 percent (commit 76944bf 之后, 加 omit 之后)
-        # 85 是底线 (略低于当前值, 留 1pp buffer 应对噪声)
-        # 调整时同步更新 CLAUDE.md
-        run: |
-          coverage report --fail-under=85 || (echo "::error::Coverage below 85 percent threshold"; exit 1)
+        # 阈值与测量方法的唯一事实源在 .github/actions/coverage-gate/action.yml
+        # mypy-gate.yml 调用同一个 action，两者口径完全一致，不会互相掩盖。
+        # 调整阈值只改 action.yml 一处。
+        uses: ./.github/actions/coverage-gate
 
       - name: Upload coverage to Codecov (optional)
         if: matrix.python-version == '3.12'
