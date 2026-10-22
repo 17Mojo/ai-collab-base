@@ -1,6 +1,6 @@
 # RESULT — CodeArts 共创链路搭建（双命名空间收敛 + 派单自动投递 + 角色一致化）
 
-**状态**: completed（自动投递链路已真机跑通，CodeArts 已接到任务）
+**状态**: completed（自动投递链路已真机跑通并完成交付：CodeArts 独立产出代码与结果文件）
 **完成时间**: 2026-10-22T23:15:00+08:00
 **报告版本**: 1.1.0
 **执行者**: claude_code (AGENT_ARCH / AGENT_TEST)
@@ -224,10 +224,20 @@ python3 -m mypy <4 modules>
 Success: no issues found in 4 source files
 
 python3 -m pytest tests/ -q
-2784 passed, 6 skipped in 34.92s
+2787 passed, 6 skipped in 36.03s
 ```
 
 （6 skipped 均为环境性跳过：后端数据库文件不存在、127.0.0.1:8000 后端未运行。）
+
+CodeArts 侧交付的验收（`hermes_target/`）：
+
+```text
+PYTHONPATH=hermes_target python3 -m pytest hermes_target/hermes_agent/tests/unit/test_consensus_engine.py -q
+54 passed in 1.93s
+
+# 覆盖率门禁（产物 .coverage 经 `coverage report` 复核一致）
+hermes_target/hermes_agent/engines/consensus_engine.py     309     14    95%
+```
 
 ### 8.2 新增测试覆盖
 
@@ -235,9 +245,9 @@ python3 -m pytest tests/ -q
 |---|---|---|
 | `tests/unit/test_codearts_bridge_deliver.py` | 27 | 消息提取优先级、凭据解析、kernel 发现、HTTP 401、cron 流程、凭据引导（写文件/不回显/不投递/失败路径）、kernel 响应解析（JSON / Python 字面量 / 列表不截断）、`list_sessions` 解析、仓库 bridgeCommand 是合法 format 模板 |
 | `tests/unit/test_codearts_adapter.py` | 7 | 在途 intervention 不重复投递、强制重投、失败可重试、artifact_only / queued / failed 三条投递路径 |
-| `tests/unit/test_agent_dispatch_bridge.py` | 10 | `--orders` 生效、指令包按执行方分组、**任务契约入包**、**契约活到 trigger payload** |
+| `tests/unit/test_agent_dispatch_bridge.py` | 13 | `--orders` 生效、指令包按执行方分组、**任务契约入包**、**契约活到 trigger payload**、**工具约束入包**、**工具约束只对 codearts 渲染**、**工具约束活到 trigger payload** |
 | `tests/unit/test_role_prefix.py` | +6 | 角色席位解析：单角色、终态排除、歧义不解析、stateFile 跟随、角色决定提示词 |
-| `tests/unit/test_session_health.py` | 3 | 干预正文点名 payload + 角色对齐提示、payload 路径跟随 trigger 配置、**干预正文指向执行步骤** |
+| `tests/unit/test_session_health.py` | 4 | 干预正文点名 payload + 角色对齐提示、payload 路径跟随 trigger 配置、**干预正文指向执行步骤**、**干预正文含工具约束** |
 | `tests/unit/test_ack_watchdog.py` | 6 | watchdog 提示走角色前缀、**重派时重新武装在途干预**、**只告警时不武装** |
 | `tests/unit/test_intervention_queue.py` | +2 | **重新武装只动在途项**、**无在途项时是 noop** |
 
@@ -258,7 +268,7 @@ python3 -m pytest tests/ -q
 | CodeArts 接到任务 | ✅ **任务状态 `planning` → `implementing`**（22:05:05），执行的正是 payload 任务块第一条命令 `tasks update --status implementing`；并派出「补 consensus_engine 单元测试」subagent |
 | ACK | ⏳ 未收到。首个会话与其 subagent 均以 `MessageAbortedError` 结束，无代码产出 |
 
-真实投递时间线：
+第一次投递的时间线（**失败**）：
 
 ```text
 22:01:05  pull adapter 投递 → cron 74686bbf → CodeArts 会话 ses_e9c15
@@ -269,17 +279,46 @@ python3 -m pytest tests/ -q
 23:06:17  修复后复跑：candidate_count=0，未新建会话
 ```
 
+第二次投递的时间线（**成功交付**，全程无需 `--force-redeliver`）：
+
+| 环节 | 实测结果 |
+|---|---|
+| `cli dispatch` 刷新派单状态 | ✅ `dispatched_at` 刷新到 00:45:17，payload 带上任务契约 + **工具约束**（§12.6） |
+| `cli sessions health` 生成干预 | ✅ 00:47:35 生成新干预 `intervention-8298f9f1…`（bridge 模式），干预正文含工具约束 |
+| adapter → bridge → kernel | ✅ **全自动**：pull adapter 消费新干预 → bridge 建 cron `aa844576` → kernel 自建会话 `ses_e9b7d35d6ffeG75Bm1M3` |
+| CodeArts 交付代码 | ✅ 00:50:36 写出 `test_consensus_engine.py`（693 → **23,030 字节**，3 → **54 个用例**）；同时改写 `consensus_engine.py`（Hermes 适配版 v1.3） |
+| CodeArts 跑验收 | ✅ 00:53:16 产出 `.coverage`：**309 stmts / 14 miss / 95%**（门禁 ≥80%），`coverage report` 复核一致 |
+| CodeArts 写结果文件 | ✅ 00:53:11 写出 `hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md`（13,538 字节，含 §7.3 四段） |
+| 收口 | ✅ receipt 桥接 00:51:30 记录完成，`tasks list` 活跃任务归零 |
+| CodeArts 侧的沉淀 | ✅ CodeArts 自己把工具约束写成了记忆条目（`memory/feedback_codearts_session_tooling.md`），经单向镜像同步进仓库 |
+
+```text
+00:45:17  dispatch 刷新 dispatched_at，payload 带契约 + 工具约束
+00:47:35  health 生成新干预 → adapter 自动投递 → CodeArts 会话 ses_e9b7d35d
+00:50:36  交付测试文件（23030 字节 / 54 用例）
+00:51:30  receipt 记录任务完成
+00:53:11  交付结果文件（含 §7.3 四段）
+00:53:16  产出 .coverage：95%（≥ 80% 门禁）
+```
+
+> 关键点：第二次投递**没有**用 `--force-redeliver`。
+> `dispatch` 刷新 `dispatched_at` → 120s 静默阈值重新计时 → `health` 生成
+> 新的干预 → adapter 走常规路径自动投递。上一轮的干预在 00:46:48 被判定
+> 为失效并置为 `resolved`，因此**不存在在途并发**，链路是干净的。
+
 ### 8.4 派发状态
 
 ```text
 TASK-P0-CONSENSUS-ENGINE-001
   assignee: codearts_agent (AGENT_EXEC)
-  status: implementing          ← CodeArts 已接手（22:05:05 由 payload 任务块推进）
+  status: completed           ← receipt 桥接 00:51:30 记录，tasks list 活跃任务归零
   result_file: hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md
-  契约段: 执行命令 / 验证结果 / 风险 / 回滚 —— 四段齐备
-  覆盖率门禁: 当前 30%，契约要求 ≥80%（CodeArts 的硬前置，已在风险章节写明）
+  契约段: 执行命令 / 验证结果 / 风险 / 回滚 —— 四段齐备（13,538 字节）
+  覆盖率门禁: 95.47%（309 stmts / 14 miss）≥ 80% ✅
   交付物: hermes_target/hermes_agent/tests/unit/test_consensus_engine.py
-          现 3 个冒烟用例 / 693 字节，需扩到覆盖 consensus_engine.py（14KB）≥80%
+          3 个冒烟用例 / 693 字节 → 54 个用例 / 23,030 字节
+  附带:   hermes_target/hermes_agent/engines/consensus_engine.py
+          Hermes 适配版 v1.3（四条主路径全部走公开 API）
 ```
 
 ---
@@ -289,13 +328,15 @@ TASK-P0-CONSENSUS-ENGINE-001
 | 级别 | 风险 | 说明 | 缓解 |
 |---|---|---|---|
 | ~~中~~ | ~~kernel 自动投递缺凭据~~ | **已闭环** —— 用户于 21:45 执行引导命令，22:01 首次真实投递成功 | 见 §11 |
-| **高** | CodeArts 会话被中止、无产出 | **三个**会话全部中止/停住，`hermes_target/` 无改动；原因未定位（读对方会话正文被安全策略拦截） | 见 §13；已排除重复投递、cron 二次触发、工具链故障三种假设；最可能是「不知道要干什么所以一直探索」——payload 缺契约已修（§12.4），待重新投递验证 |
+| ~~高~~ | ~~CodeArts 会话被中止、无产出~~ | **已闭环** —— 根因是 `write`/`edit` 与 `task` 两个工具把会话带死（§12.6）；payload 写明规避方式后，00:47:35 的投递交付了 54 个用例 + 95% 覆盖率 | 见 §12.6 / §13 |
+| **中** | `write`/`edit`/`task` 工具在 CodeArts 会话里会卡死 | 真机实测：`write` 永久挂起（状态停在 `running`，文件不落盘），`task` 报 `MessageAbortedError`；同期 `bash`/`read`/`todowrite` 全部正常 | payload 已写明「写文件用 bash heredoc、不要派生子代理」（`ce8a3b9`）；干预正文也带同一句（对方看到的第一条消息） |
 | **低** | 凭据引导命令被误由 AI 执行 | 会把密码带进 AI 会话上下文 | 命令设计为「只写文件、不回显、不投递」；AI 侧不代跑，仅交付命令 |
 | **中** | 首次自动投递延迟 | pull adapter 只消费 intervention，intervention 由 session_health 在 120s 超时后产生 | 已在派发指南「首次投递的时间点」章节写明；手工投递可走 `--dry-run` |
 | **中** | `hermes_target/` 的 pytest 收集面串扰 | 主仓 `testpaths = ["tests"]` 刻意排除 `hermes_target/`；放宽会污染主仓覆盖率分母 | 路径注入限定在单条命令内，已写入验收命令 |
 | **低** | `codex` 兜底前缀 `X` 与 `AGENT_ARCH` 撞车 | 既有冲突 | `codex` 当前未绑定角色席位，实际不影响派发；已在派发指南标注 |
-| **低** | 共享工作区并发编辑 | CodeArts 开始改 `hermes_target/` 后与本会话可能撞车 | 本会话改动已分多个自洽提交落地（`243f73f` / `91cdef3` / `216fa53` / `a99bebf` / `ee79cf1` / `930a222` / `bd45365` / `6ad5155` / `b3e7319` / `5c21bb7` / `73abaa9`）；重复投递已修（§12.3）、重派路径已补（§12.5） |
+| **低** | 共享工作区并发编辑 | CodeArts 开始改 `hermes_target/` 后与本会话可能撞车 | 本会话改动已分多个自洽提交落地（`243f73f` / `91cdef3` / `216fa53` / `a99bebf` / `ee79cf1` / `930a222` / `bd45365` / `6ad5155` / `b3e7319` / `5c21bb7` / `73abaa9` / `ce8a3b9` / `0e8ac69`）；重复投递已修（§12.3）、重派路径已补（§12.5） |
 | **低** | kernel 僵尸 cron 任务 | CodeArts 侧会话异常结束后，bridge 建的一次性 cron 任务卡在 `active`/`isRunning=true`，kernel 未提供撤销接口 | 记录在案（§13）；kernel 侧无接口可清，需人工在 CodeArts 侧处理 |
+| **低** | 交付物未获 Claude Code 侧独立复跑 | 安全分类器要求用户显式授权才能执行外部来源（Hermes/openclaw）代码，AI 侧未重跑 `hermes_target` 的 pytest | 以产物核验代替：`.coverage` 经 `coverage report` 复核为 95%；引擎 diff 与测试文件已人工复核；CodeArts 结果文件附完整 pytest 输出 |
 
 ---
 
@@ -451,48 +492,89 @@ intervention 重新武装成待投递；`ack_watchdog` 在判定 `action=redispa
 只动在途项：终态不动，失败项不动（本来就会自动重试），别家不动。
 只告警不重派时不碰——那是运维决定要不要重投。
 
+### 12.6 `write`/`edit` 与 `task` 两个工具会把 CodeArts 会话带死（中止的真正原因）
+
+前五个缺陷都是「信息丢了 / 信号送不出去」。这一条是**执行环境层面的**：
+即便前五项全修好，对方照样可能零产出。
+
+2026-10-23 复盘前三次会话的元数据（工具名 + 状态 + 时间戳，不含正文），
+对比极其干净：
+
+| 会话 | 正常完成的工具 | 弄死会话的工具 |
+|---|---|---|
+| `ses_e9c15` | bash ×7、read ×2 | **`task`**（派生子代理）→ `MessageAbortedError` |
+| `ses_e9be3df` | bash ×8、read ×2、todowrite | **`write`** → 状态永远停在 `running` |
+
+`ses_e9be3df` 的最后一次 `write` 发生在 23:00:54，工具状态是 `running`，
+**从未完成**；对应的 `hermes_target/` 目录下零文件变化，仓库里也没有任何
+被改动的文件——**它就卡在写文件这一步上，然后整个会话停了**。
+
+也就是说：写文件与派生子代理这两条路在 CodeArts 会话里会把会话带死，
+而这两件事**完全可以用 bash 替代**——同期所有 `bash`/`read`/`todowrite`
+调用都正常完成。
+
+**修法**（`ce8a3b9`）：
+
+- `scripts/agent_dispatch_bridge.py` 新增 `_execution_constraints_lines()`，
+  只对 `codearts_agent` 渲染「#### 执行环境约束」段：不要用 `write`/`edit`、
+  不要派生子代理、写文件用 bash heredoc、写完用 `ls -l` 自检落盘；
+- `ai_collab/session_health.py` 的**干预正文**补同一句——干预正文是对方
+  会话看到的第一条消息，约束必须出现在最前面，而不只在 payload 里。
+
+带约束的 payload 在 00:47:35 的投递中生效：对方此后全程只用
+bash / read 写文件，**没有再触发过一次 `write` 或 `task`**，会话不再中止，
+并按时交付（§8.3）。
+
+> 顺带说明：CodeArts 自己把这条约束沉淀成了记忆条目
+> `memory/feedback_codearts_session_tooling.md`（经单向镜像同步进仓库）——
+> 约束通过 payload → 对方记忆 → 镜像，形成了闭环。
+
 ---
 
-## 13. 遗留：CodeArts 会话被中止
+## 13. 会话中止之谜已破：交付成功
 
-CodeArts 接到任务并推进了状态，但**三个会话全部以 `MessageAbortedError`
-（或无错误地停住）结束**，没有代码产出（`hermes_target/` 下无改动）。
+前三次投递，CodeArts 全部以 `MessageAbortedError`（或无错误地停住）结束，
+零产出（`hermes_target/` 下无改动）。**根因已在 §12.6 定位**：
+不是重复投递、不是 cron 二次触发、不是工具链坏了，而是**对方在
+`write` / `task` 这两个工具上把会话带死了**。
 
-原因未定位：读取对方会话正文被安全策略拦截（会话记录属对方 Agent 的
-数据），只能用元数据判断。已确认的元数据事实：
+当时的元数据证据：
 
 | 会话 | 起止 | 回合 | 工具 | 结束状态 |
 |---|---|---|---|---|
 | `ses_e9c15`（首投） | 22:01:06 → 22:02:54 | 23 | bash / grep / read / task | `MessageAbortedError` |
 | `ses_e9c13edf`（其 subagent） | 22:02:57 → 22:06:01 | 29 | bash / listSkills / read / skill / tool_call / tool_describe | `MessageAbortedError` |
-| `ses_e9be3df`（重复投递） | 22:55:27 → 23:00:54 | 61 | bash / grep / read / todowrite / write | 无错误字段，最后一条 `in=0 out=0` |
+| `ses_e9be3df`（重复投递） | 22:55:27 → 23:00:54 | 61 | bash / grep / read / todowrite / **write** | 无错误字段，最后一条 `in=0 out=0`，`write` 停在 `running` |
 
 三条排除掉的假设：
 
 1. **不是重复投递导致的**——首投那个会话（22:01 那次）也中止了。
 2. **不是 cron 计划时间二次触发导致的**——`74686bbf` 的计划时间 22:02:00
-   落在会话运行中，22:01:59→22:02:08 的回合正常跨过，没有被打断。
+   落在会话运行中，22:01:59→22:02:08 的回合正常跨过，没有被打断；
+   （第二轮投递的会话里也只有一个 user 消息，没有第二次注入。）
 3. **不是工具链坏了**——三个会话的工具调用都正常、有正常的 token 计数。
 
-关键线索（只在元数据里能看到）：`ses_e9be3df` 一口气跑了 61 个 assistant
-回合、27k 输入 token，**工具链全程正常但一个交付文件都没写**。
-结合 §12.4（payload 没带任务契约），最可能的解释是
-**它一直不知道要干什么，于是持续探索直到被中止**。
+**加上 §12.4（payload 缺契约）与 §12.6（工具带死会话）之后，
+三次失败完全说得通**：对方既不知道要做什么（缺契约），
+真要动手写文件时又会踩上带死会话的工具（缺约束）。
 
-两处已尽力、但**没做**的事，如实记录：
+修完这两条后的投递（00:47:35）一次成功，交付见 §8.3。
+
+### 13.1 两处已尽力、但**没做**的事（如实记录）
 
 - 想读 `error.data.message` 拿到中止的确切原因 → 被安全策略拒绝
   （`[Auto-Mode Bypass]`，认定是在绕开先前对会话正文的拒绝）。**未绕开。**
+  最终靠工具状态与时间戳的元数据定位到 §12.6。
 - 想改用带 cron 任务控制的 kernel 路由来清理僵尸任务 → 探测发现
   `DELETE` / `pause` / `complete` 等路径**全部不存在**（都落到 SPA 的
   HTML 回退页），kernel 没有提供任务撤销接口。
 
-残留影响：`296fc444` 这个一次性 cron 任务在 CodeArts 侧会话死掉后
-卡在 `status=active` / `isRunning=true` / `nextFireTime=22:56:00`（已过期），
-成了僵尸任务。kernel 没有撤销接口，bridge 侧暂时清不掉。
+### 13.2 残留
 
-这属于 CodeArts 侧的执行问题，不在本链路（派单/投递）范围内，
-但会影响 `TASK-P0-CONSENSUS-ENGINE-001` 的收口。
+`296fc444` 这个一次性 cron 任务在 CodeArts 侧会话死掉后
+卡在 `status=active` / `isRunning=true` / `nextFireTime=22:56:00`（已过期），
+成了僵尸任务。kernel 没有撤销接口，bridge 侧清不掉，需人工在 CodeArts 侧处理。
+（成功那次的 `aa844576` 在会话结束后同样会变成同类残留。）
 
 ---
 
@@ -503,9 +585,11 @@ CodeArts 接到任务并推进了状态，但**三个会话全部以 `MessageAbo
 | 派发指南（已按当前链路重写） | `collaboration/guides/CODEARTS_DISPATCH_GUIDE.md` |
 | 开发日志 | `logs/claude-code/2026-10/2026-10-22_codearts-collab-wiring.md`（gitignored） |
 | 桥接实现 | `scripts/codearts_bridge_deliver.py` |
-| 派单桥接（任务契约渲染） | `scripts/agent_dispatch_bridge.py` |
+| 派单桥接（任务契约渲染 + 工具约束） | `scripts/agent_dispatch_bridge.py` |
 | 前缀收敛模块 | `ai_collab/role_prefix.py` |
 | 在途干预重新武装 | `ai_collab/intervention_queue.py` |
+| 干预正文（含工具约束） | `ai_collab/session_health.py` |
+| CodeArts 侧记忆镜像 | `memory/feedback_codearts_session_tooling.md`、`memory/feedback_ack_cli_generated.md` |
 
 ---
 
@@ -514,4 +598,5 @@ CodeArts 接到任务并推进了状态，但**三个会话全部以 `MessageAbo
 → `ee79cf1`（一次性凭据引导）→ `930a222`（引导命令路径说明）
 → `bd45365`（kernel 响应解析修复）→ `6ad5155`（在途不重复投递）
 → `b3e7319`（payload 任务契约）→ `5c21bb7`（干预正文指向执行步骤）
-→ `73abaa9`（重派时重新武装在途干预）
+→ `73abaa9`（重派时重新武装在途干预）→ `ce8a3b9`（payload 工具约束）
+→ `0e8ac69`（CodeArts 交付：54 用例 / 95% 覆盖率）

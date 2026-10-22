@@ -284,6 +284,72 @@ python3 -m ai_collab.cli sessions health --force-redeliver
 > `assignee_role`——`scripts/agent_dispatch_bridge.py` 的
 > `_task_contract_lines()` 负责把它们渲染进任务块。
 
+### payload 必须带工具约束（重要）
+
+CodeArts 会话里有两个工具会把**整个会话卡死并中止**：
+
+| 工具 | 实测表现 |
+|---|---|
+| `write` / `edit` | 工具状态永远停在 `running`，**文件不落盘**，会话随后中止 |
+| `task`（派生子代理） | 报 `MessageAbortedError`，父会话与子会话一起中止 |
+
+同期所有 `bash` / `read` / `todowrite` 调用都正常完成 —— 说明工具链本身没坏，
+坏的是这两个调用。于是 payload 必须写明规避方式：
+
+```markdown
+#### 执行环境约束（真机实测，必须遵守）
+
+- `write` / `edit`：实测会话在 `write` 调用上永久挂起，文件没有落盘，会话随后中止。
+- `task`（派生子代理）：实测报 `MessageAbortedError`，父会话与子会话一起中止。
+
+**写文件一律用 bash（heredoc）**：
+
+```bash
+cat > path/to/file.py <<'EOF'
+...文件内容...
+EOF
+```
+
+写完立刻自检，确认文件真的落盘了：
+
+```bash
+ls -l path/to/file.py && wc -l path/to/file.py
+```
+
+自己直接做完，不要派生子代理。
+```
+
+- `scripts/agent_dispatch_bridge.py` 的 `_execution_constraints_lines()` 负责渲染，
+  **只对 `codearts_agent`** 生效（别家执行方不该看到这段）。
+- `ai_collab/session_health.py` 的**干预正文**也带同一句 ——
+  干预正文是对方会话看到的第一条消息，约束必须出现在最前面，
+  而不是只藏在 payload 里等对方自己读到。
+
+> ⚠️ **这一段也是踩过坑才加的**（2026-10-22→23 真机实测）：
+> 前三次投递的会话全部以 `MessageAbortedError`（或无错误停住）结束、零产出。
+> 复盘元数据发现，两个会话分别死在 `task` 与 `write` 调用上，
+> 而 `hermes_target/` 与仓库里没有任何文件被写出来 —— 它就卡在写文件那一步。
+> 加上约束后的投递（00:47:35）一次成功：54 个用例、95% 覆盖率。
+
+### 重新投递的干净做法（不需要 --force-redeliver）
+
+对方没产出、又不能重复投在途项时，**不要**直接上 `--force-redeliver`
+（那会绕过在途保护、可能造成并发会话）。干净的做法是**刷新派单状态**：
+
+```bash
+python3 -m ai_collab.cli dispatch --target codearts_agent   # 刷新 dispatched_at
+sleep 150                                                     # 等过 120s 静默阈值
+python3 -m ai_collab.cli sessions health                     # 生成新干预
+```
+
+链路会自己走完：`dispatch` 刷新 `dispatched_at` → 旧干预被判失效并置为
+`resolved`（**不再有在途项**）→ 静默阈值重新计时 → `health` 生成新干预 →
+pull adapter 走常规路径自动投递 → bridge → kernel → 对方新会话。
+
+实测（2026-10-23 00:45→00:53）：`dispatch` 00:45:17 → 新干预 00:47:35 →
+对方会话建立 → 00:50:36 交付测试文件 → 00:53:11 交付结果文件 → 收口。
+全程无 `--force-redeliver`、无并发会话。
+
 ### kernel 响应格式不统一（排查时必读）
 
 kernel 的序列化**不统一**：
@@ -375,6 +441,7 @@ git commit -m "..."
 | CodeArts adapter | `ai_collab/adapters/codearts_adapter.py` |
 | 干预队列（在途/重新武装） | `ai_collab/intervention_queue.py` |
 | ACK watchdog（重派判定） | `ai_collab/ack_watchdog.py` |
+| 干预正文（工具约束） | `ai_collab/session_health.py` |
 | 编排配置 | `config/agent-orchestration.json` |
 | Adapter 配置 | `.vscode/ai-collab.json` |
 | 桥接测试 | `tests/unit/test_codearts_bridge_deliver.py` |
@@ -387,3 +454,6 @@ git commit -m "..."
 **变更说明**: 全链路重写。原文档描述的手工 JSON payload 流程已废弃。
 2026-10-23 补充真机实测结论：在途不重复投递、重派时重新武装、
 payload 必须带任务契约、kernel 响应格式不统一。
+2026-10-23（晚）补充：payload 必须带工具约束（write/edit、task 会带死会话）、
+重新投递的干净做法（刷新派单状态而非 --force-redeliver）。
+2026-10-23 已真机验证一次完整交付：54 个用例、95% 覆盖率、结果文件四段齐备。
