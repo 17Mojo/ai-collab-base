@@ -398,6 +398,42 @@ def _resolve_trigger_assignees(config: dict, *, target: str = "all") -> list[str
     return assignees
 
 
+def _resolve_assignee_roles(workspace: str) -> dict[str, str]:
+    """按控制面状态推导每个执行方的角色代号。
+
+    同一执行方可能占多个角色（例如 Claude Code 同时占 AGENT_ARCH 与
+    AGENT_TEST），此时只有当其活跃任务的角色一致时才能唯一确定；
+    不唯一就返回空，由 provider 兜底前缀接管。
+    """
+    state_file = Path(workspace) / "logs" / "collaboration_state.json"
+    if not state_file.exists():
+        return {}
+    try:
+        payload = json.loads(state_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    tasks = payload.get("tasks", {})
+    if not isinstance(tasks, dict):
+        return {}
+
+    roles: dict[str, set[str]] = {}
+    for task in tasks.values():
+        if not isinstance(task, dict):
+            continue
+        assignee = str(task.get("assignee") or task.get("ai_type") or "").strip().lower()
+        role = str(task.get("assignee_role") or "").strip()
+        status = str(task.get("status") or "").strip().lower()
+        if not assignee or not role or status in {"completed", "cancelled", "failed"}:
+            continue
+        roles.setdefault(assignee, set()).add(role)
+
+    resolved: dict[str, str] = {}
+    for assignee, candidates in roles.items():
+        if len(candidates) == 1:
+            resolved[assignee] = next(iter(candidates))
+    return resolved
+
+
 def _generate_trigger_payload_files(
     *,
     workspace: str,
@@ -425,6 +461,7 @@ def _generate_trigger_payload_files(
     generated_at = generated_at or datetime.now().isoformat()
     output_files: list[str] = []
     payloads: dict[str, str] = {}
+    assignee_roles = _resolve_assignee_roles(workspace)
 
     for assignee in assignees:
         payload = build_handoff_payload(
@@ -433,6 +470,8 @@ def _generate_trigger_payload_files(
             orders_relpath=orders_relpath,
             section_markdown=section_map.get(assignee),
             generated_at=generated_at,
+            assignee_role=assignee_roles.get(assignee),
+            workspace=workspace,
         )
         payload_file = Path(workspace) / output_dir_rel / f"{payload_prefix}_{assignee}_latest.md"
         payload_file.parent.mkdir(parents=True, exist_ok=True)
@@ -771,6 +810,7 @@ def cmd_tasks(args):
             vscode_context={"source": "cli"},
             change_id=getattr(args, "change_id", None),
             assignee=getattr(args, "assignee", None) or args.ai,
+            assignee_role=getattr(args, "assignee_role", None),
             reviewer=getattr(args, "reviewer", None),
             primary_skill=getattr(args, "primary_skill", None),
             support_skills=getattr(args, "support_skills", None),
@@ -903,6 +943,21 @@ def cmd_tasks(args):
             print("\n错误: 需要指定 task_id")
             return 1
 
+        # 契约字段与状态分开更新：
+        # - 契约字段是工单的"内容"，状态是工单的"进度"，不应互相隐式覆盖
+        # - 历史行为在省略 --status 时会把状态重置为 pending
+        contract_updates = {
+            "change_id": getattr(args, "change_id", None),
+            "assignee": getattr(args, "assignee", None),
+            "assignee_role": getattr(args, "assignee_role", None),
+            "reviewer": getattr(args, "reviewer", None),
+            "primary_skill": getattr(args, "primary_skill", None),
+            "support_skills": getattr(args, "support_skills", None),
+            "acceptance_commands": getattr(args, "acceptance_commands", None),
+            "result_file": getattr(args, "result_file", None),
+        }
+        contract_updates = {key: value for key, value in contract_updates.items() if value}
+
         status_map = {
             "pending": TaskStatus.PENDING,
             "planning": TaskStatus.PLANNING,
@@ -914,19 +969,53 @@ def cmd_tasks(args):
             "failed": TaskStatus.FAILED,
             "cancelled": TaskStatus.CANCELLED,
         }
-        new_status = status_map.get(args.status, TaskStatus.PENDING)
-
-        try:
-            state.update_task_status(
-                args.task_id,
-                new_status,
-                args.note,
-                actor=getattr(args, "ai", None),
-            )
-        except ValueError as exc:
-            print(f"\n错误: {exc}")
+        # "all"/"active" 是 list 的过滤值，不是任务状态；显式拒绝而不是静默落到 pending
+        status_provided = getattr(args, "status_provided", None)
+        if status_provided is None:
+            # 兼容未显式追踪的调用方（如直接构造 namespace 的测试）
+            status_provided = args.status in status_map
+        if status_provided and args.status not in status_map:
+            print(f"\n错误: 不支持的状态: {args.status}")
             return 1
-        print(f"\n任务状态已更新: {args.task_id} -> {new_status.value}")
+
+        if not contract_updates and not status_provided:
+            print(
+                "\n错误: 需要指定 --status 或至少一个契约字段"
+                "\n      (--acceptance-commands / --result-file / --assignee / --assignee-role"
+                " / --reviewer / --primary-skill / --support-skills / --change-id)"
+            )
+            return 1
+
+        if contract_updates:
+            try:
+                contract_result = state.update_task_contract(
+                    args.task_id,
+                    note=args.note,
+                    actor=getattr(args, "ai", None),
+                    **contract_updates,
+                )
+            except ValueError as exc:
+                print(f"\n错误: {exc}")
+                return 1
+            changed = list(contract_result.get("updated_fields", {}))
+            print(
+                f"\n任务契约已更新: {args.task_id} -> "
+                f"{', '.join(changed) if changed else '无变更'}"
+            )
+
+        if status_provided:
+            new_status = status_map[args.status]
+            try:
+                state.update_task_status(
+                    args.task_id,
+                    new_status,
+                    args.note if not contract_updates else None,
+                    actor=getattr(args, "ai", None),
+                )
+            except ValueError as exc:
+                print(f"\n错误: {exc}")
+                return 1
+            print(f"\n任务状态已更新: {args.task_id} -> {new_status.value}")
 
     elif cmd == "takeover":
         if not args.task_id:
@@ -1058,6 +1147,10 @@ def cmd_ack(args):
         print(f"\n错误: 无法推断任务 assignee: {task_id}")
         return 1
 
+    # 角色（PROTOCOL §7.3）决定 ACK 前缀：同一 provider 占多个角色时，
+    # 只有带上角色才能保证 ACK 行与派发 payload 里的 ACK 提示一致。
+    assignee_role = str(task.get("assignee_role") or "").strip()
+
     result_file = explicit_result_file or normalize_result_file(task_id, task)
     current_status = str(task.get("status", "")).strip().lower()
     if explicit_status:
@@ -1070,7 +1163,12 @@ def cmd_ack(args):
         status = "ok"
 
     ack_line = build_ack_line(
-        assignee=assignee, task_id=task_id, result_file=result_file, status=status
+        assignee=assignee,
+        task_id=task_id,
+        result_file=result_file,
+        status=status,
+        assignee_role=assignee_role or None,
+        workspace=Path(workspace),
     )
     if assignee in SUPPORTED_ASSIGNEES:
         completed_at = str(
@@ -1089,6 +1187,7 @@ def cmd_ack(args):
             bridged_at=datetime.now().isoformat(),
             status=status,
             increment_count=True,
+            assignee_role=assignee_role or None,
         )
 
     print(ack_line)
@@ -2510,6 +2609,142 @@ def cmd_controller(args):
         return code
 
     return 0
+
+
+def cmd_orchestration(args):
+    """角色编排配置命令。
+
+    CLAUDE.md / PROTOCOL.md / AI-COLLABORATION-STANDARDS.md 一直承诺
+    `cli orchestration status|detect|roles activate|snapshot|history`，
+    但编排服务层 ai_collab/orchestration.py 此前从未接入 CLI，
+    文档里的命令全部无法执行。这里补齐该入口。
+    """
+    _set_workspace_env(getattr(args, "workspace", None))
+    workspace = os.path.abspath(getattr(args, "workspace", None) or os.getcwd())
+
+    from ..orchestration import OrchestrationConfig
+
+    config = OrchestrationConfig(workspace_path=workspace)
+    if not config.load():
+        print("\n错误: 无法加载角色编排配置")
+        return 1
+
+    subcommand = getattr(args, "subcommand", "") or "status"
+
+    if subcommand == "status":
+        print("=" * 60)
+        print("AI 协作系统 - 角色编排状态")
+        print("=" * 60)
+        print(f"\n工作区: {workspace}")
+        print(f"绑定状态: {config.get_binding_status().value}")
+        print(f"启动模式: {config.config.get('startup_mode', 'unknown')}")
+        print("\n角色绑定:")
+        for role_id, role in config.roles.items():
+            provider = role.binding.get("provider")
+            marker = "●" if role.is_active() else "○"
+            model = role.binding.get("model_variant")
+            suffix = f" ({model})" if model else ""
+            print(
+                f"  {marker} {role_id} → {provider or '未绑定'}{suffix}"
+                f"  [{role.display_name}]"
+            )
+        prefixes = config.config.get("command_prefixes", {})
+        if isinstance(prefixes, dict):
+            print("\n命令前缀:")
+            for prefix, role_id in prefixes.items():
+                if isinstance(prefix, str) and prefix.endswith(".RUN"):
+                    print(f"  {prefix} → {role_id}")
+        return 0
+
+    if subcommand == "detect":
+        providers = config.detect_providers()
+        print("=" * 60)
+        print("AI 协作系统 - Agent 服务商检测")
+        print("=" * 60)
+        for provider_id, provider in providers.items():
+            print(f"  {provider_id}: {provider.connection_status.value}")
+        return 0
+
+    if subcommand == "roles":
+        action = getattr(args, "action", None) or "list"
+        if action == "list":
+            print("=" * 60)
+            print("AI 协作系统 - 角色列表")
+            print("=" * 60)
+            for role_id, role in config.roles.items():
+                provider = role.binding.get("provider")
+                model = role.binding.get("model_variant")
+                suffix = f" ({model})" if model else ""
+                print(
+                    f"  {role_id} → {provider or '未绑定'}{suffix}"
+                    f"  [{role.display_name}] {role.raci_role}"
+                )
+            return 0
+
+        if action == "activate":
+            role_id = str(getattr(args, "role_id", "") or "").strip()
+            provider = str(getattr(args, "provider", "") or "").strip()
+            if not role_id or not provider:
+                print("\n错误: roles activate 需要 --role-id 与 --provider")
+                return 1
+            if role_id not in config.roles:
+                print(f"\n错误: 角色不存在: {role_id}")
+                return 1
+            model_variant = getattr(args, "model_variant", None)
+            try:
+                config.activate_role(role_id, provider, model_variant)
+            except ValueError as exc:
+                print(f"\n错误: {exc}")
+                return 1
+            if not config.save():
+                print("\n错误: 配置保存失败")
+                return 1
+            print(f"\n角色已激活: {role_id} → {provider}")
+            return 0
+
+        print(f"\n错误: 未知的角色操作: {action}")
+        return 1
+
+    if subcommand == "snapshot":
+        action = getattr(args, "action", None) or "create"
+        if action == "create":
+            note = str(getattr(args, "note", "") or "")
+            snapshot_id = config.create_snapshot(trigger="manual", note=note)
+            if not config.save():
+                print("\n错误: 配置保存失败")
+                return 1
+            print(f"\n快照已创建: {snapshot_id}")
+            return 0
+        if action == "rollback":
+            snapshot_id = str(getattr(args, "snapshot_id", "") or "").strip()
+            if not snapshot_id:
+                print("\n错误: snapshot rollback 需要 --snapshot-id")
+                return 1
+            if not config.rollback_to_snapshot(snapshot_id):
+                print(f"\n错误: 快照不存在: {snapshot_id}")
+                return 1
+            print(f"\n已回滚到快照: {snapshot_id}")
+            return 0
+        print(f"\n错误: 未知的快照操作: {action}")
+        return 1
+
+    if subcommand == "history":
+        limit = int(getattr(args, "limit", 20) or 20)
+        events = config.config.get("history", [])
+        print("=" * 60)
+        print("AI 协作系统 - 编排变更历史")
+        print("=" * 60)
+        for event in list(events)[-limit:]:
+            if not isinstance(event, dict):
+                continue
+            print(f"  {event.get('timestamp', '')} {event.get('event', '')}")
+            details = event.get("details")
+            if isinstance(details, dict) and details:
+                print(f"    {details}")
+        return 0
+
+    print(f"\n错误: 未知子命令: {subcommand}")
+    return 1
 
 
 def cmd_dispatch(args):
@@ -4338,6 +4573,18 @@ def _handle_sharing_command(args, packs_root):
     return 0
 
 
+class _TrackProvidedAction(argparse.Action):
+    """记录选项是否被显式提供。
+
+    `--status` 的默认值是 "active"（tasks list 的过滤语义），
+    但 update 需要区分"用户没传"和"用户传了 active"。
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+        setattr(namespace, f"{self.dest}_provided", True)
+
+
 def main():
     """CLI 主函数"""
     parser = argparse.ArgumentParser(
@@ -4447,8 +4694,10 @@ def main():
             "cancelled",
         ],
         default="active",
+        action=_TrackProvidedAction,
         help="任务状态过滤",
     )
+    tasks_parser.set_defaults(status_provided=False)
     tasks_parser.add_argument("--task-id", help="任务ID")
     tasks_parser.add_argument(
         "--ai", choices=["claude_code", "copilot", "codearts_agent", "codex"], help="AI 类型"
@@ -4460,6 +4709,10 @@ def main():
     tasks_parser.add_argument("--reason", help="接管/修复原因（takeover/repair-assignee 专用）")
     tasks_parser.add_argument("--change-id", help="关联 OpenSpec change_id 或 bugfix/no-spec")
     tasks_parser.add_argument("--assignee", help="任务执行者（register 默认与 --ai 一致；repair-assignee 必填）")
+    tasks_parser.add_argument(
+        "--assignee-role",
+        help="承接角色代号（PROTOCOL §7.3，如 AGENT_EXEC）",
+    )
     tasks_parser.add_argument("--reviewer", help="任务审核者")
     tasks_parser.add_argument("--primary-skill", help="主技能标识")
     tasks_parser.add_argument("--support-skills", nargs="*", help="支持技能列表")
@@ -4672,6 +4925,74 @@ def main():
     controller_parser.add_argument("--default-assignee", help="自动补丁默认执行者")
     controller_parser.add_argument("--report", help="报告路径（相对 workspace）")
     controller_parser.add_argument("--history", help="历史快照路径（相对 workspace）")
+
+    # orchestration 命令（角色编排配置）
+    # 注意：嵌套子解析器使用 SUPPRESS 作为 --workspace 默认值，
+    # 否则 argparse 子命名空间里的 None 会覆盖父级已解析出的工作区路径。
+    orchestration_parser = subparsers.add_parser(
+        "orchestration", help="角色编排配置（绑定状态、角色激活、快照、历史）"
+    )
+    orchestration_parser.add_argument("--workspace", help="工作区路径")
+    orchestration_sub = orchestration_parser.add_subparsers(dest="subcommand")
+
+    orchestration_status_parser = orchestration_sub.add_parser(
+        "status", help="显示绑定状态与角色绑定"
+    )
+    orchestration_status_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+
+    orchestration_detect_parser = orchestration_sub.add_parser(
+        "detect", help="检测可用的 Agent 服务商"
+    )
+    orchestration_detect_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+
+    orchestration_roles_parser = orchestration_sub.add_parser("roles", help="角色列表与激活")
+    orchestration_roles_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+    orchestration_roles_sub = orchestration_roles_parser.add_subparsers(dest="action")
+    orchestration_roles_list_parser = orchestration_roles_sub.add_parser("list", help="列出角色")
+    orchestration_roles_list_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+    orchestration_roles_activate_parser = orchestration_roles_sub.add_parser(
+        "activate", help="激活角色并绑定服务商"
+    )
+    orchestration_roles_activate_parser.add_argument("--role-id", required=True, help="角色代号")
+    orchestration_roles_activate_parser.add_argument("--provider", required=True, help="服务商 ID")
+    orchestration_roles_activate_parser.add_argument("--model-variant", help="模型变体")
+    orchestration_roles_activate_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+
+    orchestration_snapshot_parser = orchestration_sub.add_parser("snapshot", help="配置快照")
+    orchestration_snapshot_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+    orchestration_snapshot_sub = orchestration_snapshot_parser.add_subparsers(dest="action")
+    orchestration_snapshot_create_parser = orchestration_snapshot_sub.add_parser(
+        "create", help="创建快照"
+    )
+    orchestration_snapshot_create_parser.add_argument("--note", default="", help="快照备注")
+    orchestration_snapshot_create_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+    orchestration_snapshot_rollback_parser = orchestration_snapshot_sub.add_parser(
+        "rollback", help="回滚到快照"
+    )
+    orchestration_snapshot_rollback_parser.add_argument("--snapshot-id", required=True, help="快照 ID")
+    orchestration_snapshot_rollback_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
+
+    orchestration_history_parser = orchestration_sub.add_parser("history", help="编排变更历史")
+    orchestration_history_parser.add_argument("--limit", type=int, default=20, help="显示条数")
+    orchestration_history_parser.add_argument(
+        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
+    )
 
     # dispatch 命令
     dispatch_parser = subparsers.add_parser("dispatch", help="自动派单桥接（生成 Agent 执行指令包）")
@@ -5020,6 +5341,8 @@ def main():
         return cmd_codex(args)
     elif args.command == "controller":
         return cmd_controller(args)
+    elif args.command == "orchestration":
+        return cmd_orchestration(args)
     elif args.command == "dispatch":
         return cmd_dispatch(args)
     elif args.command == "trigger":

@@ -478,6 +478,7 @@ def test_task_contract_allows_implementing_when_required_fields_complete(tmp_pat
         vscode_context={"source": "unit-test"},
         change_id="add-task-contract-gatekeeper",
         assignee="claude_code",
+        assignee_role="AGENT_ARCH",
         reviewer="codex",
         primary_skill="backend-architect",
         support_skills=["planning-with-files"],
@@ -997,3 +998,205 @@ def test_task_completion_blocks_when_result_file_contains_negative_signal(tmp_pa
             status=state_manager.TaskStatus.COMPLETED,
             note="complete with negative signal evidence",
         )
+
+
+def test_update_task_contract_updates_fields_without_touching_status(tmp_path: Path, monkeypatch):
+    """契约字段更新不应改变任务状态。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    manager = state_manager.StateManager(workspace_path=str(tmp_path))
+
+    manager.register_task(
+        task_id="TASK-CONTRACT-UPDATE-001",
+        ai_type="codearts_agent",
+        description="contract field update",
+        files=["hermes_target/hermes_agent/engines/consensus_engine.py"],
+        vscode_context={"source": "unit-test"},
+        change_id="bugfix/no-spec",
+        assignee="codearts_agent",
+        reviewer="user",
+        primary_skill="backend-architect",
+        support_skills=["testing"],
+        acceptance_commands=["python3 -m pytest -q"],
+        result_file="hermes_target/RESULT-TASK-CONTRACT-UPDATE-001.md",
+        contract_required=True,
+    )
+
+    before_status = manager.state["tasks"]["TASK-CONTRACT-UPDATE-001"]["status"]
+
+    result = manager.update_task_contract(
+        "TASK-CONTRACT-UPDATE-001",
+        acceptance_commands=["PYTHONPATH=hermes_target python3 -m pytest -q"],
+        note="补 PYTHONPATH 前缀",
+    )
+
+    task = manager.state["tasks"]["TASK-CONTRACT-UPDATE-001"]
+    assert task["status"] == before_status
+    assert task["acceptance_commands"] == ["PYTHONPATH=hermes_target python3 -m pytest -q"]
+    assert "acceptance_commands" in result["updated_fields"]
+    assert any("补 PYTHONPATH 前缀" in note for note in task["notes"])
+
+
+def test_update_task_contract_ignores_empty_values(tmp_path: Path, monkeypatch):
+    """空值/空白值不得覆盖已有契约字段。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    manager = state_manager.StateManager(workspace_path=str(tmp_path))
+
+    manager.register_task(
+        task_id="TASK-CONTRACT-EMPTY-001",
+        ai_type="codearts_agent",
+        description="empty contract update",
+        files=["hermes_target/hermes_agent/engines/consensus_engine.py"],
+        vscode_context={"source": "unit-test"},
+        change_id="bugfix/no-spec",
+        assignee="codearts_agent",
+        reviewer="user",
+        primary_skill="backend-architect",
+        support_skills=["testing"],
+        acceptance_commands=["python3 -m pytest -q"],
+        result_file="hermes_target/RESULT-TASK-CONTRACT-EMPTY-001.md",
+        contract_required=True,
+    )
+
+    result = manager.update_task_contract(
+        "TASK-CONTRACT-EMPTY-001",
+        acceptance_commands=["   "],
+        assignee="",
+        reviewer=None,
+    )
+
+    task = manager.state["tasks"]["TASK-CONTRACT-EMPTY-001"]
+    assert task["acceptance_commands"] == ["python3 -m pytest -q"]
+    assert task["assignee"] == "codearts_agent"
+    assert result["updated_fields"] == {}
+
+
+def test_update_task_contract_rejects_unknown_task(tmp_path: Path, monkeypatch):
+    """未知任务应报错而不是静默创建。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    manager = state_manager.StateManager(workspace_path=str(tmp_path))
+
+    with pytest.raises(ValueError, match="任务不存在"):
+        manager.update_task_contract(
+            "TASK-NOT-EXIST-001",
+            acceptance_commands=["python3 -m pytest -q"],
+        )
+
+
+def test_update_task_contract_sets_assignee_role(tmp_path: Path, monkeypatch):
+    """assignee_role 是 PROTOCOL §7.3 的强制契约字段，应可单独更新。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    manager = state_manager.StateManager(workspace_path=str(tmp_path))
+
+    manager.register_task(
+        task_id="TASK-ROLE-001",
+        ai_type="codearts_agent",
+        description="role contract",
+        files=["hermes_target/hermes_agent/engines/consensus_engine.py"],
+        vscode_context={"source": "unit-test"},
+        change_id="bugfix/no-spec",
+        assignee="codearts_agent",
+        assignee_role="AGENT_EXEC",
+        reviewer="user",
+        primary_skill="backend-architect",
+        support_skills=["testing"],
+        acceptance_commands=["python3 -m pytest -q"],
+        result_file="hermes_target/RESULT-TASK-ROLE-001.md",
+        contract_required=True,
+    )
+
+    result = manager.update_task_contract("TASK-ROLE-001", assignee_role="AGENT_ARCH")
+
+    task = manager.state["tasks"]["TASK-ROLE-001"]
+    assert task["assignee_role"] == "AGENT_ARCH"
+    assert result["updated_fields"] == {"assignee_role": "AGENT_ARCH"}
+    # 契约更新不应顺手改状态
+    assert task["status"] == "pending"
+
+
+def test_register_task_derives_assignee_role_from_orchestration(tmp_path: Path, monkeypatch):
+    """未显式给出角色时，按编排配置的 provider→role 绑定反查。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "agent-orchestration.json").write_text(
+        json.dumps(
+            {
+                "version": "2.0.0",
+                "binding_status": "active",
+                "startup_mode": "multi_agent",
+                "roles": {
+                    "AGENT_EXEC": {
+                        "role_id": "AGENT_EXEC",
+                        "display_name": "主执行者",
+                        "duties": [],
+                        "required_capabilities": [],
+                        "raci_role": "R",
+                        "binding": {"provider": "codearts_agent", "status": "active"},
+                    },
+                    "AGENT_ARCH": {
+                        "role_id": "AGENT_ARCH",
+                        "display_name": "架构师",
+                        "duties": [],
+                        "required_capabilities": [],
+                        "raci_role": "A",
+                        "binding": {"provider": "claude_code", "status": "active"},
+                    },
+                },
+                "command_prefixes": {},
+                "provider_registry": {},
+                "runtime_policy": {},
+                "snapshots": [],
+                "history": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    manager = state_manager.StateManager(workspace_path=str(tmp_path))
+    manager.register_task(
+        task_id="TASK-ROLE-DERIVE-001",
+        ai_type="codearts_agent",
+        description="derive role",
+        files=["x.py"],
+        vscode_context={"source": "unit-test"},
+        change_id="bugfix/no-spec",
+        assignee="codearts_agent",
+        reviewer="user",
+        primary_skill="backend-architect",
+        support_skills=["testing"],
+        acceptance_commands=["python3 -m pytest -q"],
+        result_file="hermes_target/RESULT-TASK-ROLE-DERIVE-001.md",
+        contract_required=True,
+    )
+
+    assert manager.state["tasks"]["TASK-ROLE-DERIVE-001"]["assignee_role"] == "AGENT_EXEC"
+
+
+def test_contract_validation_requires_assignee_role(tmp_path: Path, monkeypatch):
+    """缺 assignee_role 的任务应被判为契约不完整。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    manager = state_manager.StateManager(workspace_path=str(tmp_path))
+
+    manager.register_task(
+        task_id="TASK-ROLE-MISSING-001",
+        ai_type="codearts_agent",
+        description="missing role",
+        files=["x.py"],
+        vscode_context={"source": "unit-test"},
+        change_id="bugfix/no-spec",
+        assignee="codearts_agent",
+        reviewer="user",
+        primary_skill="backend-architect",
+        support_skills=["testing"],
+        acceptance_commands=["python3 -m pytest -q"],
+        result_file="hermes_target/RESULT-TASK-ROLE-MISSING-001.md",
+        contract_required=True,
+    )
+
+    # 手动抹掉角色字段，模拟历史数据
+    manager.state["tasks"]["TASK-ROLE-MISSING-001"].pop("assignee_role", None)
+
+    check = manager.validate_task_contract("TASK-ROLE-MISSING-001")
+    assert check["valid"] is False
+    assert "assignee_role" in check["missing_fields"]

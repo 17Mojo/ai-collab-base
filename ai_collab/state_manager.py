@@ -69,6 +69,7 @@ class Task:
     vscode_context: dict[str, Any] = field(default_factory=dict)
     change_id: str | None = None
     assignee: str | None = None
+    assignee_role: str | None = None
     reviewer: str | None = None
     primary_skill: str | None = None
     support_skills: list[str] = field(default_factory=list)
@@ -263,6 +264,7 @@ class StateManager:
     TASK_CONTRACT_REQUIRED_STR_FIELDS = (
         "change_id",
         "assignee",
+        "assignee_role",
         "reviewer",
         "primary_skill",
         "result_file",
@@ -273,6 +275,15 @@ class StateManager:
     )
     TASK_CONTRACT_DEFAULT_CHANGE_ID = "legacy/task-contract-migration"
     TASK_CONTRACT_DEFAULT_REVIEWER = "codex"
+    # 无法从 orchestration 反查角色时的兜底角色代号（PROTOCOL §7.3）
+    TASK_CONTRACT_DEFAULT_ASSIGNEE_ROLE = "AGENT_EXEC"
+    # provider → 默认角色代号。orchestration 配置缺失时的降级依据，
+    # 与当前共创分工一致：CodeArts 承接执行位，Claude Code 承接架构位。
+    TASK_CONTRACT_DEFAULT_ROLE_BY_ASSIGNEE = {
+        "codearts_agent": "AGENT_EXEC",
+        "claude_code": "AGENT_ARCH",
+        "codex": "AGENT_TEST",
+    }
     TASK_CONTRACT_DEFAULT_SUPPORT_SKILLS = ("legacy-contract-migration",)
     TASK_CONTRACT_DEFAULT_ACCEPTANCE_COMMANDS = (
         "python3 -m ai_collab.cli tasks validate-contract --scope all --strict",
@@ -859,6 +870,7 @@ class StateManager:
         vscode_context: dict[str, Any] | None = None,
         change_id: str | None = None,
         assignee: str | None = None,
+        assignee_role: str | None = None,
         reviewer: str | None = None,
         primary_skill: str | None = None,
         support_skills: list[str] | None = None,
@@ -888,6 +900,13 @@ class StateManager:
             vscode_context=vscode_context or {},
             change_id=change_id,
             assignee=assignee,
+            # 未显式指定角色时按 orchestration 的 provider→role 绑定反查，
+            # 避免新注册任务立刻卡在契约门禁（PROTOCOL §7.3 要求声明角色）。
+            assignee_role=(
+                self._normalize_non_empty_str(assignee_role)
+                or self._default_assignee_role(assignee or ai_type)
+                or self.TASK_CONTRACT_DEFAULT_ASSIGNEE_ROLE
+            ),
             reviewer=reviewer,
             primary_skill=primary_skill,
             support_skills=[
@@ -1180,6 +1199,99 @@ class StateManager:
             output_message=f"任务状态更新: {task_id} -> {status.value}",
         )
 
+    def update_task_contract(
+        self,
+        task_id: str,
+        *,
+        change_id: str | None = None,
+        assignee: str | None = None,
+        assignee_role: str | None = None,
+        reviewer: str | None = None,
+        primary_skill: str | None = None,
+        support_skills: list[str] | None = None,
+        acceptance_commands: list[str] | None = None,
+        result_file: str | None = None,
+        note: str | None = None,
+        actor: str | None = None,
+    ) -> dict[str, Any]:
+        """更新任务契约字段，且不改变任务状态。
+
+        与 update_task_status 分开的原因：契约字段是工单的"内容"，
+        状态是工单的"进度"。混在一条命令里会导致只想改验收命令时
+        顺带把状态重置（历史 CLI 行为），也让契约修正无法追溯。
+
+        Args:
+            task_id: 任务唯一标识
+            change_id: OpenSpec 变更 ID 或特殊标签
+            assignee: 承接方（Agent 提供商，即 PROTOCOL §7.3 的 assignee_provider）
+            assignee_role: 承接角色代号（PROTOCOL §7.3 的 assignee_role，如 AGENT_EXEC）
+            reviewer: 审核者
+            primary_skill: 主技能
+            support_skills: 支撑技能列表
+            acceptance_commands: 验收命令列表
+            result_file: 结果文件相对路径
+            note: 可选备注，会写入任务 notes
+            actor: 写入者标识，用于 owner lock 判定
+        """
+
+        def _mutate() -> dict[str, Any]:
+            if task_id not in self.state["tasks"]:
+                raise ValueError(f"任务不存在: {task_id}")
+
+            task = self.state["tasks"][task_id]
+            updated: dict[str, Any] = {}
+
+            def _set_str(field: str, value: str | None) -> None:
+                normalized = self._normalize_non_empty_str(value)
+                if normalized is None:
+                    return
+                if task.get(field) != normalized:
+                    task[field] = normalized
+                    updated[field] = normalized
+
+            def _set_list(field: str, value: list[str] | None) -> None:
+                if value is None:
+                    return
+                normalized = self._normalize_non_empty_list(value)
+                if not normalized:
+                    return
+                if task.get(field) != normalized:
+                    task[field] = normalized
+                    updated[field] = normalized
+
+            _set_str("change_id", change_id)
+            _set_str("assignee", assignee)
+            _set_str("assignee_role", assignee_role)
+            _set_str("reviewer", reviewer)
+            _set_str("primary_skill", primary_skill)
+            _set_str("result_file", result_file)
+            _set_list("support_skills", support_skills)
+            _set_list("acceptance_commands", acceptance_commands)
+
+            if not updated:
+                return {
+                    "task_id": task_id,
+                    "updated_fields": {},
+                    "updated_at": task.get("updated_at"),
+                }
+
+            now = datetime.now().isoformat()
+            task["updated_at"] = now
+            if note:
+                task.setdefault("notes", [])
+                task["notes"].append(f"[{now}] {note}")
+
+            return {
+                "task_id": task_id,
+                "updated_fields": updated,
+                "updated_at": now,
+            }
+
+        return self._commit_state_transaction(
+            mutate=_mutate,
+            output_message=f"任务契约已更新: {task_id}",
+        )
+
     def register_patch(
         self,
         patch_id: str,
@@ -1455,6 +1567,54 @@ class StateManager:
         }
         return mapping.get(normalized, "planning-with-files")
 
+    def _default_assignee_role(self, assignee: str) -> str | None:
+        """按 orchestration 的 provider→role 绑定反查角色代号。
+
+        PROTOCOL §7.3 要求工单声明 assignee_role（角色代号）与
+        assignee_provider（实际提供商）；本仓库的 state 用 assignee 承载
+        provider，assignee_role 需要从编排配置反查。
+        """
+        normalized = self._normalize_non_empty_str(assignee)
+        if not normalized:
+            return None
+
+        workspace = str(self.workspace_path or "").strip()
+        if not workspace:
+            # 没有工作区就不要实例化 OrchestrationConfig，
+            # 否则它会在当前目录建出 config/ 目录。
+            return None
+
+        try:
+            from .orchestration import OrchestrationConfig
+        except ImportError:  # pragma: no cover - 编排模块不可用时降级
+            return None
+
+        try:
+            config = OrchestrationConfig(workspace_path=workspace)
+            if not config.load():
+                return None
+        except OSError:
+            return None
+
+        matched: list[tuple[str, str]] = []
+        for role_id, role in config.roles.items():
+            provider = str((role.binding or {}).get("provider") or "").strip()
+            if provider and provider == normalized:
+                matched.append((role_id, str(role.raci_role or "").strip().upper()))
+
+        if not matched:
+            # 编排配置里没有该 provider 的绑定时，退到静态默认表
+            return self.TASK_CONTRACT_DEFAULT_ROLE_BY_ASSIGNEE.get(normalized)
+
+        # 优先 R（执行位），其次 AGENT_EXEC，最后按角色代号排序取第一个
+        for role_id, raci in matched:
+            if raci == "R":
+                return role_id
+        for role_id, _ in matched:
+            if role_id == "AGENT_EXEC":
+                return role_id
+        return sorted(role_id for role_id, _ in matched)[0]
+
     def _default_result_file(self, task_id: str) -> str:
         """生成默认结果文件路径。"""
         safe_task_id = task_id.strip() or "UNKNOWN-TASK"
@@ -1701,6 +1861,11 @@ class StateManager:
                 self._normalize_non_empty_str(task.get("change_id")) or change_id_fallback
             )
             task["assignee"] = self._normalize_non_empty_str(task.get("assignee")) or ai_type
+            task["assignee_role"] = (
+                self._normalize_non_empty_str(task.get("assignee_role"))
+                or self._default_assignee_role(ai_type)
+                or self.TASK_CONTRACT_DEFAULT_ASSIGNEE_ROLE
+            )
             task["reviewer"] = (
                 self._normalize_non_empty_str(task.get("reviewer")) or reviewer_fallback
             )

@@ -188,11 +188,14 @@ def has_explicit_ack(ack_state: dict[str, Any], task_id: str) -> bool:
 
 
 def ack_prefix_for(assignee: str) -> str:
+    # 与 ai_collab/ack_protocol.py 的 _ACK_PREFIX 保持一致
+    # （tests/unit/test_ack_prefix_consistency.py 会强制两者同步）。
     return {"claude_code": "C", "codearts_agent": "A", "codex": "X"}.get(assignee, "A")
 
 
 def ack_status_for(assignee: str) -> str:
-    return "completed" if assignee == "codearts_agent" else "ok"
+    # PROTOCOL.md：ACK 行 status 只能是 ok / blocked / noop
+    return "ok"
 
 
 # ---------------- 主流程 ----------------

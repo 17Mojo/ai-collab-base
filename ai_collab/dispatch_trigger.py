@@ -9,6 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .role_prefix import resolve_hints
+
 SECTION_HEADING = re.compile(r"^##\s+发送给\s+`[^`]+`\s+\(`(?P<assignee>[^`]+)`\)\s*$")
 
 ACTION_ALIASES = {
@@ -153,11 +155,22 @@ def build_handoff_payload(
     orders_relpath: str,
     section_markdown: str | None,
     generated_at: str | None = None,
+    assignee_role: str | None = None,
+    workspace: str | None = None,
 ) -> str:
-    """Build a ready-to-send payload for one assignee session."""
+    """Build a ready-to-send payload for one assignee session.
+
+    RUN / ACK 提示由 `ai_collab.role_prefix` 统一解析：优先用工单声明的
+    角色（PROTOCOL §7.3），其次用 provider 在编排配置里的 fallback 前缀。
+    这样 payload 里的触发词与要求的 ACK 行永远同源，接收方不会拿到
+    "用 A.RUN 触发、却要回 C.ACK" 这种自相矛盾的指令。
+    """
     timestamp = generated_at or datetime.now().isoformat(timespec="seconds")
     name = DISPLAY_NAME.get(assignee, assignee)
     refresh_command = build_payload_refresh_command(assignee)
+    run_hint, ack_hint = resolve_hints(
+        assignee, assignee_role=assignee_role, workspace=workspace
+    )
     lines: list[str] = []
     lines.append("# Agent Session Dispatch Payload（自动生成）")
     lines.append("")
@@ -192,8 +205,6 @@ def build_handoff_payload(
     lines.append("")
     lines.append("请将本文件完整发送到对应 Agent 会话，避免手工抽段造成漏项。")
     lines.append("")
-    run_hint = RUN_HINT.get(assignee, "RUN")
-    ack_hint = ACK_HINT.get(assignee, "ACK")
     lines.append("## 会话执行约束（必须遵守）")
     lines.append("")
     lines.append(f"- 收到 `{run_hint}` 后必须先读取本文件，再执行任务块。")

@@ -485,6 +485,103 @@ class TestCmdTasks:
 
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
+    def test_tasks_update_contract_fields_does_not_change_status(
+        self, mock_set_env, mock_manager_cls, temp_workspace
+    ):
+        """只更新契约字段时不得重置任务状态。"""
+        mock_manager = Mock()
+        mock_manager_cls.return_value = mock_manager
+        mock_manager.update_task_contract.return_value = {
+            "task_id": "TASK-001",
+            "updated_fields": {"acceptance_commands": ["pytest -q"]},
+            "updated_at": "2026-10-22T00:00:00",
+        }
+
+        args = SimpleNamespace(
+            subcommand="update",
+            task_id="TASK-001",
+            status="active",
+            status_provided=False,
+            change_id=None,
+            assignee=None,
+            reviewer=None,
+            primary_skill=None,
+            support_skills=None,
+            acceptance_commands=["pytest -q"],
+            result_file=None,
+            note="补验收命令",
+            workspace=str(temp_workspace),
+        )
+
+        result = cli.cmd_tasks(args)
+
+        assert result == 0
+        mock_manager.update_task_contract.assert_called_once()
+        mock_manager.update_task_status.assert_not_called()
+
+    @patch("ai_collab.cli._cli_main.StateManager")
+    @patch("ai_collab.cli._cli_main._set_workspace_env")
+    def test_tasks_update_rejects_list_filter_status(
+        self, mock_set_env, mock_manager_cls, temp_workspace
+    ):
+        """--status all/active 是 list 的过滤值，不能被 update 当作任务状态写入。"""
+        mock_manager = Mock()
+        mock_manager_cls.return_value = mock_manager
+
+        args = SimpleNamespace(
+            subcommand="update",
+            task_id="TASK-001",
+            status="all",
+            status_provided=True,
+            change_id=None,
+            assignee=None,
+            reviewer=None,
+            primary_skill=None,
+            support_skills=None,
+            acceptance_commands=None,
+            result_file=None,
+            note=None,
+            workspace=str(temp_workspace),
+        )
+
+        result = cli.cmd_tasks(args)
+
+        assert result == 1
+        mock_manager.update_task_status.assert_not_called()
+
+    @patch("ai_collab.cli._cli_main.StateManager")
+    @patch("ai_collab.cli._cli_main._set_workspace_env")
+    def test_tasks_update_requires_status_or_contract_field(
+        self, mock_set_env, mock_manager_cls, temp_workspace
+    ):
+        """既无状态也无契约字段时应报错，而不是静默重置为 pending。"""
+        mock_manager = Mock()
+        mock_manager_cls.return_value = mock_manager
+
+        args = SimpleNamespace(
+            subcommand="update",
+            task_id="TASK-001",
+            status="active",
+            status_provided=False,
+            change_id=None,
+            assignee=None,
+            reviewer=None,
+            primary_skill=None,
+            support_skills=None,
+            acceptance_commands=None,
+            result_file=None,
+            note=None,
+            workspace=str(temp_workspace),
+        )
+
+        result = cli.cmd_tasks(args)
+
+        assert result == 1
+        mock_manager.update_task_status.assert_not_called()
+        mock_manager.update_task_contract.assert_not_called()
+
+    @patch("ai_collab.cli._cli_main.StateManager")
+    @patch("ai_collab.cli._cli_main._set_workspace_env")
     def test_tasks_takeover(self, mock_set_env, mock_manager_cls, temp_workspace):
         """测试接管任务并锁定 owner。"""
         mock_manager = Mock()

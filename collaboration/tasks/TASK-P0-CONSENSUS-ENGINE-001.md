@@ -4,6 +4,7 @@ change_id: migrate-parallel-architecture-to-hermes
 status: planning
 priority: P0
 assignee: codearts_agent
+assignee_role: AGENT_EXEC
 reviewer: user
 status_updated_at: 2026-10-22T16:35:00+08:00
 primary_skill: backend-architect
@@ -13,8 +14,9 @@ support_skills:
   - documentation
 created_at: 2026-06-01T13:50:00Z
 acceptance_commands:
-  - "python3 -m pytest hermes_target/hermes_agent/tests/unit/test_consensus_engine.py -v"
+  - "PYTHONPATH=hermes_target python3 -m pytest hermes_target/hermes_agent/tests/unit/test_consensus_engine.py -v"
   - "python3 -c \"import sys; sys.path.insert(0, 'hermes_target'); from hermes_agent.engines import ConsensusEngine; print('OK')\""
+  - "PYTHONPATH=hermes_target python3 -m pytest hermes_target/hermes_agent/tests/unit/test_consensus_engine.py -q --cov=hermes_agent.engines.consensus_engine --cov-fail-under=80"
 result_file: hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md
 ---
 
@@ -30,6 +32,23 @@ result_file: hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md
 >   实际测试在 `hermes_target/hermes_agent/tests/unit/test_consensus_engine.py`。
 > - 遗留：该结果文件仍缺 `验证结果` / `风险` / `回滚` 三个收口必需章节，
 >   任务转为 `completed` 前需补齐。
+>
+> **2026-10-22 第二轮校正**（Claude Code, AGENT_ARCH）：
+>
+> - **已补齐**：结果文件 `hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md` 已重写，
+>   `执行命令` / `验证结果` / `风险` / `回滚` 四章节齐备，且通过
+>   `StateManager.TASK_RESULT_REQUIRED_SECTION_GROUPS` 门禁校验（缺失章节组=0，
+>   负面信号=0，验收命令覆盖完整）。
+> - **验收命令二次修正**：原命令缺 `PYTHONPATH=hermes_target`，直接执行会在收集阶段抛
+>   `ModuleNotFoundError: No module named 'hermes_agent'`。已在单条命令内显式补齐路径前缀，
+>   **未改动** `[tool.pytest.ini_options] testpaths = ["tests"]`——保持 hermes_target 不进入
+>   主仓覆盖率分母（该隔离是 2026-09-26 已知陷阱，见 pyproject.toml 注释）。
+> - **新增第 3 条覆盖率门禁命令**（`--cov-fail-under=80`）：实测当前 **30%**，
+>   远低于工单声称的 80%。现有 3 个用例只覆盖导入/实例化/dataclass 默认值，
+>   并发查询、超时隔离、重试退避、结果归一化四条主路径均未被触达。
+>   这是 CodeArts 承接的**硬性前置**，任务在覆盖率门禁通过前不得转入 `completed`。
+> - **任务保持 `planning`**：`pending` 需 `--include-pending` 才能持续进入派单候选，
+>   `planning` 可稳定复用。
 
 # 任务：移植 consensus_engine 到 Hermes
 

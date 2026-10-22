@@ -4,6 +4,7 @@ change_id: bugfix/no-spec
 status: completed
 priority: P1
 assignee: claude_code
+assignee_role: AGENT_ARCH
 reviewer: user
 status_updated_at: 2026-10-22T16:45:00+08:00
 primary_skill: backend-architect

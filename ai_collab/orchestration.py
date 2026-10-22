@@ -15,7 +15,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from enum import Enum
-from typing import Any, cast
+from typing import Any
 
 
 class BindingStatus(Enum):
@@ -50,7 +50,7 @@ class ProviderConnectionStatus(Enum):
 class AgentProvider:
     """Agent provider information"""
 
-    PROVIDER_DETECTORS = {
+    PROVIDER_DETECTORS: dict[str, dict[str, Any]] = {
         "claude_code": {
             "name": "Claude Code",
             "check_command": None,  # CLI integrated, always available when running
@@ -77,18 +77,39 @@ class AgentProvider:
             "check_command": None,  # VSCode extension, check via environment
             "supports_sub_agent": False,
             "model_variants": [],
-            "capabilities": ["testing", "documentation", "validation"]
+            "capabilities": [
+                "implementation",
+                "refactoring",
+                "testing",
+                "documentation",
+                "validation",
+            ]
         }
     }
 
     def __init__(self, provider_id: str, config: dict[str, Any]):
         self.provider_id = provider_id
-        self.name = config.get("name", provider_id)
+        self.name = config.get("name") or config.get("display_name") or provider_id
         self.connection_status = ProviderConnectionStatus.UNAVAILABLE
         self.supports_sub_agent = config.get("supports_sub_agent", False)
         self.model_variants = config.get("model_variants", [])
         self.capabilities = config.get("capabilities", [])
         self.last_check: datetime | None = None
+        # 保留 schema 之外的扩展字段（如 fallback_ack_prefix）。
+        # load→save 往返会丢掉它们，导致 provider 元数据在保存后被抹平。
+        known_keys = {
+            "name",
+            "display_name",
+            "provider_name",
+            "connection_status",
+            "supports_sub_agent",
+            "model_variants",
+            "capabilities",
+            "last_check",
+        }
+        self.extra: dict[str, Any] = {
+            key: value for key, value in config.items() if key not in known_keys
+        }
 
     def check_availability(self) -> bool:
         """Check if provider is available"""
@@ -139,14 +160,17 @@ class AgentProvider:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
-        return {
-            "provider_name": self.name,
+        payload = {
+            "provider_name": self.provider_id,
+            "display_name": self.name,
             "connection_status": self.connection_status.value,
             "supports_sub_agent": self.supports_sub_agent,
             "model_variants": self.model_variants,
             "capabilities": self.capabilities,
-            "last_check": self.last_check.isoformat() if self.last_check else None
+            "last_check": self.last_check.isoformat() if self.last_check else None,
         }
+        payload.update(self.extra)
+        return payload
 
 
 class OrchestrationRole:
@@ -233,6 +257,17 @@ class OrchestrationConfig:
         "C.RUN": "AGENT_TEST"
     }
 
+    # provider → ACK 前缀的兜底映射。
+    # ACK 前缀的权威来源应是角色的 command_prefix（如 X.RUN → AGENT_EXEC），
+    # 这里是 provider 直连场景下的兜底值。
+    DEFAULT_FALLBACK_ACK_PREFIX = {
+        "claude_code": "C",
+        "codearts_agent": "A",
+        "codex": "X",
+        "codex_cli": "X",
+        "gemini_cli": "G",
+    }
+
     def __init__(self, workspace_path: str | None = None):
         self.workspace_path = workspace_path or os.getcwd()
         self.config_dir = os.path.join(self.workspace_path, "config")
@@ -260,36 +295,44 @@ class OrchestrationConfig:
             with open(self.config_file, encoding="utf-8") as f:
                 self.config = json.load(f)
 
-            # Parse roles
-            for role_id, role_data in self.config.get("roles", {}).items():
-                role = OrchestrationRole(
-                    role_id=role_id,
-                    display_name=role_data.get("display_name", role_id),
-                    duties=role_data.get("duties", []),
-                    required_capabilities=role_data.get("required_capabilities", []),
-                    raci_role=role_data.get("raci_role", "C"),
-                    binding=role_data.get("binding")
-                )
-                if role_data.get("created_at"):
-                    role.created_at = datetime.fromisoformat(role_data["created_at"])
-                if role_data.get("activated_at"):
-                    role.activated_at = datetime.fromisoformat(role_data["activated_at"])
-                self.roles[role_id] = role
-
-            # Parse providers
-            for provider_id, provider_data in self.config.get("provider_registry", {}).items():
-                provider = AgentProvider(provider_id, provider_data)
-                if provider_data.get("last_check"):
-                    provider.last_check = datetime.fromisoformat(provider_data["last_check"])
-                provider.connection_status = ProviderConnectionStatus(
-                    provider_data.get("connection_status", "unavailable")
-                )
-                self.providers[provider_id] = provider
-
+            self._parse_config()
             return True
         except (OSError, json.JSONDecodeError) as e:
             print(f"Error loading config: {e}")
             return False
+
+    def _parse_config(self) -> None:
+        """从 self.config 重建 roles / providers 对象。
+
+        load() 与 rollback_to_snapshot() 共用，避免回滚后 save() 又用
+        回滚前的旧对象覆盖快照里的绑定。
+        """
+        self.roles = {}
+        self.providers = {}
+
+        for role_id, role_data in self.config.get("roles", {}).items():
+            role = OrchestrationRole(
+                role_id=role_id,
+                display_name=role_data.get("display_name", role_id),
+                duties=role_data.get("duties", []),
+                required_capabilities=role_data.get("required_capabilities", []),
+                raci_role=role_data.get("raci_role", "C"),
+                binding=role_data.get("binding")
+            )
+            if role_data.get("created_at"):
+                role.created_at = datetime.fromisoformat(role_data["created_at"])
+            if role_data.get("activated_at"):
+                role.activated_at = datetime.fromisoformat(role_data["activated_at"])
+            self.roles[role_id] = role
+
+        for provider_id, provider_data in self.config.get("provider_registry", {}).items():
+            provider = AgentProvider(provider_id, provider_data)
+            if provider_data.get("last_check"):
+                provider.last_check = datetime.fromisoformat(provider_data["last_check"])
+            provider.connection_status = ProviderConnectionStatus(
+                provider_data.get("connection_status", "unavailable")
+            )
+            self.providers[provider_id] = provider
 
     def save(self) -> bool:
         """Save orchestration configuration"""
@@ -299,10 +342,15 @@ class OrchestrationConfig:
                 role_id: role.to_dict()
                 for role_id, role in self.roles.items()
             }
-            self.config["provider_registry"] = {
-                provider_id: provider.to_dict()
-                for provider_id, provider in self.providers.items()
-            }
+            # self.providers 为空时不要清空已有注册表，否则 provider 元数据
+            # （display_name / capabilities / fallback_ack_prefix）会被静默抹掉。
+            if self.providers:
+                self.config["provider_registry"] = {
+                    provider_id: provider.to_dict()
+                    for provider_id, provider in self.providers.items()
+                }
+            else:
+                self.config.setdefault("provider_registry", {})
 
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, ensure_ascii=False, indent=2)
@@ -314,7 +362,6 @@ class OrchestrationConfig:
 
     def _create_default_config(self):
         """Create default configuration"""
-
         roles = {}
         for role_id, role_def in self.DEFAULT_ROLES.items():
             role = OrchestrationRole(
@@ -340,7 +387,7 @@ class OrchestrationConfig:
                 "custom_allowed": True,
                 "history_compatible": True
             },
-            "provider_registry": {},
+            "provider_registry": self._default_provider_registry(),
             "runtime_policy": {
                 "allow_hot_reload": True,
                 "require_confirmation": True,
@@ -358,7 +405,31 @@ class OrchestrationConfig:
             }
         }
 
+        # 先按刚生成的配置重建对象，再落盘：
+        # 否则 save() 会用空的 self.providers 把 provider_registry 清空。
+        self._parse_config()
         self.save()
+
+    def _default_provider_registry(self) -> dict[str, Any]:
+        """从 PROVIDER_DETECTORS 生成默认 provider 注册表。
+
+        没有它，新工作区的 provider_registry 永远是空的，save() 之后
+        provider 元数据（display_name / capabilities / fallback_ack_prefix）
+        全部丢失。
+        """
+        registry: dict[str, Any] = {}
+        for provider_id, detector in AgentProvider.PROVIDER_DETECTORS.items():
+            registry[provider_id] = {
+                "provider_name": provider_id,
+                "display_name": detector.get("name", provider_id),
+                "connection_status": ProviderConnectionStatus.UNAVAILABLE.value,
+                "supports_sub_agent": detector.get("supports_sub_agent", False),
+                "model_variants": list(detector.get("model_variants", [])),
+                "capabilities": list(detector.get("capabilities", [])),
+                "last_check": None,
+                "fallback_ack_prefix": self.DEFAULT_FALLBACK_ACK_PREFIX.get(provider_id, ""),
+            }
+        return registry
 
     def get_binding_status(self) -> BindingStatus:
         """Get current binding status"""
@@ -390,7 +461,7 @@ class OrchestrationConfig:
         """Detect available agent providers"""
         self.providers = {}
 
-        detectors = cast(dict[str, dict[str, Any]], AgentProvider.PROVIDER_DETECTORS)
+        detectors = AgentProvider.PROVIDER_DETECTORS
         for provider_id, config in detectors.items():
             provider = AgentProvider(provider_id, config)
             provider.check_availability()
@@ -420,12 +491,20 @@ class OrchestrationConfig:
         """Create configuration snapshot"""
         snapshot_id = f"snap_{len(self.config.get('snapshots', [])) + 1:03d}"
 
+        # 快照不复制 snapshots / history 自身：否则每次快照都会把上一次的快照
+        # 再嵌一层，配置文件体积随变更次数指数膨胀。
+        snapshot_source = {
+            key: value
+            for key, value in self.config.items()
+            if key not in {"snapshots", "history"}
+        }
+
         snapshot = {
             "snapshot_id": snapshot_id,
             "timestamp": datetime.now().isoformat(),
             "trigger": trigger,
             "note": note,
-            "config_copy": json.loads(json.dumps(self.config))  # Deep copy
+            "config_copy": json.loads(json.dumps(snapshot_source))  # Deep copy
         }
 
         self.config.setdefault("snapshots", []).append(snapshot)
@@ -449,11 +528,19 @@ class OrchestrationConfig:
         # Create pre-rollback snapshot
         self.create_snapshot(trigger="auto_before_change", note="Pre-rollback backup")
 
-        # Restore config
-        self.config = target_snapshot["config_copy"]
+        # Restore config，但保留当前的快照与历史列表（快照本身不含这两项）
+        preserved_snapshots = self.config.get("snapshots", [])
+        preserved_history = self.config.get("history", [])
+        self.config = dict(target_snapshot["config_copy"])
+        self.config["snapshots"] = preserved_snapshots
+        self.config["history"] = preserved_history
+
+        # 用回滚后的配置重建 roles / providers，否则 save() 会把回滚前的旧对象写回去
+        self._parse_config()
         self.save()
 
         self.add_history_event("rollback_executed", {"target_snapshot": snapshot_id})
+        self.save()
 
         return True
 
@@ -473,6 +560,55 @@ class OrchestrationConfig:
             return self.roles.get(role_id)
 
         return None
+
+    def get_command_prefix_for_role(self, role_id: str) -> str | None:
+        """取角色对应的命令前缀（如 AGENT_EXEC → 'A.RUN'）。
+
+        这是角色命名空间的权威来源：ACK 前缀、RUN 提示都应该由它派生，
+        避免同一个字母在角色命名空间与 provider 命名空间里各指不同角色。
+        """
+        normalized = str(role_id or "").strip()
+        if not normalized:
+            return None
+        command_prefixes = self.config.get("command_prefixes", {})
+        if not isinstance(command_prefixes, dict):
+            return None
+        for prefix, mapped_role in command_prefixes.items():
+            if not isinstance(prefix, str) or not prefix.endswith(".RUN"):
+                continue
+            if mapped_role == normalized:
+                return prefix
+        custom_prefixes = command_prefixes.get("custom_prefixes", {})
+        if isinstance(custom_prefixes, dict):
+            for prefix, mapped_role in custom_prefixes.items():
+                if isinstance(prefix, str) and prefix.endswith(".RUN") and mapped_role == normalized:
+                    return prefix
+        return None
+
+    def get_role_for_provider(self, provider_id: str) -> str | None:
+        """取 provider 绑定的角色代号。
+
+        一个 provider 可能同时占多个角色（例如 Claude Code 同时占
+        AGENT_ARCH 与 AGENT_TEST），这里优先返回 R（执行位），
+        其次 AGENT_EXEC，最后按角色代号排序取第一个，保证结果稳定。
+        """
+        normalized = str(provider_id or "").strip()
+        if not normalized:
+            return None
+        matched: list[tuple[str, str]] = []
+        for role_id, role in self.roles.items():
+            bound = str((role.binding or {}).get("provider") or "").strip()
+            if bound and bound == normalized:
+                matched.append((role_id, str(role.raci_role or "").strip().upper()))
+        if not matched:
+            return None
+        for role_id, raci in matched:
+            if raci == "R":
+                return role_id
+        for role_id, _ in matched:
+            if role_id == "AGENT_EXEC":
+                return role_id
+        return sorted(role_id for role_id, _ in matched)[0]
 
     def add_role(
         self,

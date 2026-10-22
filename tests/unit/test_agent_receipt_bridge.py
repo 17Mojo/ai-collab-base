@@ -148,8 +148,10 @@ def test_receipt_completes_testing_task(tmp_path):
     ack_bridge_state = json.loads(
         (workspace / "logs" / "agent_ack_bridge_state.json").read_text(encoding="utf-8")
     )
+    # PROTOCOL.md：ACK 行 status 只能是 ok / blocked / noop。
+    # codearts_agent 之前默认发 "completed"，不在协议枚举内。
     assert ack_bridge_state["items"]["TASK-RECEIPT-001"]["ack_line"] == (
-        "A.ACK|task=TASK-RECEIPT-001|status=completed|result=collaboration/results/RESULT_TASK-RECEIPT-001.md"
+        "A.ACK|task=TASK-RECEIPT-001|status=ok|result=collaboration/results/RESULT_TASK-RECEIPT-001.md"
     )
 
 

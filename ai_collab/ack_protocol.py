@@ -18,10 +18,12 @@ _ACK_PREFIX = {
     "codex": "X",
 }
 
-# Preserve existing bridge compatibility while allowing CLI emit to override.
+# PROTOCOL.md §ACK 行定义：status 只能是 ok / blocked / noop。
+# 之前 codearts_agent 默认发 "completed"，不在协议枚举内，会让
+# 缺失 ACK 监控与回执桥接生成不合规的 ACK 行。
 _DEFAULT_ACK_STATUS = {
     "claude_code": "ok",
-    "codearts_agent": "completed",
+    "codearts_agent": "ok",
     "codex": "ok",
 }
 
@@ -62,9 +64,27 @@ def is_explicit_ack_source(source: object) -> bool:
     return any(normalized.startswith(prefix) for prefix in EXPLICIT_ACK_SOURCE_PREFIXES)
 
 
-def ack_prefix_for_assignee(assignee: str) -> str:
+def ack_prefix_for_assignee(
+    assignee: str,
+    *,
+    assignee_role: str | None = None,
+    workspace: Path | None = None,
+) -> str:
+    """取执行方对应的 ACK 前缀。
+
+    优先用工单声明的角色（PROTOCOL §7.3 的 assignee_role），
+    其次用编排配置里 provider 的 fallback_ack_prefix，
+    最后退回本模块的兜底表。
+    """
     normalized = str(assignee or "").strip().lower()
-    return _ACK_PREFIX.get(normalized, "X")
+    try:
+        from .role_prefix import resolve_ack_prefix
+
+        return resolve_ack_prefix(
+            normalized, assignee_role=assignee_role, workspace=workspace
+        )
+    except Exception:  # pragma: no cover - 解析器不可用时退回兜底表
+        return _ACK_PREFIX.get(normalized, "X")
 
 
 def ack_status_for_assignee(assignee: str) -> str:
@@ -72,8 +92,18 @@ def ack_status_for_assignee(assignee: str) -> str:
     return _DEFAULT_ACK_STATUS.get(normalized, "ok")
 
 
-def build_ack_line(*, assignee: str, task_id: str, result_file: str, status: str | None = None) -> str:
-    prefix = ack_prefix_for_assignee(assignee)
+def build_ack_line(
+    *,
+    assignee: str,
+    task_id: str,
+    result_file: str,
+    status: str | None = None,
+    assignee_role: str | None = None,
+    workspace: Path | None = None,
+) -> str:
+    prefix = ack_prefix_for_assignee(
+        assignee, assignee_role=assignee_role, workspace=workspace
+    )
     resolved_status = str(status or ack_status_for_assignee(assignee)).strip()
     return f"{prefix}.ACK|task={task_id}|status={resolved_status}|result={result_file}"
 
@@ -218,6 +248,8 @@ def upsert_ack_bridge_item(
     status: str | None = None,
     result_synced_from: str = "",
     increment_count: bool = True,
+    assignee_role: str | None = None,
+    workspace: Path | None = None,
 ) -> dict[str, Any]:
     existing = get_ack_bridge_item(items, task_id)
     count = int(existing.get("bridge_count", 0)) + (1 if increment_count else 0)
@@ -226,6 +258,8 @@ def upsert_ack_bridge_item(
         task_id=task_id,
         result_file=result_file,
         status=status,
+        assignee_role=assignee_role,
+        workspace=workspace,
     )
     existing_source = str(existing.get("source") or "").strip()
     resolved_source = source
@@ -270,6 +304,7 @@ def record_ack_bridge(
     result_synced_from: str = "",
     increment_count: bool = True,
     dry_run: bool = False,
+    assignee_role: str | None = None,
 ) -> dict[str, Any]:
     state_file, payload, items = load_ack_bridge_state(workspace, state_path=state_path)
     record = upsert_ack_bridge_item(
@@ -283,6 +318,8 @@ def record_ack_bridge(
         status=status,
         result_synced_from=result_synced_from,
         increment_count=increment_count,
+        assignee_role=assignee_role,
+        workspace=workspace,
     )
     if not dry_run:
         write_json(state_file, payload)
