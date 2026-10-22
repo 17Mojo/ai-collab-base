@@ -173,6 +173,31 @@ kernel 走 HTTP Basic 认证（用户名默认 `codearts`）。密码按以下�
 
 三者都拿不到时 bridge **大声失败**（`缺少 kernel 密码`），不会静默降级。
 
+#### 一次性凭据引导（推荐）
+
+**由用户本人在本机终端执行一次**：
+
+```bash
+python3 scripts/codearts_bridge_deliver.py --workspace . --setup-credentials
+```
+
+它会：
+
+1. 发现正在运行的 kernel，取出它的 Basic Auth 密码
+2. 写入 `~/.codeartsdoer/kernel-bridge.env`（权限 `0600`）
+3. **不回显密码**（只打印"凭据已写入…密码未回显"）
+4. 立即退出，**不做任何投递**
+
+执行完这条命令后，日常投递走上面第 2 条（凭据文件）的常规路径，
+**不再需要** `--allow-process-env-discovery`。
+
+> 🔒 **为什么必须由用户自己跑**：这条命令会把本机 kernel 的密码落盘。
+> 如果由 AI 助手代跑，密码就会进入 AI 会话上下文、shell 历史与对话记录，
+> 等于绕过了凭据保护本身。AI 侧只负责写好这条命令、验证它可用，
+> 执行动作留给用户。
+>
+> 凭据文件在 `~/.codeartsdoer/` 下，**不在仓库内**，不会被提交。
+
 ### 首次投递的时间点
 
 codearts pull adapter 只消费 **intervention**，intervention 由 session_health 产生。
@@ -201,7 +226,14 @@ codearts pull adapter 只消费 **intervention**，intervention 由 session_heal
 
 ### 问题 3：bridge 报 `缺少 kernel 密码`
 
-见上文「凭据」段。三种方式任选其一。
+跑一次引导命令即可（**用户本人执行**）：
+
+```bash
+python3 scripts/codearts_bridge_deliver.py --workspace . --setup-credentials
+```
+
+也可以手动创建 `~/.codeartsdoer/kernel-bridge.env` 写入
+`OPENCODE_SERVER_PASSWORD=<password>`。详见上文「一次性凭据引导」。
 
 ### 问题 4：workspace guard 拦截派发
 

@@ -563,6 +563,56 @@ def write_inbox_copy(
     return str(target.relative_to(workspace))
 
 
+def _setup_credentials(*, kernel_url: str) -> int:
+    """一次性凭据引导：把 kernel 密码写进本机凭据文件后退出。
+
+    **这个子命令由用户本人在本机终端执行**，AI 助手不应代跑：
+    密码只在用户自己的 shell 与本机文件之间流动，不进入任何对话上下文、
+    不进入 shell 历史、不进入仓库。
+
+    写入目标 `~/.codeartsdoer/kernel-bridge.env`（0600），
+    供后续 `resolve_credentials` 的常规路径（环境变量 → 凭据文件）读取，
+    于是**日常投递不再需要** `--allow-process-env-discovery`。
+    """
+    resolved_url = kernel_url
+    if not resolved_url:
+        try:
+            host, port, _pid = _discover_kernel()
+            resolved_url = f"http://{host}:{port}"
+        except BridgeError as exc:
+            return _fail(str(exc))
+
+    try:
+        username, password = resolve_credentials(
+            allow_process_env_discovery=True,
+            kernel_url=resolved_url,
+        )
+    except BridgeError as exc:
+        return _fail(
+            f"{exc}\n"
+            f"提示：也可手动创建 {CREDENTIAL_FILE}，写入一行 "
+            "OPENCODE_SERVER_PASSWORD=<password>（用户名默认 codearts）。"
+        )
+
+    try:
+        CREDENTIAL_FILE.parent.mkdir(parents=True, exist_ok=True)
+        CREDENTIAL_FILE.write_text(
+            "# CodeArts Doer kernel 凭据（由 --setup-credentials 生成，权限 0600）\n"
+            f"OPENCODE_SERVER_USERNAME={username}\n"
+            f"OPENCODE_SERVER_PASSWORD={password}\n",
+            encoding="utf-8",
+        )
+        CREDENTIAL_FILE.chmod(0o600)
+    except OSError as exc:
+        return _fail(f"写凭据文件失败: {exc}")
+
+    # 刻意不回显密码本身，也不回显长度等可推断信息。
+    print(f"[codearts-bridge] 凭据已写入 {CREDENTIAL_FILE}（权限 0600）")
+    print(f"[codearts-bridge] 用户名: {username}")
+    print("[codearts-bridge] 密码未回显。现在可以正常投递，无需 --allow-process-env-discovery。")
+    return 0
+
+
 # --------------------------------------------------------------------------
 # 入口
 # --------------------------------------------------------------------------
@@ -593,6 +643,15 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="允许从本机 kernel 进程环境读取 Basic Auth 凭据（默认关闭）",
     )
+    parser.add_argument(
+        "--setup-credentials",
+        action="store_true",
+        help=(
+            "一次性凭据引导：把 kernel 密码写入 "
+            f"{CREDENTIAL_FILE}（0600 权限）后退出，不做任何投递。"
+            "由用户本人在本机执行——密码不经过任何 AI 会话。"
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true", help="只解析不发送")
     parser.add_argument("--json", action="store_true", help="以 JSON 输出结果")
     args = parser.parse_args(argv)
@@ -600,6 +659,9 @@ def main(argv: list[str] | None = None) -> int:
     workspace = Path(args.workspace).expanduser().resolve()
     if not workspace.is_dir():
         return _fail(f"工作区不存在: {workspace}")
+
+    if args.setup_credentials:
+        return _setup_credentials(kernel_url=args.kernel_url)
 
     try:
         message = extract_message(

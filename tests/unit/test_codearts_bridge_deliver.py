@@ -368,5 +368,98 @@ def test_repo_codearts_adapter_is_enabled():
     assert config["sessionOrchestration"]["codeartsAdapter"]["enabled"] is True
 
 
+# ---------------------------------------------------------------------------
+# 一次性凭据引导（--setup-credentials）
+# ---------------------------------------------------------------------------
+
+
+def test_setup_credentials_writes_credential_file_without_echoing_password(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """引导命令把密码写进 0600 文件，且**绝不回显密码**。
+
+    回显密码会把它带进终端滚动记录、CI 日志或 AI 会话上下文，
+    那等于没做凭据保护。
+    """
+    monkeypatch.delenv("OPENCODE_SERVER_PASSWORD", raising=False)
+    monkeypatch.delenv("CODEARTS_KERNEL_PASSWORD", raising=False)
+    credential_file = tmp_path / "kernel-bridge.env"
+    monkeypatch.setattr(bridge, "CREDENTIAL_FILE", credential_file)
+    monkeypatch.setattr(
+        bridge,
+        "resolve_credentials",
+        lambda **_: ("codearts", "s3cret-password-value"),
+    )
+
+    code = bridge.main(["--workspace", str(tmp_path), "--setup-credentials"])
+
+    assert code == 0
+    written = credential_file.read_text(encoding="utf-8")
+    assert "OPENCODE_SERVER_PASSWORD=s3cret-password-value" in written
+    assert "OPENCODE_SERVER_USERNAME=codearts" in written
+    assert oct(credential_file.stat().st_mode)[-3:] == "600"
+
+    stdout = capsys.readouterr().out
+    assert "s3cret-password-value" not in stdout
+    assert "密码未回显" in stdout
+
+
+def test_setup_credentials_does_not_deliver_anything(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """引导只写凭据文件，绝不触发任何投递。"""
+    monkeypatch.setattr(bridge, "CREDENTIAL_FILE", tmp_path / "kernel-bridge.env")
+    monkeypatch.setattr(
+        bridge, "resolve_credentials", lambda **_: ("codearts", "pw")
+    )
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("引导命令不应发起任何 kernel 请求")
+
+    monkeypatch.setattr(bridge, "KernelClient", _boom)
+    monkeypatch.setattr(bridge, "deliver_via_cron", _boom)
+    monkeypatch.setattr(bridge, "deliver_via_session", _boom)
+
+    assert bridge.main(["--workspace", str(tmp_path), "--setup-credentials"]) == 0
+
+
+def test_setup_credentials_reports_failure_when_credential_unavailable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """拿不到凭据时明确失败并给出补救提示，不写空文件。"""
+    monkeypatch.delenv("OPENCODE_SERVER_PASSWORD", raising=False)
+    monkeypatch.delenv("CODEARTS_KERNEL_PASSWORD", raising=False)
+    credential_file = tmp_path / "kernel-bridge.env"
+    monkeypatch.setattr(bridge, "CREDENTIAL_FILE", credential_file)
+
+    def _raise(**_kwargs):
+        raise bridge.BridgeError("缺少 kernel 密码")
+
+    monkeypatch.setattr(bridge, "resolve_credentials", _raise)
+
+    code = bridge.main(["--workspace", str(tmp_path), "--setup-credentials"])
+
+    assert code == 2
+    assert not credential_file.exists()
+    assert "kernel-bridge.env" in capsys.readouterr().err
+
+
+def test_setup_credentials_uses_env_password_when_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """环境变量里已有密码时，引导直接把它固化到文件里。"""
+    monkeypatch.setenv("OPENCODE_SERVER_PASSWORD", "env-provided-pw")
+    credential_file = tmp_path / "kernel-bridge.env"
+    monkeypatch.setattr(bridge, "CREDENTIAL_FILE", credential_file)
+
+    code = bridge.main(["--workspace", str(tmp_path), "--setup-credentials"])
+
+    assert code == 0
+    assert "OPENCODE_SERVER_PASSWORD=env-provided-pw" in credential_file.read_text(
+        encoding="utf-8"
+    )
+    assert "env-provided-pw" not in capsys.readouterr().out
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
