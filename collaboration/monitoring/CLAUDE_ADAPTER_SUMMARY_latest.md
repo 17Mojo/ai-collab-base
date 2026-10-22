@@ -1,6 +1,6 @@
 # Claude Adapter Summary（自动生成）
 
-- generated_at: `2026-10-22T23:59:18.419599`
+- generated_at: `2026-10-23T00:47:35.010708`
 - mode: `apply`
 - candidate_count: `0`
 - queued_count: `0`

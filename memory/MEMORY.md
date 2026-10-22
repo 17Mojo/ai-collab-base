@@ -11,6 +11,8 @@
 - [user.md](user.md) — 用户角色与偏好信息
 
 ## Feedback
+- [ACK/receipt 必须由 CLI 生成且先 RUN-RESET 再 RUN](feedback_ack_cli_generated.md) — 派单流程硬性规范——ACK/receipt 禁止手写，须用 python3 -m ai_collab.cli ack ... 生成并原样回复；RUN 静默无 ACK 时先 A.RUN-RESET 再 A.RUN
+- [CodeArts 派单执行的工具约束（禁 write/edit、禁派生代理、写文件用 bash heredoc）](feedback_codearts_session_tooling.md) — 真机实测 CodeArts 会话中 write/edit 工具与派生 subagent 会卡死并中止会话；派单任务写文件一律用 bash heredoc
 - [方案选型前先做可行性实测，不凭直觉论证](feedback_empirical_test_before_solution_choice.md) — 用户要求「先做链接可行性实测，再定软链还是生成方案」；涉及技术选型时先跑实测拿到退出码/行为级真证，再给判定与方案
 - [按用户既定目标反推应做项，而非并列可选项](feedback_goal_driven_backlog.md) — 用户已给出明确目标时，应从目标逐条反推应落地项并给出「目标↔项↔依据↔优先级」映射；禁止退回到并列的「你可以选 1/2/3」式可选项
 - [交付报告禁列流程仪式（仪式税），门禁改分层触发](feedback_no_ceremony_tax.md) — RESULT/closeout 不得列举 Skill 触发与门禁遵循情况；closeout 只写 5 行；门禁按提交/周/里程碑分层触发

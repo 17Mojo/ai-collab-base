@@ -1,17 +1,18 @@
 # ACK Watchdog Summary（自动生成）
 
-- 生成时间: `2026-10-22T23:59:18.416921`
-- 模式: `dry-run`
+- 生成时间: `2026-10-23T00:51:52.268252`
+- 模式: `apply`
 - 超时阈值: `120s`
-- 候选静默任务: `1`
+- 候选静默任务: `0`
 - 自动重派: `0`
-- 仅告警: `1`
+- 仅告警: `0`
+- 重新武装在途干预: `0`
 - 跳过: `0`
 - 错误: `0`
 
 ## 静默任务
 
-- `TASK-P0-CONSENSUS-ENGINE-001` assignee=`codearts_agent` status=`implementing` action=`alert` age=`1268s`
+- 无
 
 ## 跳过项
 
