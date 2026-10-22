@@ -7,6 +7,7 @@ Pack 市场功能测试
 
 import os
 import tempfile
+from contextlib import closing
 from datetime import datetime
 
 import pytest
@@ -306,7 +307,7 @@ class TestPackMarketStore:
         # 检查表是否存在
         import sqlite3
 
-        with sqlite3.connect(temp_db) as conn:
+        with closing(sqlite3.connect(temp_db)) as conn, conn:
             cursor = conn.cursor()
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             tables = [row[0] for row in cursor.fetchall()]
@@ -889,7 +890,7 @@ class TestSQLiteCheckConstraints:
         store.create_listing(listing)
 
         # 直接 SQL 插入合法 feedback_type
-        with sqlite3.connect(temp_db) as conn:
+        with closing(sqlite3.connect(temp_db)) as conn, conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -932,7 +933,7 @@ class TestSQLiteCheckConstraints:
         store.create_listing(listing)
 
         # 直接 SQL 插入非法 feedback_type
-        with sqlite3.connect(temp_db) as conn:
+        with closing(sqlite3.connect(temp_db)) as conn, conn:
             cursor = conn.cursor()
             with pytest.raises(sqlite3.IntegrityError):
                 cursor.execute(
@@ -973,7 +974,7 @@ class TestSQLiteCheckConstraints:
         # 测试所有合法值: bug, suggestion, request
         valid_types = ["bug", "suggestion", "request"]
         for i, valid_type in enumerate(valid_types):
-            with sqlite3.connect(temp_db) as conn:
+            with closing(sqlite3.connect(temp_db)) as conn, conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
@@ -1015,7 +1016,7 @@ class TestSQLiteCheckConstraints:
         store.create_listing(listing)
 
         # 测试边界值: 1 和 5 应该成功
-        with sqlite3.connect(temp_db) as conn:
+        with closing(sqlite3.connect(temp_db)) as conn, conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -1074,7 +1075,7 @@ class TestSQLiteCheckConstraints:
         store.create_listing(listing)
 
         # 测试超出范围值: 0 和 6 应该失败
-        with sqlite3.connect(temp_db) as conn:
+        with closing(sqlite3.connect(temp_db)) as conn, conn:
             cursor = conn.cursor()
             # rating = 0 应该失败
             with pytest.raises(sqlite3.IntegrityError):
@@ -1096,7 +1097,7 @@ class TestSQLiteCheckConstraints:
                 )
                 conn.commit()
 
-        with sqlite3.connect(temp_db) as conn:
+        with closing(sqlite3.connect(temp_db)) as conn, conn:
             cursor = conn.cursor()
             # rating = 6 应该失败
             with pytest.raises(sqlite3.IntegrityError):
