@@ -302,8 +302,14 @@ TASK-P0-CONSENSUS-ENGINE-001
 新增一次性凭据引导命令，**由用户本人在本机终端执行**：
 
 ```bash
+cd /Users/raymondna/Documents/AI-collab/ai-collab-base
 python3 scripts/codearts_bridge_deliver.py --workspace . --setup-credentials
 ```
+
+> ⚠️ **必须在仓库根目录下执行**（脚本路径是相对的）。在 `~` 下直接跑会报
+> `can't open file '.../scripts/codearts_bridge_deliver.py'`。
+> 也可以用绝对路径：
+> `python3 /Users/raymondna/Documents/AI-collab/ai-collab-base/scripts/codearts_bridge_deliver.py --workspace /Users/raymondna/Documents/AI-collab/ai-collab-base --setup-credentials`
 
 它会取出 kernel 密码、写入 `~/.codeartsdoer/kernel-bridge.env`（权限 `0600`）、
 **不回显密码**、**不做任何投递**后退出。执行完后，日常投递走凭据文件的

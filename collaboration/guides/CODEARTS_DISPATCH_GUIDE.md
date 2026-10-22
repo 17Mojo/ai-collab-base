@@ -178,7 +178,17 @@ kernel 走 HTTP Basic 认证（用户名默认 `codearts`）。密码按以下�
 **由用户本人在本机终端执行一次**：
 
 ```bash
+# 注意：要在仓库根目录下执行（脚本路径是相对的）
+cd /Users/raymondna/Documents/AI-collab/ai-collab-base
 python3 scripts/codearts_bridge_deliver.py --workspace . --setup-credentials
+```
+
+或者用绝对路径，在哪个目录跑都行：
+
+```bash
+python3 /Users/raymondna/Documents/AI-collab/ai-collab-base/scripts/codearts_bridge_deliver.py \
+  --workspace /Users/raymondna/Documents/AI-collab/ai-collab-base \
+  --setup-credentials
 ```
 
 它会：
@@ -226,14 +236,18 @@ codearts pull adapter 只消费 **intervention**，intervention 由 session_heal
 
 ### 问题 3：bridge 报 `缺少 kernel 密码`
 
-跑一次引导命令即可（**用户本人执行**）：
+跑一次引导命令即可（**用户本人执行**，注意要在仓库根目录或用绝对路径）：
 
 ```bash
+cd /Users/raymondna/Documents/AI-collab/ai-collab-base
 python3 scripts/codearts_bridge_deliver.py --workspace . --setup-credentials
 ```
 
 也可以手动创建 `~/.codeartsdoer/kernel-bridge.env` 写入
 `OPENCODE_SERVER_PASSWORD=<password>`。详见上文「一次性凭据引导」。
+
+> 若报 `can't open file '.../scripts/codearts_bridge_deliver.py'`，
+> 说明当前目录不在仓库里 —— 脚本路径是相对的。
 
 ### 问题 4：workspace guard 拦截派发
 
