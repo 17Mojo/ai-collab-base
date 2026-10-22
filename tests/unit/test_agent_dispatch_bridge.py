@@ -367,3 +367,91 @@ def test_dispatch_orders_carry_assignee_section_headings(tmp_path):
     sections = split_orders_by_assignee(orders)
     assert "codearts_agent" in sections
     assert "TASK-DISPATCH-007" in sections["codearts_agent"]
+
+
+def test_dispatch_orders_carry_task_contract(tmp_path):
+    """指令包的任务块必须带契约：描述 / 涉及文件 / 结果文件 / change_id / 角色。
+
+    回归（2026-10-22 真机实测）：payload 之前只有「任务 ID + 改状态命令 +
+    验收命令」，接收方拿不到「要做什么、交什么」，只能自己翻仓库反推。
+    CodeArts 收到这种 payload 后探索了 5 分钟，一个文件也没产出。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-CONTRACT-001"] = {
+        "task_id": "TASK-CONTRACT-001",
+        "ai_type": "codearts_agent",
+        "assignee": "codearts_agent",
+        "assignee_role": "AGENT_EXEC",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "description": "把 consensus_engine 移植到 Hermes 并把覆盖率提到 80%",
+        "files": ["hermes_target/hermes_agent/engines/consensus_engine.py"],
+        "change_id": "migrate-parallel-architecture-to-hermes",
+        "acceptance_commands": ["pytest -q hermes_target/hermes_agent/tests/unit/"],
+        "result_file": "hermes_target/RESULT-TASK-CONTRACT-001.md",
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+
+    assert "**任务描述**: 把 consensus_engine 移植到 Hermes 并把覆盖率提到 80%" in orders
+    assert "`hermes_target/hermes_agent/engines/consensus_engine.py`" in orders
+    assert "`hermes_target/RESULT-TASK-CONTRACT-001.md`" in orders
+    assert "`migrate-parallel-architecture-to-hermes`" in orders
+    assert "`AGENT_EXEC`" in orders
+    assert "#### 执行步骤" in orders
+
+
+def test_dispatch_orders_contract_survives_trigger_payload(tmp_path):
+    """契约段必须一路活到最终交给对方的 trigger payload 里。
+
+    回归：`build_handoff_payload` 原样拼接指令包分节，若分节时丢内容，
+    接收方拿到的仍然是一份没有任务描述的 payload。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-CONTRACT-002"] = {
+        "task_id": "TASK-CONTRACT-002",
+        "ai_type": "codearts_agent",
+        "assignee": "codearts_agent",
+        "assignee_role": "AGENT_EXEC",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "description": "把 coverage 门禁接到 CI 上",
+        "files": ["ai_collab/pack/schema_validator.py"],
+        "result_file": "collaboration/results/RESULT-TASK-CONTRACT-002.md",
+        "acceptance_commands": ["pytest -q tests/unit/test_pack_schema_validator.py"],
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+
+    from ai_collab.dispatch_trigger import build_handoff_payload, split_orders_by_assignee
+
+    sections = split_orders_by_assignee(orders)
+    trigger_payload = build_handoff_payload(
+        assignee="codearts_agent",
+        trigger_phrase="2X DISPATCH CodeArts",
+        orders_relpath="collaboration/monitoring/AGENT_DISPATCH_ORDERS_test.md",
+        section_markdown=sections["codearts_agent"],
+    )
+
+    assert "把 coverage 门禁接到 CI 上" in trigger_payload
+    assert "`collaboration/results/RESULT-TASK-CONTRACT-002.md`" in trigger_payload
+    assert "#### 执行步骤" in trigger_payload
+

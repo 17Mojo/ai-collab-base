@@ -130,12 +130,24 @@ def write_orders_markdown(
 
             lines.append(f"### {o['task_id']}")
             lines.append("")
+            task = task_lookup.get(o["task_id"], {}) or {}
+            contract = _task_contract_lines(o, task, workspace)
+            if contract:
+                lines.extend(contract)
+            lines.append("#### 执行步骤")
+            lines.append("")
+            lines.append("1. 先把状态翻成 implementing（下面这条命令）：")
+            lines.append("")
             lines.append("```bash")
             lines.append(build_update_command(o))
             lines.append("```")
+            lines.append("")
+            lines.append("2. 按上面的**任务描述**动手实现，产出**结果文件**。")
+            lines.append("3. 逐条跑下面的**验收命令**，必须全部通过。")
+            lines.append("4. 写完结果文件后回一行 ACK（用任务块里的 ack 命令生成，原样回复）。")
+            lines.append("")
             cmds = o.get("commands", [])
             if cmds:
-                lines.append("")
                 lines.append("#### Acceptance Commands")
                 for c in cmds:
                     lines.append(f"- `{c}`")
@@ -152,6 +164,63 @@ def build_order(task: dict) -> dict:
         "result_file": task.get("result_file", ""),
         "dispatched_at": datetime.now().isoformat(),
     }
+
+
+def _task_contract_lines(
+    order: dict, task: dict, workspace: Path
+) -> list[str]:
+    """渲染任务契约段。
+
+    之前 payload 的任务块只有「任务 ID + 改状态的命令 + 验收命令」，
+    没有描述、没有涉及文件、没有结果文件 —— 接收方只能从任务 ID 和验收命令
+    反推要做什么。真机实测：CodeArts 收到这种 payload 后花了 5 分钟探索仓库，
+    一个文件也没产出（会话中途被中止）。
+
+    任务记录里本来就有 description / files / result_file / change_id /
+    assignee_role，这里原样带过去，让接收方一眼知道「做什么、交什么」。
+    """
+    task_id = str(order.get("task_id") or "")
+    lines: list[str] = []
+
+    description = str(task.get("description") or "").strip()
+    if description:
+        lines.append(f"**任务描述**: {description}")
+        lines.append("")
+
+    files = task.get("files") or []
+    if files:
+        lines.append("**涉及文件**:")
+        for f in files:
+            lines.append(f"- `{f}`")
+        lines.append("")
+
+    result_file = str(order.get("result_file") or task.get("result_file") or "").strip()
+    if result_file:
+        lines.append(f"**结果文件**（必须写）: `{result_file}`")
+        lines.append("")
+        lines.append(
+            "  按 PROTOCOL §7.3 契约写入四段："
+            "`## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`。"
+        )
+        lines.append("")
+
+    change_id = str(task.get("change_id") or "").strip()
+    if change_id:
+        lines.append(f"**change_id**: `{change_id}`")
+        lines.append("")
+
+    role = str(task.get("assignee_role") or "").strip()
+    if role:
+        lines.append(f"**角色**: `{role}`（{order.get('assignee')}）")
+        lines.append("")
+
+    ticket = workspace / "collaboration" / "tasks" / f"{task_id}.md"
+    if ticket.exists():
+        lines.append(f"**任务工单**: `collaboration/tasks/{task_id}.md`")
+        lines.append("")
+
+    return lines
+
 
 
 def classify_task(task: dict, existing: dict, args) -> dict:
