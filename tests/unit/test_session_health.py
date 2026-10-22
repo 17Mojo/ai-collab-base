@@ -304,6 +304,9 @@ def test_ack_silence_intervention_names_payload_and_uses_role_scoped_hint(
     # provider 兜底前缀是 C，与 AGENT_EXEC 席位冲突，不能出现在提示里
     assert "C.RUN" not in artifact_text
     assert incident["recommended_action"] == "A.RUN-RESET -> A.RUN"
+    # 干预正文是对方会话的第一条消息，必须直接指向 payload 里的执行步骤，
+    # 否则对方读完 payload 也不知道该干什么（真机实测：探索 5 分钟零产出）
+    assert "执行步骤" in artifact_text
 
 
 def test_ack_silence_intervention_honors_trigger_output_config(

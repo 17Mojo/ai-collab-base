@@ -300,6 +300,8 @@ def _build_exact_message(incident: dict[str, Any], *, workspace: Path | None = N
             [
                 f"请先执行 `{_run_reset_hint(assignee, assignee_role=assignee_role, workspace=str(workspace or ''))}`，"
                 f"再重新执行 `{run_hint}`。",
+                "payload 里的「#### 执行步骤」就是本次要做的事：按描述实现、"
+                "写出结果文件、跑完验收命令。",
                 "完成后不要手写 ACK，请使用任务块中的 `python3 -m ai_collab.cli ack ...` 生成并原样回复。",
             ]
         )
