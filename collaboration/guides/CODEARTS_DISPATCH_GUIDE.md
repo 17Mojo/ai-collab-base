@@ -72,6 +72,10 @@ collaboration/tasks/TASK_*.md
 权威来源是 `config/agent-orchestration.json` 的 `command_prefixes`；
 `ai_collab/role_prefix.py` 负责把角色/provider 两套命名空间收敛成一套。
 
+> ⚠️ **已知残留**：未绑定的 `codex` provider 兜底前缀也是 `X`，
+> 与 `AGENT_ARCH` 的 `X.RUN` 撞车。目前 `codex` 没有绑定角色席位，
+> 实际不影响派发；等它被绑定时需要重新分配前缀。
+
 ### 2. 控制面注册
 
 ```bash
@@ -224,7 +228,7 @@ git commit -m "..."
 | 派单 payload | `collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md` | 自动 |
 | 干预工件 | `collaboration/monitoring/session_interventions/*.md` | 自动 |
 | pull event | `collaboration/monitoring/codearts_pull_events/*.md` | 自动 |
-| 桥接审计副本 | `collaboration/monitoring/codearts_inbox/*.md` | 自动 |
+| 桥接审计副本 | `collaboration/monitoring/codearts_inbox/*.md` | 投递成功后生成 |
 | 控制面状态 | `logs/collaboration_state.json` | 自动 |
 | 派单状态 | `logs/agent_dispatch_state.json` | 自动 |
 | 回执状态 | `logs/agent_receipt_state.json` | 自动 |
