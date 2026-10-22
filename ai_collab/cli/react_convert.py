@@ -125,32 +125,32 @@ def save_artifacts(artifacts: ConversionArtifacts, output_dir: str):
     print(f"✓ Saved react_trace.json to {trace_path}")
 
 
-def main():
-    """Main CLI entry point"""
-    parser = argparse.ArgumentParser(
-        description="Convert Owner requirements to Pack drafts using ReAct pattern"
-    )
-    parser.add_argument("--requirement", "-r", required=True, help="Path to requirement JSON file")
-    parser.add_argument(
-        "--output",
-        "-o",
-        default="./conversion_output",
-        help="Output directory for conversion artifacts (default: ./conversion_output)",
-    )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
+def convert_requirement_file(requirement_path: str, output_dir: str, verbose: bool = False) -> int:
+    """把 Owner 需求 JSON 转换成 Pack 草稿产物。
 
-    args = parser.parse_args()
+    这是 ``pack convert`` 子命令与独立脚本共用的入口。
 
-    # Load requirement
-    if not os.path.exists(args.requirement):
-        print(f"Error: Requirement file not found: {args.requirement}")
-        sys.exit(1)
+    Args:
+        requirement_path: 需求 JSON 文件路径
+        output_dir: 产物输出目录
+        verbose: 是否打印 ReAct trace 明细
 
-    with open(args.requirement, encoding="utf-8") as f:
-        requirement = json.load(f)
+    Returns:
+        退出码：0 成功，1 失败
+    """
+    if not os.path.exists(requirement_path):
+        print(f"Error: Requirement file not found: {requirement_path}")
+        return 1
+
+    try:
+        with open(requirement_path, encoding="utf-8") as f:
+            requirement = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid requirement JSON: {e}")
+        return 1
 
     print(f"Converting requirement: {requirement.get('name', 'Unknown')}")
-    print(f"Output directory: {args.output}")
+    print(f"Output directory: {output_dir}")
     print()
 
     # Convert requirement
@@ -158,7 +158,7 @@ def main():
     artifacts = converter.convert(requirement)
 
     # Save artifacts
-    save_artifacts(artifacts, args.output)
+    save_artifacts(artifacts, output_dir)
 
     # Print summary
     print()
@@ -188,7 +188,7 @@ def main():
         for error in artifacts.validation_report.errors:
             print(f"  - {error}")
 
-    if args.verbose:
+    if verbose:
         print()
         print("ReAct Traces:")
         for trace in artifacts.traces:
@@ -202,6 +202,27 @@ def main():
     print("Conversion completed successfully!")
     print("=" * 60)
 
+    return 0
+
+
+def main() -> int:
+    """Main CLI entry point"""
+    parser = argparse.ArgumentParser(
+        description="Convert Owner requirements to Pack drafts using ReAct pattern"
+    )
+    parser.add_argument("--requirement", "-r", required=True, help="Path to requirement JSON file")
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="./conversion_output",
+        help="Output directory for conversion artifacts (default: ./conversion_output)",
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
+
+    args = parser.parse_args()
+
+    return convert_requirement_file(args.requirement, args.output, args.verbose)
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
