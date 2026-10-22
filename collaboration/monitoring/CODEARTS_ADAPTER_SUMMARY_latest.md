@@ -1,13 +1,19 @@
 # CodeArts Adapter Summary（自动生成）
 
-- generated_at: `2026-10-22T20:18:55.354851`
+- generated_at: `2026-10-22T23:06:17.900149`
 - mode: `apply`
-- candidate_count: `1`
+- candidate_count: `0`
 - queued_count: `0`
 - artifact_only_count: `0`
-- failed_count: `1`
+- failed_count: `0`
+- skipped_in_flight_count: `1`
 
 ## Deliveries
 
-- `intervention-fd04852f6b5a4fd1a55f6d00504a9491` action=`failed` status=`failed`
-  event_file: `collaboration/monitoring/codearts_pull_events/CODEARTS_PULL_EVENT_intervention-fd04852f6b5a4fd1a55f6d00504a9491_latest.md`
+- 无
+
+## Skipped (In Flight)
+
+已投递、等待对方 ACK，未重复投递：
+
+- `intervention-fd04852f6b5a4fd1a55f6d00504a9491`
