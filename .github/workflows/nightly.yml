@@ -58,6 +58,24 @@ jobs:
           path: nightly-test.log
           retention-days: 7
 
+      # 项目事实快照：CI 环境跑出的「机器视角真证」（目录树/行数/CLI 入口/测试收集数）
+      # 与仓库内 docs/FACTS.generated.md（开发者手动刷新的基线）互为校验，
+      # 差异即文档漂移信号。不自动提交回仓库——CI 写仓库会引入归属不清
+      # （PROTOCOL.md 14.4），人工刷新保持单一责任人。
+      - name: Generate project facts snapshot
+        if: always()
+        run: |
+          bash scripts/gen_facts.sh
+          cp docs/FACTS.generated.md nightly-facts-snapshot.md
+
+      - name: Upload facts snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-facts-snapshot
+          path: nightly-facts-snapshot.md
+          retention-days: 30
+
       # 如果 nightly 失败，发邮件/通知（可选）
       - name: Notify on failure
         if: failure()

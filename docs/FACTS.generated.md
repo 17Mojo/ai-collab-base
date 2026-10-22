@@ -1,29 +1,34 @@
 # 项目事实快照
 
-**生成时间**: 2026-10-21T11:30:44Z
+**生成时间**: 2026-10-22T07:56:32Z
 **生成方式**: scripts/gen_facts.sh（自动生成，请勿手工编辑）
 **仓库路径**: /Users/raymondna/Documents/AI-collab/ai-collab-base
-**仓库 HEAD**: 61e6b076d5adef4b14971ff8652c0ea3426b09e4
+**仓库 HEAD**: 3ae6ccad351e779028cb1f6f39d1552ef11b6117
+**当前分支**: refactor/slimming-2026-09-20
 
 ## 1. Git 状态
 ```
 $ git status --short --branch
-## refactor/slimming-2026-09-20
- M .vscode/settings.json
- M ai_collab/pack/schema_v2.py
- M tests/unit/context/test_enhanced.py
- M tests/unit/test_adapter_contract.py
- M tests/unit/test_notebooklm_integration.py
- M tests/unit/test_schema_v2.py
-?? collaboration/results/RESULT_P2_OPTIMIZATION_2026-09-20.md
-?? docs/FACTS_2026-10-21_193044.md
-?? scripts/gen_facts.sh
-?? templates/
-?? tests/unit/test_state_manager_v2_coverage.py
+## refactor/slimming-2026-09-20...origin/refactor/slimming-2026-09-20
+ M collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md
+D  docs/FACTS_2026-10-21_193044.md
+ M pyproject.toml
+ M scripts/gen_facts.sh
+?? docs/FACTS.generated.md
 ```
 
 ## 2. 最近 20 次提交
 ```
+3ae6cca fix(hermes): 修复 consensus_engine 语法错误与 IntegrationMode 假枚举
+01f67c2 fix(ci): 修复 test.yml 的 ruff 步骤，恢复被遮蔽的覆盖率门禁
+157cb2c fix(test): 消除新增测试文件的 lint 回归，使 ruff 错误数回到 main 基线
+b27cbc1 test(pack): 为 pack 执行测试补真实断言，清零 return-not-none 警告
+9590f0b fix(laya-client): 校验响应 JSON 类型，清零 mypy 最后一个错误
+fd0f556 chore(scripts): 新增 gen_facts.sh 生成项目事实快照
+048bffa fix(test): 隔离模板库测试写入目录，消除仓库根目录污染
+50da6c8 test(context): 补强 enhanced_query 路径与 state_manager P2 覆盖率缺口
+56f0cf2 test(adapter): 新增 16 个单元测试覆盖适配器契约与 NotebookLM 集成
+e0a7d2c feat(pack): 新增 ReviewWorkflow 数据类支持 AI-Pair 审查模式
 61e6b07 test(laya-client): 新增 27 个单元测试覆盖自动路由与错误分层
 23518e2 feat(laya-client): 新增 Laya MLX API 同步客户端
 b679b0d test(concurrent-guard): 新增 23 个单元测试含冲突样本回归
@@ -34,22 +39,13 @@ b679b0d test(concurrent-guard): 新增 23 个单元测试含冲突样本回归
 9e0c8b7 chore(extension): archive 36 one-off debug scripts (4,643 lines)
 8191c6b docs: replace obsolete `python3 -m src.cli` references
 6030087 chore: remove dead src/ directory (3,564 lines)
-f76d25c docs(p2): correct openclaw misinterpretation in TASK-P0-CONSENSUS-ENGINE-001
-14aa4cf docs(ci): add CI verification report for mypy-gate workflow
-bbf7a97 style(ruff): auto-fix import sorting in 6 files
-9ffad86 fix(test): use __file__ for reliable subprocess cwd in test_main_block
-393ef1f test+chore: coverage polish + gitignore coverage.xml
-24d361b test: boost coverage in 3 modules (39 new tests)
-418242a ci+test+p2: P0 commit - spawn_agent_preflight tests, CI gate, P2 Hermes prep
-5974848 test+fix: P1.2 coverage boost + dispatch_trigger type: ignore
-fce1c20 fix(types): Round 9-11 FINAL - mypy 109→0 (100% complete)
-4193dfb fix(types): resolve Round 8 syntax error and import fixes
 ```
 
 ## 3. 远端同步状态
 ```
-unpushed=0
-ahead=10
+# 基于当前分支的 upstream（@{u}），不硬编码 main
+unpushed(ahead of upstream)=0
+behind(upstream ahead of us)=0
 ```
 
 ## 4. 目录树（2 层）
@@ -71,6 +67,7 @@ ahead=10
 ./.ruff_cache
 ./.ruff_cache/0.16.2
 ./.ruff_cache/0.16.8
+./.ruff_cache/0.17.1
 ./.trae
 ./.trae/skills
 ./.vscode
@@ -115,10 +112,12 @@ ahead=10
 ./local-backend/collaboration
 ./local-backend/data
 ./local-backend/docs
+./local-backend/local-backend
 ./local-backend/logs
 ./local-backend/monitoring
 ./logs
 ./logs/api
+./logs/claude-code
 ./logs/faults
 ./logs/monitoring_backup
 ./logs/openspec_backup
@@ -142,7 +141,6 @@ ahead=10
 ./scripts
 ./src
 ./src/ai_collab_system.egg-info
-./templates
 ./tests
 ./tests/data
 ./tests/e2e
@@ -366,11 +364,11 @@ $ cat config/agent-orchestration.json
 ## 9. 测试收集
 ```
 $ python3 -m pytest -q --collect-only 2>&1 | tail -5
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+tests/unit/test_workspace_guard_extra.py::test_module_exports
+
 =========================== short test summary info ============================
-ERROR hermes_target/hermes_agent/tests/unit/test_consensus_engine.py
-!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
-2661 tests collected, 1 error in 1.16s
+SKIPPED [1] tests/unit/test_database_indexes.py:17: backend database not found at /Users/raymondna/Documents/AI-collab/ai-collab-base/local-backend/data/client_tokens.db
+2665 tests collected in 0.81s
 ```
 
 ## 10. 活跃任务
