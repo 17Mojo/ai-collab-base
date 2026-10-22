@@ -785,6 +785,7 @@ def run_session_health_aggregation(
     history_path: str | None = None,
     summary_path: str | None = None,
     artifact_dir: str | None = None,
+    force_redeliver: bool = False,
 ) -> dict[str, Any]:
     report_file, history_file, summary_file, artifact_root = _resolve_paths(
         workspace=workspace,
@@ -876,6 +877,7 @@ def run_session_health_aggregation(
             workspace=workspace,
             dry_run=dry_run,
             allow_delivery=emit_interventions,
+            force_redeliver=force_redeliver,
         )
     codex_adapter_report = run_codex_native_adapter(
         workspace=workspace,

@@ -23,6 +23,17 @@ DEFAULT_BRIDGE_DELIVERY_STATUS = "queued_for_delivery"
 SUPPORTED_DELIVERY_MODES = {"manual", "bridge"}
 TERMINAL_DELIVERY_STATUSES = {"delivered", "resolved", "cancelled"}
 
+# 在途状态：已经交给传输通道，等对方 ACK。
+#
+# 它不是终态（对方可能永远不回 ACK），但也**不是**待投递状态——
+# 轮询适配器每跑一次就重投一次，会在对方那边不断新建会话：
+# 实测 22:01:05 投递一次、22:55:27 同一轮健康检查又投一次，
+# 于是两个 CodeArts 会话并发改同一个工作区。
+#
+# 投递失败（failed）才该重试；「对方收到没回」由 ACK watchdog 告警 +
+# 重派机制处理，不是靠重复投递。
+IN_FLIGHT_DELIVERY_STATUSES = {"queued_for_delivery"}
+
 
 @dataclass
 class InterventionRecord:

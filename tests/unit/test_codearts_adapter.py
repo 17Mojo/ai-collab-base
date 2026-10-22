@@ -129,6 +129,113 @@ def test_codearts_adapter_queues_delivery_when_bridge_command_succeeds(tmp_path:
     assert queue["interventions"][0]["delivery_mode"] == "bridge"
 
 
+def test_codearts_adapter_does_not_redeliver_in_flight_intervention(tmp_path: Path):
+    """已投递、等待对方 ACK 的 intervention 不得重复投递。
+
+    实测事故：22:01:05 投递一次，22:55:27 同一轮健康检查又投一次，
+    于是在 CodeArts 那边建了两个会话，并发改同一个工作区。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/codearts_bridge_delivery.txt\"",
+        },
+    )
+
+    artifact_relpath = "collaboration/monitoring/session_interventions/SESSION_INTERVENTION_codearts_inflight_latest.md"
+    _write_intervention_artifact(workspace, artifact_relpath, "请补发 ACK。")
+    enqueue_intervention(
+        workspace=workspace,
+        session_id="codearts-main",
+        assignee="codearts_agent",
+        reason_code="ack_silence_after_run",
+        severity="high",
+        message_artifact=artifact_relpath,
+        intervention_id="intervention-codearts-inflight",
+    )
+
+    first = run_codearts_pull_adapter(workspace=workspace)
+    assert first["queued_count"] == 1
+
+    second = run_codearts_pull_adapter(workspace=workspace)
+
+    assert second["candidate_count"] == 0
+    assert second["queued_count"] == 0
+    assert second["skipped_in_flight_count"] == 1
+    assert second["skipped_in_flight_ids"] == ["intervention-codearts-inflight"]
+    assert second["deliveries"] == []
+
+
+def test_codearts_adapter_force_redeliver_requeues_in_flight_intervention(tmp_path: Path):
+    """运维确实需要重投时，用 force_redeliver 显式开口子。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/codearts_bridge_delivery.txt\"",
+        },
+    )
+
+    artifact_relpath = "collaboration/monitoring/session_interventions/SESSION_INTERVENTION_codearts_forced_latest.md"
+    _write_intervention_artifact(workspace, artifact_relpath, "请补发 ACK。")
+    enqueue_intervention(
+        workspace=workspace,
+        session_id="codearts-main",
+        assignee="codearts_agent",
+        reason_code="ack_silence_after_run",
+        severity="high",
+        message_artifact=artifact_relpath,
+        intervention_id="intervention-codearts-forced",
+    )
+
+    run_codearts_pull_adapter(workspace=workspace)
+    forced = run_codearts_pull_adapter(workspace=workspace, force_redeliver=True)
+
+    assert forced["candidate_count"] == 1
+    assert forced["queued_count"] == 1
+    assert forced["skipped_in_flight_count"] == 0
+    assert forced["force_redeliver"] is True
+
+
+def test_codearts_adapter_retries_failed_intervention(tmp_path: Path):
+    """投递失败属于可重试状态，必须能再次投递。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": "exit 9",
+        },
+    )
+
+    artifact_relpath = "collaboration/monitoring/session_interventions/SESSION_INTERVENTION_codearts_retry_latest.md"
+    _write_intervention_artifact(workspace, artifact_relpath, "请重试。")
+    enqueue_intervention(
+        workspace=workspace,
+        session_id="codearts-main",
+        assignee="codearts_agent",
+        reason_code="stale_payload",
+        severity="high",
+        message_artifact=artifact_relpath,
+        intervention_id="intervention-codearts-retry",
+    )
+
+    first = run_codearts_pull_adapter(workspace=workspace)
+    assert first["failed_count"] == 1
+
+    second = run_codearts_pull_adapter(workspace=workspace)
+
+    assert second["candidate_count"] == 1
+    assert second["failed_count"] == 1
+    assert second["skipped_in_flight_count"] == 0
+
+
 def test_codearts_adapter_marks_failed_when_bridge_command_fails(tmp_path: Path):
     workspace = tmp_path / "ws"
     workspace.mkdir()

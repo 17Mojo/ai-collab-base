@@ -14,6 +14,7 @@ from ..ack_protocol import load_json, write_json
 from ..adapters.contract import SessionAdapterContract, build_adapter_heartbeat
 from ..intervention_queue import (
     DEFAULT_BRIDGE_DELIVERY_STATUS,
+    IN_FLIGHT_DELIVERY_STATUSES,
     ack_intervention,
     inspect_interventions,
 )
@@ -163,6 +164,7 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
         f"- queued_count: `{report.get('queued_count', 0)}`",
         f"- artifact_only_count: `{report.get('artifact_only_count', 0)}`",
         f"- failed_count: `{report.get('failed_count', 0)}`",
+        f"- skipped_in_flight_count: `{report.get('skipped_in_flight_count', 0)}`",
         "",
         "## Deliveries",
         "",
@@ -178,6 +180,15 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
                 lines.append(f"  event_file: `{item.get('event_file', '')}`")
     else:
         lines.append("- 无")
+    skipped = list(report.get("skipped_in_flight_ids", []) or [])
+    if skipped:
+        lines.append("")
+        lines.append("## Skipped (In Flight)")
+        lines.append("")
+        lines.append("已投递、等待对方 ACK，未重复投递：")
+        lines.append("")
+        for item in skipped:
+            lines.append(f"- `{item}`")
     lines.append("")
     return "\n".join(lines)
 
@@ -191,6 +202,7 @@ def run_codearts_pull_adapter(
     summary_path: str | None = None,
     event_dir: str | None = None,
     allow_delivery: bool = True,
+    force_redeliver: bool = False,
 ) -> dict[str, Any]:
     report_file, history_file, summary_file, event_root = _resolve_paths(
         workspace=workspace,
@@ -202,6 +214,19 @@ def run_codearts_pull_adapter(
     enabled, bridge_command, delivery_status_on_success = _adapter_mode(workspace)
     payload = inspect_interventions(workspace=workspace, assignee="codearts_agent", only_open=True)
     candidates = list(payload.get("interventions", []) or [])
+
+    # 在途（已投递、等 ACK）的 intervention 不重复投递——否则每轮轮询都会在
+    # 对方那边新建一个会话，两个会话并发改同一个工作区。
+    in_flight_ids: list[str] = []
+    if not force_redeliver:
+        keep: list[dict[str, Any]] = []
+        for intervention in candidates:
+            status = str(intervention.get("delivery_status") or "").strip().lower()
+            if status in IN_FLIGHT_DELIVERY_STATUSES:
+                in_flight_ids.append(str(intervention.get("intervention_id") or ""))
+                continue
+            keep.append(intervention)
+        candidates = keep
 
     deliveries: list[dict[str, Any]] = []
     queued_count = 0
@@ -305,6 +330,9 @@ def run_codearts_pull_adapter(
         "queued_count": queued_count,
         "artifact_only_count": artifact_only_count,
         "failed_count": failed_count,
+        "skipped_in_flight_count": len(in_flight_ids),
+        "skipped_in_flight_ids": in_flight_ids,
+        "force_redeliver": force_redeliver,
         "deliveries": deliveries,
     }
 

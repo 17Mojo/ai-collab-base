@@ -1317,6 +1317,7 @@ def cmd_sessions(args):
             report_path=str(getattr(args, "report", "") or "").strip() or None,
             summary_path=str(getattr(args, "summary", "") or "").strip() or None,
             artifact_dir=str(getattr(args, "artifact_dir", "") or "").strip() or None,
+            force_redeliver=bool(getattr(args, "force_redeliver", False)),
         )
 
         if bool(getattr(args, "json", False)):
@@ -1465,6 +1466,7 @@ def cmd_sessions(args):
             history_path=str(getattr(args, "history", "") or "").strip() or None,
             summary_path=str(getattr(args, "summary", "") or "").strip() or None,
             event_dir=str(getattr(args, "event_dir", "") or "").strip() or None,
+            force_redeliver=bool(getattr(args, "force_redeliver", False)),
         )
 
         if bool(getattr(args, "json", False)):
@@ -1477,6 +1479,7 @@ def cmd_sessions(args):
         print(f"  queued_count: {report.get('queued_count', 0)}")
         print(f"  artifact_only_count: {report.get('artifact_only_count', 0)}")
         print(f"  failed_count: {report.get('failed_count', 0)}")
+        print(f"  skipped_in_flight_count: {report.get('skipped_in_flight_count', 0)}")
         print(f"  report_file: {report.get('report_file', '')}")
         print(f"  summary_file: {report.get('summary_file', '')}")
         return 0
@@ -4754,6 +4757,14 @@ def main():
     sessions_parser.add_argument("--artifact-dir", help="intervention artifact 输出目录（health 子命令专用）")
     sessions_parser.add_argument(
         "--event-dir", help="adapter event 输出目录（claude-push/codearts-pull 子命令专用）"
+    )
+    sessions_parser.add_argument(
+        "--force-redeliver",
+        action="store_true",
+        help=(
+            "强制重投在途 intervention（已投递但未收到 ACK）。"
+            "默认跳过，避免每轮轮询都在对方那边新建会话。"
+        ),
     )
     sessions_parser.add_argument("--output-dir", help="handoff 输出目录（handoff 子命令专用）")
     sessions_parser.add_argument("--objective", help="handoff 的当前目标摘要")
