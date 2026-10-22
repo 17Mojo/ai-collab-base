@@ -350,8 +350,13 @@ class StateManager:
             return normalized
 
         for key, value in loaded_state.items():
-            if key not in {"tasks", "patches"}:
+            if key not in {"tasks", "patches", "workspace"}:
                 normalized[key] = value
+
+        # workspace 是本机运行时元数据，不是需要跨机合并的业务数据。
+        # 仓库被移动/改名后，磁盘上的旧路径快照会让漂移检测与 controller
+        # 静默找不到 RESULT 文件，因此始终以当前解析出的工作区为准。
+        normalized["workspace"] = self.workspace_path or normalized.get("workspace", "") or ""
 
         tasks = loaded_state.get("tasks", {})
         normalized["tasks"] = {}
@@ -648,9 +653,10 @@ class StateManager:
         merged = dict(latest_norm)
         merged["version"] = local_norm.get("version") or latest_norm.get("version") or "2.0.0"
         merged["workspace"] = (
-            local_norm.get("workspace")
+            self.workspace_path
+            or local_norm.get("workspace")
             or latest_norm.get("workspace")
-            or (self.workspace_path or "")
+            or ""
         )
         merged["file_status"] = {
             **(latest_norm.get("file_status") or {}),
