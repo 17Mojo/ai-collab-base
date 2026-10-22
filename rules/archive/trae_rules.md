@@ -1,5 +1,9 @@
 # Trae AI 记忆系统规则
 
+> ⚠️ **已归档（2026-10-22）**：本文件为历史 Agent 专属规则，**不再作为当前角色绑定或会话启动依据**。
+> 当前角色服务商绑定见 `config/agent-orchestration.json`，协作协议见 `collaboration/PROTOCOL.md`，
+> 必读清单见 `collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md`。保留仅为历史溯源。
+
 ## 激活方式
 当用户输入 `2X` 时，Trae AI 必须自动启动：
 启动时必须立即响应：
@@ -8,7 +12,7 @@ Trae AI ACK: 记忆已激活，已读取 {规则文件列表}，准备执行。
 ## 执行规则
 
 ### 1. 读取规范
-- 项目启动时加载 `rules/trae_rules.md`
+- 项目启动时加载 `rules/archive/trae_rules.md`
 - 加载 `rules/AI-COLLABORATION-STANDARDS.md`
 - 加载 `rules/dev-record-template.md`
 

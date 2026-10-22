@@ -104,16 +104,18 @@
 
 ### 🟢 P2 - 历史参考文档
 
-以下文件为历史 Agent 专属规则，可作为参考但不再强制执行：
+以下文件为历史 Agent 专属规则，**已于 2026-10-22 移至 `rules/archive/` 并加归档警告头**，仅作历史溯源，不参与会话启动流程：
 
 | 文件 | 历史角色 | 说明 |
 |------|---------|------|
-| `/rules/claude_code_memory.md` | Claude Code 专属 | 历史参考 |
-| `/rules/codearts_agent_rules.md` | CodeArts Agent 专属 | 历史参考 |
-| `/rules/codex_agent_rules.md` | Codex Agent 专属 | 历史参考 |
-| `/rules/copilot_rules.md` | Copilot 专属 | 历史参考 |
+| `/rules/archive/claude_code_memory.md` | Claude Code 专属 | 历史参考 |
+| `/rules/archive/codearts_agent_rules.md` | CodeArts Agent 专属 | 历史参考 |
+| `/rules/archive/codex_agent_rules.md` | Codex Agent 专属 | 历史参考 |
+| `/rules/archive/copilot_rules.md` | Copilot 专属 | 历史参考 |
+| `/rules/archive/trae_rules.md` | Trae 专属 | 历史参考 |
+| `/rules/archive/agent_governance_quickstart.md` | 治理切换期 | 历史参考（2026-03-02 产物） |
 
-**注意**: 当前角色绑定通过 `/menu` 动态配置，不再依赖这些硬编码规则文件。
+**注意**: 当前角色绑定通过 `/menu` 动态配置，不再依赖这些硬编码规则文件。**归档文件内出现的 `rules/<name>.md` 自引用已同步更新为 `rules/archive/<name>.md`。**
 
 ---
 

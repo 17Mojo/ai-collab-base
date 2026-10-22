@@ -1,5 +1,8 @@
 # Agent Governance Quickstart
 
+> ⚠️ **已归档（2026-10-22）**：本文件为 2026-03-02 治理切换期产物，**不再作为当前启动必读依据**。
+> 当前必读清单见 `collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md`，协议见 `collaboration/PROTOCOL.md`。
+
 **版本**: 1.0.0  
 **生效日期**: 2026-03-03  
 **目标**: 让 Claude Code 与 CodeArts Agent 在上岗前快速完成治理对齐、自改造和协同测试。
@@ -15,9 +18,9 @@
 ## 2. 必读资料（启动前）
 
 1. `collaboration/PROTOCOL.md`
-2. `rules/codex_agent_rules.md`
-3. `rules/claude_code_memory.md`（Claude）
-4. `rules/codearts_agent_rules.md`（CodeArts）
+2. `rules/archive/codex_agent_rules.md`
+3. `rules/archive/claude_code_memory.md`（Claude）
+4. `rules/archive/codearts_agent_rules.md`（CodeArts）
 5. `collaboration/results/GOVERNANCE_SWITCHOVER_2026-03-02.md`
 
 ## 3. 上岗前对齐动作（DoD）

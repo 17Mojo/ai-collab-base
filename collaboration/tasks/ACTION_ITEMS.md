@@ -7,7 +7,11 @@
 
 ## 第一梯队：立即处理 (本周)
 
-### 🔴 P0-1: 解决 cli.py 文件冲突
+### ✅ P0-1: 解决 cli.py 文件冲突（已完成 2026-02-27）
+
+> **状态注记 (2026-10-22)**: 本项已于 2026-02-27 解决（见 `rules/OWNERSHIP_UPDATE.md`）。
+> 下方 `[ ]` 勾选未回填属历史遗留，不再代表未完成。
+> 当前权威冲突状态以 `logs/collaboration_issues.json` 为准。
 
 **任务ID**: IMPLEMENT-CONFLICT-RESOLUTION  
 **分配给**: Claude Code  
@@ -166,8 +170,8 @@ rules/OWNERSHIP.md
 | ai_collab/cli.py | Claude | 初始创作 + 主要功能 | R (可读) |
 | ai_collab/state_manager.py | Shared | 双方都需要修改 | RW (读写) |
 | ai_collab/dev_logger.py | Claude | 实现者 + 维护者 | R (可读) |
-| rules/copilot_rules.md | Copilot | Copilot 特定规则 | RO (仅读) |
-| rules/claude_code_memory.md | Claude | Claude 特定规则 | RO (仅读) |
+| rules/archive/copilot_rules.md | Copilot | Copilot 特定规则 | RO (仅读) |
+| rules/archive/claude_code_memory.md | Claude | Claude 特定规则 | RO (仅读) |
 | rules/AI-COLLABORATION-STANDARDS.md | Shared | 双方遵守 | RO (仅读) |
 | ... | | | |
 ```
