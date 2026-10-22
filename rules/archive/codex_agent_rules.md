@@ -1,5 +1,9 @@
 # Codex Agent 规则
 
+> ⚠️ **已归档（2026-10-22）**：本文件为历史 Agent 专属规则，**不再作为当前角色绑定或会话启动依据**。
+> 当前角色服务商绑定见 `config/agent-orchestration.json`，协作协议见 `collaboration/PROTOCOL.md`，
+> 必读清单见 `collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md`。保留仅为历史溯源。
+
 **版本**: 1.3.2
 **最后更新**: 2026-03-17
 **角色**: 技术合伙人（开发管理负责人）+ 编码专家

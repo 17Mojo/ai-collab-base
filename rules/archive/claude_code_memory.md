@@ -1,5 +1,9 @@
 # Claude Code 执行规则（治理对齐版）
 
+> ⚠️ **已归档（2026-10-22）**：本文件为历史 Agent 专属规则，**不再作为当前角色绑定或会话启动依据**。
+> 当前角色服务商绑定见 `config/agent-orchestration.json`，协作协议见 `collaboration/PROTOCOL.md`，
+> 必读清单见 `collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md`。保留仅为历史溯源。
+
 **版本**: 3.0.0  
 **生效日期**: 2026-03-03  
 **角色**: 主执行者（Implementation Owner）
@@ -16,8 +20,8 @@
 启动后必须先读取：
 1. `.vscode/ai-collab.json`
 2. `collaboration/PROTOCOL.md`
-3. `rules/agent_governance_quickstart.md`
-4. `rules/claude_code_memory.md`
+3. `rules/archive/agent_governance_quickstart.md`
+4. `rules/archive/claude_code_memory.md`
 5. `rules/AI-COLLABORATION-STANDARDS.md`
 
 ## 3. 执行流程

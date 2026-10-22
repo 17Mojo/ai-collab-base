@@ -277,7 +277,7 @@ python3 -m ai_collab.cli spawn-agent-guard --actor codex --parent-task <TASK-ID>
 
 本准则由以下文件共同约束：
 
-- `rules/codex_agent_rules.md`
+- `rules/archive/codex_agent_rules.md`
 - `collaboration/PROTOCOL.md`
 - `rules/AI-COLLABORATION-STANDARDS.md`
 - `collaboration/CROSS_AI_COLLABORATION_STANDARDS.md`

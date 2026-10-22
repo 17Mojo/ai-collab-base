@@ -36,7 +36,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
    - `/collaboration/COLLABORATION_GUIDELINES.md` ← 协同工作准则
    - `/collaboration/PROTOCOL.md` ← 协作协议
    - `/rules/AI-COLLABORATION-STANDARDS.md` ← AI 协作标准
-   - `/rules/claude_code_memory.md` ← Claude Code 专属规则
 
 **不阅读以上规则不得开始任何工作。**
 

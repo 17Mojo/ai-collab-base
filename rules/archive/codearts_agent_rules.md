@@ -1,5 +1,9 @@
 # CodeArts Agent 执行辅助规则
 
+> ⚠️ **已归档（2026-10-22）**：本文件为历史 Agent 专属规则，**不再作为当前角色绑定或会话启动依据**。
+> 当前角色服务商绑定见 `config/agent-orchestration.json`，协作协议见 `collaboration/PROTOCOL.md`，
+> 必读清单见 `collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md`。保留仅为历史溯源。
+
 **版本**: 2.0.0  
 **最后更新**: 2026-03-02  
 **角色**: 执行辅助者（Copilot 替代位）
@@ -59,7 +63,7 @@ CodeArts Agent 不承担技术合伙人领导职责，不负责最终方案裁�
 
 每次进入待命后重启时，先完成以下动作：
 
-1. 阅读 `rules/agent_governance_quickstart.md`
+1. 阅读 `rules/archive/agent_governance_quickstart.md`
 2. 阅读 `collaboration/PROTOCOL.md`
 3. 认领 `TASK-GOV-ONBOARD-CODEARTS-001`
 4. 执行协同 smoke 测试并回写结果文件

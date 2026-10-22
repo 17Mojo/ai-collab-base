@@ -81,12 +81,12 @@
 
 | 文件 | 所有权 | 内容 | 协作方 | 修改权限 |
 |------|--------|------|--------|---------|
-| `claude_code_memory.md` | Claude Code | Claude 工作规范 | 仅 Claude | RO |
-| `copilot_rules.md` | Copilot | Copilot 工作规范 | 仅 Copilot | Copilot: RW, Claude: R |
+| `archive/claude_code_memory.md` | 历史参考 | Claude 工作规范（已归档 2026-10-22） | — | RO |
+| `archive/copilot_rules.md` | 历史参考 | Copilot 工作规范（已归档 2026-10-22） | — | RO |
 | `copilot_tasks.md` | Copilot | Copilot 待办列表 | 仅 Copilot | Copilot: RW, Claude: R |
 | `AI-COLLABORATION-STANDARDS.md` | **Shared** | 双 AI 协作标准 | Claude + Copilot | 双方可改 |
 | `dev-record-template.md` | Claude Code | 开发记录模板 | 仅 Claude | RO |
-| `trae_rules.md` | Claude Code | 早期 Trae 规则 | 存档 | RO (归档) |
+| `archive/trae_rules.md` | 历史参考 | 早期 Trae 规则（已归档 2026-10-22） | — | RO |
 | `OWNERSHIP.md` | Claude Code | 所有权矩阵 | 双方遵守 | Claude: RW, Copilot: R |
 
 **注**: 
@@ -227,7 +227,10 @@ R  (仅读):   5 个文件    (28%)
 **冲突文件**: `ai_collab/cli.py`  
 **所有权**: Claude Code  
 **冲突方**: claude_code vs copilot  
-**状态**: 待解决
+**状态**: ✅ 已解决 (2026-02-27，见 `rules/OWNERSHIP_UPDATE.md`)
+
+> 本节保留作所有权原则的教学案例；冲突本身已结案，当前状态以
+> `logs/collaboration_issues.json` 为准（2026-10-22 注记）。
 
 **解决方案**:
 ```

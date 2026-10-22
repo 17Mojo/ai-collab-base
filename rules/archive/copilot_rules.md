@@ -1,5 +1,9 @@
 # GitHub Copilot AI 协作系统规则 - VSCode 集成版
 
+> ⚠️ **已归档（2026-10-22）**：本文件为历史 Agent 专属规则，**不再作为当前角色绑定或会话启动依据**。
+> 当前角色服务商绑定见 `config/agent-orchestration.json`，协作协议见 `collaboration/PROTOCOL.md`，
+> 必读清单见 `collaboration/AI_BEHAVIOR_CONSTRAINT_FILES.md`。保留仅为历史溯源。
+
 ## 版本信息
 - **版本**: v2.0.1
 - **生效日期**: 2026-02-25 → 2026-02-27 (更新)
@@ -37,7 +41,7 @@ Copilot 在以下场景自动进入协作模式：
 ### 1. 读取规范
 启动时依次加载：
 - `.vscode/ai-collab.json`（项目配置）
-- `rules/copilot_rules.md`（Copilot 规则）
+- `rules/archive/copilot_rules.md`（Copilot 规则）
 - `rules/AI-COLLABORATION-STANDARDS.md`（协作规范）
 - `rules/dev-record-template.md`（日志模板）
 
