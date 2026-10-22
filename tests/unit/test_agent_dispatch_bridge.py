@@ -287,3 +287,83 @@ def test_dispatch_redispatch_does_not_include_new_implementing_task_without_reco
     )
     assert report["candidate_count"] == 0
     assert report["dispatched_count"] == 0
+
+
+def test_dispatch_honors_custom_orders_path(tmp_path):
+    """`--orders` 必须真的决定输出路径。
+
+    回归：实现曾把文件名写死成 AGENT_DISPATCH_ORDERS_test.md，导致
+    `cli trigger` 按配置去读 AGENT_DISPATCH_ORDERS_latest.md 时报
+    "派单指令包不存在"，整条派单→触发链路断掉。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-DISPATCH-006"] = {
+        "task_id": "TASK-DISPATCH-006",
+        "ai_type": "claude_code",
+        "assignee": "claude_code",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "acceptance_commands": ["python3 -m pytest -q tests/unit/test_agent_dispatch_bridge.py"],
+        "result_file": "collaboration/results/RESULT_TASK-DISPATCH-006.md",
+    }
+    _write_state(workspace, payload)
+
+    custom = "collaboration/monitoring/AGENT_DISPATCH_ORDERS_custom.md"
+    cmd = [
+        "python3",
+        str(SCRIPT),
+        "--workspace",
+        str(workspace),
+        "--report",
+        "logs/task_dispatch_report.json",
+        "--history",
+        "logs/task_dispatch_history.jsonl",
+        "--state",
+        "logs/agent_dispatch_state.json",
+        "--orders",
+        custom,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+    assert result.returncode == 0, result.stderr
+    assert (workspace / custom).exists()
+    assert "TASK-DISPATCH-006" in (workspace / custom).read_text(encoding="utf-8")
+
+
+def test_dispatch_orders_carry_assignee_section_headings(tmp_path):
+    """指令包必须带 `## 发送给 `Name` (`assignee`)` 标题。
+
+    回归：`split_orders_by_assignee` 靠这个标题切分指令包，缺了就切不出
+    任何执行方，payload 会退化成"当前无待派发任务"。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-DISPATCH-007"] = {
+        "task_id": "TASK-DISPATCH-007",
+        "ai_type": "codearts_agent",
+        "assignee": "codearts_agent",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "acceptance_commands": ["python3 -m pytest -q tests/unit/test_agent_dispatch_bridge.py"],
+        "result_file": "collaboration/results/RESULT_TASK-DISPATCH-007.md",
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+    assert "## 发送给 `CodeArts` (`codearts_agent`)" in orders
+
+    from ai_collab.dispatch_trigger import split_orders_by_assignee
+
+    sections = split_orders_by_assignee(orders)
+    assert "codearts_agent" in sections
+    assert "TASK-DISPATCH-007" in sections["codearts_agent"]

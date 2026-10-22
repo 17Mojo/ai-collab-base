@@ -55,10 +55,27 @@ def build_update_command(order: dict) -> str:
     )
 
 
-def write_orders_markdown(workspace: Path, orders: list, dispatch_state: dict = None, task_lookup: dict = None) -> None:
-    md_dir = workspace / "collaboration" / "monitoring"
-    md_dir.mkdir(parents=True, exist_ok=True)
-    md_file = md_dir / "AGENT_DISPATCH_ORDERS_test.md"
+DEFAULT_ORDERS_RELPATH = "collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md"
+
+# 与 ai_collab/dispatch_trigger.py 的 DISPLAY_NAME 保持一致
+ASSIGNEE_DISPLAY_NAMES = {
+    "claude_code": "Claude",
+    "codearts_agent": "CodeArts",
+    "codex": "Codex",
+}
+
+
+def write_orders_markdown(
+    workspace: Path,
+    orders: list,
+    dispatch_state: dict = None,
+    task_lookup: dict = None,
+    orders_relpath: str = DEFAULT_ORDERS_RELPATH,
+) -> None:
+    # 输出路径由 --orders 决定。写死文件名会让 `trigger` 找不到指令包
+    # （trigger 读的是 config 里配置的 orders 路径），整条派单链路直接断掉。
+    md_file = workspace / orders_relpath
+    md_file.parent.mkdir(parents=True, exist_ok=True)
     if dispatch_state is None:
         dispatch_state = {"items": {}}
     if task_lookup is None:
@@ -68,47 +85,60 @@ def write_orders_markdown(workspace: Path, orders: list, dispatch_state: dict = 
         "",
         f"Generated: {datetime.now().isoformat()}",
         "",
-        "## Task Status Updates",
-        "",
     ]
-    for o in orders:
-        lines.append("")
-        # Check if this task was previously dispatched
-        existing = dispatch_state.get("items", {}).get(o["task_id"])
-        is_reopened = existing and existing.get("status") == "pending"
+    # 按执行方分组：trigger 用 `## 发送给 \`Name\` (\`assignee\`)` 标题切分指令包，
+    # 没有这些标题，payload 就会退化成"当前无待派发任务"。
+    grouped: dict[str, list[dict]] = {}
+    for order in orders:
+        assignee = str(
+            order.get("assignee") or order.get("ai_type") or "claude_code"
+        ).strip().lower()
+        grouped.setdefault(assignee, []).append(order)
 
-        if is_reopened:
-            lines.append("### 返工重派说明（必须先读）")
-            lines.append("")
-            lines.append(f"**任务**: {o['task_id']}")
-            lines.append(f"**原状态**: {existing.get('status')}")
-            lines.append(f"**新状态**: {o.get('status')}")
-            lines.append("")
-            # Include notes from task
-            task_notes = task_lookup.get(o["task_id"], {}).get("notes", [])
-            if task_notes:
-                lines.append("**任务 notes (review 反馈)**:")
-                lines.append("")
-                for note in task_notes:
-                    lines.append(f"- {note}")
-                lines.append("")
-            lines.append("此任务之前已 dispatch，但被 review 拒绝。")
-            lines.append("重新 dispatch 前请先读 `notes` 字段了解拒绝原因。")
-            lines.append("")
-            lines.append("**禁止因为 result_file 已存在或任务曾到过 testing 就回复 noop。**")
-            lines.append("")
-
-        lines.append(f"### {o['task_id']}")
+    for assignee, assignee_orders in grouped.items():
+        display = ASSIGNEE_DISPLAY_NAMES.get(assignee, assignee)
+        lines.append(f"## 发送给 `{display}` (`{assignee}`)")
         lines.append("")
-        lines.append("```bash")
-        lines.append(build_update_command(o))
-        lines.append("```")
-        cmds = o.get("commands", [])
-        if cmds:
+        for o in assignee_orders:
             lines.append("")
-            lines.append("#### Acceptance Commands")
-            for c in cmds:
-                lines.append(f"- `{c}`")
+            # Check if this task was previously dispatched
+            existing = dispatch_state.get("items", {}).get(o["task_id"])
+            is_reopened = existing and existing.get("status") == "pending"
+
+            if is_reopened:
+                lines.append("### 返工重派说明（必须先读）")
+                lines.append("")
+                lines.append(f"**任务**: {o['task_id']}")
+                lines.append(f"**原状态**: {existing.get('status')}")
+                lines.append(f"**新状态**: {o.get('status')}")
+                lines.append("")
+                # Include notes from task
+                task_notes = task_lookup.get(o["task_id"], {}).get("notes", [])
+                if task_notes:
+                    lines.append("**任务 notes (review 反馈)**:")
+                    lines.append("")
+                    for note in task_notes:
+                        lines.append(f"- {note}")
+                    lines.append("")
+                lines.append("此任务之前已 dispatch，但被 review 拒绝。")
+                lines.append("重新 dispatch 前请先读 `notes` 字段了解拒绝原因。")
+                lines.append("")
+                lines.append(
+                    "**禁止因为 result_file 已存在或任务曾到过 testing 就回复 noop。**"
+                )
+                lines.append("")
+
+            lines.append(f"### {o['task_id']}")
+            lines.append("")
+            lines.append("```bash")
+            lines.append(build_update_command(o))
+            lines.append("```")
+            cmds = o.get("commands", [])
+            if cmds:
+                lines.append("")
+                lines.append("#### Acceptance Commands")
+                for c in cmds:
+                    lines.append(f"- `{c}`")
     md_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -243,7 +273,9 @@ def dispatch_once(args) -> int:
         orders = list(dispatch_state.get("items", {}).values())
         # Build task lookup for note extraction
         task_lookup = {tid: task for tid, task in tasks.items()}
-        write_orders_markdown(workspace, orders, dispatch_state, task_lookup)
+        write_orders_markdown(
+            workspace, orders, dispatch_state, task_lookup, args.orders
+        )
     if args.history and not args.dry_run:
         write_history(workspace, json.dumps({"event": "dispatch", "count": len(dispatched)}))
 
