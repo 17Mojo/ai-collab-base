@@ -6,13 +6,36 @@ Pack 市场存储层
 使用 SQLite 提供持久化存储
 """
 
+from __future__ import annotations
+
 import json
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from .market import PackListing, PackRating, PackStatus, UserFeedback
+
+
+@contextmanager
+def _connect(db_path: str) -> Iterator[sqlite3.Connection]:
+    """打开 SQLite 连接，退出时提交事务并关闭连接。
+
+    sqlite3 的 ``with conn:`` 只管理**事务**（成功提交 / 异常回滚），**不关闭连接**。
+    直接写 ``with sqlite3.connect(...) as conn:`` 会泄漏连接，
+    表现为 ``ResourceWarning: unclosed database``。
+
+    这里在事务上下文外层补上关闭语义：退出顺序为「先提交/回滚，后关闭」。
+    注意不能只包 ``contextlib.closing`` —— 那会丢掉事务上下文导致写入不落盘。
+    """
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            yield conn
+    finally:
+        conn.close()
 
 
 class PackMarketStore:
@@ -34,7 +57,7 @@ class PackMarketStore:
 
     def _init_schema(self) -> None:
         """初始化数据库表结构"""
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             cursor = conn.cursor()
 
             # Pack 列表表
@@ -114,7 +137,7 @@ class PackMarketStore:
             是否创建成功
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with _connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
@@ -153,7 +176,7 @@ class PackMarketStore:
         Returns:
             Pack 列表项，不存在返回 None
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM pack_listings WHERE pack_id = ?", (pack_id,))
@@ -188,7 +211,7 @@ class PackMarketStore:
             是否更新成功
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with _connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
@@ -226,7 +249,7 @@ class PackMarketStore:
         Returns:
             是否删除成功
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM pack_listings WHERE pack_id = ?", (pack_id,))
             conn.commit()
@@ -252,7 +275,7 @@ class PackMarketStore:
         Returns:
             Pack 列表项列表
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
@@ -306,7 +329,7 @@ class PackMarketStore:
         Returns:
             Pack 列表项列表
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             search_pattern = f"%{query}%"
@@ -352,7 +375,7 @@ class PackMarketStore:
             是否创建成功
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with _connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
@@ -388,7 +411,7 @@ class PackMarketStore:
         Returns:
             Pack 评价，不存在返回 None
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM pack_ratings WHERE rating_id = ?", (rating_id,))
@@ -417,7 +440,7 @@ class PackMarketStore:
         Returns:
             Pack 评价列表
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
@@ -452,7 +475,7 @@ class PackMarketStore:
         Returns:
             是否删除成功
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             cursor = conn.cursor()
             # 先获取 pack_id 用于更新评分
             cursor.execute("SELECT pack_id FROM pack_ratings WHERE rating_id = ?", (rating_id,))
@@ -477,7 +500,7 @@ class PackMarketStore:
         Args:
             pack_id: Pack ID
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             cursor = conn.cursor()
 
             cursor.execute(
@@ -514,7 +537,7 @@ class PackMarketStore:
             是否创建成功
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with _connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
@@ -545,7 +568,7 @@ class PackMarketStore:
         Returns:
             用户反馈，不存在返回 None
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM user_feedback WHERE feedback_id = ?", (feedback_id,))
@@ -575,7 +598,7 @@ class PackMarketStore:
         Returns:
             用户反馈列表
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with _connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
