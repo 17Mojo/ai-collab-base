@@ -1,11 +1,11 @@
 ---
 task_id: TASK-P0-CONSENSUS-ENGINE-001
 change_id: migrate-parallel-architecture-to-hermes
-status: ready_to_implement
+status: planning
 priority: P0
 assignee: codearts_agent
 reviewer: user
-status_updated_at: 2026-09-20T12:25:00+08:00
+status_updated_at: 2026-10-22T16:35:00+08:00
 primary_skill: backend-architect
 support_skills:
   - asyncio-programming
@@ -13,10 +13,23 @@ support_skills:
   - documentation
 created_at: 2026-06-01T13:50:00Z
 acceptance_commands:
-  - "pytest tests/unit/hermes/test_consensus_engine.py -v --cov=hermes.engines.consensus_engine"
-  - "python3 -c \"from hermes.engines.consensus_engine import ConsensusEngine; print('OK')\""
-result_file: collaboration/results/RESULT-P0-CONSENSUS-ENGINE-001.md
+  - "python3 -m pytest hermes_target/hermes_agent/tests/unit/test_consensus_engine.py -v"
+  - "python3 -c \"import sys; sys.path.insert(0, 'hermes_target'); from hermes_agent.engines import ConsensusEngine; print('OK')\""
+result_file: hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md
 ---
+
+> **2026-10-22 契约校正**（由 TASK-P1-GOV-CONVERGE-001 同步）：
+>
+> - `status`: md 原标注 `ready_to_implement`，但该值不在 CLI 的 `TaskStatus` 枚举中
+>   （`ai_collab/state_manager.py` 的 `TaskStatus` / `status_map` / argparse choices 均无此值），
+>   CLI 无法设置。取语义最接近的 `planning`（已排期、未开工）。
+> - `result_file`: 原值 `collaboration/results/RESULT-P0-CONSENSUS-ENGINE-001.md` **不存在**；
+>   实际结果写在 `hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md`。原值会让漂移检测
+>   永远找不到结果工件。
+> - `acceptance_commands`: 原值指向 `tests/unit/hermes/test_consensus_engine.py`（不存在）；
+>   实际测试在 `hermes_target/hermes_agent/tests/unit/test_consensus_engine.py`。
+> - 遗留：该结果文件仍缺 `验证结果` / `风险` / `回滚` 三个收口必需章节，
+>   任务转为 `completed` 前需补齐。
 
 # 任务：移植 consensus_engine 到 Hermes
 
