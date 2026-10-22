@@ -67,6 +67,7 @@ tests/playwright/test-results/
 # Generated collaboration monitoring artifacts
 collaboration/monitoring/AGENT_DISPATCH_ORDERS_20*.md
 collaboration/monitoring/AGENT_RECEIPT_SUMMARY_20*.md
+collaboration/monitoring/AGENT_RECEIPT_SUMMARY_latest.md
 collaboration/monitoring/AGENT_TRIGGER_codex_latest.md
 collaboration/monitoring/DAILY_REPORT_latest.md
 collaboration/monitoring/NOOP_PENDING_CONFLICT_SUMMARY_latest.md
