@@ -294,6 +294,84 @@ def test_write_inbox_copy_creates_audit_file(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
+# kernel 响应解析（序列化格式不统一）
+# ---------------------------------------------------------------------------
+
+
+def test_parse_kernel_payload_reads_standard_json():
+    assert bridge.parse_kernel_payload('{"a": 1}') == {"a": 1}
+
+
+def test_parse_kernel_payload_reads_python_literal():
+    """kernel 的 /session 系列路由返回 Python 字面量格式（单引号），不是合法 JSON。"""
+    payload = bridge.parse_kernel_payload("[{'id': 'ses_abc', 'title': 'x'}]")
+
+    assert payload == [{"id": "ses_abc", "title": "x"}]
+
+
+def test_parse_kernel_payload_returns_none_on_garbage():
+    assert bridge.parse_kernel_payload("not a payload {") is None
+    assert bridge.parse_kernel_payload("   ") is None
+
+
+def test_request_keeps_full_list_instead_of_truncating(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """非 JSON 的列表响应必须整体保留。
+
+    原先截断到 2000 字符，会把会话列表砍到只剩第一条消息 —— 静默丢信息。
+    """
+    sessions = [{"id": f"ses_{i:04d}", "title": "t" * 40} for i in range(80)]
+    body = repr(sessions)
+
+    class _Response:
+        status = 200
+
+        def read(self) -> bytes:
+            return body.encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response()
+    )
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    payload = client.request("GET", "/session")
+
+    raw = payload.get("raw")
+    assert isinstance(raw, list)
+    assert len(raw) == 80
+    assert raw[0]["id"] == "ses_0000"
+
+
+def test_list_sessions_parses_literal_list(monkeypatch: pytest.MonkeyPatch):
+    """`list_sessions` 曾因 raw 是字符串而恒返回空 —— 会话快路径从未生效。"""
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    monkeypatch.setattr(
+        client,
+        "request",
+        lambda *args, **kwargs: {
+            "raw": "[{'id': 'ses_abc', 'time': {'updated': 1}}]",
+            "http_status": 200,
+        },
+    )
+
+    sessions = client.list_sessions(Path("/tmp/ws"))
+
+    assert len(sessions) == 1
+    assert sessions[0]["id"] == "ses_abc"
+
+
+# ---------------------------------------------------------------------------
 # 入口行为
 # ---------------------------------------------------------------------------
 

@@ -48,6 +48,7 @@ kernel 自己会新建 CodeArts 会话并把 markdown 当成用户消息投进�
 from __future__ import annotations
 
 import argparse
+import ast
 import base64
 import json
 import os
@@ -69,6 +70,13 @@ CREDENTIAL_FILE = Path.home() / ".codeartsdoer" / "kernel-bridge.env"
 KERNEL_CONFIG_ROOT = Path.home() / ".codeartsdoer" / "Visual_Studio_Code"
 INBOX_DIR = "collaboration/monitoring/codearts_inbox"
 SESSION_REGISTRY = "logs/session_registry_state.json"
+
+# 非 JSON 响应（kernel 部分 GET 路由返回 Python 字面量格式）解析失败时的兜底保留长度。
+# 原先写死 2000，会把会话列表截断到只剩第一条消息 —— 静默丢信息，最难查的一类。
+MAX_RAW_RESPONSE_CHARS = 200_000
+
+# `ast.literal_eval` 的输入上限，防止畸形响应把解析器拖死。
+MAX_LITERAL_PARSE_CHARS = 1_000_000
 
 EXACT_MESSAGE_PATTERN = re.compile(
     r"## Exact Forward Message\s+```text\s*(?P<message>.*?)\s*```",
@@ -334,6 +342,30 @@ def _session_from_opencode_db(workspace: Path) -> str | None:
 # --------------------------------------------------------------------------
 
 
+def parse_kernel_payload(raw: str) -> Any:
+    """解析 kernel 响应体。
+
+    kernel 的序列化**不统一**：`/cag/cron/tasks` 返回标准 JSON，
+    而 `/session` 与 `/session/{id}/message` 返回 Python 字面量格式
+    （单引号、`True`/`None`），不是合法 JSON。
+
+    先按 JSON 试，再按字面量试，都不行返回 None（交给调用方走兜底）。
+    """
+    text = raw.strip()
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    if len(text) > MAX_LITERAL_PARSE_CHARS:
+        return None
+    try:
+        return ast.literal_eval(text)
+    except (ValueError, SyntaxError, MemoryError, RecursionError):
+        return None
+
+
 class KernelClient:
     """CodeArts Doer kernel（opencode）HTTP 客户端。"""
 
@@ -379,13 +411,13 @@ class KernelClient:
             raise BridgeError(f"无法连接 kernel {self.base_url}: {exc.reason}") from exc
         if not raw.strip():
             return {"http_status": status}
-        try:
-            decoded: Any = json.loads(raw)
-        except json.JSONDecodeError:
-            decoded = {"raw": raw[:2000]}
-        if not isinstance(decoded, dict):
-            decoded = {"raw": str(decoded)[:2000]}
-        result: dict[str, Any] = decoded
+        decoded: Any = parse_kernel_payload(raw)
+        if isinstance(decoded, dict):
+            result: dict[str, Any] = decoded
+        elif isinstance(decoded, list):
+            result = {"raw": decoded}
+        else:
+            result = {"raw": raw[:MAX_RAW_RESPONSE_CHARS]}
         result.setdefault("http_status", status)
         return result
 
@@ -394,11 +426,14 @@ class KernelClient:
     def list_sessions(self, workspace: Path) -> list[dict[str, Any]]:
         payload = self.request("GET", "/session", query={"directory": str(workspace)})
         items = payload.get("sessions")
+        if not isinstance(items, list):
+            items = payload.get("raw")
+        if isinstance(items, str):
+            # kernel 的 /session 返回 Python 字面量格式，request() 已尝试解析；
+            # 这里再兜一次，覆盖解析失败但内容仍可读的情况。
+            items = parse_kernel_payload(items)
         if isinstance(items, list):
             return [dict(item) for item in items if isinstance(item, dict)]
-        raw_sessions = payload.get("raw")
-        if isinstance(raw_sessions, list):
-            return [dict(item) for item in raw_sessions if isinstance(item, dict)]
         return []
 
     def send_message(
