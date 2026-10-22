@@ -133,6 +133,69 @@ def test_ack_watchdog_redispatches_silent_pending_task_once(tmp_path: Path):
     assert "python3 -m ai_collab.cli trigger --phrase '2X DISPATCH Claude' --target claude_code" in payload
 
 
+def test_ack_watchdog_uses_role_scoped_run_hint(tmp_path: Path):
+    """watchdog 重派提示必须跟着工单声明的角色走。
+
+    claude_code 声明为 AGENT_ARCH 席位时，提示词应该是 `X.RUN`；
+    provider 兜底表里的 `C.RUN`（claude_code → C）会与角色表冲突，
+    接收方拿到 "用 C.RUN 触发、却要回 X.ACK" 这种自相矛盾的指令。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    config_dir = workspace / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "agent-orchestration.json").write_text(
+        (Path(__file__).resolve().parents[2] / "config" / "agent-orchestration.json").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
+
+    dispatched_at = (datetime.now() - timedelta(seconds=180)).isoformat()
+    state = _base_state(workspace)
+    state["tasks"]["TASK-ROLE-001"] = {
+        "task_id": "TASK-ROLE-001",
+        "ai_type": "claude_code",
+        "assignee": "claude_code",
+        "assignee_role": "AGENT_ARCH",
+        "status": "pending",
+        "updated_at": dispatched_at,
+        "result_file": "collaboration/results/RESULT_TASK-ROLE-001.md",
+    }
+    _write_json(workspace / "logs" / "collaboration_state.json", state)
+    _write_json(
+        workspace / "logs" / "agent_dispatch_state.json",
+        {
+            "version": "1.0.0",
+            "items": {
+                "TASK-ROLE-001": {
+                    "task_id": "TASK-ROLE-001",
+                    "assignee": "claude_code",
+                    "status": "pending",
+                    "result_file": "collaboration/results/RESULT_TASK-ROLE-001.md",
+                    "updated_at": dispatched_at,
+                    "dispatched_at": dispatched_at,
+                    "dispatch_count": 1,
+                }
+            },
+        },
+    )
+    _write_json(workspace / "logs" / "agent_receipt_state.json", {"version": "1.0.0", "items": {}})
+    _write_json(workspace / "logs" / "agent_ack_bridge_state.json", {"version": "1.0.0", "items": {}})
+    _write_orders(workspace, "claude_code", "TASK-ROLE-001")
+
+    report = run_ack_watchdog(workspace=workspace, threshold_seconds=120)
+
+    assert report["redispatched_count"] == 1
+    payload = (
+        workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_claude_code_latest.md"
+    ).read_text(encoding="utf-8")
+    assert "X.RUN-RESET" in payload
+    assert "X.RUN" in payload
+    assert "C.RUN" not in payload
+
+
 def test_ack_watchdog_alerts_when_max_redispatch_reached(tmp_path: Path):
     workspace = tmp_path / "ws"
     workspace.mkdir()

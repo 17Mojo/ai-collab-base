@@ -8,6 +8,23 @@ from ai_collab.intervention_queue import enqueue_intervention, inspect_intervent
 from ai_collab.session_health import run_session_health_aggregation
 from ai_collab.session_registry import inspect_sessions, register_session
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+ORCHESTRATION_CONFIG = REPO_ROOT / "config" / "agent-orchestration.json"
+
+
+def _write_orchestration_config(workspace: Path) -> None:
+    """把仓库真实的编排配置复制到测试工作区。
+
+    `OrchestrationConfig` 在缺少配置文件时会用内置默认值建一份，
+    那份默认值的 AGENT_EXEC → X.RUN，与仓库配置（A.RUN → AGENT_EXEC）
+    不一致；不复制就会测到另一套前缀映射。
+    """
+    config_dir = workspace / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "agent-orchestration.json").write_text(
+        ORCHESTRATION_CONFIG.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+
 
 def _patch_state_paths(monkeypatch, workspace: Path):
     monkeypatch.setattr(
@@ -219,6 +236,142 @@ def test_session_health_detects_ack_silence_and_missing_explicit_ack(tmp_path: P
     )
     artifact_text = (workspace / missing_ack_incident["message_artifact"]).read_text(encoding="utf-8")
     assert "python3 -m ai_collab.cli ack --task-id TASK-ACK-001 --ai claude_code --status ok" in artifact_text
+
+
+def test_ack_silence_intervention_names_payload_and_uses_role_scoped_hint(
+    tmp_path: Path, monkeypatch
+):
+    """自动投递的干预正文必须自足：点名 payload 文件 + 角色对齐的触发词。
+
+    干预消息是投递给对方进程的正文，接收方没有会话上下文；
+    如果只写 "请执行 A.RUN" 而不说 payload 在哪，对方无从读任务。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _patch_state_paths(monkeypatch, workspace)
+    _write_workspace_config(workspace)
+    _write_orchestration_config(workspace)
+    manager = state_manager.StateManager(workspace_path=str(workspace))
+
+    register_session(
+        workspace=workspace,
+        session_id="codearts-main",
+        assignee="codearts_agent",
+        transport_mode="manual",
+    )
+    manager.register_task(
+        task_id="TASK-ROLE-001",
+        ai_type="codearts_agent",
+        assignee="codearts_agent",
+        assignee_role="AGENT_EXEC",
+        description="role scoped silence task",
+        files=["ai_collab/cli.py"],
+        result_file="collaboration/results/RESULT_TASK-ROLE-001.md",
+        contract_required=False,
+    )
+
+    dispatch_state_file = workspace / "logs/agent_dispatch_state.json"
+    dispatch_state_file.parent.mkdir(parents=True, exist_ok=True)
+    dispatch_state_file.write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "items": {
+                    "TASK-ROLE-001": {
+                        "assignee": "codearts_agent",
+                        "dispatched_at": "2026-03-28T19:50:00",
+                        "dispatch_count": 1,
+                    }
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    report = run_session_health_aggregation(workspace=workspace)
+
+    incident = next(
+        item
+        for item in report["incidents"]
+        if item["reason_code"] == "ack_silence_after_run"
+    )
+    artifact_text = (workspace / incident["message_artifact"]).read_text(encoding="utf-8")
+    assert "AGENT_TRIGGER_codearts_agent_latest.md" in artifact_text
+    assert "`A.RUN`" in artifact_text
+    assert "`A.RUN-RESET`" in artifact_text
+    # provider 兜底前缀是 C，与 AGENT_EXEC 席位冲突，不能出现在提示里
+    assert "C.RUN" not in artifact_text
+    assert incident["recommended_action"] == "A.RUN-RESET -> A.RUN"
+
+
+def test_ack_silence_intervention_honors_trigger_output_config(
+    tmp_path: Path, monkeypatch
+):
+    """payload 路径必须与 CLI 派发链路同源（`.vscode/ai-collab.json` 顶层 `trigger`）。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _patch_state_paths(monkeypatch, workspace)
+    _write_workspace_config(workspace)
+
+    config_file = workspace / ".vscode" / "ai-collab.json"
+    config = json.loads(config_file.read_text(encoding="utf-8"))
+    config["trigger"] = {
+        "outputDir": "collaboration/payloads",
+        "payloadPrefix": "PAYLOAD",
+    }
+    config_file.write_text(
+        json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    manager = state_manager.StateManager(workspace_path=str(workspace))
+    register_session(
+        workspace=workspace,
+        session_id="codearts-main",
+        assignee="codearts_agent",
+        transport_mode="manual",
+    )
+    manager.register_task(
+        task_id="TASK-PATH-001",
+        ai_type="codearts_agent",
+        assignee="codearts_agent",
+        assignee_role="AGENT_EXEC",
+        description="payload path task",
+        files=["ai_collab/cli.py"],
+        result_file="collaboration/results/RESULT_TASK-PATH-001.md",
+        contract_required=False,
+    )
+
+    dispatch_state_file = workspace / "logs/agent_dispatch_state.json"
+    dispatch_state_file.parent.mkdir(parents=True, exist_ok=True)
+    dispatch_state_file.write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "items": {
+                    "TASK-PATH-001": {
+                        "assignee": "codearts_agent",
+                        "dispatched_at": "2026-03-28T19:50:00",
+                        "dispatch_count": 1,
+                    }
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    report = run_session_health_aggregation(workspace=workspace)
+
+    incident = next(
+        item
+        for item in report["incidents"]
+        if item["reason_code"] == "ack_silence_after_run"
+    )
+    artifact_text = (workspace / incident["message_artifact"]).read_text(encoding="utf-8")
+    assert "collaboration/payloads/PAYLOAD_codearts_agent_latest.md" in artifact_text
 
 
 def test_session_health_surfaces_unregistered_sessions(tmp_path: Path, monkeypatch):

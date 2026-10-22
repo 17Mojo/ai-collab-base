@@ -15,6 +15,7 @@ from ai_collab.dispatch_trigger import build_handoff_payload
 from ai_collab.role_prefix import (
     FALLBACK_ACK_PREFIX,
     resolve_ack_prefix,
+    resolve_assignee_roles,
     resolve_hints,
     resolve_run_hint,
 )
@@ -126,6 +127,123 @@ class TestHandoffPayload:
         )
         assert "A.RUN" in payload
         assert "A.ACK" in payload
+
+
+class TestAssigneeRoleResolution:
+    """`resolve_assignee_roles` 从控制面状态推导执行方的角色席位。
+
+    watchdog / session_health 的提示词必须跟着角色走：
+    一个声明为 AGENT_ARCH 的 claude_code 席位要收到 `X.RUN`，
+    而不是 provider 兜底表里的 `C.RUN`。
+    """
+
+    def _write_state(self, workspace: Path, tasks: dict) -> None:
+        state_file = workspace / "logs" / "collaboration_state.json"
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(
+            json.dumps({"tasks": tasks}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+    def test_single_active_task_yields_its_role(self, tmp_path: Path):
+        self._write_state(
+            tmp_path,
+            {
+                "TASK-1": {
+                    "assignee": "codearts_agent",
+                    "assignee_role": "AGENT_EXEC",
+                    "status": "pending",
+                }
+            },
+        )
+        assert resolve_assignee_roles(tmp_path) == {"codearts_agent": "AGENT_EXEC"}
+
+    def test_terminal_tasks_do_not_pin_a_role(self, tmp_path: Path):
+        self._write_state(
+            tmp_path,
+            {
+                "TASK-1": {
+                    "assignee": "codearts_agent",
+                    "assignee_role": "AGENT_EXEC",
+                    "status": "completed",
+                }
+            },
+        )
+        assert resolve_assignee_roles(tmp_path) == {}
+
+    def test_ambiguous_seat_is_not_resolved(self, tmp_path: Path):
+        """同一执行方占两个角色 → 不给结论，交给 provider 兜底前缀。"""
+        self._write_state(
+            tmp_path,
+            {
+                "TASK-1": {
+                    "assignee": "claude_code",
+                    "assignee_role": "AGENT_ARCH",
+                    "status": "pending",
+                },
+                "TASK-2": {
+                    "assignee": "claude_code",
+                    "assignee_role": "AGENT_TEST",
+                    "status": "pending",
+                },
+            },
+        )
+        assert resolve_assignee_roles(tmp_path) == {}
+
+    def test_state_file_path_follows_workspace_config(self, tmp_path: Path):
+        """stateFile 由 `.vscode/ai-collab.json` 指定，读错路径会拿到空结果。"""
+        config_dir = tmp_path / ".vscode"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        (config_dir / "ai-collab.json").write_text(
+            json.dumps({"stateFile": "./logs/custom_state.json"}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        custom = tmp_path / "logs" / "custom_state.json"
+        custom.parent.mkdir(parents=True, exist_ok=True)
+        custom.write_text(
+            json.dumps(
+                {
+                    "tasks": {
+                        "TASK-1": {
+                            "assignee": "codearts_agent",
+                            "assignee_role": "AGENT_EXEC",
+                            "status": "pending",
+                        }
+                    }
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+        assert resolve_assignee_roles(tmp_path) == {"codearts_agent": "AGENT_EXEC"}
+
+    def test_missing_state_file_returns_empty(self, tmp_path: Path):
+        assert resolve_assignee_roles(tmp_path) == {}
+
+    def test_resolved_role_drives_the_run_hint(self, tmp_path: Path):
+        """角色席位决定提示词：AGENT_ARCH 席位 → X.RUN。"""
+        # 编排配置是角色命名空间的权威来源，测试工作区要带同一份配置。
+        config_dir = tmp_path / "config"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        (config_dir / "agent-orchestration.json").write_text(
+            ORCHESTRATION_CONFIG.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        self._write_state(
+            tmp_path,
+            {
+                "TASK-1": {
+                    "assignee": "claude_code",
+                    "assignee_role": "AGENT_ARCH",
+                    "status": "pending",
+                }
+            },
+        )
+        role = resolve_assignee_roles(tmp_path).get("claude_code")
+        run_hint, ack_hint = resolve_hints(
+            "claude_code", assignee_role=role, workspace=str(tmp_path)
+        )
+        assert run_hint == "X.RUN"
+        assert ack_hint == "X.ACK"
 
 
 if __name__ == "__main__":

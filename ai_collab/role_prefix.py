@@ -23,9 +23,13 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
+
+# 控制面状态文件（相对工作区），编排配置里 stateFile 缺失时的兜底。
+DEFAULT_TASK_STATE_PATH = "logs/collaboration_state.json"
 
 # provider → ACK 前缀的兜底表（编排配置不可用时使用）。
 # 与 ai_collab/ack_protocol.py 的 _ACK_PREFIX 保持一致，
@@ -75,7 +79,7 @@ def resolve_role_for_provider(
     if config is not None:
         role_id = config.get_role_for_provider(normalized)
         if role_id:
-            return role_id
+            return str(role_id)
     return FALLBACK_ROLE_BY_PROVIDER.get(normalized)
 
 
@@ -166,3 +170,55 @@ def resolve_ack_hint(
         provider_id, assignee_role=assignee_role, workspace=workspace
     )
     return ack_hint
+
+
+def resolve_assignee_roles(workspace: Path | str | None) -> dict[str, str]:
+    """从控制面状态推导每个执行方的角色代号。
+
+    同一执行方可能占多个角色（例如 Claude Code 同时占 AGENT_ARCH 与
+    AGENT_TEST），此时只有当其活跃任务的角色一致时才能唯一确定；
+    不唯一就不给结论，由 provider 兜底前缀接管。
+    """
+    root = str(workspace or "").strip()
+    if not root:
+        root = os.getcwd()
+    base = Path(root)
+
+    state_relpath = DEFAULT_TASK_STATE_PATH
+    config_file = base / ".vscode" / "ai-collab.json"
+    if config_file.exists():
+        try:
+            config = json.loads(config_file.read_text(encoding="utf-8"))
+            configured = str(config.get("stateFile") or "").strip()
+            if configured:
+                state_relpath = configured
+        except (OSError, ValueError):
+            pass
+
+    state_file = base / state_relpath
+    if not state_file.exists():
+        return {}
+    try:
+        payload = json.loads(state_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    tasks = payload.get("tasks", {})
+    if not isinstance(tasks, dict):
+        return {}
+
+    roles: dict[str, set[str]] = {}
+    for task in tasks.values():
+        if not isinstance(task, dict):
+            continue
+        assignee = str(task.get("assignee") or task.get("ai_type") or "").strip().lower()
+        role = str(task.get("assignee_role") or "").strip()
+        status = str(task.get("status") or "").strip().lower()
+        if not assignee or not role or status in {"completed", "cancelled", "failed"}:
+            continue
+        roles.setdefault(assignee, set()).add(role)
+
+    resolved: dict[str, str] = {}
+    for assignee, candidates in roles.items():
+        if len(candidates) == 1:
+            resolved[assignee] = next(iter(candidates))
+    return resolved

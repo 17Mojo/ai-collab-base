@@ -23,6 +23,7 @@ from .intervention_queue import (
 )
 from .missing_ack_monitor import run_missing_ack_monitor
 from .result_consistency_audit import run_terminal_result_consistency_audit
+from .role_prefix import resolve_assignee_roles, resolve_hints
 from .session_auto_register import run_session_auto_sync
 from .session_registry import inspect_sessions, refresh_session
 
@@ -150,9 +151,29 @@ def _select_latest_session(records: list[dict[str, Any]]) -> dict[str, dict[str,
     return selected
 
 
-def _run_reset_hint(assignee: str) -> str:
-    run_hint = RUN_HINT.get(assignee, "RUN")
+def _run_reset_hint(
+    assignee: str,
+    *,
+    assignee_role: str | None = None,
+    workspace: str | None = None,
+) -> str:
+    run_hint = _run_hint(assignee, assignee_role=assignee_role, workspace=workspace)
     return run_hint.replace(".RUN", ".RUN-RESET") if ".RUN" in run_hint else f"{run_hint}-RESET"
+
+
+def _run_hint(
+    assignee: str,
+    *,
+    assignee_role: str | None = None,
+    workspace: str | None = None,
+) -> str:
+    """执行方的 RUN 提示（角色优先，其次 provider 兜底）。"""
+    if assignee_role or workspace:
+        run_hint, _ = resolve_hints(
+            assignee, assignee_role=assignee_role, workspace=workspace
+        )
+        return run_hint
+    return RUN_HINT.get(assignee, "RUN")
 
 
 def _session_context(
@@ -223,7 +244,27 @@ def _merge_incident(
             incident["details"].append(detail)
 
 
-def _build_exact_message(incident: dict[str, Any]) -> str:
+def _trigger_payload_relpath(workspace: Path, assignee: str) -> str:
+    """该执行方的派单 payload 相对路径。
+
+    干预消息是**自动投递**出去的正文，接收方拿不到会话上下文，
+    因此必须显式点名 payload 文件，否则对方不知道去哪读任务。
+
+    `trigger` 配置与 CLI 派发链路同源，位于 `.vscode/ai-collab.json` 顶层
+    （`cli/_cli_main.py` 读的就是 `config["trigger"]`），不是
+    `sessionOrchestration` 子树——从后者读会静默退回默认值，
+    指着一个根本不存在的文件。
+    """
+    config = load_json(workspace / ".vscode" / "ai-collab.json", default={})
+    trigger_config = (
+        config.get("trigger") if isinstance(config.get("trigger"), dict) else {}
+    ) or {}
+    output_dir = str(trigger_config.get("outputDir") or "collaboration/monitoring")
+    prefix = str(trigger_config.get("payloadPrefix") or "AGENT_TRIGGER")
+    return f"{output_dir.rstrip('/')}/{prefix}_{assignee}_latest.md"
+
+
+def _build_exact_message(incident: dict[str, Any], *, workspace: Path | None = None) -> str:
     assignee = str(incident.get("assignee") or "")
     reason_code = str(incident.get("reason_code") or "")
     task_ids = [str(item) for item in incident.get("task_ids", []) if str(item).strip()]
@@ -243,11 +284,25 @@ def _build_exact_message(incident: dict[str, Any]) -> str:
         return "\n".join(lines)
 
     if reason_code == "ack_silence_after_run":
+        assignee_role = (
+            resolve_assignee_roles(workspace).get(assignee) if workspace else None
+        )
+        run_hint = _run_hint(
+            assignee, assignee_role=assignee_role, workspace=str(workspace or "")
+        )
         lines = [
             f"检测到 `{assignee}` 在 RUN 后未按预期返回 ACK 或 receipt。",
-            f"请先执行 `{_run_reset_hint(assignee)}`，再重新执行 `{RUN_HINT.get(assignee, 'RUN')}`。",
-            "完成后不要手写 ACK，请使用任务块中的 `python3 -m ai_collab.cli ack ...` 生成并原样回复。",
         ]
+        if workspace:
+            payload_relpath = _trigger_payload_relpath(workspace, assignee)
+            lines.append(f"请先完整读取派单 payload：{payload_relpath}")
+        lines.extend(
+            [
+                f"请先执行 `{_run_reset_hint(assignee, assignee_role=assignee_role, workspace=str(workspace or ''))}`，"
+                f"再重新执行 `{run_hint}`。",
+                "完成后不要手写 ACK，请使用任务块中的 `python3 -m ai_collab.cli ack ...` 生成并原样回复。",
+            ]
+        )
         if task_ids:
             lines.append(f"涉及任务: {', '.join(task_ids)}")
         return "\n".join(lines)
@@ -281,8 +336,8 @@ def _build_exact_message(incident: dict[str, Any]) -> str:
     return str(incident.get("recommended_action") or "请根据控制面摘要执行纠偏。")
 
 
-def _build_intervention_artifact_markdown(*, incident: dict[str, Any], artifact_path: Path) -> str:
-    exact_message = _build_exact_message(incident)
+def _build_intervention_artifact_markdown(*, incident: dict[str, Any], artifact_path: Path, workspace: Path | None = None) -> str:
+    exact_message = _build_exact_message(incident, workspace=workspace)
     lines = [
         "# Session Intervention Artifact（自动生成）",
         "",
@@ -333,7 +388,9 @@ def _upsert_intervention_for_incident(
     artifact_file = _artifact_path(artifact_dir, incident)
     artifact_file.parent.mkdir(parents=True, exist_ok=True)
     artifact_file.write_text(
-        _build_intervention_artifact_markdown(incident=incident, artifact_path=artifact_file),
+        _build_intervention_artifact_markdown(
+            incident=incident, artifact_path=artifact_file, workspace=workspace
+        ),
         encoding="utf-8",
     )
     artifact_relpath = str(artifact_file.relative_to(workspace))
@@ -507,13 +564,17 @@ def _collect_ack_silence_incidents(
             if str(item.get("task_id") or "").strip()
         ]
         threshold = entries[0].get("threshold_seconds", 0) if entries else 0
+        assignee_role = resolve_assignee_roles(workspace).get(assignee)
         _merge_incident(
             incidents,
             assignee=assignee,
             reason_code="ack_silence_after_run",
             source_signal="ack_watchdog",
             summary=f"检测到 {len(entries)} 个任务在 RUN 后超过 {threshold}s 仍无 ACK/receipt。",
-            recommended_action=f"{_run_reset_hint(assignee)} -> {RUN_HINT.get(assignee, 'RUN')}",
+            recommended_action=(
+                f"{_run_reset_hint(assignee, assignee_role=assignee_role, workspace=str(workspace))}"
+                f" -> {_run_hint(assignee, assignee_role=assignee_role, workspace=str(workspace))}"
+            ),
             sessions_by_assignee=sessions_by_assignee,
             task_ids=task_ids,
             details=entries,

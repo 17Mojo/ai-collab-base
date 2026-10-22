@@ -404,34 +404,12 @@ def _resolve_assignee_roles(workspace: str) -> dict[str, str]:
     同一执行方可能占多个角色（例如 Claude Code 同时占 AGENT_ARCH 与
     AGENT_TEST），此时只有当其活跃任务的角色一致时才能唯一确定；
     不唯一就返回空，由 provider 兜底前缀接管。
+
+    实现在 ai_collab.role_prefix，CLI 与 watchdog/健康检查共用同一份口径。
     """
-    state_file = Path(workspace) / "logs" / "collaboration_state.json"
-    if not state_file.exists():
-        return {}
-    try:
-        payload = json.loads(state_file.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    tasks = payload.get("tasks", {})
-    if not isinstance(tasks, dict):
-        return {}
+    from ..role_prefix import resolve_assignee_roles
 
-    roles: dict[str, set[str]] = {}
-    for task in tasks.values():
-        if not isinstance(task, dict):
-            continue
-        assignee = str(task.get("assignee") or task.get("ai_type") or "").strip().lower()
-        role = str(task.get("assignee_role") or "").strip()
-        status = str(task.get("status") or "").strip().lower()
-        if not assignee or not role or status in {"completed", "cancelled", "failed"}:
-            continue
-        roles.setdefault(assignee, set()).add(role)
-
-    resolved: dict[str, str] = {}
-    for assignee, candidates in roles.items():
-        if len(candidates) == 1:
-            resolved[assignee] = next(iter(candidates))
-    return resolved
+    return resolve_assignee_roles(workspace)
 
 
 def _generate_trigger_payload_files(

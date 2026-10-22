@@ -10,6 +10,7 @@ from typing import Any
 
 from .ack_protocol import SUPPORTED_ASSIGNEES, load_json, write_json
 from .dispatch_trigger import DISPLAY_NAME, RUN_HINT, build_handoff_payload, split_orders_by_assignee
+from .role_prefix import resolve_assignee_roles, resolve_hints
 
 DEFAULT_THRESHOLD_SECONDS = 120
 DEFAULT_MAX_REDISPATCH = 1
@@ -175,9 +176,30 @@ def _payload_path(*, workspace: Path, assignee: str, output_dir: str, prefix: st
     return workspace / output_dir / f"{prefix}_{assignee}_latest.md"
 
 
-def _run_reset_hint(assignee: str) -> str:
-    run_hint = RUN_HINT.get(assignee, "RUN")
+def _run_reset_hint(assignee: str, *, assignee_role: str | None = None, workspace: str | None = None) -> str:
+    run_hint = _run_hint(assignee, assignee_role=assignee_role, workspace=workspace)
     return run_hint.replace(".RUN", ".RUN-RESET") if ".RUN" in run_hint else f"{run_hint}-RESET"
+
+
+def _run_hint(
+    assignee: str,
+    *,
+    assignee_role: str | None = None,
+    workspace: str | None = None,
+) -> str:
+    """执行方的 RUN 提示。
+
+    与派发 payload 同源：优先用工单声明的角色（PROTOCOL §7.3），
+    否则退回 provider 兜底前缀。角色与 provider 不一致时，
+    watchdog 提示的触发词必须跟着角色走，否则接收方会拿到
+    "用 A.RUN 触发、却要回 C.ACK" 这种自相矛盾的指令。
+    """
+    if assignee_role or workspace:
+        run_hint, _ = resolve_hints(
+            assignee, assignee_role=assignee_role, workspace=workspace
+        )
+        return run_hint
+    return RUN_HINT.get(assignee, "RUN")
 
 
 def _refresh_assignee_payload(
@@ -206,6 +228,8 @@ def _refresh_assignee_payload(
 
     task_ids = ", ".join(item.task_id for item in candidates)
     role = DISPLAY_NAME.get(assignee, assignee)
+    assignee_role = resolve_assignee_roles(workspace).get(assignee)
+    run_hint = _run_hint(assignee, assignee_role=assignee_role, workspace=str(workspace))
     watchdog_lines = [
         f"## 发送给 `{role}` (`{assignee}`)",
         "",
@@ -215,7 +239,8 @@ def _refresh_assignee_payload(
         f"【ACK 超时重派 | {task_ids}】",
         f"检测到派发后超过 {candidates[0].threshold_seconds}s 仍无 ACK/无 receipt。",
         f"watchdog_refresh_at={generated_at}",
-        f"请先执行 `{_run_reset_hint(assignee)}`，再执行 `{RUN_HINT.get(assignee, 'RUN')}`。",
+        f"请先执行 `{_run_reset_hint(assignee, assignee_role=assignee_role, workspace=str(workspace))}`，"
+        f"再执行 `{run_hint}`。",
         "完成后不要手写 ACK，请使用任务块中的 ack 命令生成并原样回复。",
         "```",
         "",
@@ -249,6 +274,8 @@ def _refresh_assignee_payload(
         orders_relpath=orders_path,
         section_markdown="\n".join(watchdog_lines),
         generated_at=payload_generated_at,
+        assignee_role=assignee_role,
+        workspace=str(workspace),
     )
     payload_file = _payload_path(workspace=workspace, assignee=assignee, output_dir=output_dir, prefix=payload_prefix)
     payload_file.parent.mkdir(parents=True, exist_ok=True)
