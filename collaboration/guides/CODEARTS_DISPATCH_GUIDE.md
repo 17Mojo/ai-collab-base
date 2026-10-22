@@ -2,153 +2,250 @@
 
 ## 概述
 
-本文档固化 Claude → CodeArts 任务派发的标准流程，避免重复调查和调试。
+本文档固化 Claude Code → CodeArts 任务派发的标准流程，避免重复调查和调试。
+
+**当前形态（2026-10-22 重写）**：整条链路已由 CLI + adapter + bridge 打通，
+**不需要手工造 payload 文件**。旧版本文档描述的
+`payload_codearts_agent_latest.json` / `collaboration/dispatch/payloads/` 一套
+是历史遗留，当前链路不再读取，已删除。
+
+---
+
+## 全链路概览
+
+```text
+工单（collaboration/tasks/TASK_*.md + 控制面状态）
+  │
+  ├─ cli dispatch ──────────────► AGENT_DISPATCH_ORDERS_latest.md
+  │                                （按执行方分组：## 发送给 `CodeArts`）
+  │
+  ├─ cli trigger --phrase "2X DISPATCH CodeArts"
+  │                             ──► AGENT_TRIGGER_codearts_agent_latest.md
+  │                                  （触发词 A.RUN / ACK 前缀 A.ACK）
+  │
+  ├─ 对方执行 A.RUN → 读 payload → 干活
+  │
+  ├─ 对方回 ACK：A.ACK|task=<id>|status=ok|result=<paths>
+  │      └─ cli receipt ────────► testing → completed
+  │
+  └─ 若 120s 内无 ACK：
+        cli ack-watchdog ──────► 自动重派 + 刷新 payload
+        cli sessions health ───► 干预工单（intervention queue）
+        cli sessions codearts-pull
+                               ──► CODEARTS_PULL_EVENT_*.md
+                                    └─ bridgeCommand（默认投递通道）
+                                         └─ CodeArts Doer kernel 收到任务
+```
+
+一键入口（dispatch + trigger 串起来）：
+
+```bash
+python3 -m ai_collab.cli 2x codearts
+```
+
+---
 
 ## 派发清单（Checklist）
 
 ### 1. 任务文件准备
 
-```bash
-# 任务文件位置
+```text
 collaboration/tasks/TASK_*.md
-
-# 任务文件模板
 ```
+
+任务文件需包含契约段（PROTOCOL §7.3）：
+
+- `change_id` — 关联的 OpenSpec 变更
+- `assignee_role` — 角色代号（`AGENT_EXEC` 等）
+- `assignee_provider` — provider（`codearts_agent` 等）
+- 验收命令（可执行）
+- 风险与回滚说明
+
+**角色代号决定命令前缀**。当前编排：
+
+| 角色 | provider | 触发词 | ACK 前缀 |
+|------|----------|--------|----------|
+| `AGENT_EXEC` | `codearts_agent` | `A.RUN` | `A.ACK` |
+| `AGENT_ARCH` | `claude_code` | `X.RUN` | `X.ACK` |
+| `AGENT_TEST` | `claude_code` | `C.RUN` | `C.ACK` |
+
+权威来源是 `config/agent-orchestration.json` 的 `command_prefixes`；
+`ai_collab/role_prefix.py` 负责把角色/provider 两套命名空间收敛成一套。
+
+### 2. 控制面注册
+
+```bash
+python3 -m ai_collab.cli tasks register \
+  --task-id TASK-P0-XXX-001 \
+  --ai codearts_agent \
+  --assignee codearts_agent \
+  --assignee-role AGENT_EXEC \
+  --change-id <change_id> \
+  --description "任务描述" \
+  --files ai_collab/xxx.py \
+  --result-file collaboration/results/RESULT-P0-XXX-001.md \
+  --acceptance-commands "pytest -q tests/unit/test_xxx.py"
+```
+
+### 3. 结果文件契约段（先补齐再派发）
+
+结果文件必须含以下段落，否则收口门禁不通过：
 
 ```markdown
-# 任务：[任务名称]
-
-**日期**: YYYY-MM-DD
-**优先级**: P0/P1/P2
-**执行者**: CodeArts Agent
-**参考文档**: `docs/[相关文档].md`
-
----
-
-## 任务背景
-
-[任务背景描述]
-
-## 任务列表
-
-### Task 1: [任务标题]
-
-**目标**: [目标描述]
-
-**文件**: `[文件路径]`
-
-**验收标准**:
-- [ ] 标准1
-- [ ] 标准2
-
----
-
-## 完成后回复
-
-\`\`\`
-A.ACK|task=[任务ID]|status=ok|result=[结果描述]
-\`\`\`
+## 执行命令
+## 验证结果
+## 风险
+## 回滚
 ```
 
-### 2. Payload 文件创建（关键！）
-
-**必须同时创建两个格式的 payload 文件**：
-
-#### JSON 格式（CodeArts 主要识别）
+### 4. 派发
 
 ```bash
-# 位置 1: collaboration/monitoring/payload_codearts_agent_latest.json
-# 位置 2: collaboration/dispatch/payloads/AGENT_TRIGGER_codearts_agent_latest.json
+# 完整链路（推荐）
+python3 -m ai_collab.cli 2x codearts
+
+# 或分步
+python3 -m ai_collab.cli dispatch
+python3 -m ai_collab.cli trigger --phrase "2X DISPATCH CodeArts" --target codearts_agent
 ```
+
+派发前会过**工作区门禁**（`workspace-guard`）：source 域不干净会被拦下。
+先提交自己的改动再派发。
+
+### 5. 收口
+
+```bash
+# 对方回 ACK 后
+python3 -m ai_collab.cli receipt
+```
+
+---
+
+## 自动投递（bridge）机制
+
+`.vscode/ai-collab.json` 的 `sessionOrchestration.codeartsAdapter`：
 
 ```json
 {
-  "assignee": "codearts_agent",
-  "generated_at": "YYYY-MM-DDTHH:MM:SS",
-  "mode": "direct_execution",
-  "task_id": "TASK_ID",
-  "task_file": "collaboration/tasks/TASK_FILE.md",
-  "reference_docs": ["docs/REF.md"],
-  "steps": [
-    {"id": 1, "title": "步骤1", "commands": ["cmd1"], "files": ["file1"]}
-  ],
-  "acceptance_criteria": ["标准1", "标准2"],
-  "ack_format": "A.ACK|task=TASK_ID|status=ok|result=描述"
+  "enabled": true,
+  "bridgeCommand": "python3 scripts/codearts_bridge_deliver.py --workspace {workspace} --event-file {event_file} --artifact-file {artifact_file} --intervention-id {intervention_id} --session-id {session_id} --assignee {assignee} --reason-code {reason_code}",
+  "deliveryStatusOnSuccess": "queued_for_delivery",
+  "eventDir": "collaboration/monitoring/codearts_pull_events"
 }
 ```
 
-#### MD 格式（系统兼容）
+`bridgeCommand` 占位符由 adapter 在调用前做 `str.format` 替换。
+**改了 command 字符串必须同步改测试**
+（`tests/unit/test_codearts_bridge_deliver.py` 会校验它是合法的 format 模板）。
+
+### 投递通道
+
+`scripts/codearts_bridge_deliver.py` 支持两条通道：
+
+| 通道 | 机制 | 适用 |
+|------|------|------|
+| `cron`（默认） | `GET/POST /cag/cron/tasks` → `POST /cag/cron/tasks/fire` | 首选。kernel 自己建会话，不需要预置 CodeArts 会话 |
+| `session` | `POST /session/{id}/message` | 已有活跃 CodeArts 会话时更快 |
+
+手动试跑：
 
 ```bash
-# 位置: collaboration/dispatch/AGENT_TRIGGER_codearts_agent_latest.md
+python3 scripts/codearts_bridge_deliver.py \
+  --workspace . \
+  --event-file collaboration/monitoring/codearts_pull_events/CODEARTS_PULL_EVENT_*.md \
+  --artifact-file collaboration/monitoring/session_interventions/*.md \
+  --intervention-id <id> --session-id <sid> \
+  --assignee codearts_agent --reason-code ack_silence_after_run \
+  --dry-run
 ```
 
-### 3. StateManager 注册
+### 凭据
 
-```python
-from ai_collab.state_manager import StateManager
+kernel 走 HTTP Basic 认证（用户名默认 `codearts`）。密码按以下顺序解析：
 
-sm = StateManager()
-sm.register_task(
-    task_id='TASK_ID',
-    ai_type='codearts_agent',
-    description='任务描述',
-    files=['file1', 'file2'],
-    assignee='codearts_agent'
-)
-```
+1. 环境变量 `OPENCODE_SERVER_PASSWORD` / `CODEARTS_KERNEL_PASSWORD`
+2. `~/.codeartsdoer/kernel-bridge.env` 里的 `OPENCODE_SERVER_PASSWORD`
+3. `--allow-process-env-discovery`：从本机 kernel 进程环境读取（**默认关闭，需显式开启**）
 
-### 4. Git 提交
+三者都拿不到时 bridge **大声失败**（`缺少 kernel 密码`），不会静默降级。
 
-```bash
-git add collaboration/tasks/TASK_*.md \
-        collaboration/monitoring/payload_codearts_agent_latest.json \
-        collaboration/dispatch/payloads/ \
-        logs/collaboration_state.json
+### 首次投递的时间点
 
-git commit -m "feat: assign TASK_ID to CodeArts"
-```
+codearts pull adapter 只消费 **intervention**，intervention 由 session_health 产生。
+所以**第一次自动投递要等 ACK 超时阈值（默认 120s）之后**。
+想立刻验证，用 `--dry-run` 手跑 bridge，或直接手动把 payload 贴给 CodeArts。
+
+---
 
 ## 常见问题排查
 
-### 问题 1: CodeArts 返回 `noop`
+### 问题 1：CodeArts 返回 `noop`
 
-| 原因 | 解决方案 |
-|------|----------|
-| payload 文件不存在 | 创建 payload 文件 |
-| 文件名不包含 `payload` | 使用 `payload_codearts_agent_latest.json` |
-| JSON 格式错误 | 验证 JSON 语法 |
-| 任务未注册 | 调用 StateManager.register_task() |
+| 原因 | 排查 |
+|------|------|
+| 任务未注册 | `python3 -m ai_collab.cli tasks list` |
+| payload 不存在 | 检查 `collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md` |
+| payload 内容是"当前无待派发任务" | 派单指令包没有按执行方分组 → 查 `AGENT_DISPATCH_ORDERS_latest.md` 是否有 `## 发送给 \`CodeArts\`` 段 |
+| 触发词与 ACK 前缀对不上 | 查工单 `assignee_role` 与 `config/agent-orchestration.json` 的 `command_prefixes` |
 
-### 问题 2: `payloads目录不存在`
+### 问题 2：`错误: 派单指令包不存在`
 
-```bash
-mkdir -p collaboration/dispatch/payloads/
-mkdir -p collaboration/monitoring/
+`trigger` 找不到 `--orders` 指定的那份指令包。检查：
+
+- `cli dispatch` 是否真的写出了文件（路径由 `dispatch.orders` 配置或 `--orders` 决定）
+- `trigger` 用的 `dispatch.orders` 与 `dispatch` 写出的路径是否一致
+
+### 问题 3：bridge 报 `缺少 kernel 密码`
+
+见上文「凭据」段。三种方式任选其一。
+
+### 问题 4：workspace guard 拦截派发
+
+```
+source domain is not clean: source_dirty=19
 ```
 
-### 问题 3: `无有效payload`
+共享工作区里还有未提交的 source 域改动。先提交再派发：
 
-确保文件名匹配 CodeArts 的搜索模式：
-- ✅ `payload_*.json`
-- ✅ `*payload*.json`
-- ❌ `AGENT_TRIGGER_*.json` (不会被识别)
+```bash
+python3 -m ai_collab.cli stage-safe      # 按域安全暂存
+git commit -m "..."
+```
+
+---
 
 ## 文件位置速查表
 
 | 文件类型 | 位置 | 必需 |
 |----------|------|------|
 | 任务文件 | `collaboration/tasks/TASK_*.md` | ✅ |
-| JSON Payload | `collaboration/monitoring/payload_codearts_agent_latest.json` | ✅ |
-| JSON Payload (备) | `collaboration/dispatch/payloads/AGENT_TRIGGER_*.json` | 推荐 |
-| MD Payload | `collaboration/dispatch/AGENT_TRIGGER_*.md` | 推荐 |
-| 状态文件 | `logs/collaboration_state.json` | 自动 |
-
-## 快速派发脚本
-
-见: `scripts/dispatch_to_codearts.py`
+| 结果文件 | `collaboration/results/RESULT_*.md` | ✅ |
+| 派单指令包 | `collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md` | 自动 |
+| 派单 payload | `collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md` | 自动 |
+| 干预工件 | `collaboration/monitoring/session_interventions/*.md` | 自动 |
+| pull event | `collaboration/monitoring/codearts_pull_events/*.md` | 自动 |
+| 桥接审计副本 | `collaboration/monitoring/codearts_inbox/*.md` | 自动 |
+| 控制面状态 | `logs/collaboration_state.json` | 自动 |
+| 派单状态 | `logs/agent_dispatch_state.json` | 自动 |
+| 回执状态 | `logs/agent_receipt_state.json` | 自动 |
 
 ---
 
-**更新时间**: 2026-04-13
-**维护者**: Claude (Technical Partner)
+## 相关文件
+
+| 用途 | 路径 |
+|------|------|
+| 桥接实现 | `scripts/codearts_bridge_deliver.py` |
+| 派单桥接 | `scripts/agent_dispatch_bridge.py` |
+| 前缀收敛 | `ai_collab/role_prefix.py` |
+| CodeArts adapter | `ai_collab/adapters/codearts_adapter.py` |
+| 编排配置 | `config/agent-orchestration.json` |
+| Adapter 配置 | `.vscode/ai-collab.json` |
+| 桥接测试 | `tests/unit/test_codearts_bridge_deliver.py` |
+| 派单测试 | `tests/unit/test_agent_dispatch_bridge.py` |
+
+---
+
+**更新时间**: 2026-10-22
+**维护者**: Claude Code (AGENT_ARCH)
+**变更说明**: 全链路重写。原文档描述的手工 JSON payload 流程已废弃。
