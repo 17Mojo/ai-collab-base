@@ -72,6 +72,12 @@ collaboration/monitoring/AGENT_TRIGGER_codex_latest.md
 collaboration/monitoring/DAILY_REPORT_latest.md
 collaboration/monitoring/NOOP_PENDING_CONFLICT_SUMMARY_latest.md
 
+# 运行时事件/干预工件：每次轮询都会重生成，不入库
+collaboration/monitoring/codearts_pull_events/
+collaboration/monitoring/claude_push_events/
+collaboration/monitoring/session_interventions/
+collaboration/monitoring/codearts_inbox/
+
 # Governance temp artifacts
 collaboration/results/governance_*/
 
@@ -91,7 +97,10 @@ data/
 
 # AI tools temp
 .trae/
-memory/
+memory/*
+!memory/MEMORY.md
+!memory/*.md
+!memory/.sync-manifest.json
 knowledge-sources/
 
 # Export temp files

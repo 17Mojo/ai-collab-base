@@ -1,0 +1,24 @@
+{
+  "source": "/Users/raymondna/.codeartsdoer/memory/-Users-raymondna-Documents-AI-collab-ai-collab-base",
+  "generated_at": "2026-10-22T11:31:20.378824+00:00",
+  "files": [
+    "MEMORY.md",
+    "feedback_empirical_test_before_solution_choice.md",
+    "feedback_goal_driven_backlog.md",
+    "feedback_no_ceremony_tax.md",
+    "feedback_parallel_bash_abort.md",
+    "feedback_readiness_gate_before_coding.md",
+    "feedback_test_gate_design.md",
+    "feedback_validator_false_positive.md",
+    "feedback_verification_static_vs_behavioral.md",
+    "project.md",
+    "project_claude_code_model_window.md",
+    "project_dual_agent_config_sync.md",
+    "project_hermes_port_line.md",
+    "project_route_decision.md",
+    "reference_laya_decision_engine.md",
+    "reference_local_llm_endpoint.md",
+    "user.md"
+  ],
+  "count": 17
+}

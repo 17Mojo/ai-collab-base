@@ -335,3 +335,12 @@ See [`docs/backend-alternatives.md`](docs/backend-alternatives.md) for complete 
 
 **记录时间**: 2026-09-15
 **来源**: 与用户协作完成覆盖率提升任务后总结
+
+---
+
+## 共享记忆（双 Agent 一致）
+
+项目记忆以 `memory/` 为只读镜像事实源，由 `scripts/sync_agent_memory.py` 从 CodeArts 记忆单向同步生成。
+Claude Code 通过下方 `@import` 载入记忆索引；条目详情按需读取 `memory/<file>.md`。CodeArts 侧记忆目录为原始事实源。
+
+@memory/MEMORY.md
