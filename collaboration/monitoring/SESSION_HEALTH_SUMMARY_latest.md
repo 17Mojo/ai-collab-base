@@ -1,14 +1,14 @@
 # Session Health Summary（自动生成）
 
-- 生成时间: `2026-10-22T19:17:06.868982`
+- 生成时间: `2026-10-22T20:12:43.083754`
 - 模式: `apply`
 - session_count: `8`
-- healthy: `8`
-- unhealthy: `0`
+- healthy: `7`
+- unhealthy: `1`
 - unregistered: `0`
-- incidents: `0`
-- interventions: `0`
-- open_interventions: `0`
+- incidents: `1`
+- interventions: `1`
+- open_interventions: `1`
 - claude_push_report: `logs/claude_adapter_report.json`
 - codearts_pull_report: `logs/codearts_adapter_report.json`
 - codex_native_report: `logs/codex_adapter_report.json`
@@ -22,8 +22,9 @@
 - `9fb00703-fc35-48fb-9de0-109f669e852f` assignee=`claude_code` health=`healthy` reasons=``
 - `cccfe573-6e74-4751-a828-41f3190b70cd` assignee=`claude_code` health=`healthy` reasons=``
 - `f43b2192-faed-4d34-84e7-83e2c5786446` assignee=`claude_code` health=`healthy` reasons=``
-- `codearts-agent-bridge` assignee=`codearts_agent` health=`healthy` reasons=``
+- `codearts-agent-bridge` assignee=`codearts_agent` health=`unhealthy` reasons=`ack_silence_after_run`
 
 ## Incidents
 
-- 无
+- assignee=`codearts_agent` session=`codearts-agent-bridge` reason=`ack_silence_after_run` severity=`high`
+  artifact: `collaboration/monitoring/session_interventions/SESSION_INTERVENTION_codearts-agent-bridge_ack_silence_after_run_latest.md`
