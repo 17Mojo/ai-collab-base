@@ -294,7 +294,7 @@ TASK-P0-CONSENSUS-ENGINE-001
 | **中** | 首次自动投递延迟 | pull adapter 只消费 intervention，intervention 由 session_health 在 120s 超时后产生 | 已在派发指南「首次投递的时间点」章节写明；手工投递可走 `--dry-run` |
 | **中** | `hermes_target/` 的 pytest 收集面串扰 | 主仓 `testpaths = ["tests"]` 刻意排除 `hermes_target/`；放宽会污染主仓覆盖率分母 | 路径注入限定在单条命令内，已写入验收命令 |
 | **低** | `codex` 兜底前缀 `X` 与 `AGENT_ARCH` 撞车 | 既有冲突 | `codex` 当前未绑定角色席位，实际不影响派发；已在派发指南标注 |
-| **低** | 共享工作区并发编辑 | CodeArts 开始改 `hermes_target/` 后与本会话可能撞车 | 本会话改动已分多个自洽提交落地（`243f73f` / `91cdef3` / `216fa53` / `a99bebf` / `ee79cf1` / `930a222` / `bd45365` / `6ad5155` / `b3e7319` / `5c21bb7` / `5d38a40`）；重复投递已修（§12.3）、重派路径已补（§12.5） |
+| **低** | 共享工作区并发编辑 | CodeArts 开始改 `hermes_target/` 后与本会话可能撞车 | 本会话改动已分多个自洽提交落地（`243f73f` / `91cdef3` / `216fa53` / `a99bebf` / `ee79cf1` / `930a222` / `bd45365` / `6ad5155` / `b3e7319` / `5c21bb7` / `73abaa9`）；重复投递已修（§12.3）、重派路径已补（§12.5） |
 | **低** | kernel 僵尸 cron 任务 | CodeArts 侧会话异常结束后，bridge 建的一次性 cron 任务卡在 `active`/`isRunning=true`，kernel 未提供撤销接口 | 记录在案（§13）；kernel 侧无接口可清，需人工在 CodeArts 侧处理 |
 
 ---
@@ -514,4 +514,4 @@ CodeArts 接到任务并推进了状态，但**三个会话全部以 `MessageAbo
 → `ee79cf1`（一次性凭据引导）→ `930a222`（引导命令路径说明）
 → `bd45365`（kernel 响应解析修复）→ `6ad5155`（在途不重复投递）
 → `b3e7319`（payload 任务契约）→ `5c21bb7`（干预正文指向执行步骤）
-→ `5d38a40`（重派时重新武装在途干预）
+→ `73abaa9`（重派时重新武装在途干预）
