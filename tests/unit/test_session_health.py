@@ -307,6 +307,10 @@ def test_ack_silence_intervention_names_payload_and_uses_role_scoped_hint(
     # 干预正文是对方会话的第一条消息，必须直接指向 payload 里的执行步骤，
     # 否则对方读完 payload 也不知道该干什么（真机实测：探索 5 分钟零产出）
     assert "执行步骤" in artifact_text
+    # 真机实测：`write`/`edit` 与 `task` 两个工具会把 CodeArts 会话卡死并中止，
+    # 干预正文是对方看到的第一条消息，必须把规避方式写在里面
+    assert "bash" in artifact_text
+    assert "write" in artifact_text
 
 
 def test_ack_silence_intervention_honors_trigger_output_config(

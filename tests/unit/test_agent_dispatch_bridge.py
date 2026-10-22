@@ -455,3 +455,111 @@ def test_dispatch_orders_contract_survives_trigger_payload(tmp_path):
     assert "`collaboration/results/RESULT-TASK-CONTRACT-002.md`" in trigger_payload
     assert "#### 执行步骤" in trigger_payload
 
+
+def test_dispatch_orders_include_codearts_tool_constraints(tmp_path):
+    """CodeArts 的指令包必须写明工具约束：不要用 write/edit、不要派生子代理。
+
+    回归（2026-10-22 真机实测）：两个 CodeArts 会话都死在工具调用上——
+    `ses_e9be3df` 的 `write` 调用永久挂起（状态停在 running，文件没落盘），
+    `ses_e9c15` 的 `task`（子代理）调用报 MessageAbortedError。
+    同期的 bash / read / todowrite 全部正常完成。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-TOOLS-001"] = {
+        "task_id": "TASK-TOOLS-001",
+        "ai_type": "codearts_agent",
+        "assignee": "codearts_agent",
+        "assignee_role": "AGENT_EXEC",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "description": "补 consensus_engine 单元测试",
+        "files": ["hermes_target/hermes_agent/tests/unit/test_consensus_engine.py"],
+        "result_file": "hermes_target/RESULT-TASK-TOOLS-001.md",
+        "acceptance_commands": ["pytest -q hermes_target/hermes_agent/tests/unit/"],
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+
+    assert "#### 执行环境约束（真机实测，必须遵守）" in orders
+    assert "cat > path/to/file.py <<'EOF'" in orders
+    assert "不要用" in orders
+    assert "`task`（派生子代理）" in orders
+
+
+def test_dispatch_orders_skip_tool_constraints_for_other_assignees(tmp_path):
+    """工具约束只对已知会卡死的 provider 渲染，别家执行方不该看到。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-TOOLS-002"] = {
+        "task_id": "TASK-TOOLS-002",
+        "ai_type": "claude_code",
+        "assignee": "claude_code",
+        "assignee_role": "AGENT_ARCH",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "description": "评审派单链路",
+        "acceptance_commands": ["pytest -q tests/unit/test_agent_dispatch_bridge.py"],
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+
+    assert "#### 执行环境约束（真机实测，必须遵守）" not in orders
+    assert "评审派单链路" in orders
+
+
+def test_tool_constraints_survive_trigger_payload(tmp_path):
+    """工具约束必须一路活到最终交给 CodeArts 的 trigger payload 里。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-TOOLS-003"] = {
+        "task_id": "TASK-TOOLS-003",
+        "ai_type": "codearts_agent",
+        "assignee": "codearts_agent",
+        "assignee_role": "AGENT_EXEC",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "description": "补 consensus_engine 单元测试",
+        "result_file": "hermes_target/RESULT-TASK-TOOLS-003.md",
+        "acceptance_commands": ["pytest -q hermes_target/hermes_agent/tests/unit/"],
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+
+    from ai_collab.dispatch_trigger import build_handoff_payload, split_orders_by_assignee
+
+    sections = split_orders_by_assignee(orders)
+    trigger_payload = build_handoff_payload(
+        assignee="codearts_agent",
+        trigger_phrase="2X DISPATCH CodeArts",
+        orders_relpath="collaboration/monitoring/AGENT_DISPATCH_ORDERS_test.md",
+        section_markdown=sections["codearts_agent"],
+    )
+
+    assert "#### 执行环境约束（真机实测，必须遵守）" in trigger_payload
+    assert "cat > path/to/file.py <<'EOF'" in trigger_payload
+

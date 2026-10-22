@@ -134,6 +134,11 @@ def write_orders_markdown(
             contract = _task_contract_lines(o, task, workspace)
             if contract:
                 lines.extend(contract)
+            constraints = _execution_constraints_lines(
+                str(o.get("assignee") or o.get("ai_type") or "")
+            )
+            if constraints:
+                lines.extend(constraints)
             lines.append("#### 执行步骤")
             lines.append("")
             lines.append("1. 先把状态翻成 implementing（下面这条命令）：")
@@ -221,6 +226,50 @@ def _task_contract_lines(
 
     return lines
 
+
+def _execution_constraints_lines(assignee: str) -> list[str]:
+    """渲染接收方环境约束段（只对已知会卡死的 provider 渲染）。
+
+    真机实测（2026-10-22，CodeArts Doer kernel）：
+    - 会话 `ses_e9be3df` 在 `write` 工具调用上**永久挂起**（tool 状态停在
+      `running`），文件没有落盘，会话随后中止；
+    - 会话 `ses_e9c15` 在 `task`（派生子代理）调用上报 `MessageAbortedError`，
+      父会话与子会话一起中止；
+    - 同期 `bash` / `read` / `todowrite` 调用**全部正常完成**。
+
+    也就是说：写文件和派生子代理这两条路会把整个会话带死，而这两件事
+    完全可以用 bash 替代。payload 里直接写清楚，比事后排查便宜得多。
+    """
+    if str(assignee or "").strip().lower() != "codearts_agent":
+        return []
+    return [
+        "#### 执行环境约束（真机实测，必须遵守）",
+        "",
+        "本执行环境里有两个工具会把整个会话卡死并中止，**不要用**：",
+        "",
+        "- `write` / `edit`：实测会话在 `write` 调用上永久挂起，"
+        "文件没有落盘，会话随后中止。",
+        "- `task`（派生子代理）：实测报 `MessageAbortedError`，"
+        "父会话与子会话一起中止。",
+        "",
+        "**写文件一律用 bash（heredoc）**——"
+        "`bash` / `read` / `todowrite` 在真机实测里全部正常完成：",
+        "",
+        "```bash",
+        "cat > path/to/file.py <<'EOF'",
+        "...文件内容...",
+        "EOF",
+        "```",
+        "",
+        "写完立刻自检，确认文件真的落盘了（不要假设写成功）：",
+        "",
+        "```bash",
+        "ls -l path/to/file.py && wc -l path/to/file.py",
+        "```",
+        "",
+        "自己直接做完，不要派生子代理。",
+        "",
+    ]
 
 
 def classify_task(task: dict, existing: dict, args) -> dict:

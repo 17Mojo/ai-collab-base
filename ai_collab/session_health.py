@@ -302,6 +302,8 @@ def _build_exact_message(incident: dict[str, Any], *, workspace: Path | None = N
                 f"再重新执行 `{run_hint}`。",
                 "payload 里的「#### 执行步骤」就是本次要做的事：按描述实现、"
                 "写出结果文件、跑完验收命令。",
+                "写文件请用 bash（heredoc），不要用 `write`/`edit` 工具；"
+                "也不要派生子代理 —— 真机实测这两个调用会把会话卡死并中止。",
                 "完成后不要手写 ACK，请使用任务块中的 `python3 -m ai_collab.cli ack ...` 生成并原样回复。",
             ]
         )
