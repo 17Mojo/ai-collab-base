@@ -50,7 +50,7 @@ jobs:
           retention-days: 30
 
   coverage-gate:
-    name: Coverage Gate (>=80%)
+    name: Coverage Gate (>=85%)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: mypy
@@ -73,11 +73,7 @@ jobs:
           PYTHONPATH=. python -m pytest tests/unit --cov=ai_collab --cov-report=term --cov-report=xml -q
 
       - name: Check coverage threshold
-        run: |
-          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; root = ET.parse('coverage.xml').getroot(); print(int(float(root.attrib.get('line-rate', 0)) * 100))")
-          echo "Current coverage: $COVERAGE%"
-          if [ "$COVERAGE" -lt 80 ]; then
-            echo "::error::Coverage $COVERAGE% is below 80% threshold"
-            exit 1
-          fi
-          echo "Coverage $COVERAGE% - PASS"
+        # 阈值与测量方法的唯一事实源在 .github/actions/coverage-gate/action.yml
+        # 与 test.yml 共用同一 action，口径完全一致（此前这里用 XML line-rate + 阈值 80，
+        # 与 test.yml 的 coverage report + 阈值 85 互不知情，宽松的一套会掩盖严格的一套）。
+        uses: ./.github/actions/coverage-gate
