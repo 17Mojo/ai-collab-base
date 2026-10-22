@@ -3664,6 +3664,14 @@ def cmd_pack(args):
 
         return _handle_import_command(args, packs_root, workspace)
 
+    elif args.subcommand == "convert":
+        if not getattr(args, "requirement", None):
+            print("\n错误: 需要 --requirement 参数")
+            return 1
+
+        output_dir = getattr(args, "output", None) or os.path.join(workspace, "conversion_output")
+        return _handle_convert_command(args, output_dir)
+
     return 0
 
 
@@ -4245,6 +4253,24 @@ def _handle_import_command(args, packs_root, workspace):
     print(f"  目标路径: {dest_file}")
 
     return 0
+
+
+def _handle_convert_command(args, output_dir):
+    """处理 Owner 需求 → Pack 草稿转换命令
+
+    产物是**待 Owner 审阅的草稿**（validation_report 状态为
+    READY_FOR_OWNER_REVIEW 或 BLOCKED），不是可直接激活的正式 Pack。
+    草稿的 metadata.pack_id / metadata.pack_name 与 `pack import` 读取的字段一致，
+    因此 `pack convert` → `pack import` 可以串成两步闭环。
+    """
+    from ai_collab.cli.react_convert import convert_requirement_file
+
+    print("\nOwner 需求 → Pack 草稿转换")
+    print("=" * 60)
+    print(f"需求文件: {args.requirement}")
+    print(f"输出目录: {output_dir}")
+
+    return convert_requirement_file(args.requirement, output_dir, getattr(args, "verbose", False))
 
 
 def _handle_sharing_command(args, packs_root):
@@ -4956,6 +4982,12 @@ def main():
     import_parser.add_argument("--source", required=True, help="Pack 文件路径")
     import_parser.add_argument("--target", help="目标目录（默认：examples）")
     import_parser.add_argument("--force", action="store_true", help="覆盖已存在的文件")
+
+    # pack convert 子命令（Owner 需求 → Pack 草稿，ReAct 转换）
+    convert_parser = pack_subparsers.add_parser("convert", help="Owner 需求 → Pack 草稿（ReAct 转换）")
+    convert_parser.add_argument("--requirement", "-r", required=True, help="需求 JSON 文件路径")
+    convert_parser.add_argument("--output", "-o", help="产物输出目录（默认：<workspace>/conversion_output）")
+    convert_parser.add_argument("--verbose", action="store_true", help="打印 ReAct trace 明细")
 
     args = parser.parse_args()
 

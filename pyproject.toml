@@ -62,11 +62,14 @@ filterwarnings = [
 # 排除结构性限制的入口/集成模块 (单测投入产出比低)
 # 这些应由 E2E 测试覆盖, 不是单元测试的责任
 # 见 CLAUDE.md「经验 3」: CLI 入口/编排层适合显式 omit, 不靠凑覆盖率数字掩盖
+#
+# 注意: ai_collab/cli/react_convert.py 已于 2026-10-22 移出本列表 ——
+# 它原先被 omit 掩盖了「0% 覆盖 + 未接入主 CLI」的真实缺口。
+# 现已补 tests/unit/cli/test_react_convert_cli.py 并接入 `pack convert` 子命令。
 omit = [
     "ai_collab/__main__.py",
     "ai_collab/cli/__main__.py",
     "ai_collab/cli/_cli_main.py",
-    "ai_collab/cli/react_convert.py",
 ]
 
 [tool.coverage.report]
