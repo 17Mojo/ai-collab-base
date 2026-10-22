@@ -1,8 +1,8 @@
 # RESULT — CodeArts 共创链路搭建（双命名空间收敛 + 派单自动投递 + 角色一致化）
 
-**状态**: completed（自动投递链路打通，kernel 投递待凭据）
-**完成时间**: 2026-10-22T20:30:00+08:00
-**报告版本**: 1.0.0
+**状态**: completed（自动投递链路已真机跑通，CodeArts 已接到任务）
+**完成时间**: 2026-10-22T23:15:00+08:00
+**报告版本**: 1.1.0
 **执行者**: claude_code (AGENT_ARCH / AGENT_TEST)
 **审核者**: user
 **change_id**: bugfix/no-spec
@@ -220,11 +220,11 @@ python3 scripts/codearts_bridge_deliver.py --workspace . --setup-credentials
 ### 8.1 类型检查与测试
 
 ```text
-python3 -m mypy <4 modules>
-Success: no issues found in 4 source files
+python3 -m mypy <5 modules>
+Success: no issues found in 5 source files
 
 python3 -m pytest tests/ -q
-2770 passed, 6 skipped in 38.30s
+2778 passed, 6 skipped in 34.61s
 ```
 
 （6 skipped 均为环境性跳过：后端数据库文件不存在、127.0.0.1:8000 后端未运行。）
@@ -233,7 +233,8 @@ python3 -m pytest tests/ -q
 
 | 文件 | 数量 | 覆盖 |
 |---|---|---|
-| `tests/unit/test_codearts_bridge_deliver.py` | 22 | 消息提取优先级、凭据解析、kernel 发现、HTTP 401、cron 流程、凭据引导（写文件/不回显/不投递/失败路径）、仓库 bridgeCommand 是合法 format 模板 |
+| `tests/unit/test_codearts_bridge_deliver.py` | 27 | 消息提取优先级、凭据解析、kernel 发现、HTTP 401、cron 流程、凭据引导（写文件/不回显/不投递/失败路径）、kernel 响应解析（JSON / Python 字面量 / 列表不截断）、`list_sessions` 解析、仓库 bridgeCommand 是合法 format 模板 |
+| `tests/unit/test_codearts_adapter.py` | 7 | 在途 intervention 不重复投递、强制重投、失败可重试、artifact_only / queued / failed 三条投递路径 |
 | `tests/unit/test_agent_dispatch_bridge.py` | +2 | `--orders` 生效、指令包按执行方分组 |
 | `tests/unit/test_role_prefix.py` | +6 | 角色席位解析：单角色、终态排除、歧义不解析、stateFile 跟随、角色决定提示词 |
 | `tests/unit/test_session_health.py` | +2 | 干预正文点名 payload + 角色对齐提示、payload 路径跟随 trigger 配置 |
@@ -243,25 +244,41 @@ python3 -m pytest tests/ -q
 建一份，而那份默认值的 `AGENT_EXEC → X.RUN` 与仓库配置（`A.RUN → AGENT_EXEC`）
 **不一致**。不把仓库真实配置复制进临时工作区，测的就是另一套前缀映射。
 
-### 8.3 端到端链路实测
+### 8.3 端到端链路实测（真机）
+
+凭据就位后（用户执行 `--setup-credentials`），整条链路在真 kernel 上跑通：
 
 | 环节 | 实测结果 |
 |---|---|
 | `cli trigger` 生成 payload | ✅ `AGENT_TRIGGER_codearts_agent_latest.md` 含 `A.RUN` / `A.ACK` / `## 发送给 \`CodeArts\`` / 3 条验收命令 |
 | `cli sessions health` 生成干预 | ✅ 干预正文点名 payload 路径，提示 `A.RUN-RESET -> A.RUN` |
 | `cli sessions codearts-pull` 写 pull event | ✅ pull event 快照含完整干预正文 |
-| bridge HTTP 层 | ✅ 用错误密码探测返回 `HTTP 401`（**不是**连接/路由错误）——证明 URL、路径、`directory` 参数、Auth 头全部正确，只差密码值 |
-| bridge 实际投递 | ⏳ 阻塞：缺 kernel 密码 |
+| bridge → kernel 投递 | ✅ **成功**：cron 任务 `74686bbf` 建立并 fire，kernel 自建会话 `ses_e9c15a557ffe0iVBDgzdb7Ywns`，消息以 user 角色进入 CodeArts 会话 |
+| CodeArts 接到任务 | ✅ **任务状态 `planning` → `implementing`**（22:05:05），执行的正是 payload 任务块第一条命令 `tasks update --status implementing`；并派出「补 consensus_engine 单元测试」subagent |
+| ACK | ⏳ 未收到。首个会话与其 subagent 均以 `MessageAbortedError` 结束，无代码产出 |
+
+真实投递时间线：
+
+```text
+22:01:05  pull adapter 投递 → cron 74686bbf → CodeArts 会话 ses_e9c15
+22:02:57  CodeArts 派出 subagent「补 consensus_engine 单元测试」
+22:05:05  任务状态 planning → implementing   ← CodeArts 执行 payload 任务块
+22:06:01  会话与 subagent 均 MessageAbortedError 结束，无产出
+22:55:27  又一轮 sessions health → 同一 intervention 被重复投递（缺陷，见 §12）
+23:06:17  修复后复跑：candidate_count=0，未新建会话
+```
 
 ### 8.4 派发状态
 
 ```text
 TASK-P0-CONSENSUS-ENGINE-001
   assignee: codearts_agent (AGENT_EXEC)
-  status: planning
+  status: implementing          ← CodeArts 已接手（22:05:05 由 payload 任务块推进）
   result_file: hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md
   契约段: 执行命令 / 验证结果 / 风险 / 回滚 —— 四段齐备
   覆盖率门禁: 当前 30%，契约要求 ≥80%（CodeArts 的硬前置，已在风险章节写明）
+  交付物: hermes_target/hermes_agent/tests/unit/test_consensus_engine.py
+          现 3 个冒烟用例 / 693 字节，需扩到覆盖 consensus_engine.py（14KB）≥80%
 ```
 
 ---
@@ -270,12 +287,13 @@ TASK-P0-CONSENSUS-ENGINE-001
 
 | 级别 | 风险 | 说明 | 缓解 |
 |---|---|---|---|
-| **中** | kernel 自动投递缺凭据 | bridge 报 `缺少 kernel 密码`，intervention 停在 `failed` 态重试 | 已提供一次性引导命令 `--setup-credentials`（用户本人执行，见 §11）；期间可手工投递 payload 工件 |
+| ~~中~~ | ~~kernel 自动投递缺凭据~~ | **已闭环** —— 用户于 21:45 执行引导命令，22:01 首次真实投递成功 | 见 §11 |
+| **高** | CodeArts 会话被中止、无产出 | 首个会话与其 subagent 均以 `MessageAbortedError` 结束，`hermes_target/` 无改动；原因未定位（读对方会话正文被安全策略拦截） | 见 §13；需人工确认 CodeArts 侧执行环境 |
 | **低** | 凭据引导命令被误由 AI 执行 | 会把密码带进 AI 会话上下文 | 命令设计为「只写文件、不回显、不投递」；AI 侧不代跑，仅交付命令 |
 | **中** | 首次自动投递延迟 | pull adapter 只消费 intervention，intervention 由 session_health 在 120s 超时后产生 | 已在派发指南「首次投递的时间点」章节写明；手工投递可走 `--dry-run` |
 | **中** | `hermes_target/` 的 pytest 收集面串扰 | 主仓 `testpaths = ["tests"]` 刻意排除 `hermes_target/`；放宽会污染主仓覆盖率分母 | 路径注入限定在单条命令内，已写入验收命令 |
 | **低** | `codex` 兜底前缀 `X` 与 `AGENT_ARCH` 撞车 | 既有冲突 | `codex` 当前未绑定角色席位，实际不影响派发；已在派发指南标注 |
-| **低** | 共享工作区并发编辑 | CodeArts 开始改 `hermes_target/` 后与本会话可能撞车 | 本会话改动已分三个自洽提交落地（`243f73f` / `91cdef3` / `216fa53` / `a99bebf`） |
+| **低** | 共享工作区并发编辑 | CodeArts 开始改 `hermes_target/` 后与本会话可能撞车 | 本会话改动已分多个自洽提交落地（`243f73f` / `91cdef3` / `216fa53` / `a99bebf` / `ee79cf1` / `930a222` / `bd45365` / `6ad5155`）；重复投递已修（§12.3） |
 
 ---
 
@@ -293,13 +311,14 @@ TASK-P0-CONSENSUS-ENGINE-001
 
 ---
 
-## 11. 尚未闭环的一项（需用户执行一条命令）
+## 11. 曾唯一的阻塞项：kernel 凭据（已闭环）
 
-**kernel 自动投递缺凭据**，这是整条链路当前唯一的阻塞点。
+**kernel 自动投递缺凭据**曾是整条链路唯一的阻塞点。**现已闭环** ——
+用户于 21:45 执行引导命令，投递随即在真 kernel 上跑通。
 
 ### 11.1 处置方式
 
-新增一次性凭据引导命令，**由用户本人在本机终端执行**：
+一次性凭据引导命令，**由用户本人在本机终端执行**：
 
 ```bash
 cd /Users/raymondna/Documents/AI-collab/ai-collab-base
@@ -325,15 +344,79 @@ AI 会话上下文、shell 历史与对话记录 —— 那等于绕过了凭据
 未将任何凭据写入仓库**。拦截是正确的：AI 侧负责把这条命令写好并验证其可用，
 执行动作留给用户。
 
-### 11.3 现状
+### 11.3 闭环结果
 
-在凭据就位前：干预工单保持 open 并持续重试，
-payload 工件（`collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md`）
-可以手工投递给 CodeArts。
+```text
+21:45  用户执行 --setup-credentials → ~/.codeartsdoer/kernel-bridge.env (0600)
+22:01  首次真实投递成功 → CodeArts 会话建立、接到任务、状态翻 implementing
+```
 
 ---
 
-## 12. 配套产出
+## 12. 真机跑通后暴露的三个缺陷
+
+这三个都是**只有真跑才会暴露**的问题——单测全绿时它们一个都不会现形。
+
+### 12.1 bridge 把 kernel 响应截断到 2000 字符（静默丢信息）
+
+kernel 的序列化**不统一**：`/cag/cron/tasks` 返回标准 JSON，而
+`/session` 与 `/session/{id}/message` 返回 **Python 字面量格式**（单引号），
+不是合法 JSON —— 于是落进 `except JSONDecodeError` 兜底分支，被
+`raw[:2000]` 截断。
+
+实测 9 个会话只剩第一条，文件改动统计、会话正文全部看不到。
+排查「CodeArts 到底干了什么」时完全失明。
+
+### 12.2 `list_sessions()` 恒返回空 → 会话快路径从未生效
+
+`raw` 是字符串而代码只认 `list`，于是 `resolve_direct_session()` 永远拿不到
+会话，`--channel auto` 的会话快路径**一次都没生效过**——默认 `cron` 把它盖住了。
+
+### 12.3 在途 intervention 被重复投递（在对方建出多个会话）
+
+`queued_for_delivery`（已交付、等 ACK）不在终态集合
+`TERMINAL_DELIVERY_STATUSES = {delivered, resolved, cancelled}` 里，
+而 pull adapter 只按 `only_open=True` 选候选 —— **每跑一次轮询就重投一次**：
+
+```text
+22:01:05  第 1 次投递 → 会话 ses_e9c15（CodeArts 开工，跑了状态更新）
+22:55:27  第 2 次投递 → 会话 ses_e9be3df（重复！）
+```
+
+两次投递在 CodeArts 侧建出两个会话，并发改同一个工作区。
+
+语义上 `queued_for_delivery` 既不是终态、也**不是**待投递状态：
+只有投递失败（`failed`）才该重试；「对方收到没回」由 ACK watchdog 告警 +
+重派机制处理，不是靠重复投递。
+
+**修法**：新增 `IN_FLIGHT_DELIVERY_STATUSES = {"queued_for_delivery"}`，
+pull adapter 默认跳过在途项并在报告里显式给出
+`skipped_in_flight_count` / `skipped_in_flight_ids`（不静默跳过）；
+新增 `--force-redeliver` 让运维在确需重投时显式开口子。
+
+修复后复跑 `sessions health`：`candidate_count=0`、
+`skipped_in_flight_count=1`、`queued_count=0`，kernel 侧未新建会话。
+
+---
+
+## 13. 遗留：CodeArts 会话被中止
+
+CodeArts 接到任务并推进了状态，但**首个会话与其 subagent 都以
+`MessageAbortedError` 结束**，没有代码产出（`hermes_target/` 下无改动）。
+
+原因未定位：读取对方会话正文被安全策略拦截（会话记录属对方 Agent 的
+数据），只能用元数据判断。可确认的事实：
+
+- 会话工具链正常：`bash` / `grep` / `read` / `task` / `todowrite` / `write`
+- 无其他错误类型，只有 `MessageAbortedError`
+- 第二个会话（重复投递产生）在 23:00:54 后停止推进，停在 62 条消息
+
+这属于 CodeArts 侧的执行问题，不在本链路（派单/投递）范围内，
+但会影响 `TASK-P0-CONSENSUS-ENGINE-001` 的收口。
+
+---
+
+## 14. 配套产出
 
 | 产出 | 位置 |
 |---|---|
@@ -346,3 +429,5 @@ payload 工件（`collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.m
 
 **相关提交**：`243f73f`（派单输出路径与执行方分组）→ `91cdef3`（角色命名空间一致化）
 → `216fa53` + `a99bebf`（派发指南重写与修正）
+→ `ee79cf1`（一次性凭据引导）→ `930a222`（引导命令路径说明）
+→ `bd45365`（kernel 响应解析修复）→ `6ad5155`（在途不重复投递）

@@ -214,6 +214,46 @@ codearts pull adapter 只消费 **intervention**，intervention 由 session_heal
 所以**第一次自动投递要等 ACK 超时阈值（默认 120s）之后**。
 想立刻验证，用 `--dry-run` 手跑 bridge，或直接手动把 payload 贴给 CodeArts。
 
+### 在途不重复投递（重要）
+
+`queued_for_delivery` 的语义是「**已交给传输通道，等对方 ACK**」——
+它既不是终态，也**不是**待投递状态。
+
+pull adapter 默认**跳过**在途的 intervention，报告里会显式给出：
+
+```text
+skipped_in_flight_count: 1
+skipped_in_flight_ids: ['intervention-fd04852f...']
+```
+
+只有投递失败（`failed`）才会自动重试。「对方收到没回」由 ACK watchdog
+告警 + 重派机制处理，不是靠重复投递。
+
+> ⚠️ 这条规则是踩过坑才加的：修复前每跑一次 `sessions health` 就会把
+> 同一条 intervention 重投一次，在 CodeArts 那边建出一个个新会话，
+> 并发改同一个工作区（实测 22:01 一次、22:55 又一次）。
+
+运维确实需要重投时，显式开口子：
+
+```bash
+python3 -m ai_collab.cli sessions codearts-pull --force-redeliver
+python3 -m ai_collab.cli sessions health --force-redeliver
+```
+
+### kernel 响应格式不统一（排查时必读）
+
+kernel 的序列化**不统一**：
+
+| 路由 | 返回格式 |
+|---|---|
+| `/cag/cron/tasks` | 标准 JSON |
+| `/session`、`/session/{id}/message` | **Python 字面量格式**（单引号、`True`/`None`），不是合法 JSON |
+
+bridge 已用 `parse_kernel_payload()` 兼容两种格式。若你直接用 curl 排查，
+`/session` 的输出要按字面量解析，不要用 `json.loads`——
+之前 bridge 把这类响应截断到 2000 字符，导致 9 个会话只剩第一条，
+排查时完全看不出对方做了什么。
+
 ---
 
 ## 常见问题排查
