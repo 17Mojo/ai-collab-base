@@ -16,6 +16,7 @@ from ai_collab.intervention_queue import (
     enqueue_intervention,
     load_intervention_state,
     read_intervention_items,
+    rearm_interventions,
     resolve_intervention,
     run_intervention_queue_summary,
 )
@@ -23,6 +24,24 @@ from ai_collab.intervention_queue import (
 
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _item(intervention_id: str, assignee: str, delivery_status: str) -> dict:
+    """构造一条 intervention 记录。"""
+    return {
+        "intervention_id": intervention_id,
+        "session_id": "session-001",
+        "assignee": assignee,
+        "reason_code": "ack_silence_after_run",
+        "severity": "medium",
+        "message_artifact": "collaboration/monitoring/x.md",
+        "delivery_mode": "bridge",
+        "delivery_status": delivery_status,
+        "created_at": "2026-03-17T08:00:00+08:00",
+        "updated_at": "2026-03-17T08:00:00+08:00",
+        "resolved_at": "",
+        "source_signal": "ack_silence_after_run",
+    }
 
 
 def test_enqueue_intervention_defaults_to_manual_pending_operator_delivery(tmp_path: Path):
@@ -207,3 +226,57 @@ def test_intervention_queue_reads_paths_from_session_orchestration_config(tmp_pa
 
     summary_report = run_intervention_queue_summary(workspace=workspace)
     assert summary_report["summary_file"] == "collaboration/monitoring/CUSTOM_SESSION_INTERVENTION_SUMMARY.md"
+
+
+def test_rearm_interventions_only_rearms_in_flight_items(tmp_path: Path):
+    """重新武装只动在途项：终态不动，失败项不动，别家不动。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    workspace.joinpath(DEFAULT_STATE_PATH).parent.mkdir(parents=True, exist_ok=True)
+    workspace.joinpath(DEFAULT_STATE_PATH).write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "items": {
+                    "in-flight": _item("in-flight", "codearts_agent", "queued_for_delivery"),
+                    "delivered": _item("delivered", "codearts_agent", "delivered"),
+                    "failed": _item("failed", "codearts_agent", "failed"),
+                    "other-agent": _item("other-agent", "claude_code", "queued_for_delivery"),
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    rearmed = rearm_interventions(workspace=workspace, assignee="codearts_agent")
+
+    assert rearmed == ["in-flight"]
+    _, _, items = load_intervention_state(workspace)
+    assert items["in-flight"]["delivery_status"] == "pending_operator_delivery"
+    assert items["in-flight"]["resolved_at"] == ""
+    assert items["delivered"]["delivery_status"] == "delivered"
+    assert items["failed"]["delivery_status"] == "failed"
+    assert items["other-agent"]["delivery_status"] == "queued_for_delivery"
+
+
+def test_rearm_interventions_is_a_noop_without_in_flight_items(tmp_path: Path):
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    workspace.joinpath(DEFAULT_STATE_PATH).parent.mkdir(parents=True, exist_ok=True)
+    workspace.joinpath(DEFAULT_STATE_PATH).write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "items": {
+                    "delivered": _item("delivered", "codearts_agent", "delivered"),
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    assert rearm_interventions(workspace=workspace, assignee="codearts_agent") == []

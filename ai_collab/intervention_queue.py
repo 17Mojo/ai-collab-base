@@ -34,6 +34,10 @@ TERMINAL_DELIVERY_STATUSES = {"delivered", "resolved", "cancelled"}
 # 重派机制处理，不是靠重复投递。
 IN_FLIGHT_DELIVERY_STATUSES = {"queued_for_delivery"}
 
+# 重新武装后的状态：已判定需要重投，回到待投递队列。
+# 语义上区别于「在途」——在途是被动等 ACK，重新武装是主动决定再发一次。
+REARMED_DELIVERY_STATUS = "pending_operator_delivery"
+
 
 @dataclass
 class InterventionRecord:
@@ -567,6 +571,83 @@ def resolve_intervention(
         history_path=history_path,
         summary_path=summary_path,
     )
+
+
+def rearm_interventions(
+    *,
+    workspace: Path,
+    assignee: str,
+    state_path: str | None = None,
+    history_path: str | None = None,
+    summary_path: str | None = None,
+) -> list[str]:
+    """把某执行方的在途 intervention 重新武装成待投递。
+
+    为什么需要这一步：在途（`queued_for_delivery`）默认不重投，
+    否则每跑一次轮询都会在对方那边新建一个会话（实测两个会话并发改同一个
+    工作区）。但「ACK watchdog 判定要重派」是一个**明确的**重投决定——
+    这时如果不把在途项重新武装，重派信号就永远送不出去：
+    payload 刷新了，在途项却被适配器跳过，派单链路在这一步断掉。
+
+    只重武装在途项；终态（delivered/resolved/cancelled）不动，
+    投递失败（failed）的本来就会自动重试，也不动。
+    """
+    target = _normalize_assignee(assignee)
+    if not target:
+        return []
+
+    state_file, history_file, summary_file = _resolve_paths(
+        workspace=workspace,
+        state_path=state_path,
+        history_path=history_path,
+        summary_path=summary_path,
+    )
+    _, payload, items = load_intervention_state(
+        workspace,
+        state_path=state_path,
+        history_path=history_path,
+        summary_path=summary_path,
+    )
+
+    rearmed: list[str] = []
+    for intervention_id, item in items.items():
+        if not isinstance(item, dict):
+            continue
+        if _normalize_assignee(item.get("assignee")) != target:
+            continue
+        status = str(item.get("delivery_status") or "").strip().lower()
+        if status not in IN_FLIGHT_DELIVERY_STATUSES:
+            continue
+        item["delivery_status"] = REARMED_DELIVERY_STATUS
+        item["updated_at"] = _now_iso()
+        item["resolved_at"] = ""
+        rearmed.append(str(intervention_id))
+
+    if not rearmed:
+        return []
+
+    payload["generated_at"] = _now_iso()
+    write_json(state_file, payload)
+
+    for intervention_id in rearmed:
+        _append_history(
+            history_file,
+            {
+                "generated_at": _now_iso(),
+                "event": "intervention_rearmed",
+                "intervention_id": intervention_id,
+                "assignee": target,
+                "delivery_status": REARMED_DELIVERY_STATUS,
+            },
+        )
+
+    _build_summary_payload(
+        workspace=workspace,
+        payload=payload,
+        mode="rearm",
+        summary_file=summary_file,
+    )
+    return rearmed
 
 
 def render_intervention_summary_markdown(

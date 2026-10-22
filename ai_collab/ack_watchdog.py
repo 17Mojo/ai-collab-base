@@ -10,6 +10,7 @@ from typing import Any
 
 from .ack_protocol import SUPPORTED_ASSIGNEES, load_json, write_json
 from .dispatch_trigger import DISPLAY_NAME, RUN_HINT, build_handoff_payload, split_orders_by_assignee
+from .intervention_queue import rearm_interventions
 from .role_prefix import resolve_assignee_roles, resolve_hints
 
 DEFAULT_THRESHOLD_SECONDS = 120
@@ -293,6 +294,7 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
     lines.append(f"- 候选静默任务: `{report.get('candidate_count', 0)}`")
     lines.append(f"- 自动重派: `{report.get('redispatched_count', 0)}`")
     lines.append(f"- 仅告警: `{report.get('alerted_count', 0)}`")
+    lines.append(f"- 重新武装在途干预: `{report.get('rearmed_count', 0)}`")
     lines.append(f"- 跳过: `{report.get('skipped_count', 0)}`")
     lines.append(f"- 错误: `{report.get('error_count', 0)}`")
     lines.append("")
@@ -366,6 +368,7 @@ def run_ack_watchdog(
     handled: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
     redispatched_by_assignee: dict[str, list[AckWatchdogCandidate]] = {}
+    rearmed_by_assignee: dict[str, list[str]] = {}
     for candidate in candidates:
         try:
             dispatch_item = items.get(candidate.task_id)
@@ -412,11 +415,21 @@ def run_ack_watchdog(
             except Exception as exc:  # noqa: BLE001
                 errors.append({"task_id": ",".join(x.task_id for x in assignee_candidates), "error": str(exc)})
 
+            # 重派是「明确要再发一次」的决定，在途的 intervention 必须重新武装，
+            # 否则适配器会把它当在途跳过 —— payload 刷新了却送不出去。
+            try:
+                rearmed = rearm_interventions(workspace=workspace, assignee=assignee)
+                if rearmed:
+                    rearmed_by_assignee[assignee] = rearmed
+            except Exception as exc:  # noqa: BLE001
+                errors.append({"task_id": ",".join(x.task_id for x in assignee_candidates), "error": f"rearm failed: {exc}"})
+
         if handled:
             write_json(dispatch_state_file, dispatch_state)
 
     redispatched_count = len([item for item in handled if item.get("action") == "redispatch"])
     alerted_count = len([item for item in handled if item.get("action") == "alert"])
+    rearmed_count = sum(len(ids) for ids in rearmed_by_assignee.values())
     report = {
         "generated_at": generated_at,
         "workspace": str(workspace),
@@ -426,6 +439,8 @@ def run_ack_watchdog(
         "candidate_count": len(candidates),
         "redispatched_count": redispatched_count,
         "alerted_count": alerted_count,
+        "rearmed_count": rearmed_count,
+        "rearmed_by_assignee": rearmed_by_assignee,
         "skipped_count": len(skipped),
         "error_count": len(errors),
         "candidate_tasks": [asdict(item) for item in candidates],
