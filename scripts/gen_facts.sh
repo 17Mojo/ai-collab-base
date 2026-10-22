@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -uo pipefail
 [ -d .git ] || { echo "错误：当前目录不是 git 仓库（$(pwd)）"; exit 1; }
-OUT="docs/FACTS_$(date +%Y-%m-%d_%H%M%S).md"
+# 固定文件名 = 唯一事实源；生成时间在文件内容头部，不体现在文件名
+# （历史时间戳文件名模式已于 2026-10-22 废弃，避免快照堆积无人认领权威）
+OUT="docs/FACTS.generated.md"
 mkdir -p docs
 {
   echo "# 项目事实快照"
@@ -10,6 +12,7 @@ mkdir -p docs
   echo "**生成方式**: scripts/gen_facts.sh（自动生成，请勿手工编辑）"
   echo "**仓库路径**: $(pwd)"
   echo "**仓库 HEAD**: $(git rev-parse HEAD 2>&1)"
+  echo "**当前分支**: $(git rev-parse --abbrev-ref HEAD 2>&1)"
   echo
   echo "## 1. Git 状态"
   echo '```'; echo "\$ git status --short --branch"; git status --short --branch 2>&1 | head -50; echo '```'
@@ -19,8 +22,9 @@ mkdir -p docs
   echo
   echo "## 3. 远端同步状态"
   echo '```'
-  echo "unpushed=$(git rev-list --count HEAD..origin/main 2>&1)"
-  echo "ahead=$(git rev-list --count origin/main..HEAD 2>&1)"
+  echo "# 基于当前分支的 upstream（@{u}），不硬编码 main"
+  echo "unpushed(ahead of upstream)=$(git rev-list --count @{u}..HEAD 2>&1)"
+  echo "behind(upstream ahead of us)=$(git rev-list --count HEAD..@{u} 2>&1)"
   echo '```'
   echo
   echo "## 4. 目录树（2 层）"
