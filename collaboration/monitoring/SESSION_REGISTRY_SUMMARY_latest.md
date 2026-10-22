@@ -1,9 +1,9 @@
 # Session Registry Summary（自动生成）
 
-- 生成时间: `2026-10-23T00:47:35.474191`
+- 生成时间: `2026-10-23T01:10:25.193669`
 - 会话数: `8`
-- healthy: `7`
-- unhealthy: `1`
+- healthy: `8`
+- unhealthy: `0`
 - state_file: `logs/session_registry_state.json`
 
 ## Sessions
@@ -15,4 +15,4 @@
 - `9fb00703-fc35-48fb-9de0-109f669e852f` assignee=`claude_code` transport=`manual` status=`active` health=`healthy`
 - `cccfe573-6e74-4751-a828-41f3190b70cd` assignee=`claude_code` transport=`manual` status=`active` health=`healthy`
 - `f43b2192-faed-4d34-84e7-83e2c5786446` assignee=`claude_code` transport=`manual` status=`active` health=`healthy`
-- `codearts-agent-bridge` assignee=`codearts_agent` transport=`bridge` status=`active` health=`unhealthy`
+- `codearts-agent-bridge` assignee=`codearts_agent` transport=`bridge` status=`active` health=`healthy`
