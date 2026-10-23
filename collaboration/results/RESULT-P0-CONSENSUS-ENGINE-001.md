@@ -1,11 +1,26 @@
 # RESULT — TASK-P0-CONSENSUS-ENGINE-001 Hermes 移植收口
 
+> **2026-10-23 归档说明（Hermes/openclaw 噪声清理）**
+>
+> 本文件是**已收口任务的事实回执**，保留不动。但它记录的移植产物目录
+> `hermes_target/`（外部 Hermes 移植目标的本地副本）已于 2026-10-23 清理，
+> 本文件因此从 `hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md` 迁到
+> `collaboration/results/RESULT-P0-CONSENSUS-ENGINE-001.md`（符合 CLAUDE.md
+> 「结果报告放 `collaboration/results/RESULT_*.md`」）。
+>
+> 下文所有 `hermes_target/...` 路径是**历史事实记录**，指向的目录已不存在，
+> 其中的验收命令**已不可复跑**（命令依赖的外部代码不在本仓）。本仓不再持有
+> 外部项目的代码副本；本仓自带的等价实现是
+> [`ai_collab/engines/consensus_engine.py`](../../ai_collab/engines/consensus_engine.py)。
+> 另：原 `openspec/changes/migrate-parallel-architecture-to-hermes/` 变更提案
+> （目标是外部路径 `~/.hermes/`、`~/.openclaw-mac/`）同期删除。
+
 **状态**: 本地移植层已完成（覆盖率门禁已转绿）
 **完成时间**: 2026-10-23T00:52:00+08:00
 **报告版本**: 3.0.0
 **执行者**: codearts_agent (AGENT_EXEC)
 **审核者**: user
-**change_id**: migrate-parallel-architecture-to-hermes
+**change_id**: migrate-parallel-architecture-to-hermes（外部项目变更提案，2026-10-23 已清理）
 **执行口径**: 分支 `feat/codearts-collab-wiring` / HEAD `ce8a3b9` / Python 3.14.6 / macOS darwin / 分母=单文件 `hermes_target/hermes_agent/engines/consensus_engine.py`
 **承接说明**: 本文件由 Claude Code 的 2.0.0 基线快照升级而来，覆盖其「覆盖率不达标」章节；本地移植层四条主路径已全部落地并通过工单契约的三条验收命令。
 
@@ -63,6 +78,19 @@ python3 -m ruff check hermes_target/hermes_agent/engines/consensus_engine.py her
 ```
 
 > **契约修正说明**：原第一条命令缺少 `PYTHONPATH=hermes_target`，直接执行会在收集阶段抛 `ModuleNotFoundError: No module named 'hermes_agent'`。路径前缀在单条命令内显式补齐；未改动 `[tool.pytest.ini_options] testpaths = ["tests"]`，hermes_target 仍不进入主仓覆盖率分母。
+
+### 本仓等价能力的验收命令（2026-10-23 起为工单有效契约）
+
+外部副本目录 `hermes_target/` 已随噪声清理删除，上述三条历史命令**已不可复跑**
+（依赖的外部代码不在本仓）。工单的 `acceptance_commands` 已改为指向本仓自带的
+等价实现 `ai_collab/engines/consensus_engine.py`（产品级实现，4 个测试文件）：
+
+```bash
+python3 -m pytest tests/unit/test_consensus_engine.py tests/unit/test_consensus_engine_extra.py tests/unit/test_consensus_engine_provider_client.py tests/unit/test_consensus_integration.py -q
+python3 -c "from ai_collab.engines.consensus_engine import ConsensusEngine; print('OK')"
+```
+
+复验结果（2026-10-23）：`48 passed`；导入冒烟输出 `OK`。
 
 ## 验证结果
 

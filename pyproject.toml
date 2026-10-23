@@ -41,10 +41,10 @@ requires = ["wheel", "setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-# 收集范围限定 tests/：hermes_target/ 是外部 Hermes 移植目标的本地副本，
-# 其 hermes_agent 模块不在本仓库依赖内，收集会触发 ModuleNotFoundError
-# (2026-09-26 已知陷阱)。tests/ 之外无测试文件，CI 口径为 tests/unit/，
-# 本地 testpaths 覆盖面 >= CI。
+# 收集范围限定 tests/：仓库根目录下不得放置任何非本仓依赖的第三方/外部项目
+# 副本 —— 那类目录既不在依赖清单内，pytest 收集时会触发 ModuleNotFoundError
+# (2026-09-26 已知陷阱，当时由已删除的外部项目副本目录触发)。
+# tests/ 之外无测试文件，CI 口径为 tests/unit/，本地 testpaths 覆盖面 >= CI。
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
