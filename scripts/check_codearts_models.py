@@ -140,8 +140,15 @@ def _session_id(payload: Any) -> str:
 
 
 def list_models(client, workspace: Path) -> tuple[dict[str, str], str]:
-    """返回 (model_id -> provider_id 映射, 默认模型)。"""
-    payload = client.request("GET", "/provider")
+    """返回 (model_id -> provider_id 映射, 默认模型)。
+
+    注册表**按工作区目录查**（真机实测 2026-10-23 18:31）：kernel 重启后，
+    不带 directory 的 `GET /provider` 返回空注册表，带
+    `?directory=<工作区>` 才拿得到该项目的 provider 与模型。查空会被误判成
+    "模型不在注册表"，于是所有候选都判不可用 —— 看起来像模型全挂了，
+    实际是查错了作用域。查不到再退回无目录查询（兼容全局作用域的老 kernel）。
+    """
+    payload = client.request("GET", "/provider", query={"directory": str(workspace)})
     mapping: dict[str, str] = {}
     default = ""
     providers = payload.get("all") if isinstance(payload, dict) else None
@@ -161,6 +168,28 @@ def list_models(client, workspace: Path) -> tuple[dict[str, str], str]:
                 items = []
             for model_id in items:
                 mapping[str(model_id)] = provider_id
+    if not mapping:
+        # 作用域查不到 → 退回全局作用域再查一次（老 kernel 把 provider 配在全局）。
+        payload = client.request("GET", "/provider")
+        providers = payload.get("all") if isinstance(payload, dict) else None
+        if isinstance(providers, list):
+            for provider in providers:
+                if not isinstance(provider, dict):
+                    continue
+                provider_id = str(provider.get("id") or "")
+                models = provider.get("models")
+                if isinstance(models, dict):
+                    items = list(models.keys())
+                elif isinstance(models, list):
+                    items = [
+                        str(item.get("id"))
+                        for item in models
+                        if isinstance(item, dict) and item.get("id")
+                    ]
+                else:
+                    items = []
+                for model_id in items:
+                    mapping[str(model_id)] = provider_id
     defaults = payload.get("default") if isinstance(payload, dict) else None
     if isinstance(defaults, dict) and defaults:
         provider_id, model_id = next(iter(defaults.items()))
@@ -275,7 +304,11 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     client = bridge.KernelClient(
-        base_url=bridge.DEFAULT_KERNEL_URL, username=username, password=password, timeout=args.timeout
+        base_url=bridge.DEFAULT_KERNEL_URL,
+        username=username,
+        password=password,
+        timeout=args.timeout,
+        workspace=workspace,
     )
 
     while True:

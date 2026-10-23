@@ -417,8 +417,33 @@ def parse_model_spec(spec: str) -> tuple[str, str]:
 
 
 def provider_registry(client: KernelClient) -> dict[str, str]:
-    """kernel 的模型注册表：model_id → provider_id。"""
-    payload = client.request("GET", "/provider")
+    """kernel 的模型注册表：model_id → provider_id。
+
+    **必须按工作区目录查**（真机实测 2026-10-23 18:31）：kernel 重启后，
+    不带 directory 的 `GET /provider` 返回空注册表
+    （`{"all":[],"default":{},"connected":[]}`），而带
+    `?directory=<工作区>` 的同一个路由能拿到该项目的 provider 与模型。
+    查空 → 以为"模型不在注册表" → 静默降级成"不指定模型" → 钉模型功能
+    整个失效，而且现场看不出任何异常。
+
+    查法：**先按 client 的工作区查，查不到再退回无目录查询**（兼容把
+    provider 配在全局作用域的老 kernel）。两边都查不到才算真的没有。
+    """
+    workspace = getattr(client, "workspace", None)
+    payload = client.request(
+        "GET",
+        "/provider",
+        query={"directory": str(workspace)} if workspace is not None else None,
+    )
+    mapping = _provider_mapping(payload)
+    if not mapping and workspace is not None:
+        payload = client.request("GET", "/provider")
+        mapping = _provider_mapping(payload)
+    return mapping
+
+
+def _provider_mapping(payload: dict[str, Any]) -> dict[str, str]:
+    """从 /provider 的响应里抽出 model_id → provider_id。"""
     mapping: dict[str, str] = {}
     providers = payload.get("all") if isinstance(payload, dict) else None
     if isinstance(providers, list):
@@ -533,9 +558,13 @@ class KernelClient:
         username: str,
         password: str,
         timeout: int = 120,
+        workspace: Path | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        # 工作区作用域：kernel 的 provider 注册表是**按项目**查的
+        # （不带 directory 的 /provider 会返回空注册表，见 provider_registry）。
+        self.workspace = workspace
         token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
         self._auth = f"Basic {token}"
 
@@ -1430,6 +1459,7 @@ def main(argv: list[str] | None = None) -> int:
         username=username,
         password=password,
         timeout=args.timeout,
+        workspace=workspace,
     )
 
     # 模型降级链：候选 >= 2 才启用；单候选保持既有行为（失败就是失败，

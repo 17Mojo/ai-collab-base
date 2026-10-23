@@ -613,6 +613,72 @@ def test_create_session_raises_when_response_has_no_id(
         client.create_session(workspace=Path("/tmp/ws"), title="t")
 
 
+def test_provider_registry_queries_provider_with_workspace_scope():
+    """注册表必须按工作区目录查。
+
+    真机实测 2026-10-23 18:31：kernel 重启后，不带 directory 的
+    `GET /provider` 返回空注册表，带 `?directory=<工作区>` 才拿得到该项目的
+    provider 与模型。查空会被误判成"模型不在注册表" → 钉模型静默失效。
+    """
+    calls: list[str] = []
+
+    class _Client:
+        workspace = Path("/tmp/ws")
+
+        def request(self, method, path, *, query=None, body=None):
+            calls.append(f"{method} {path} {query or ''}")
+            return {
+                "all": [
+                    {
+                        "id": "inferhub-provider",
+                        "models": {"glm-5.3": {}, "kimi-k3": {}},
+                    }
+                ]
+            }
+
+    registry = bridge.provider_registry(_Client())
+
+    assert registry == {"glm-5.3": "inferhub-provider", "kimi-k3": "inferhub-provider"}
+    assert len(calls) == 1
+    assert "'directory': '/tmp/ws'" in calls[0]
+
+
+def test_provider_registry_falls_back_to_unscoped_query_when_scope_is_empty():
+    """作用域查不到 → 退回全局作用域再查一次（老 kernel 把 provider 配在全局）。"""
+    calls: list[str] = []
+
+    class _Client:
+        workspace = Path("/tmp/ws")
+
+        def request(self, method, path, *, query=None, body=None):
+            calls.append(f"{method} {path} {query or ''}")
+            if query:
+                return {"all": []}
+            return {"all": [{"id": "minimax", "models": {"MiniMax-M3.1-Flash": {}}}]}
+
+    registry = bridge.provider_registry(_Client())
+
+    assert registry == {"MiniMax-M3.1-Flash": "minimax"}
+    assert len(calls) == 2
+
+
+def test_resolve_model_uses_workspace_scoped_registry():
+    """端到端一点：resolve_model 拿到的 provider 必须来自作用域查询。"""
+
+    class _Client:
+        workspace = Path("/tmp/ws")
+
+        def request(self, method, path, *, query=None, body=None):
+            assert query == {"directory": "/tmp/ws"}
+            return {"all": [{"id": "inferhub-provider", "models": {"glm-5.3": {}}}]}
+
+    model, resolved, warning = bridge.resolve_model(_Client(), spec="glm-5.3")
+
+    assert model == {"providerID": "inferhub-provider", "modelID": "glm-5.3"}
+    assert resolved == "inferhub-provider/glm-5.3"
+    assert warning == ""
+
+
 def test_resolve_model_resolves_provider_from_registry(
     monkeypatch: pytest.MonkeyPatch,
 ):
