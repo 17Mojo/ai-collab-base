@@ -11,13 +11,74 @@ Pack 注册表和发现机制
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from .schema import PackCategoryType
+
+#: 下载事件在索引里的保留天数。契约 TASK-P1-PROMPT-TRENDING-001 R2 指定 90 天，
+#: 目的是防止 .packs-index.json 随下载次数无限膨胀。
+DOWNLOAD_EVENT_RETENTION_DAYS = 90
+
+
+def _parse_event_timestamp(raw: object) -> datetime | None:
+    """把下载事件的时间戳解析为 naive datetime，无法解析时返回 None"""
+    if not isinstance(raw, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if parsed.tzinfo is not None:
+        parsed = parsed.replace(tzinfo=None)
+    return parsed
+
+
+def _normalize_download_events(raw: object) -> list[str]:
+    """把索引里的 download_events 原始值规整为 list[str]
+
+    旧索引文件没有该字段，或该字段被手工改坏成非 list 值时，统一按 [] 处理。
+    这里绝不能让异常冒泡到 _load_index 的 except 分支 —— 那会触发
+    _build_index() 重建索引并清空全部统计，丢掉下载历史，比原缺陷更严重。
+    """
+    if not isinstance(raw, list):
+        return []
+    return [item for item in raw if isinstance(item, str)]
+
+
+def _prune_download_events(
+    events: list[str], now: datetime | None = None
+) -> list[str]:
+    """裁剪下载事件，只保留最近 DOWNLOAD_EVENT_RETENTION_DAYS 天内的记录"""
+    reference = now or datetime.now()
+    if reference.tzinfo is not None:
+        reference = reference.replace(tzinfo=None)
+    cutoff = reference - timedelta(days=DOWNLOAD_EVENT_RETENTION_DAYS)
+    kept = []
+    for raw in events:
+        parsed = _parse_event_timestamp(raw)
+        if parsed is None:
+            continue
+        if parsed >= cutoff:
+            kept.append(raw)
+    return kept
+
+
+def _count_events_in_window(
+    events: list[str], window_start: datetime, window_end: datetime
+) -> int:
+    """统计落在闭区间窗口 [window_start, window_end] 内的下载事件数"""
+    count = 0
+    for raw in events or []:
+        parsed = _parse_event_timestamp(raw)
+        if parsed is None:
+            continue
+        if window_start <= parsed <= window_end:
+            count += 1
+    return count
 
 
 class PackSortType(Enum):
@@ -45,6 +106,7 @@ class PackIndexEntry:
     rating: float = 0.0
     review_count: int = 0
     tags: list[str] | None = None
+    download_events: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.tags is None:
@@ -64,6 +126,7 @@ class PackIndexEntry:
             "rating": self.rating,
             "review_count": self.review_count,
             "tags": self.tags,
+            "download_events": self.download_events,
         }
 
 
@@ -105,13 +168,24 @@ class PackRegistry:
                         rating=entry_data.get("rating", 0.0),
                         review_count=entry_data.get("review_count", 0),
                         tags=entry_data.get("tags", []),
+                        download_events=_normalize_download_events(
+                            entry_data.get("download_events")
+                        ),
                     )
             except (json.JSONDecodeError, KeyError, ValueError):
                 # 索引文件损坏，重新构建
                 self._build_index()
 
     def _build_index(self):
-        """构建 Pack 索引"""
+        """构建 Pack 索引
+
+        对同名包保留已积累的统计（downloads / rating / review_count）与下载事件
+        （download_events）。refresh_index() 走的就是这条路径，若用全新条目覆盖旧条目，
+        一次刷新就会把热度数据全部清零 —— 热度功能活不过一次刷新。
+        描述性字段（version / description / author / category / 时间戳 / tags）
+        仍以文件系统的 manifest.json 为准。
+        """
+        previous_by_name = {e.name: e for e in (getattr(self, "index", None) or {}).values()}
         self.index = {}
 
         for pack_dir in self.packs_root.iterdir():
@@ -126,6 +200,8 @@ class PackRegistry:
                 with open(manifest_file, encoding="utf-8") as f:
                     manifest = json.load(f)
 
+                carried = previous_by_name.get(manifest["name"])
+
                 entry = PackIndexEntry(
                     name=manifest["name"],
                     version=manifest["version"],
@@ -134,7 +210,15 @@ class PackRegistry:
                     author=manifest["author"],
                     created_at=datetime.fromisoformat(manifest["created_at"]),
                     updated_at=datetime.fromisoformat(manifest["updated_at"]),
+                    downloads=carried.downloads if carried else 0,
+                    rating=carried.rating if carried else 0.0,
+                    review_count=carried.review_count if carried else 0,
                     tags=manifest.get("tags", []),
+                    download_events=(
+                        _prune_download_events(list(carried.download_events))
+                        if carried
+                        else []
+                    ),
                 )
 
                 self.index[entry.name] = entry
@@ -194,6 +278,11 @@ class PackRegistry:
 
         if downloads is not None:
             entry.downloads += downloads
+            if downloads > 0:
+                # 记下每一次下载发生的时间，热度窗口才有数据可算
+                stamp = datetime.now().isoformat()
+                entry.download_events.extend([stamp] * downloads)
+                entry.download_events = _prune_download_events(entry.download_events)
 
         if rating is not None:
             # 计算新的平均评分
@@ -298,19 +387,44 @@ class PackSearchEngine:
 
     def get_trending_packs(self, days: int = 7, limit: int = 10) -> list[PackIndexEntry]:
         """
-        获取热门 Pack
+        获取热门 Pack（按时间窗口内的下载热度）
 
         Args:
-            days: 日期范围（天）
-            limit: 结果数量限制
+            days: 日期范围（天），闭区间 [now - days, now]，必须为正
+            limit: 结果数量限制，非正数返回空列表
 
         Returns:
             热门 Pack 列表
+
+        Raises:
+            ValueError: days <= 0
         """
-        # TODO: 实现基于时间的热度计算
-        # 当前简单按下载次数排序
-        all_packs = self.registry.get_all_packs()
-        return sorted(all_packs, key=lambda x: x.downloads, reverse=True)[:limit]
+        if days <= 0:
+            raise ValueError(f"days must be a positive window in days, got {days}")
+        if limit <= 0:
+            return []
+
+        now = datetime.now()
+        window_start = now - timedelta(days=days)
+
+        windowed: list[tuple[int, PackIndexEntry]] = []
+        for entry in self.registry.get_all_packs():
+            hits = _count_events_in_window(entry.download_events, window_start, now)
+            if hits > 0:
+                windowed.append((hits, entry))
+
+        if windowed:
+            # 排序键：窗口内下载次数 desc → 总下载数 desc → name asc（稳定 tie-break）
+            windowed.sort(key=lambda pair: (-pair[0], -pair[1].downloads, pair[1].name))
+            return [entry for _, entry in windowed[:limit]]
+
+        # 降级路径（有意为之，不是 bug）：旧索引文件根本没有下载事件数据，
+        # 或窗口内确实无人下载。此时退回按累计下载数排序 —— 与本工单改动前的
+        # 行为一致，保证 CLI 的「热门 Pack」不会因历史数据缺失而空屏。
+        return sorted(
+            self.registry.get_all_packs(),
+            key=lambda x: (-x.downloads, x.name),
+        )[:limit]
 
     def get_recommended_packs(self, pack_name: str, limit: int = 5) -> list[PackIndexEntry]:
         """
@@ -324,7 +438,12 @@ class PackSearchEngine:
             推荐 Pack 列表
         """
         if pack_name not in self.registry.index:
-            return self.get_trending_packs(limit=limit)
+            # 「推荐」的语义是「全部 Pack 里最热门的」，不该被 7 天窗口绑架，
+            # 因此这里走不依赖窗口的排序（downloads desc → name asc）。
+            return sorted(
+                self.registry.get_all_packs(),
+                key=lambda x: (-x.downloads, x.name),
+            )[:limit]
 
         # 获取当前 Pack
         current = self.registry.index[pack_name]
