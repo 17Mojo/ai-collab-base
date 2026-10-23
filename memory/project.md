@@ -96,10 +96,14 @@ from: Agent
 - **用户定性（2026-09-26）**: 用户明确要把本次并行冲突当作**样本案例**，转化为 AI Collaboration System 在**治理层**和**服务层**的**可复用能力增强**，而非只做一次性修复。
   - **How to apply**: 后续涉及并行协作 / 冲突处理的需求，优先从"可沉淀为治理层（规则/协议/看板约束）与服务层（自动化冲突检测/交接机制）的通用机制"角度设计；先探索现有治理层与服务层架构现状再动手。
 
-### 测试 collection 环境陷阱（2026-09-26 发现，2026-10-22 已修复）
-- `hermes_target/` 目录会导致 pytest 全量 collection error：`ModuleNotFoundError: No module named 'hermes_agent'`。
-- **Why**: 该目录是外部 Hermes 移植目标（TASK-P0-CONSENSUS-ENGINE-001）的本地副本，非本项目测试目标，但会被 pytest 从根目录收集。
-- **How to apply**: ✅ 修复方式为 `pyproject.toml` 新增 `[tool.pytest.ini_options] testpaths = ["tests"]`（白名单，tests/ 之外零测试文件，对齐 CI 的 tests/unit/ 口径）。**注意：该修复截至 2026-10-22 仅存在于本地工作区、尚未入库**——因 `pyproject.toml` 混入了并行协作者（TASK-P1-GOV-CONVERGE-001）的 asyncio/markers/coverage omit 配置，无法拆分为独立提交，需由该任务收口时一并提交。若未来测试置于 tests/ 之外需同步更新 testpaths。
+### 仓库边界：不得存放外部项目副本（2026-09-26 发现，2026-10-23 清理完毕）
+- **硬规则**：本仓库根目录下**不得存放任何非本仓依赖的第三方/外部项目代码副本**。外部项目的东西要么放在它自己的机器/仓库里，要么以「本仓自带的等价实现」形式落地，绝不以来源不明的目录形式躺在仓里。
+- **Why**: 2026-09-26 曾有一个外部项目的移植目标目录躺在仓里，导致 pytest 全量 collection error（`ModuleNotFoundError`），且被 pytest 从根目录收集、污染覆盖率分母 —— 那时它是「全量 pytest 的唯一阻断项」，排查成本远高于收益。更根本的问题是：外部项目的代码副本在本仓**无法被复跑验证**（依赖不在本仓），却会持续出现在工单、结果文件、文档里，把后续开发带偏。2026-10-23 已连同该外部项目的变更提案、任务契约、记忆条目一并清理。
+- **How to apply**:
+  1. 外部项目的移植/对接需求 → **在本仓落地等价能力**（如 Consensus Engine 本仓已有产品级实现 `ai_collab/engines/consensus_engine.py`），不保留来源代码副本；
+  2. 确需引用外部产物 → 只保留**结果回执**（放 `collaboration/results/RESULT_*.md`）并明确标注「历史事实、路径已不存在、命令不可复跑」；
+  3. `pyproject.toml` 的 `[tool.pytest.ini_options] testpaths = ["tests"]` 是白名单，**保留**（这是兜底防线，不是临时补丁）；若未来测试置于 tests/ 之外需同步更新 testpaths；
+  4. 工单的 `acceptance_commands` 必须**指向本仓可复跑的命令**，不得指向已删除或不在本仓依赖内的路径。
 
 ## 质量基线快照（2026-10-22 现场核验，slimming 分支领先 main 20 提交）
 - 全量测试: **2660 passed / 0 failed / 6 skipped**（36s，Python 3.14.6）

@@ -17,7 +17,11 @@ from: Agent
 - 两套规则文件与两套记忆**均为普通文件、独立存储，且位于仓库之外**，故任何一侧改动都不会传导到另一侧。
 - 唯一共同事实源是根 `CLAUDE.md`（两者都读）；`AGENTS.md` 是 CodeArts 独有空壳。
 - **治理缺口**：`scripts/validate_collaboration_governance.py` 期望根目录存在 `AGENTS.md`，实际缺失 → 报 `missing_agents_reference`。
-- **索引漂移**：CodeArts 记忆目录内的 `feedback_no_ceremony_tax.md`、`feedback_validator_false_positive.md`、`project_route_decision.md`、`project_hermes_port_line.md`、`reference_local_llm_endpoint.md` 等未被 `MEMORY.md` 收录，索引滞后于实际文件。
+- **索引漂移**：CodeArts 记忆目录内的 `feedback_no_ceremony_tax.md`、`feedback_validator_false_positive.md`、`project_route_decision.md`、`reference_local_llm_endpoint.md` 等未被 `MEMORY.md` 收录，索引滞后于实际文件。
+- **镜像索引由脚本生成**：CodeArts 侧的 `MEMORY.md` 本身**不参与**同步 ——
+  `scripts/sync_agent_memory.py` 用各记忆文件的 frontmatter（`name` / `description`）
+  **重新生成**仓库镜像里的 `memory/MEMORY.md`。所以「让镜像索引变干净」的正确做法是
+  **改源文件的 frontmatter 或删源文件**，不是手改镜像的 MEMORY.md。
 
 ## 应做项（按用户目标反推，2026-10-22 给出，尚未落地确认）
 
