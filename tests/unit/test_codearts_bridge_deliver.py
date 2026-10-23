@@ -1382,5 +1382,529 @@ def test_remove_from_cron_store_leaves_no_temp_file(tmp_path: Path, monkeypatch)
     assert leftovers == []
 
 
+
+# ---------------------------------------------------------------------------
+# 模型降级链（--model-fallback）与投递回执落盘
+#
+# 三种"失败"口径（命中即换下一个候选，且每次重试用全新会话）：
+#   1. resolve_model 返回 model_payload is None（模型不在注册表）；
+#   2. 投递抛 BridgeError（HTTP 错误 / 连接失败 / 建会话失败）；
+#   3. 回执里的实际模型 != 请求的模型（静默回落）。
+# 全部候选失败 → 退出码 2，绝不静默降级成"不指定模型"。
+# ---------------------------------------------------------------------------
+
+
+def _patch_delivery_harness(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
+    """给降级链用例搭公共桩：凭据 / KernelClient / 残留体检。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "KernelClient", lambda **_: object())
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    return event
+
+
+def _default_resolve_model(client, *, spec: str):
+    return (
+        {"providerID": "inferhub-provider", "modelID": spec},
+        f"inferhub-provider/{spec}",
+        "",
+    )
+
+
+def test_fallback_chain_first_choice_succeeds_without_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """用例 1：首选生效 → fallback_used=False，model_attempts 长度 1。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(
+        bridge,
+        "deliver_via_new_session",
+        lambda client, *, workspace, message, agent, model=None: {
+            "channel": "new_session",
+            "session_id": "ses_new_1",
+            "response": {"info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}},
+        },
+    )
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "deepseek-v4.1-flash,kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["model_requested"] == "inferhub-provider/glm-5.3"
+    assert payload["model_used"] == "inferhub-provider/glm-5.3"
+    assert payload["model_applied"] is True
+    assert payload["fallback_used"] is False
+    assert payload["model_attempts"] == [
+        {"model": "inferhub-provider/glm-5.3", "ok": True, "error": ""}
+    ]
+
+
+def test_fallback_chain_silent_fallback_moves_to_next_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """用例 2：首选静默回落（回执 modelID 不同）→ 自动换下一个候选。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    calls: list[dict[str, Any] | None] = []
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        calls.append(model)
+        if len(calls) == 1:
+            used: dict[str, Any] | None = {
+                "providerID": "minimax",
+                "modelID": "MiniMax-M3.1-Flash-Preview",
+            }
+        else:
+            used = model
+        return {
+            "channel": "new_session",
+            "session_id": f"ses_new_{len(calls)}",
+            "response": {"info": used},
+        }
+
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "deepseek-v4.1-flash,kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["model_requested"] == "inferhub-provider/glm-5.3"
+    assert payload["model_used"] == "inferhub-provider/deepseek-v4.1-flash"
+    assert payload["model_applied"] is False
+    assert payload["fallback_used"] is True
+    assert len(payload["model_attempts"]) == 2
+    assert payload["model_attempts"][0]["ok"] is False
+    assert "静默回落" in payload["model_attempts"][0]["error"]
+    assert payload["model_attempts"][1] == {
+        "model": "inferhub-provider/deepseek-v4.1-flash",
+        "ok": True,
+        "error": "",
+    }
+
+
+def test_fallback_chain_http_error_moves_to_next_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """用例 3：首选 HTTP 报错 → 换下一个候选。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        if model and model["modelID"] == "glm-5.3":
+            raise bridge.BridgeError(
+                "POST /session/ses_1/message 返回 HTTP 500: upstream boom"
+            )
+        return {
+            "channel": "new_session",
+            "session_id": "ses_new_2",
+            "response": {"info": model},
+        }
+
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "deepseek-v4.1-flash",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["model_used"] == "inferhub-provider/deepseek-v4.1-flash"
+    assert payload["fallback_used"] is True
+    assert payload["model_attempts"][0]["ok"] is False
+    assert "HTTP 500" in payload["model_attempts"][0]["error"]
+
+
+def test_fallback_chain_all_candidates_fail(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """用例 4：全部候选失败 → 退出码 2，stderr 逐条列出原因，且没有任何
+    一次"不指定模型"的投递。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+
+    def _resolve(client, *, spec: str):
+        if spec == "kimi-k3":
+            return (
+                None,
+                spec,
+                f"模型 {spec} 不在 kernel 注册表中，本次投递未指定模型（由 kernel 决定）",
+            )
+        return (
+            {"providerID": "inferhub-provider", "modelID": spec},
+            f"inferhub-provider/{spec}",
+            "",
+        )
+
+    deliver_calls: list[dict[str, Any] | None] = []
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        deliver_calls.append(model)
+        if model and model["modelID"] == "glm-5.3":
+            return {
+                "channel": "new_session",
+                "session_id": "ses_new_1",
+                "response": {
+                    "info": {"providerID": "minimax", "modelID": "MiniMax-M3.1"}
+                },
+            }
+        raise bridge.BridgeError(
+            "无法连接 kernel http://127.0.0.1:14934: connection refused"
+        )
+
+    monkeypatch.setattr(bridge, "resolve_model", _resolve)
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "deepseek-v4.1-flash,kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 2
+    captured = capsys.readouterr()
+    for spec in ("glm-5.3", "deepseek-v4.1-flash", "kimi-k3"):
+        assert spec in captured.err
+    assert "静默回落" in captured.err
+    assert "无法连接" in captured.err
+    assert "不在 kernel 注册表" in captured.err
+    # 三种失败路径各自命中一次：静默回落（glm-5.3）、BridgeError（deepseek）、
+    # 注册表缺失（kimi-k3，不触发投递）。
+    assert deliver_calls and all(m is not None for m in deliver_calls)
+    assert captured.out.strip() == ""
+
+
+def test_fallback_chain_retry_uses_fresh_session(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """用例 5：降级重试必须用全新会话（两次尝试的 session_id 不同）。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    sessions: list[str] = []
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        # deliver_via_new_session 每次调用都会先 create_session —— 用递增
+        # 会话号模拟"每次尝试 = 一个全新会话"。
+        sessions.append(f"ses_new_{len(sessions) + 1}")
+        if len(sessions) == 1:
+            used: dict[str, Any] | None = {
+                "providerID": "minimax",
+                "modelID": "MiniMax-M3.1",
+            }
+        else:
+            used = model
+        return {
+            "channel": "new_session",
+            "session_id": sessions[-1],
+            "response": {"info": used},
+        }
+
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert sessions == ["ses_new_1", "ses_new_2"]
+    assert len(set(sessions)) == 2
+    assert payload["session_id"] == "ses_new_2"
+
+
+def test_single_model_failure_keeps_legacy_behaviour(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """没给 --model-fallback：失败就是失败（退出码 2），不做自动降级、不重试。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    calls: list[int] = []
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        calls.append(1)
+        raise bridge.BridgeError("POST /session/ses_1/message 返回 HTTP 500: boom")
+
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 2
+    assert len(calls) == 1
+
+
+def test_model_fallback_requires_primary_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--model-fallback", "kimi-k3",
+        ]
+    )
+
+    assert code == 2
+    assert "--model-fallback" in capsys.readouterr().err
+
+
+def test_model_fallback_rejects_cron_channel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--channel", "cron",
+            "--model", "glm-5.3",
+            "--model-fallback", "kimi-k3",
+        ]
+    )
+
+    assert code == 2
+    assert "cron" in capsys.readouterr().err
+
+
+def test_model_fallback_rejects_session_channel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """降级重试必须用全新会话 —— 复用已有会话的 session 通道不兼容降级链。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--channel", "session",
+            "--model", "glm-5.3",
+            "--model-fallback", "kimi-k3",
+        ]
+    )
+
+    assert code == 2
+    assert "new_session" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# 投递回执落盘（R4）：logs/codearts_delivery_receipt.json
+# ---------------------------------------------------------------------------
+
+
+def test_delivery_receipt_written_on_success(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(
+        bridge,
+        "deliver_via_new_session",
+        lambda client, *, workspace, message, agent, model=None: {
+            "channel": "new_session",
+            "session_id": "ses_new",
+            "response": {"info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}},
+        },
+    )
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--intervention-id", "int-rcpt-1",
+            "--model", "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    receipt_path = tmp_path / "logs" / "codearts_delivery_receipt.json"
+    assert receipt_path.exists()
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["intervention_id"] == "int-rcpt-1"
+    assert receipt["session_id"] == "ses_new"
+    assert receipt["model_requested"] == "inferhub-provider/glm-5.3"
+    assert receipt["model_used"] == "inferhub-provider/glm-5.3"
+    assert receipt["model_applied"] is True
+    assert receipt["fallback_used"] is False
+    assert receipt["model_attempts"][0]["ok"] is True
+    assert receipt["generated_at"]
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["receipt_file"] == "logs/codearts_delivery_receipt.json"
+
+
+def test_delivery_receipt_overwritten_per_delivery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """每次投递覆盖写：回执文件只有一个，内容是最近一次投递。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(
+        bridge,
+        "deliver_via_new_session",
+        lambda client, *, workspace, message, agent, model=None: {
+            "channel": "new_session",
+            "session_id": "ses_new",
+            "response": {"info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}},
+        },
+    )
+
+    for intervention_id in ("int-first", "int-second"):
+        code = bridge.main(
+            [
+                "--workspace", str(tmp_path),
+                "--event-file", str(event),
+                "--kernel-url", "http://127.0.0.1:14934",
+                "--intervention-id", intervention_id,
+                "--model", "glm-5.3",
+                "--json",
+            ]
+        )
+        assert code == 0
+
+    receipt_files = list((tmp_path / "logs").glob("codearts_delivery_receipt*.json"))
+    assert len(receipt_files) == 1
+    receipt = json.loads(receipt_files[0].read_text(encoding="utf-8"))
+    assert receipt["intervention_id"] == "int-second"
+
+
+def test_delivery_receipt_write_failure_only_warns(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """写回执失败只告警，不影响投递成功（与 inbox 副本的容错口径一致）。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(
+        bridge,
+        "deliver_via_new_session",
+        lambda client, *, workspace, message, agent, model=None: {
+            "channel": "new_session",
+            "session_id": "ses_new",
+            "response": {"info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}},
+        },
+    )
+
+    def _boom(**_kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(bridge, "write_delivery_receipt", _boom)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    err = capsys.readouterr().err
+    assert "写投递回执失败" in err
+
+
+def test_inbox_copy_carries_fallback_trace_fields(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """write_inbox_copy 落的 payload 里必须带 fallback_used / model_attempts。"""
+    event = _patch_delivery_harness(monkeypatch, tmp_path)
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    calls: list[dict[str, Any] | None] = []
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        calls.append(model)
+        if len(calls) == 1:
+            used: dict[str, Any] | None = {
+                "providerID": "minimax",
+                "modelID": "MiniMax-M3.1",
+            }
+        else:
+            used = model
+        return {
+            "channel": "new_session",
+            "session_id": f"ses_new_{len(calls)}",
+            "response": {"info": used},
+        }
+
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--intervention-id", "int-trace-1",
+            "--model", "glm-5.3",
+            "--model-fallback", "kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    inbox_files = list(
+        (tmp_path / "collaboration" / "monitoring" / "codearts_inbox").glob("*.md")
+    )
+    assert len(inbox_files) == 1
+    text = inbox_files[0].read_text(encoding="utf-8")
+    assert "fallback_used" in text
+    assert "model_attempts" in text
+    assert "model_requested" in text
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

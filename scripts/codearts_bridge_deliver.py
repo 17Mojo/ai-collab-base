@@ -39,6 +39,13 @@ kernel 自己会新建 CodeArts 会话并把 markdown 当成用户消息投进�
 `info.providerID` / `info.modelID` 是**实际**用掉的模型 —— 用它来防
 "静默回落"（注册表里有 ≠ 真的被选中）。
 
+**模型降级链（`--model-fallback`）** —— 首选模型不可用（不在注册表 /
+投递 HTTP 失败 / 回证实为静默回落）时，按候选顺序换下一个模型重试，
+每次重试都用全新会话；全部候选失败则明确失败（退出码 2），绝不静默
+降级成"不指定模型"。投递结果与 `logs/codearts_delivery_receipt.json`
+回执里都带 `model_requested` / `model_used` / `model_applied` /
+`fallback_used` / `model_attempts` 留痕字段。
+
 鉴权是 HTTP Basic。密码由运行环境提供，本脚本不硬编码、不落盘：
 
     1. 环境变量 `OPENCODE_SERVER_PASSWORD`（用户名默认 `codearts`，
@@ -88,6 +95,7 @@ KERNEL_CONFIG_ROOT = Path.home() / ".codeartsdoer" / "Visual_Studio_Code"
 CRON_STORE_PATH = Path.home() / ".codeartsdoer" / "vscode-data" / "cron" / "scheduled_tasks.json"
 INBOX_DIR = "collaboration/monitoring/codearts_inbox"
 SESSION_REGISTRY = "logs/session_registry_state.json"
+DELIVERY_RECEIPT_RELATIVE = "logs/codearts_delivery_receipt.json"
 
 # 非 JSON 响应（kernel 部分 GET 路由返回 Python 字面量格式）解析失败时的兜底保留长度。
 # 原先写死 2000，会把会话列表截断到只剩第一条消息 —— 静默丢信息，最难查的一类。
@@ -694,6 +702,146 @@ class KernelClient:
 
 
 
+# --------------------------------------------------------------------------
+# 模型降级链（--model-fallback）
+#
+# 钉死的模型不可用时自动降级到下一个候选，派单不中断；降级全程留痕。
+# 某个候选"失败"的口径（三者任一，命中即换下一个候选、并使用全新会话）：
+#   1. resolve_model 返回 model_payload is None（模型不在 kernel 注册表）；
+#   2. 投递过程抛 BridgeError（HTTP 错误、连接失败、创建会话失败等）；
+#   3. 投递成功但回执里的实际模型 != 请求的模型（静默回落）。
+# 全部候选失败 → 明确失败（退出码 2），绝不静默降级成"不指定模型"——
+# 那等于假装钉住了模型。
+# --------------------------------------------------------------------------
+
+
+def parse_fallback_models(raw: str) -> list[str]:
+    """'a,b,c' → ['a', 'b', 'c']（去空白、滤空项，不去重）。"""
+    items: list[str] = []
+    for piece in str(raw or "").split(","):
+        text = piece.strip()
+        if text:
+            items.append(text)
+    return items
+
+
+def build_model_candidates(primary: str, fallback: list[str]) -> list[str]:
+    """候选序列 = [primary] + fallback 里尚未出现过的项（去重、保持原序）。"""
+    candidates: list[str] = []
+    for spec in [primary, *fallback]:
+        if spec and spec not in candidates:
+            candidates.append(spec)
+    return candidates
+
+
+def deliver_with_model_fallback(
+    client: KernelClient,
+    *,
+    workspace: Path,
+    message: str,
+    agent: str,
+    candidates: list[str],
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    """按候选顺序投递（new_session 通道），失败换下一个候选。
+
+    每次尝试都调用 deliver_via_new_session —— 它每次都新建会话，
+    所以降级重试天然使用全新会话（不在已被污染的会话里重试）。
+
+    返回 (delivery, attempts)：delivery 已组装好 model_requested /
+    model_used / model_applied / fallback_used / model_attempts 字段
+    （model_* 都以**首选**模型为基准）；delivery 为 None 表示全部候选
+    失败（attempts 里逐条记录了每个候选的失败原因）。
+    """
+    attempts: list[dict[str, Any]] = []
+    first_requested = ""
+    for index, spec in enumerate(candidates):
+        try:
+            model_payload, model_resolved, model_warning = resolve_model(
+                client, spec=spec
+            )
+        except BridgeError as exc:
+            attempts.append(
+                {"model": spec, "ok": False, "error": f"解析模型失败: {exc}"}
+            )
+            continue
+        if index == 0:
+            first_requested = model_resolved or spec
+        if model_payload is None:
+            attempts.append(
+                {
+                    "model": spec,
+                    "ok": False,
+                    "error": model_warning or f"模型 {spec} 不在 kernel 注册表中",
+                }
+            )
+            continue
+        try:
+            delivery = deliver_via_new_session(
+                client,
+                workspace=workspace,
+                message=message,
+                agent=agent,
+                model=model_payload,
+            )
+        except BridgeError as exc:
+            attempts.append(
+                {"model": model_resolved, "ok": False, "error": str(exc)}
+            )
+            continue
+        model_used = extract_used_model(delivery.get("response"))
+        if model_used and model_used != model_resolved:
+            attempts.append(
+                {
+                    "model": model_resolved,
+                    "ok": False,
+                    "error": (
+                        f"静默回落：请求 {model_resolved}，实际用了 {model_used}"
+                    ),
+                }
+            )
+            continue
+        attempts.append({"model": model_resolved, "ok": True, "error": ""})
+        delivery["model_requested"] = first_requested or candidates[0]
+        delivery["model_used"] = model_used
+        if not model_used:
+            delivery["model_applied"] = None  # 回执里没带模型信息，无法证实
+        else:
+            delivery["model_applied"] = model_used == delivery["model_requested"]
+        delivery["fallback_used"] = bool(
+            model_used
+            and delivery["model_requested"]
+            and model_used != delivery["model_requested"]
+        )
+        delivery["model_attempts"] = attempts
+        return delivery, attempts
+    return None, attempts
+
+
+def write_delivery_receipt(*, workspace: Path, delivery: dict[str, Any]) -> str:
+    """把本次投递的关键信息写成回执文件（每次覆盖写，只有一个文件）。
+
+    调用方（适配器）按 intervention_id 把回执对到具体哪一单，从这里读
+    "实际用的模型" —— 不解析桥接进程的 stdout。写文件失败由调用方
+    告警兜底，不影响投递成功（与 inbox 副本的容错口径一致）。
+    """
+    receipt = {
+        "intervention_id": str(delivery.get("intervention_id") or ""),
+        "session_id": str(delivery.get("session_id") or ""),
+        "model_requested": delivery.get("model_requested", ""),
+        "model_used": delivery.get("model_used", ""),
+        "model_applied": delivery.get("model_applied"),
+        "fallback_used": bool(delivery.get("fallback_used")),
+        "model_attempts": list(delivery.get("model_attempts") or []),
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+    }
+    target = workspace / DELIVERY_RECEIPT_RELATIVE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    return str(target.relative_to(workspace))
+
+
 def _next_minute_cron() -> str:
     """下一分钟的一次性 cron 表达式（5 段，本地时区）。
 
@@ -1156,6 +1304,15 @@ def main(argv: list[str] | None = None) -> int:
         default="",
         help="钉死本次投递使用的模型（modelID 或 providerID/modelID）",
     )
+    parser.add_argument(
+        "--model-fallback",
+        default="",
+        help=(
+            "模型降级链：逗号分隔的候选列表（如 glm-5.3,deepseek-v4.1-flash,kimi-k3）。"
+            "首选（--model）不可用时按顺序降级到下一个候选（每次重试用全新会话），"
+            "全部候选失败则明确失败；只支持 new_session 通道"
+        ),
+    )
     parser.add_argument("--timeout", type=int, default=120, help="请求超时（秒）")
     parser.add_argument(
         "--channel",
@@ -1218,12 +1375,25 @@ def main(argv: list[str] | None = None) -> int:
     except BridgeError as exc:
         return _fail(str(exc))
 
+    # 模型降级链候选：首选 + fallback（去重、保持原序）。
+    fallback_models = parse_fallback_models(args.model_fallback)
+    if fallback_models and not args.model:
+        return _fail(
+            "--model-fallback 需要与 --model 一起使用：没有首选模型就谈不上降级链"
+        )
+    candidates = build_model_candidates(args.model, fallback_models)
+
     # 通道选择：默认保持旧行为（cron），只有钉了模型才走 new_session。
     channel = args.channel or ("new_session" if args.model else "cron")
-    if channel == "cron" and args.model:
+    if channel == "cron" and (args.model or fallback_models):
         return _fail(
-            "cron 通道由 kernel 决定模型，无法配合 --model 使用；"
+            "cron 通道由 kernel 决定模型，无法配合 --model/--model-fallback 使用；"
             "请改用 --channel new_session（自建会话 + 消息体带模型）"
+        )
+    if fallback_models and channel != "new_session":
+        return _fail(
+            "--model-fallback 只支持 new_session 通道"
+            f"（降级重试必须用全新会话），当前通道: {channel}"
         )
 
     kernel_url = args.kernel_url
@@ -1240,6 +1410,7 @@ def main(argv: list[str] | None = None) -> int:
             "kernel_url": kernel_url,
             "channel": channel,
             "model_requested": args.model,
+            "model_fallback": fallback_models,
             "message_length": len(message),
             "message_preview": message[:500],
         }
@@ -1261,48 +1432,54 @@ def main(argv: list[str] | None = None) -> int:
         timeout=args.timeout,
     )
 
-    # 解析模型：查不到就如实降级并告警（不静默假装钉住了）。
-    model_payload: dict[str, str] | None = None
-    model_resolved = ""
-    model_warning = ""
-    if args.model:
+    # 模型降级链：候选 >= 2 才启用；单候选保持既有行为（失败就是失败，
+    # 不做自动降级，也不改变"查不到模型 → 告警后如实不指定模型投递"）。
+    use_fallback_chain = len(candidates) >= 2
+    delivery: dict[str, Any]
+    if use_fallback_chain:
         try:
-            model_payload, model_resolved, model_warning = resolve_model(
-                client, spec=args.model
+            delivery, attempts = deliver_with_model_fallback(
+                client,
+                workspace=workspace,
+                message=message,
+                agent=args.agent,
+                candidates=candidates,
             )
         except BridgeError as exc:
-            return _fail(f"解析模型失败: {exc}")
+            return _fail(f"模型降级链投递失败: {exc}")
+        if delivery is None:
+            for attempt in attempts:
+                print(
+                    "[codearts-bridge] 候选模型 "
+                    f"{attempt['model']} 失败: {attempt['error']}",
+                    file=sys.stderr,
+                )
+            return _fail(
+                f"全部 {len(candidates)} 个候选模型都失败，未做任何投递；"
+                "拒绝降级成不指定模型（那等于假装钉住了模型）"
+            )
+    else:
+        # 解析模型：查不到就如实降级并告警（不静默假装钉住了）。
+        model_payload: dict[str, str] | None = None
+        model_resolved = ""
+        model_warning = ""
+        if args.model:
+            try:
+                model_payload, model_resolved, model_warning = resolve_model(
+                    client, spec=args.model
+                )
+            except BridgeError as exc:
+                return _fail(f"解析模型失败: {exc}")
 
-    try:
-        if channel == "session":
-            session_id = resolve_direct_session(
-                client, workspace=workspace, explicit=args.session_id
-            )
-            if not session_id:
-                return _fail("未找到可用的 CodeArts 会话，且指定了 --channel session")
-            delivery = deliver_via_session(
-                client,
-                workspace=workspace,
-                message=message,
-                session_id=session_id,
-                agent=args.agent,
-                model=model_payload,
-            )
-        elif channel == "new_session":
-            delivery = deliver_via_new_session(
-                client,
-                workspace=workspace,
-                message=message,
-                agent=args.agent,
-                model=model_payload,
-            )
-        elif channel == "cron":
-            delivery = deliver_via_cron(client, workspace=workspace, message=message)
-        else:  # auto
-            session_id = resolve_direct_session(
-                client, workspace=workspace, explicit=args.session_id
-            )
-            if session_id:
+        try:
+            if channel == "session":
+                session_id = resolve_direct_session(
+                    client, workspace=workspace, explicit=args.session_id
+                )
+                if not session_id:
+                    return _fail(
+                        "未找到可用的 CodeArts 会话，且指定了 --channel session"
+                    )
                 delivery = deliver_via_session(
                     client,
                     workspace=workspace,
@@ -1311,7 +1488,7 @@ def main(argv: list[str] | None = None) -> int:
                     agent=args.agent,
                     model=model_payload,
                 )
-            elif model_payload:
+            elif channel == "new_session":
                 delivery = deliver_via_new_session(
                     client,
                     workspace=workspace,
@@ -1319,31 +1496,105 @@ def main(argv: list[str] | None = None) -> int:
                     agent=args.agent,
                     model=model_payload,
                 )
-            else:
-                delivery = deliver_via_cron(client, workspace=workspace, message=message)
-    except BridgeError as exc:
-        return _fail(str(exc))
+            elif channel == "cron":
+                delivery = deliver_via_cron(
+                    client, workspace=workspace, message=message
+                )
+            else:  # auto
+                session_id = resolve_direct_session(
+                    client, workspace=workspace, explicit=args.session_id
+                )
+                if session_id:
+                    delivery = deliver_via_session(
+                        client,
+                        workspace=workspace,
+                        message=message,
+                        session_id=session_id,
+                        agent=args.agent,
+                        model=model_payload,
+                    )
+                elif model_payload:
+                    delivery = deliver_via_new_session(
+                        client,
+                        workspace=workspace,
+                        message=message,
+                        agent=args.agent,
+                        model=model_payload,
+                    )
+                else:
+                    delivery = deliver_via_cron(
+                        client, workspace=workspace, message=message
+                    )
+        except BridgeError as exc:
+            return _fail(str(exc))
 
     delivery["intervention_id"] = args.intervention_id
     delivery["assignee"] = args.assignee
-    # 回执取证：model_used 是 kernel **实际**用掉的模型，model_applied 判断
-    # 有没有静默回落（请求 A、实际 B → False）。
-    delivery["model_requested"] = model_resolved or args.model
-    delivery["model_used"] = extract_used_model(delivery.get("response"))
-    if model_payload is None:
-        delivery["model_applied"] = None
-    elif not delivery["model_used"]:
-        delivery["model_applied"] = None  # 回执里没带模型信息，无法证实
-    else:
-        delivery["model_applied"] = delivery["model_used"] == model_resolved
-    if model_warning:
-        delivery["model_warning"] = model_warning
-        print(f"[codearts-bridge] 警告: {model_warning}", file=sys.stderr)
+    if not use_fallback_chain:
+        # 回执取证：model_used 是 kernel **实际**用掉的模型，model_applied 判断
+        # 有没有静默回落（请求 A、实际 B → False）。
+        delivery["model_requested"] = model_resolved or args.model
+        delivery["model_used"] = extract_used_model(delivery.get("response"))
+        if model_payload is None:
+            delivery["model_applied"] = None
+        elif not delivery["model_used"]:
+            delivery["model_applied"] = None  # 回执里没带模型信息，无法证实
+        else:
+            delivery["model_applied"] = delivery["model_used"] == model_resolved
+        # 降级留痕（与降级链统一口径）：fallback_used 的判据是
+        # "实际干活的模型不是首选" —— 静默回落同样算（kernel 单方面换模型）。
+        delivery["fallback_used"] = bool(
+            delivery["model_used"]
+            and delivery["model_requested"]
+            and delivery["model_used"] != delivery["model_requested"]
+        )
+        if args.model:
+            attempt_error = ""
+            if model_payload is None:
+                attempt_error = model_warning
+            elif delivery["model_applied"] is False:
+                attempt_error = (
+                    f"静默回落：请求 {model_resolved}，"
+                    f"实际用了 {delivery['model_used']}"
+                )
+            delivery["model_attempts"] = [
+                {
+                    "model": model_resolved or args.model,
+                    "ok": (
+                        delivery["model_applied"] is not False
+                        and model_payload is not None
+                    ),
+                    "error": attempt_error,
+                }
+            ]
+        else:
+            delivery["model_attempts"] = []
+        if model_warning:
+            delivery["model_warning"] = model_warning
+            print(f"[codearts-bridge] 警告: {model_warning}", file=sys.stderr)
     if delivery.get("model_applied") is False:
         print(
             "[codearts-bridge] 警告: 请求模型 "
             f"{delivery['model_requested']} 未生效，实际用了 "
             f"{delivery['model_used']}",
+            file=sys.stderr,
+        )
+    if delivery.get("fallback_used"):
+        print(
+            "[codearts-bridge] 提示: 本次投递不是首选模型完成的（请求 "
+            f"{delivery.get('model_requested') or '未指定'}，实际 "
+            f"{delivery.get('model_used') or '未知'}）",
+            file=sys.stderr,
+        )
+    # 投递回执落盘（R4）：调用方按 intervention_id 对单，从这里读
+    # "实际用的模型"。写失败只告警，不影响投递成功（与 inbox 副本口径一致）。
+    try:
+        delivery["receipt_file"] = write_delivery_receipt(
+            workspace=workspace, delivery=delivery
+        )
+    except OSError as exc:
+        print(
+            f"[codearts-bridge] 警告: 写投递回执失败（不影响本次投递）: {exc}",
             file=sys.stderr,
         )
     try:
@@ -1365,15 +1616,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"mode": "apply", **delivery}, ensure_ascii=False, indent=2))
     else:
         model_note = delivery.get("model_used") or "未指定"
+        fallback_note = "（已降级）" if delivery.get("fallback_used") else ""
         if delivery.get("channel") == "cron":
             print(
                 f"[codearts-bridge] 已投递（cron 通道）task_id="
-                f"{delivery.get('task_id', '')} 模型={model_note}"
+                f"{delivery.get('task_id', '')} 模型={model_note}{fallback_note}"
             )
         else:
             print(
                 f"[codearts-bridge] 已投递到 CodeArts 会话 "
-                f"{delivery.get('session_id', '')} 模型={model_note}"
+                f"{delivery.get('session_id', '')} 模型={model_note}{fallback_note}"
             )
     return 0
 

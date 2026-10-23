@@ -16,6 +16,8 @@ kernel 的 `GET /provider` 会把模型注册表列出来，但**注册 ≠ 可�
     python3 scripts/check_codearts_models.py --models glm-5.3 kimi-k3
     python3 scripts/check_codearts_models.py --watch 300        # 每 5 分钟一轮
     python3 scripts/check_codearts_models.py --json             # 机器可读
+    python3 scripts/check_codearts_models.py --pick --models glm-5.3 kimi-k3
+                                                                # 返回第一个真可用的模型
 
 凭据
 ----
@@ -244,8 +246,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workspace", default=str(REPO_ROOT), help="工作区目录（默认仓库根）")
     parser.add_argument("--timeout", type=int, default=120, help="单次请求超时秒数")
     parser.add_argument("--watch", type=int, default=0, metavar="SECONDS", help="按间隔重复探测（0=只跑一轮）")
+    parser.add_argument(
+        "--pick",
+        action="store_true",
+        help=(
+            "按 --models 的顺序逐个真实探测，返回第一个"
+            "\"实际模型 == 请求模型\"的候选（providerID/modelID）；"
+            "一个都不可用时退出码 1，且不输出任何模型 id"
+        ),
+    )
     parser.add_argument("--json", action="store_true", help="输出 JSON")
     args = parser.parse_args(argv)
+    if args.pick and args.watch:
+        print(
+            "--pick 与 --watch 互斥：--pick 只做单轮挑选（找到第一个可用即返回），"
+            "--watch 是持续监测；请去掉其中一个",
+            file=sys.stderr,
+        )
+        return 2
 
     workspace = Path(args.workspace).resolve()
     targets = [_normalize(name) for name in args.models]
@@ -268,6 +286,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
         results = []
+        picked = ""
         for model_id in targets:
             provider_id = registry.get(model_id)
             if not provider_id:
@@ -298,6 +317,41 @@ def main(argv: list[str] | None = None) -> int:
                     timeout=args.timeout,
                 )
             )
+            if args.pick:
+                requested = f"{provider_id}/{model_id}"
+                item = results[-1]
+                # "真可用"= 真实推理成功且回执取证实际模型 == 请求模型
+                # （注册表里有 ≠ 可用；静默回落到默认模型也不算）。
+                if item["usable"] and item["used_model"] == requested:
+                    picked = requested
+                    break
+
+        if args.pick:
+            if picked:
+                if args.json:
+                    print(
+                        json.dumps(
+                            {"picked": picked, "probed": len(results)},
+                            ensure_ascii=False,
+                            indent=2,
+                        )
+                    )
+                else:
+                    print(picked)
+                return 0
+            # 一个都不可用：退出码 1，不输出任何模型 id
+            # （绝不回落到 kernel 默认模型来充数）。
+            if args.json:
+                print(
+                    json.dumps(
+                        {"picked": None, "probed": len(results)},
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                )
+            else:
+                print(f"无可用模型：{len(results)} 个候选全部失败")
+            return 1
 
         if args.json:
             print(json.dumps({"default_model": default_model, "results": results}, ensure_ascii=False, indent=2))

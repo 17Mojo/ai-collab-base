@@ -449,3 +449,310 @@ def test_codearts_adapter_fixed_policy_always_uses_first_model(tmp_path: Path):
 
     models = (workspace / "models.txt").read_text(encoding="utf-8").split()
     assert models == ["glm-5.3", "glm-5.3"]
+
+
+# ---------------------------------------------------------------------------
+# 投递回执取证：delivery 记录里区分「请求的模型」与「实际用的模型」
+#
+# 桥接脚本投递成功后会把回执写到 logs/codearts_delivery_receipt.json；
+# 适配器按 intervention_id 匹配读回执。对不上或读不到 → 字段留空字符串，
+# 绝不拿"请求的模型"（model 字段）冒充"实际用的模型"（model_used 字段）。
+# ---------------------------------------------------------------------------
+
+
+def _write_delivery_receipt(workspace: Path, payload: dict) -> None:
+    receipt_dir = workspace / "logs"
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    (receipt_dir / "codearts_delivery_receipt.json").write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def test_codearts_adapter_reads_model_used_from_delivery_receipt(tmp_path: Path):
+    """用例 8：delivery 里 model_used 必须是回执里的值，不是请求值。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3", "kimi-k3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-receipt-1", message="请执行。")
+    _write_delivery_receipt(
+        workspace,
+        {
+            "intervention_id": "int-receipt-1",
+            "session_id": "ses_x",
+            "model_requested": "inferhub-provider/glm-5.3",
+            "model_used": "inferhub-provider/kimi-k3",
+            "model_applied": False,
+            "fallback_used": True,
+            "model_attempts": [
+                {"model": "inferhub-provider/glm-5.3", "ok": False, "error": "静默回落"},
+                {"model": "inferhub-provider/kimi-k3", "ok": True, "error": ""},
+            ],
+            "generated_at": "2026-10-23T18:00:00",
+        },
+    )
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    delivery = report["deliveries"][0]
+    assert delivery["action"] == "queued"
+    assert delivery["model"] == "glm-5.3"
+    assert delivery["model_used"] == "inferhub-provider/kimi-k3"
+    assert delivery["model_applied"] is False
+    assert delivery["fallback_used"] is True
+
+    summary_text = (workspace / report["summary_file"]).read_text(encoding="utf-8")
+    assert "model=`glm-5.3`" in summary_text
+    assert "model_used=`inferhub-provider/kimi-k3`" in summary_text
+    assert "model_applied=`false`" in summary_text
+    assert "fallback_used=`true`" in summary_text
+
+
+def test_codearts_adapter_ignores_receipt_for_other_intervention(tmp_path: Path):
+    """用例 9（对不上）：回执的 intervention_id 不匹配 → 字段留空字符串。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-receipt-2", message="请执行。")
+    _write_delivery_receipt(
+        workspace,
+        {
+            "intervention_id": "int-other",
+            "session_id": "ses_y",
+            "model_requested": "inferhub-provider/glm-5.3",
+            "model_used": "inferhub-provider/kimi-k3",
+            "model_applied": False,
+            "fallback_used": True,
+            "model_attempts": [],
+            "generated_at": "2026-10-23T18:00:00",
+        },
+    )
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    delivery = report["deliveries"][0]
+    assert delivery["action"] == "queued"
+    assert delivery["model"] == "glm-5.3"
+    assert delivery["model_used"] == ""
+    assert delivery["model_applied"] == ""
+    assert delivery["fallback_used"] == ""
+
+
+def test_codearts_adapter_leaves_model_used_empty_without_receipt(tmp_path: Path):
+    """用例 9（读不到）：没有回执文件 → 字段留空，不许请求值顶替。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-noreceipt", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    delivery = report["deliveries"][0]
+    assert delivery["action"] == "queued"
+    assert delivery["model"] == "glm-5.3"
+    assert delivery["model_used"] == ""
+    assert delivery["model_applied"] == ""
+    assert delivery["fallback_used"] == ""
+
+
+def test_codearts_adapter_tolerates_corrupt_receipt(tmp_path: Path):
+    """回执文件损坏（非 JSON）→ 当没有回执处理，不影响投递成功。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-corrupt", message="请执行。")
+    receipt_dir = workspace / "logs"
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    (receipt_dir / "codearts_delivery_receipt.json").write_text(
+        "not a json {{{", encoding="utf-8"
+    )
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    delivery = report["deliveries"][0]
+    assert delivery["action"] == "queued"
+    assert delivery["model_used"] == ""
+    assert delivery["model_applied"] == ""
+    assert delivery["fallback_used"] == ""
+
+
+def test_codearts_adapter_receipt_model_applied_null_is_kept_verbatim(tmp_path: Path):
+    """回执里 model_applied 为 null（无法证实）→ 原样保留 None，不臆造成 false。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-nullapplied", message="请执行。")
+    _write_delivery_receipt(
+        workspace,
+        {
+            "intervention_id": "int-nullapplied",
+            "session_id": "ses_z",
+            "model_requested": "inferhub-provider/glm-5.3",
+            "model_used": "",
+            "model_applied": None,
+            "fallback_used": False,
+            "model_attempts": [
+                {"model": "inferhub-provider/glm-5.3", "ok": True, "error": ""}
+            ],
+            "generated_at": "2026-10-23T18:00:00",
+        },
+    )
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    delivery = report["deliveries"][0]
+    assert delivery["model_used"] == ""
+    assert delivery["model_applied"] is None
+    assert delivery["fallback_used"] is False
+
+
+# ---------------------------------------------------------------------------
+# 降级链渲染（R6）：{model_fallback} 占位符
+# ---------------------------------------------------------------------------
+
+
+def test_codearts_adapter_renders_model_fallback_placeholder(tmp_path: Path):
+    """{model_fallback} = 模型池里除选中模型之外的其余模型（池内顺序、逗号连接）。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\"; "
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-fb-1", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert (workspace / "fallback.txt").read_text(encoding="utf-8") == (
+        "deepseek-v4.1-flash,kimi-k3"
+    )
+
+
+def test_codearts_adapter_renders_empty_model_fallback_without_model(tmp_path: Path):
+    """没配模型池（不钉模型）→ {model_fallback} 渲染成空串。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\"; "
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-fb-2", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert (workspace / "fallback.txt").read_text(encoding="utf-8") == ""
+
+
+def test_codearts_adapter_renders_empty_model_fallback_for_single_model_pool(
+    tmp_path: Path,
+):
+    """池里只有一个模型 → 没有可降级候选，{model_fallback} 渲染成空串。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\"; "
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-fb-3", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert (workspace / "fallback.txt").read_text(encoding="utf-8") == ""
+
+
+def test_codearts_adapter_model_fallback_placeholder_is_optional(tmp_path: Path):
+    """模板里没有 {model_fallback} 占位符 → 渲染是无害 no-op（既有模板不破）。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3", "kimi-k3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-fb-4", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert (workspace / "model.txt").read_text(encoding="utf-8") == "glm-5.3"

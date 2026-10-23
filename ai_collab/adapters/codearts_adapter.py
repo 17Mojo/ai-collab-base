@@ -24,6 +24,7 @@ DEFAULT_REPORT_PATH = "logs/codearts_adapter_report.json"
 DEFAULT_HISTORY_PATH = "logs/codearts_adapter_history.jsonl"
 DEFAULT_SUMMARY_PATH = "collaboration/monitoring/CODEARTS_ADAPTER_SUMMARY_latest.md"
 DEFAULT_EVENT_DIR = "collaboration/monitoring/codearts_pull_events"
+DELIVERY_RECEIPT_RELATIVE = "logs/codearts_delivery_receipt.json"
 EXACT_MESSAGE_PATTERN = re.compile(
     r"## Exact Forward Message\s+```text\s*(?P<message>.*?)\s*```",
     flags=re.DOTALL,
@@ -195,6 +196,26 @@ def _event_file(event_dir: Path, intervention_id: str) -> Path:
     return event_dir / f"CODEARTS_PULL_EVENT_{intervention_id}_latest.md"
 
 
+def _read_delivery_receipt(workspace: Path, intervention_id: str) -> dict[str, Any]:
+    """读桥接落盘的投递回执，按 intervention_id 匹配。
+
+    读不到 / 解析失败 / intervention_id 对不上 → 空字典（调用方把
+    model_used 等字段留空字符串，绝不拿"请求的模型"冒充"实际用的模型"）。
+    """
+    receipt_file = workspace / DELIVERY_RECEIPT_RELATIVE
+    if not receipt_file.exists():
+        return {}
+    try:
+        payload = json.loads(receipt_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    if str(payload.get("intervention_id") or "").strip() != intervention_id:
+        return {}
+    return payload
+
+
 def _run_bridge_command(
     *,
     workspace: Path,
@@ -204,6 +225,7 @@ def _run_bridge_command(
     intervention: dict[str, Any],
     model: str = "",
     channel: str = "",
+    model_fallback: str = "",
 ) -> subprocess.CompletedProcess[str]:
     rendered = command.format(
         workspace=str(workspace),
@@ -215,6 +237,7 @@ def _run_bridge_command(
         reason_code=str(intervention.get("reason_code") or ""),
         model=model,
         channel=channel,
+        model_fallback=model_fallback,
     )
     if platform.system() == "Windows":
         cmd = ["cmd", "/C", rendered]
@@ -252,10 +275,29 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
     deliveries = list(report.get("deliveries", []) or [])
     if deliveries:
         for item in deliveries:
+            # model = 请求的模型（本地选择）；model_used = 回执里实际用掉的
+            # 模型（桥接落盘的回执取证）——两者语义不同，绝不互相顶替。
+            used = str(item.get("model_used") or "")
+            used_note = used or "（无回执）"
+            applied = item.get("model_applied")
+            if applied is True:
+                applied_note = "true"
+            elif applied is False:
+                applied_note = "false"
+            elif applied is None:
+                applied_note = "null"
+            else:
+                applied_note = "（无回执）"
+            fallback = item.get("fallback_used")
+            fallback_note = (
+                "true" if fallback is True else "false" if fallback is False else "（无回执）"
+            )
             lines.append(
                 f"- `{item.get('intervention_id', '')}` action=`{item.get('action', '')}` "
                 f"status=`{item.get('delivery_status', '')}` "
-                f"model=`{item.get('model', '') or '（kernel 决定）'}`"
+                f"model=`{item.get('model', '') or '（kernel 决定）'}` "
+                f"model_used=`{used_note}` model_applied=`{applied_note}` "
+                f"fallback_used=`{fallback_note}`"
             )
             if item.get("event_file"):
                 lines.append(f"  event_file: `{item.get('event_file', '')}`")
@@ -331,7 +373,7 @@ def run_codearts_pull_adapter(
         artifact_relpath = str(intervention.get("message_artifact") or "").strip()
         artifact_file = workspace / artifact_relpath if artifact_relpath else workspace
         exact_message, error = _load_artifact_message(artifact_file)
-        delivery = {
+        delivery: dict[str, Any] = {
             "intervention_id": intervention_id,
             "session_id": str(intervention.get("session_id") or ""),
             "delivery_status": str(intervention.get("delivery_status") or ""),
@@ -339,6 +381,12 @@ def run_codearts_pull_adapter(
             "action": "",
             "error": "",
             "model": "",
+            # 实际用掉的模型（来自桥接回执）：读不到/对不上时留空字符串，
+            # 绝不拿"请求的模型"（model 字段）冒充。model_applied /
+            # fallback_used 读到回执后是 bool（model_applied 还可能是 None）。
+            "model_used": "",
+            "model_applied": "",
+            "fallback_used": "",
         }
 
         if error:
@@ -379,6 +427,7 @@ def run_codearts_pull_adapter(
             continue
 
         model = ""
+        model_fallback = ""
         # 默认仍是 cron（kernel 自建会话）；只有真的钉上模型才切 new_session。
         channel = "cron"
         if model_pool and model_wired:
@@ -390,6 +439,10 @@ def run_codearts_pull_adapter(
                 channel = "new_session"
                 model_pointer += 1
                 model_pinned_count += 1
+                # 降级链渲染：模型池里除本单选中模型之外的其余模型，
+                # 按池内顺序用逗号连接（模板里没有 {model_fallback} 占位符时
+                # 渲染是无害 no-op —— str.format 忽略未用到的键）。
+                model_fallback = ",".join(m for m in model_pool if m != model)
         delivery["model"] = model
 
         result = _run_bridge_command(
@@ -400,8 +453,22 @@ def run_codearts_pull_adapter(
             intervention=intervention,
             model=model,
             channel=channel,
+            model_fallback=model_fallback,
         )
         if result.returncode == 0:
+            # 读桥接落盘的回执，把"实际用的模型"取证进报告（R5）。
+            # 对不上或读不到 → 字段保持空字符串，绝不拿请求值顶替。
+            receipt = _read_delivery_receipt(workspace, intervention_id)
+            if receipt:
+                used = receipt.get("model_used")
+                if isinstance(used, str):
+                    delivery["model_used"] = used
+                applied = receipt.get("model_applied")
+                if isinstance(applied, bool) or applied is None:
+                    delivery["model_applied"] = applied
+                fallback = receipt.get("fallback_used")
+                if isinstance(fallback, bool):
+                    delivery["fallback_used"] = fallback
             ack_report = ack_intervention(
                 workspace=workspace,
                 intervention_id=intervention_id,
