@@ -33,8 +33,8 @@
 - [ ] 3.6 TestRegressionSample20260926 — 本次冲突完整复现（mini git repo fixture）
 - [ ] 3.7 ruff lint 全绿 + 全量回归无新增失败
 
-## Phase 4: 研究项目（暂缓）
+## Phase 4: 项目边界（暂缓）
 
-- [ ] 4.1 pytest `norecursedirs` 隔离 `hermes_target`
+- [ ] 4.1 pytest 收集边界：仓库内不存放外部项目副本，`testpaths` 限定 `tests/`
 - [ ] 4.2 修 `test_consensus_engine.py` 导入 + 并发守护
-- [ ] 4.3 在 hermes_target 上验证 concurrent guard 复用
+- [ ] 4.3 验证 concurrent guard 在任意共享工作区的复用

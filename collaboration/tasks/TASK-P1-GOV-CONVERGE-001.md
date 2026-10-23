@@ -55,6 +55,8 @@ ruff 配置清理误删了 `pyproject.toml` 里的 `[tool.coverage.*]` 段。该
 
 - 不重构 `_cli_main.py`（2606 行巨型 CLI 的拆分是独立任务）
 - 不删除 `hermes_target/`（TASK-P0-CONSENSUS-ENGINE-001 的工作产物）
+  —— **该非目标已于 2026-10-23 失效**：那次噪声清理已删除该目录，
+  本工单的范围限制只对本工单当时的执行期有效
 - 不改变 `pack/react_converter.py` 的转换逻辑
 
 ## 步骤

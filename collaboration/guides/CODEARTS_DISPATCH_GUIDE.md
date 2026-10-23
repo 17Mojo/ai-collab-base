@@ -334,7 +334,7 @@ ls -l path/to/file.py && wc -l path/to/file.py
 > ⚠️ **这一段也是踩过坑才加的**（2026-10-22→23 真机实测）：
 > 前三次投递的会话全部以 `MessageAbortedError`（或无错误停住）结束、零产出。
 > 复盘元数据发现，两个会话分别死在 `task` 与 `write` 调用上，
-> 而 `hermes_target/` 与仓库里没有任何文件被写出来 —— 它就卡在写文件那一步。
+> 而目标目录与仓库里没有任何文件被写出来 —— 它就卡在写文件那一步。
 > 加上约束后的投递（00:47:35）一次成功：54 个用例、95% 覆盖率。
 
 ### 重新投递的干净做法（不需要 --force-redeliver）
@@ -379,7 +379,7 @@ python3 scripts/codearts_bridge_deliver.py --workspace . --check-residue
     "nextFireTimeLocal": "2026-10-22T22:56:00",
     "staleNextFire": true
   }],
-  "note": "僵尸投递任务：kernel 侧没有删除路由，需人工清理。…"
+  "note": "僵尸投递任务：kernel 侧的删除路由（POST /cag/cron/tasks/delete）会拒绝仍在调度器 in-flight 集合里的任务，需要用 --purge-residue 走「API + 文件级兜底」清理。…"
 }
 ```
 
@@ -393,12 +393,32 @@ python3 scripts/codearts_bridge_deliver.py --workspace . --check-residue
 | 会自己复发吗 | 不会。实测 9.5 小时无新会话，目标会话早已沉寂 |
 | 会挡住新投递吗 | 不会。同一 projectPath 照样能建新任务 |
 | 重启 kernel / VS Code 能清掉吗 | **不能**。任务落盘持久化，跨进程存活 |
-| 有没有 API 能删 | **没有**。`/doc` 的 36 条路由里没有任何 cron 路由；`/cag/cron/tasks/{id}`、`/cag/cron/tasks/{id}/cancel`、`DELETE /cag/cron/tasks` 全部落回 SPA 页面 |
+| 有没有 API 能删 | **有**。`POST /cag/cron/tasks/delete?directory=<ws>`（body `{"ids":[...]}`）。它**不在 `/doc` 的 OpenAPI 里** —— `/cag/*` 路由挂在文档 schema 之外，所以「查 `/doc` 查不到」≠「路由不存在」。但它会拒绝 in-flight 任务，报 `任务正在执行，无法删除，如需操作，请先终止该任务` |
 | `nextFireTime` 停在过去说明什么 | 手动触发未走完成回调的**残留字段**，不是待触发的计划 |
 
-⇒ 只能人工清理（CodeArts Doer 侧 UI）。上游真正要防的是
-「会话中途死掉」—— 那正是 `write`/`edit`/`task` 三个工具造成的，
-已由 payload 工具约束堵住。
+**清理命令**（已固化，作用域只限本工作区，**不需要停 kernel**）：
+
+```bash
+python3 scripts/codearts_bridge_deliver.py --workspace . --purge-residue   # 加 --dry-run 可先看要清什么
+```
+
+两级策略：先走 kernel 官方删除路由 → 被 in-flight 拒绝的 id 再走**文件级兜底**
+（读 `~/.codeartsdoer/vscode-data/cron/scheduled_tasks.json` → 过滤 tasks →
+临时文件 → `replace()` 原子改名）→ 最后复核并输出 `still_stuck` / `residue_after`。
+
+**为什么文件级兜底是安全的**：kernel 的 cron 存储是**纯文件、无内存任务表**的 ——
+`addTask`/`removeTask`/`expireTask` 每次都 `readTasks()` 再 `writeCronTasks()`，
+写入走临时文件 + `renameWithRetry`，另有 `scheduled_tasks.lock` 操作锁和
+文件监听器 `reloadTasks()`。所以运行中直接改文件是权威且安全的。
+
+**为什么官方路由会拒删**：僵尸卡在调度器**内存**的 `inFlight` 集合里
+（会话死在 `write` 上 ⇒ fire 的 promise 永不 settle ⇒ `finally` 里的
+`inFlight.delete(id)` 从未执行）。`reloadTasks()` 只换掉 `state.tasks`、
+**不清 inFlight**，而调度器是模块级单例、没有重置入口 ⇒ 只有重启 kernel 能清
+inFlight —— 但 inFlight 并不影响文件落盘，所以文件级兜底足以真正删掉这条记录。
+
+⇒ 上游真正要防的仍是「会话中途死掉」—— 那正是 `write`/`edit`/`task`
+三个工具造成的，已由 payload 工具约束堵住。
 
 ### kernel 响应格式不统一（排查时必读）
 

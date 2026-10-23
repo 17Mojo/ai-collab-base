@@ -35,7 +35,7 @@ jobs:
       - name: Lint (ruff)
         # 只检查主源码目录。src/ 已于 6030087 删除——此前把 src/ 写在这里，
         # 目录缺失会使 ruff 退出码非零，进而触发 `|| ruff check .` 回退到全仓
-        # 检查，把 tests/ 与 hermes_target/ 的历史遗留错误也算进来，导致本步骤
+        # 检查，把 tests/ 里的历史遗留错误也算进来，导致本步骤
         # 失败并遮蔽后续的覆盖率门禁。
         run: |
           pip install ruff

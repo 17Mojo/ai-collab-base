@@ -6,7 +6,7 @@
 
 现有治理层（`PROTOCOL.md` v3.0）和服务层（`workspace_guard.py` / `spawn_agent_guard.py`）**未覆盖 git 工作区级并发**：分支漂移、基线过期、归属不清、测试污染。
 
-与 `migrate-parallel-architecture-to-hermes` 互补：该变更覆盖**运行时状态文件并发**（文件锁），本变更覆盖**开发时 git 工作区并发**。
+与运行时状态文件并发治理互补：文件锁机制覆盖**运行时状态文件并发**，本变更覆盖**开发时 git 工作区并发**。
 
 ## What Changes
 

@@ -3,8 +3,15 @@
 **状态**: 设计待评审  
 **创建日期**: 2026-09-26  
 **样本来源**: 2026-09-26 并行冲突事件  
-**关联变更**: `openspec/changes/migrate-parallel-architecture-to-hermes`  
-**适用项目**: 基础项目 `ai-collab-base`、研究项目 `hermes_target`（Hermes × OpenClaw）
+**关联变更**: `openspec/changes/add-concurrent-workspace-guard`（本仓）  
+**适用项目**: 基础项目 `ai-collab-base`（本仓）  
+
+> **2026-10-23 去外部化说明**：本设计初版把「基础项目 + 一个外部研究项目」
+> 作为共同适用对象，那个外部项目副本已于同日清理（见
+> `collaboration/results/RESULT-P0-CONSENSUS-ENGINE-001.md` 的归档说明）。
+> 本设计的治理层与服务层**本就与被治理对象无关** —— 它管的是
+> 「多 Agent 共享同一 git working tree」这件事，与仓库里放什么代码无关。
+> 下文所有 `hermes_target` 字样均已改写为本仓语境；冲突样本的历史事实保留不变。
 
 ---
 
@@ -17,7 +24,8 @@
 - 本会话产出的 3 个 commit 已在 `main` 上，但**当前 HEAD 已漂移到 `refactor/slimming-2026-09-20`**
 - 本会话基于 `main@81a02c5`（`schema_v2.py` 1022 行）准备改动，而 `main` 实际已推进到 962 行（`ReviewWorkflow` 被删除）
 - 工作区混入 **486+ 行非本会话的未提交改动**（4 个文件），无法区分归属
-- 研究项目 `hermes_target/` 被 pytest 收集，导致全量测试 `collection error`
+- 一个**外部项目副本目录**被 pytest 收集，导致全量测试 `collection error`
+  （历史事实：该目录当时名为 `hermes_target/`，2026-10-23 已随噪声清理删除）
 
 ### 1.2 问题定性（用户）
 
@@ -25,11 +33,11 @@
 
 ### 1.3 与现有变更的关系
 
-`migrate-parallel-architecture-to-hermes` 变更把 ai-collab-base 的**并行能力**（`consensus_engine` / `state_manager` / `notification`）移植到 Hermes，其风险评估已识别「状态文件并发写入冲突 → 移植文件锁机制」。
+运行时状态文件的并发（`state_manager` / `notification` 的状态写入）由文件锁机制覆盖。
 
-**本设计补齐该变更未覆盖的维度**：文件锁解决的是**运行时状态文件**的并发，而本次冲突发生在 **git 工作区级**（分支 / 基线 / 归属 / 测试隔离），是**开发时协作**的并发。
+**本设计补齐的是另一个维度**：文件锁解决的是**运行时状态文件**的并发，而本次冲突发生在 **git 工作区级**（分支 / 基线 / 归属 / 测试隔离），是**开发时协作**的并发。
 
-| 维度 | 现有变更覆盖 | 本设计覆盖 |
+| 维度 | 现有机制覆盖 | 本设计覆盖 |
 |------|-------------|-----------|
 | 运行时状态文件并发 | ✅ 文件锁 | — |
 | git 工作区并发 | ❌ 未覆盖 | ✅ 本设计 |
@@ -57,7 +65,7 @@ T5  提交前核实发现：分支漂移 + 基线过期 + 归属不清 + 测试�
 | G1 | **分支漂移** | HEAD 从 `main` 漂到 `refactor/slimming-2026-09-20` | `git rev-parse --abbrev-ref HEAD` ≠ 预期分支 |
 | G2 | **基线过期** | 基于 1022 行版本，实际 962 行 | 工作基线 commit 不是目标分支的祖先 / 目标文件已变更 |
 | G3 | **归属不清** | 工作区混入 486+ 行他人未提交改动 | 未提交改动的 mtime / 内容与会话标记不匹配 |
-| G4 | **测试污染** | `hermes_target/` 被收集 → `ModuleNotFoundError` | pytest 收集到非目标项目目录 |
+| G4 | **测试污染** | 外部项目副本目录被收集 → `ModuleNotFoundError` | pytest 收集到非目标项目目录 |
 
 ### 2.3 根因分析
 
@@ -133,7 +141,7 @@ T5  提交前核实发现：分支漂移 + 基线过期 + 归属不清 + 测试�
 ┌─────────────────────────────────────────────────────────┐
 │ 测试层（回归）                                            │
 │  tests/unit/test_concurrent_guard.py（含冲突样本 fixture）│
-│  pytest 项目边界隔离（hermes_target）                     │
+│  pytest 项目边界隔离（仓库内不放外部项目副本）             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -379,18 +387,18 @@ python3 -m ai_collab.cli concurrent guard \
 - `ruff check ai_collab/concurrent_guard.py tests/unit/test_concurrent_guard.py` 全绿
 - 全量回归无新增失败
 
-### 6.3 研究项目验证
+### 6.3 项目边界验证
 
 | 项 | 动作 | 验收 |
 |----|------|------|
-| G4 测试隔离 | pyproject.toml `norecursedirs` 排除 `hermes_target` | 全量 collection 无 error |
-| 项目边界守护 | 新增测试断言 `hermes_target` 不被主套件收集 | 防回归 |
-| consensus 并发守护 | 修 `test_consensus_engine.py` 导入 + 补并发用例 | 研究项目测试可跑 |
-| 并发治理复用 | 在 hermes_target 上跑 `concurrent guard` | 两项目共享同一治理能力 |
+| G4 测试隔离 | pyproject.toml `testpaths` 限定 `tests/`（仓库内不存放外部项目副本） | 全量 collection 无 error |
+| 项目边界守护 | 新增测试断言外部副本目录不被主套件收集 | 防回归 |
+| consensus 并发守护 | 修 `test_consensus_engine.py` 导入 + 补并发用例 | 本仓 consensus 测试可跑 |
+| 并发治理复用 | 治理层与被治理仓库解耦，可复用于任何共享工作区 | 同一套守卫跨仓库通用 |
 
 ### 6.4 端到端验证矩阵
 
-| 场景 | 基础项目 | 研究项目 |
+| 场景 | 基础项目 | 复用性（任意共享工作区） |
 |------|---------|---------|
 | 分支漂移检测 | ✅ fixture | ✅ fixture |
 | 基线过期检测 | ✅ fixture | ✅ fixture |
@@ -407,7 +415,7 @@ python3 -m ai_collab.cli concurrent guard \
 | **P1 治理层** | PROTOCOL.md 新增第十四章 | 协议文档更新 | 本设计评审通过 |
 | **P2 服务层** | `concurrent_guard.py` + CLI gate | 模块 + CLI | P1 |
 | **P3 测试层** | `test_concurrent_guard.py`（含样本 fixture） | 测试套件 | P2 |
-| **P4 研究项目** | 测试隔离 + consensus 并发守护 | 隔离修复 + 测试 | P2 |
+| **P4 项目边界** | 测试隔离 + consensus 并发守护 | 隔离修复 + 测试 | P2 |
 
 **提交拆分**（遵循用户偏好）：
 
@@ -415,7 +423,7 @@ python3 -m ai_collab.cli concurrent guard \
 2. `feat(guard): 新增 concurrent_guard 并发工作区检测`（P2）
 3. `feat(cli): 接入 concurrent guard 门禁`（P2）
 4. `test(guard): 补 concurrent_guard 守护 + 2026-09-26 冲突样本`（P3）
-5. `fix(pytest): 隔离 hermes_target 研究项目测试收集`（P4）
+5. `fix(pytest): 隔离外部项目副本目录的测试收集`（P4）
 
 ---
 
@@ -443,4 +451,4 @@ python3 -m ai_collab.cli concurrent guard \
 - ❌ 自动解决 git 冲突（仅检测与告警）
 - ❌ 强制 worktree 隔离（先约定，后工具化）
 - ❌ 替代 `workspace_guard` / `spawn_agent_guard`（互补，不替代）
-- ❌ 运行时状态文件并发（由 `migrate-parallel-architecture-to-hermes` 的文件锁覆盖）
+- ❌ 运行时状态文件并发（由状态文件锁机制覆盖）
