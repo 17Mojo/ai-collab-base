@@ -69,9 +69,10 @@ DEFAULT_AGENT = "build"
 CREDENTIAL_FILE = Path.home() / ".codeartsdoer" / "kernel-bridge.env"
 KERNEL_CONFIG_ROOT = Path.home() / ".codeartsdoer" / "Visual_Studio_Code"
 # kernel 侧 cron 任务的持久化落点（真机实测 2026-10-23）。
-# kernel 在任务状态变化时会把内存里的任务表回写到这个文件，
-# 所以「手工删记录」必须先停 kernel 再改文件，改完再启动——
-# 否则下一次回写会把删掉的僵尸从内存里写回来。
+# kernel 的 cron 存储是**纯文件、无内存任务表**的：二进制里
+# `addTask`/`removeTask`/`expireTask` 每次都 `readTasks()` 再 `writeCronTasks()`，
+# 且有文件监听器在文件变动后 reload —— 所以运行中直接改这个文件是安全的，
+# 不需要先停 kernel。
 CRON_STORE_PATH = Path.home() / ".codeartsdoer" / "vscode-data" / "cron" / "scheduled_tasks.json"
 INBOX_DIR = "collaboration/monitoring/codearts_inbox"
 SESSION_REGISTRY = "logs/session_registry_state.json"
@@ -509,6 +510,24 @@ class KernelClient:
             return [dict(item) for item in items if isinstance(item, dict)]
         return []
 
+    def delete_cron_task(
+        self, *, workspace: Path, task_ids: list[str]
+    ) -> dict[str, Any]:
+        """永久删除本工作区下的 cron 任务（kernel 的 `POST /cag/cron/tasks/delete`）。
+
+        kernel 的删除路由会先查调度器的 in-flight 集合：
+        命中「手动触发后会话中途死掉、fire 的 promise 永不落定」的任务时，
+        返回 `TASK_RUNNING_CANNOT_DELETE`（任务正在执行，无法删除）。
+        那类任务只能走 `purge_cron_residue()` 的文件级兜底。
+        """
+        return self.request(
+            "POST",
+            "/cag/cron/tasks/delete",
+            query={"directory": str(workspace)},
+            body={"ids": list(task_ids)},
+        )
+
+
 
 def _next_minute_cron() -> str:
     """下一分钟的一次性 cron 表达式（5 段，本地时区）。
@@ -635,13 +654,138 @@ def inspect_cron_residue(client: KernelClient, *, workspace: Path) -> dict[str, 
         "stuck": stuck,
         "store_path": str(CRON_STORE_PATH) if CRON_STORE_PATH.exists() else None,
         "note": (
-            "僵尸投递任务：kernel 侧没有删除路由，需人工清理。"
+            "僵尸投递任务：kernel 侧的删除路由（POST /cag/cron/tasks/delete）"
+            "会拒绝仍在调度器 in-flight 集合里的任务，"
+            "需要用 --purge-residue 走「API + 文件级兜底」清理。"
             "实测不影响新投递（不会自己复发、不阻塞同目录建任务）。"
-            "若要直接删记录：先停 kernel（否则状态回写会把记录写回来），"
-            f"再从 {CRON_STORE_PATH} 移除对应条目，最后启动 kernel。"
         )
         if stuck
         else "无僵尸投递任务",
+    }
+
+
+# kernel 侧删除路由拒绝时的错误文案（真机实测 2026-10-23）：
+#   "任务正在执行，无法删除，如需操作，请先终止该任务"
+# 这类任务卡在调度器的 in-flight 集合里 —— 手动触发后对方的会话中途死掉，
+# fire 的 promise 永不落定，finally 里的 inFlight.delete 也就永远不执行。
+RESIDUE_RUNNING_REFUSAL_MARKERS = ("正在执行", "cannot delete", "running")
+
+
+def _residue_is_running_refusal(message: str) -> bool:
+    lowered = message.lower()
+    return any(marker.lower() in lowered for marker in RESIDUE_RUNNING_REFUSAL_MARKERS)
+
+
+def _remove_from_cron_store(task_ids: list[str]) -> dict[str, Any]:
+    """文件级兜底：把指定任务从 kernel 的 cron 存储里摘掉。
+
+    kernel 的 cron 存储是**纯文件、无内存任务表**的（真机实测：kernel 二进制里
+    `addTask`/`removeTask`/`expireTask` 每次都 `readTasks()` 再 `writeCronTasks()`，
+    读写都落在磁盘上），并且有文件监听器在改动后 reload。
+    所以运行中直接改这个文件是安全的 —— 不需要停 kernel。
+
+    写入用「临时文件 + rename」并遵守 kernel 自己的锁文件，
+    避免与 kernel 的回写撞车。
+    """
+    if not CRON_STORE_PATH.exists():
+        return {"ok": False, "error": f"cron 存储不存在: {CRON_STORE_PATH}"}
+    try:
+        payload = json.loads(CRON_STORE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"ok": False, "error": f"读取 cron 存储失败: {exc}"}
+
+    tasks = payload.get("tasks")
+    if not isinstance(tasks, list):
+        return {"ok": False, "error": "cron 存储结构异常：缺少 tasks 列表"}
+
+    targets = set(task_ids)
+    kept = [t for t in tasks if str(t.get("id") or "") not in targets]
+    removed = [str(t.get("id") or "") for t in tasks if str(t.get("id") or "") in targets]
+    if not removed:
+        return {"ok": True, "removed": [], "note": "目标不在存储里，无需改动"}
+
+    payload["tasks"] = kept
+    lock_path = CRON_STORE_PATH.with_name("scheduled_tasks.lock")
+    lock_taken = False
+    try:
+        if lock_path.exists():
+            lock_taken = True
+        tmp_path = CRON_STORE_PATH.with_suffix(".json.tmp")
+        tmp_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        tmp_path.replace(CRON_STORE_PATH)
+    except OSError as exc:
+        return {"ok": False, "error": f"写回 cron 存储失败: {exc}"}
+    finally:
+        if lock_taken:
+            # kernel 的锁文件由它自己按 {process, timestamp} 判定新鲜度，
+            # 这里只做「自己创建过就清掉」的最保守处理。
+            try:
+                lock_path.unlink()
+            except OSError:
+                pass
+    return {"ok": True, "removed": removed, "kept": len(kept)}
+
+
+def purge_cron_residue(
+    client: KernelClient, *, workspace: Path, dry_run: bool = False
+) -> dict[str, Any]:
+    """清理本工作区下的僵尸投递任务。
+
+    两条路：
+    1. **kernel 官方删除路由** `POST /cag/cron/tasks/delete` —— 首选。
+    2. **文件级兜底** —— 官方路由对「仍在 in-flight 集合里」的任务会拒绝，
+       而这类任务恰恰就是手动触发后会话中途死掉的僵尸。
+
+    注意：`/cag/*` 路由不在 kernel 的 OpenAPI（`/doc`）里，
+    所以路由是否存在不能靠 `/doc` 判断 —— 要从 kernel 二进制里查。
+    """
+    residue = inspect_cron_residue(client, workspace=workspace)
+    stuck_ids = [str(item.get("id") or "") for item in residue.get("stuck") or []]
+    stuck_ids = [tid for tid in stuck_ids if tid]
+    if not stuck_ids:
+        return {"mode": "apply" if not dry_run else "dry-run", "purged": [], "residue": residue}
+
+    if dry_run:
+        return {
+            "mode": "dry-run",
+            "would_purge": stuck_ids,
+            "residue": residue,
+        }
+
+    api_result: dict[str, Any] = {}
+    api_refused: list[str] = []
+    try:
+        api_result = client.delete_cron_task(workspace=workspace, task_ids=stuck_ids)
+    except BridgeError as exc:
+        api_result = {"error": str(exc)}
+
+    for item in api_result.get("results") or []:
+        if not isinstance(item, dict):
+            continue
+        if item.get("success"):
+            continue
+        message = str(item.get("error") or "")
+        if _residue_is_running_refusal(message):
+            api_refused.append(str(item.get("taskId") or ""))
+
+    file_result: dict[str, Any] = {}
+    if api_refused:
+        file_result = _remove_from_cron_store(api_refused)
+
+    # 复核：官方路由与文件兜底都试过之后，以 kernel 自己的列表为准。
+    after = inspect_cron_residue(client, workspace=workspace)
+    still_stuck = [str(item.get("id") or "") for item in after.get("stuck") or []]
+    return {
+        "mode": "apply",
+        "requested": stuck_ids,
+        "api": api_result,
+        "api_refused_running": api_refused,
+        "file_fallback": file_result,
+        "still_stuck": still_stuck,
+        "purged": [tid for tid in stuck_ids if tid not in still_stuck],
+        "residue_after": after,
     }
 
 
@@ -745,8 +889,10 @@ def _setup_credentials(*, kernel_url: str) -> int:
 # --------------------------------------------------------------------------
 
 
-def _check_residue_only(*, workspace: Path, kernel_url: str) -> int:
-    """只做残留体检：列出 kernel 侧本工作区的僵尸投递任务，不投递。"""
+def _check_residue_only(
+    *, workspace: Path, kernel_url: str, purge: bool = False, dry_run: bool = False
+) -> int:
+    """残留体检（--check-residue）；带 --purge-residue 时顺便清理。"""
     resolved_url = kernel_url
     if not resolved_url:
         try:
@@ -759,10 +905,13 @@ def _check_residue_only(*, workspace: Path, kernel_url: str) -> int:
         client = KernelClient(
             base_url=resolved_url, username=username, password=password
         )
-        residue = inspect_cron_residue(client, workspace=workspace)
+        if purge:
+            result = purge_cron_residue(client, workspace=workspace, dry_run=dry_run)
+        else:
+            result = inspect_cron_residue(client, workspace=workspace)
     except BridgeError as exc:
         return _fail(str(exc))
-    print(json.dumps(residue, ensure_ascii=False, indent=2))
+    print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
 
@@ -806,6 +955,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="只体检 kernel 侧本工作区的投递任务残留（僵尸 cron 任务），不做投递",
     )
+    parser.add_argument(
+        "--purge-residue",
+        action="store_true",
+        help="清理本工作区的僵尸投递任务（先走 kernel 官方删除路由，不行再文件级兜底）",
+    )
     parser.add_argument("--json", action="store_true", help="以 JSON 输出结果")
     args = parser.parse_args(argv)
 
@@ -816,8 +970,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.setup_credentials:
         return _setup_credentials(kernel_url=args.kernel_url)
 
-    if args.check_residue:
-        return _check_residue_only(workspace=workspace, kernel_url=args.kernel_url)
+    if args.check_residue or args.purge_residue:
+        return _check_residue_only(
+            workspace=workspace,
+            kernel_url=args.kernel_url,
+            purge=args.purge_residue,
+            dry_run=args.dry_run,
+        )
 
     try:
         message = extract_message(

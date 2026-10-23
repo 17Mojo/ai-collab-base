@@ -581,7 +581,9 @@ def test_inspect_cron_residue_flags_active_running_task():
     assert residue["stuck_count"] == 1
     assert residue["stuck"][0]["id"] == "296fc444"
     assert residue["stuck"][0]["sessionID"] == "ses_e9be3df"
-    assert "人工清理" in residue["note"]
+    # 提示里必须给出**可执行**的清理路径，而不是"请人工处理"。
+    assert "--purge-residue" in residue["note"]
+    assert "/cag/cron/tasks/delete" in residue["note"]
 
 
 def test_inspect_cron_residue_marks_past_next_fire_as_stale():
@@ -695,6 +697,214 @@ def test_main_check_residue_does_not_deliver(
     payload = json.loads(capsys.readouterr().out)
     assert payload["stuck_count"] == 1
     assert payload["stuck"][0]["id"] == "296fc444"
+
+
+# ---------------------------------------------------------------------------
+# 僵尸投递任务清理（--purge-residue）
+#
+# kernel 的 cron 路由一共 6 条（GET/POST/PUT /tasks、POST /tasks/fire、
+# POST /tasks/delete、GET /tasks/logs），但 **`/cag/*` 路由不在 kernel 的
+# OpenAPI（/doc）里** —— 路由存不存在不能靠 /doc 判断。
+#
+# 删除路由对「手动触发后会话中途死掉」的任务会拒绝：
+# 那类任务的 fire promise 永不落定，调度器的 in-flight 集合永远留着它的 id。
+# 所以清理要走「官方路由 → 文件级兜底」两级。
+# ---------------------------------------------------------------------------
+
+
+class _PurgeKernel:
+    """模拟 kernel：官方删除路由 + 任务列表。"""
+
+    def __init__(
+        self,
+        tasks: list[dict[str, object]],
+        *,
+        refuse_running: bool = False,
+    ) -> None:
+        self.tasks = tasks
+        self.refuse_running = refuse_running
+        self.delete_calls: list[list[str]] = []
+
+    def list_cron_tasks(self, *, workspace: Path):
+        return list(self.tasks)
+
+    def delete_cron_task(self, *, workspace: Path, task_ids: list[str]):
+        self.delete_calls.append(list(task_ids))
+        if self.refuse_running:
+            return {
+                "results": [
+                    {
+                        "taskId": tid,
+                        "success": False,
+                        "error": "任务正在执行，无法删除，如需操作，请先终止该任务",
+                    }
+                    for tid in task_ids
+                ],
+                "deletedCount": 0,
+                "failedCount": len(task_ids),
+            }
+        for tid in task_ids:
+            self.tasks = [t for t in self.tasks if t.get("id") != tid]
+        return {
+            "results": [{"taskId": tid, "success": True} for tid in task_ids],
+            "deletedCount": len(task_ids),
+            "failedCount": 0,
+        }
+
+
+def _write_store(path: Path, task_ids: list[str], *, active: str | None = None) -> None:
+    """写入 cron 存储；`active` 指定哪一条是 active（默认全部 expired）。"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "tasks": [
+                    {
+                        "id": tid,
+                        "status": "active" if tid == active else "expired",
+                        "projectPath": "/tmp/ws",
+                    }
+                    for tid in task_ids
+                ],
+                "version": 3,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_purge_uses_kernel_delete_route_first(tmp_path: Path):
+    kernel = _PurgeKernel(
+        [
+            {"id": "296fc444", "status": "active", "isRunning": True},
+            {"id": "aa844576", "status": "expired", "isRunning": False},
+        ]
+    )
+
+    result = bridge.purge_cron_residue(kernel, workspace=tmp_path)  # type: ignore[arg-type]
+
+    assert kernel.delete_calls == [["296fc444"]]
+    assert result["purged"] == ["296fc444"]
+    assert result["still_stuck"] == []
+    assert result["api_refused_running"] == []
+
+
+def test_purge_falls_back_to_file_when_route_refuses_running_task(
+    tmp_path: Path, monkeypatch
+):
+    """官方路由拒绝「正在执行」的任务时，走文件级兜底。"""
+    store = tmp_path / "cron" / "scheduled_tasks.json"
+    _write_store(store, ["296fc444", "aa844576"], active="296fc444")
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+
+    kernel = _PurgeKernel(
+        [{"id": "296fc444", "status": "active", "isRunning": True}],
+        refuse_running=True,
+    )
+
+    # 复核用：kernel 读的就是这个文件，改完应立刻反映。
+    def _list(*, workspace: Path):
+        payload = json.loads(store.read_text(encoding="utf-8"))
+        return [
+            {"id": t["id"], "status": t["status"], "isRunning": t["status"] == "active"}
+            for t in payload["tasks"]
+        ]
+
+    monkeypatch.setattr(kernel, "list_cron_tasks", _list)
+
+    result = bridge.purge_cron_residue(kernel, workspace=tmp_path)  # type: ignore[arg-type]
+
+    assert result["api_refused_running"] == ["296fc444"]
+    assert result["file_fallback"]["ok"] is True
+    assert result["file_fallback"]["removed"] == ["296fc444"]
+    assert result["still_stuck"] == []
+    assert result["purged"] == ["296fc444"]
+
+    remaining = json.loads(store.read_text(encoding="utf-8"))
+    assert [t["id"] for t in remaining["tasks"]] == ["aa844576"]
+    assert remaining["version"] == 3
+
+
+def test_purge_dry_run_touches_nothing(tmp_path: Path, monkeypatch):
+    store = tmp_path / "cron" / "scheduled_tasks.json"
+    _write_store(store, ["296fc444"])
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+    before = store.read_text(encoding="utf-8")
+
+    kernel = _PurgeKernel(
+        [{"id": "296fc444", "status": "active", "isRunning": True}]
+    )
+
+    result = bridge.purge_cron_residue(
+        kernel, workspace=tmp_path, dry_run=True  # type: ignore[arg-type]
+    )
+
+    assert result["mode"] == "dry-run"
+    assert result["would_purge"] == ["296fc444"]
+    assert kernel.delete_calls == []
+    assert store.read_text(encoding="utf-8") == before
+
+
+def test_purge_with_no_stuck_task_is_a_noop(tmp_path: Path):
+    kernel = _PurgeKernel([{"id": "aa844576", "status": "expired", "isRunning": False}])
+
+    result = bridge.purge_cron_residue(kernel, workspace=tmp_path)  # type: ignore[arg-type]
+
+    assert result["purged"] == []
+    assert kernel.delete_calls == []
+
+
+def test_running_refusal_detection_covers_chinese_and_english():
+    assert bridge._residue_is_running_refusal("任务正在执行，无法删除，如需操作，请先终止该任务")
+    assert bridge._residue_is_running_refusal("Task is running, cannot delete")
+    assert not bridge._residue_is_running_refusal("Task not found")
+    assert not bridge._residue_is_running_refusal("")
+
+
+def test_remove_from_cron_store_keeps_other_tasks(tmp_path: Path, monkeypatch):
+    store = tmp_path / "scheduled_tasks.json"
+    _write_store(store, ["a1", "b2", "c3"])
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+
+    result = bridge._remove_from_cron_store(["b2"])
+
+    assert result["ok"] is True
+    assert result["removed"] == ["b2"]
+    payload = json.loads(store.read_text(encoding="utf-8"))
+    assert [t["id"] for t in payload["tasks"]] == ["a1", "c3"]
+
+
+def test_remove_from_cron_store_is_idempotent(tmp_path: Path, monkeypatch):
+    store = tmp_path / "scheduled_tasks.json"
+    _write_store(store, ["a1"])
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+
+    result = bridge._remove_from_cron_store(["nope"])
+
+    assert result["ok"] is True
+    assert result["removed"] == []
+    payload = json.loads(store.read_text(encoding="utf-8"))
+    assert [t["id"] for t in payload["tasks"]] == ["a1"]
+
+
+def test_purge_residue_cli_flag_runs_purge(tmp_path: Path, monkeypatch, capsys):
+    kernel = _PurgeKernel([{"id": "296fc444", "status": "active", "isRunning": True}])
+    monkeypatch.setattr(bridge, "KernelClient", lambda **_: kernel)
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("清理模式不应触发投递")
+
+    monkeypatch.setattr(bridge, "deliver_via_cron", _boom)
+    monkeypatch.setattr(bridge, "deliver_via_session", _boom)
+
+    code = bridge.main(["--workspace", str(tmp_path), "--purge-residue"])
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["purged"] == ["296fc444"]
+    assert kernel.delete_calls == [["296fc444"]]
 
 
 if __name__ == "__main__":
