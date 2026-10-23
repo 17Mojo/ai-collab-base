@@ -17,4 +17,4 @@ if project_root not in sys.path:
 from ai_collab.cli._cli_main import main
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

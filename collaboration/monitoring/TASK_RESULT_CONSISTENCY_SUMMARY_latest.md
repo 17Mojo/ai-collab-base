@@ -1,13 +1,4 @@
-# Task Result Consistency Summary（自动生成）
+# Task Result Consistency Summary
 
-- 生成时间: `2026-10-23T12:30:35.380750`
-- 工作区: `/Users/raymondna/Documents/AI-collab/ai-collab-base`
-- 审计任务数: `7`
-- 一致: `7`
-- mismatch: `0`
-- unparseable: `0`
-- missing result: `0`
-
-## Issues
-
-- 无
+- audited: 8
+- issue_count: 2
