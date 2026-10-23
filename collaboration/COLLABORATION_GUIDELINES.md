@@ -69,8 +69,8 @@
 命令执行时，系统从 `agent-orchestration.json` 解析当前绑定：
 
 ```
-用户输入: X.RUN
-→ 查询 command_prefixes: X.RUN → AGENT_EXEC
+用户输入: A.RUN
+→ 查询 command_prefixes: A.RUN → AGENT_EXEC
 → 查询 roles.AGENT_EXEC.binding.provider
 → 实际执行: [当前绑定的 Agent 提供商]
 ```
@@ -187,8 +187,8 @@ python3 -m ai_collab.cli orchestration cold-start
 <PREFIX>.RUN
 
 示例:
-X.RUN  → 触发 AGENT_EXEC 执行任务
-A.RUN  → 触发 AGENT_ARCH 架构任务
+A.RUN  → 触发 AGENT_EXEC 执行任务
+X.RUN  → 触发 AGENT_ARCH 架构任务
 C.RUN  → 触发当前映射角色（可能是 AGENT_TEST 或自定义）
 ```
 

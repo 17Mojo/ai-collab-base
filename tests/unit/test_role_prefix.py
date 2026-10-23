@@ -56,12 +56,15 @@ class TestResolution:
                 assert run_hint.split(".", 1)[0] == ack_hint.split(".", 1)[0]
 
     def test_unknown_provider_falls_back(self):
-        assert resolve_ack_prefix("nobody", workspace=str(REPO_ROOT)) == "X"
+        # 兜底字母必须避开角色字母池 —— 历史上的 "X" 正好是 AGENT_ARCH 的
+        # 角色前缀，会把"未解析"伪装成真实角色。
+        assert resolve_ack_prefix("nobody", workspace=str(REPO_ROOT)) == "Z"
 
     def test_fallback_table_matches_known_assignees(self):
         assert FALLBACK_ACK_PREFIX["codearts_agent"] == "A"
         assert FALLBACK_ACK_PREFIX["claude_code"] == "C"
-        assert FALLBACK_ACK_PREFIX["codex"] == "X"
+        # codex 的兜底前缀曾是 "X"，与 AGENT_ARCH 的角色前缀撞车。
+        assert FALLBACK_ACK_PREFIX["codex"] == "O"
 
 
 class TestOrchestrationCoherence:

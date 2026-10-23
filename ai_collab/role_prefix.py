@@ -5,11 +5,11 @@
 本仓库长期存在两套命令命名空间：
 
 - **角色命名空间**：`config/agent-orchestration.json` 的 `command_prefixes`，
-  例如 `X.RUN → AGENT_EXEC`、`A.RUN → AGENT_ARCH`。
+  例如 `A.RUN → AGENT_EXEC`、`X.RUN → AGENT_ARCH`、`C.RUN → AGENT_TEST`。
 - **provider 命名空间**：`ai_collab/ack_protocol.py` 里硬编码的
-  `{"claude_code": "C", "codearts_agent": "A", "codex": "X"}`。
+  `{"claude_code": "C", "codearts_agent": "A", "codex": "O"}`。
 
-两边都叫 "A"，指代的对象却不同。派发 payload 用 provider 命名空间写
+两边都叫 "A"，指代的对象却不同。派单 payload 用 provider 命名空间写
 "A.RUN"，角色表却说 A.RUN 是 AGENT_ARCH；结果 CodeArts 收到的执行提示
 与角色表对不上，ACK 前缀也跟着错位。
 
@@ -19,6 +19,20 @@
 - **provider 前缀由角色派生**：provider 绑定的角色 → 该角色的命令前缀
   → 首字母即 ACK 前缀（`A.RUN` → `A.ACK`）。
 - 角色名或编排配置缺失时，退回既有的硬编码兜底表，不改变旧行为。
+
+字母池不重叠（2026-10-23 修复）：
+
+两套命名空间都用**单字母**，字母池却是同一批，于是必然出现
+"同一个字母在两套命名空间里指代不同东西"的情况。
+`codex` 的 provider 兜底前缀历史上是 `X`（初版遗留：那时 `X` 是
+AGENT_EXEC 的角色前缀，codex 是默认执行器），而 `229062d` 把角色侧
+的 `X` 让给了 AGENT_ARCH —— 两边就此撞车：
+`X.ACK` 既可能是 codex 的 ACK，也可能是 claude_code 当 AGENT_ARCH 的 ACK。
+
+规则：**provider 兜底前缀只能与"该 provider 实际绑定的那个角色"共用字母**；
+否则必须另取一个不在角色字母池里的字母。
+`codex` 未绑定任何角色，所以它的前缀从 `X` 改为 `O`。
+`tests/unit/test_ack_prefix_consistency.py` 用不变量测试守住这条规则。
 """
 
 from __future__ import annotations
@@ -37,8 +51,15 @@ DEFAULT_TASK_STATE_PATH = "logs/collaboration_state.json"
 FALLBACK_ACK_PREFIX: dict[str, str] = {
     "claude_code": "C",
     "codearts_agent": "A",
-    "codex": "X",
+    # 初版是 "X"（与 AGENT_ARCH 的角色前缀 X 撞车），2026-10-23 改为 "O"。
+    "codex": "O",
 }
+
+# 解析不出 provider 时的兜底前缀。
+# 历史上是 "X" —— 那正好是 AGENT_ARCH 的角色前缀，等于把"我不知道"
+# 伪装成一个真实角色，让 ACK 行的归属无法判定。
+# 现在用一个角色池之外的保留字母，表示"未解析"。
+UNKNOWN_PROVIDER_PREFIX = "Z"
 
 # provider → 默认角色代号（编排配置缺失时使用）
 FALLBACK_ROLE_BY_PROVIDER: dict[str, str] = {
@@ -154,7 +175,9 @@ def resolve_hints(
         prefix = FALLBACK_ACK_PREFIX.get(normalized, "")
 
     if not prefix:
-        prefix = "X"
+        # 解析不出 provider：用一个角色池之外的保留字母，
+        # 而不是 AGENT_ARCH 的 "X"（见模块文档的字母池说明）。
+        prefix = UNKNOWN_PROVIDER_PREFIX
 
     return f"{prefix}.RUN", f"{prefix}.ACK"
 

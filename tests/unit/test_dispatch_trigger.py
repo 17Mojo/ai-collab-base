@@ -91,7 +91,8 @@ def test_build_handoff_payload_codearts_includes_ack_guard():
     assert "python3 -m ai_collab.cli run" in payload
 
 
-def test_build_handoff_payload_codex_uses_x_run_and_x_ack():
+def test_build_handoff_payload_codex_uses_o_run_and_o_ack():
+    """codex 的兜底前缀曾是 "X"，与 AGENT_ARCH 的角色前缀撞车，现改为 "O"。"""
     payload = build_handoff_payload(
         assignee="codex",
         trigger_phrase="2X DISPATCH CODEX",
@@ -99,9 +100,11 @@ def test_build_handoff_payload_codex_uses_x_run_and_x_ack():
         section_markdown=None,
         generated_at="2026-03-13T10:00:00",
     )
-    assert "X.RUN" in payload
-    assert "X.ACK|task=<ids>|status=<ok/blocked/noop>|result=<paths>" in payload
-    assert "X.ACK|task=none|status=noop|result=none" in payload
+    assert "O.RUN" in payload
+    assert "O.ACK|task=<ids>|status=<ok/blocked/noop>|result=<paths>" in payload
+    assert "O.ACK|task=none|status=noop|result=none" in payload
+    # 不应再出现角色前缀 X —— 否则 codex 与 AGENT_ARCH 无法区分
+    assert "X.ACK|" not in payload
 
 
 def test_build_payload_refresh_command_returns_valid_phrase_for_assignee():

@@ -54,16 +54,16 @@
 命令执行时，系统从 `agent-orchestration.json` 解析当前绑定：
 
 ```python
-# 示例: X.RUN 命令解析流程
-用户输入: X.RUN
+# 示例: A.RUN 命令解析流程
+用户输入: A.RUN
 
 解析流程:
-1. 查询 command_prefixes: X.RUN → AGENT_EXEC
+1. 查询 command_prefixes: A.RUN → AGENT_EXEC
 2. 查询 roles.AGENT_EXEC.binding:
-   - provider: "claude_code"  (冷启动时确定)
+   - provider: "codearts_agent"  (冷启动时确定)
    - model_variant: "sonnet"  (SubAgent 模式下)
    - status: "active"
-3. 实际执行: Claude Code (Sonnet) 执行任务
+3. 实际执行: 当前绑定的提供商执行任务
 ```
 
 ### 3.3 User 角色（不变）
@@ -281,8 +281,8 @@ if orchestration.binding_status == "uninitialized":
 <PREFIX>.RUN
 
 示例:
-X.RUN  → 触发 AGENT_EXEC 执行任务
-A.RUN  → 触发 AGENT_ARCH 架构任务
+A.RUN  → 触发 AGENT_EXEC 执行任务
+X.RUN  → 触发 AGENT_ARCH 架构任务
 C.RUN  → 触发当前映射角色（可能是 AGENT_TEST 或自定义）
 ```
 

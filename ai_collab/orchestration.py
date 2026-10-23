@@ -263,8 +263,10 @@ class OrchestrationConfig:
     DEFAULT_FALLBACK_ACK_PREFIX = {
         "claude_code": "C",
         "codearts_agent": "A",
-        "codex": "X",
-        "codex_cli": "X",
+        # codex 的兜底前缀历史上是 "X"，与 AGENT_ARCH 的角色前缀 X 撞车；
+        # 2026-10-23 改为角色字母池之外的 "O"。
+        "codex": "O",
+        "codex_cli": "O",
         "gemini_cli": "G",
     }
 

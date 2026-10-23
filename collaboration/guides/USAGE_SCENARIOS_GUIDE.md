@@ -54,8 +54,8 @@ AGENT_TEST → 休眠
 
 **工作流程**:
 ```text
-1. 输入 X.RUN → AGENT_EXEC 执行任务
-2. 完成后返回 X.ACK|task=...|status=ok
+1. 输入 A.RUN → AGENT_EXEC 执行任务
+2. 完成后返回 A.ACK|task=...|status=ok
 3. 需要架构决策时，手动激活 AGENT_ARCH
 ```
 

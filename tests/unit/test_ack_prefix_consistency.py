@@ -90,5 +90,73 @@ def test_receipt_bridge_script_still_runs_help():
     assert "workspace" in result.stdout
 
 
+# ---------------------------------------------------------------------------
+# 字母池不重叠（2026-10-23）
+#
+# 角色命名空间与 provider 命名空间都用单字母，字母池却是同一批，
+# 于是历史上出现过 "X" 同时指代 AGENT_ARCH（角色）和 codex（provider）：
+# codex 的兜底前缀是初版遗留（那时 X 是 AGENT_EXEC 的角色前缀），
+# 而 229062d 把角色侧的 X 让给了 AGENT_ARCH，两边就此撞车。
+#
+# 不变量：**provider 兜底前缀只能与"该 provider 实际绑定的那个角色"
+# 共用字母**；否则必须另取角色池之外的字母。
+# ---------------------------------------------------------------------------
+
+
+def _role_prefixes() -> dict[str, str]:
+    payload = json.loads(ORCHESTRATION_CONFIG.read_text(encoding="utf-8"))
+    prefixes = payload.get("command_prefixes", {})
+    return {
+        str(role): str(prefix).split(".", 1)[0].strip()
+        for prefix, role in prefixes.items()
+        if isinstance(prefix, str) and "." in prefix
+    }
+
+
+def _role_bindings() -> dict[str, set[str]]:
+    payload = json.loads(ORCHESTRATION_CONFIG.read_text(encoding="utf-8"))
+    bindings: dict[str, set[str]] = {}
+    for role, entry in (payload.get("roles") or {}).items():
+        provider = str((entry.get("binding") or {}).get("provider") or "").strip()
+        if provider:
+            bindings.setdefault(provider, set()).add(role)
+    return bindings
+
+
+def test_provider_prefix_never_collides_with_unbound_role_prefix():
+    """provider 兜底前缀不得撞上"它并没有扮演"的角色前缀。"""
+    role_prefixes = _role_prefixes()
+    bindings = _role_bindings()
+    for provider, prefix in _ACK_PREFIX.items():
+        for role, role_prefix in role_prefixes.items():
+            if role_prefix != prefix:
+                continue
+            assert role in bindings.get(provider, set()), (
+                f"provider {provider} 的兜底前缀 {prefix} 与角色 {role} 撞车，"
+                f"但它并未绑定该角色；ACK 行无法区分发送方"
+            )
+
+
+def test_codex_prefix_is_outside_role_letter_pool():
+    """codex 未绑定任何角色，其前缀必须避开角色字母池。"""
+    role_prefixes = set(_role_prefixes().values())
+    assert _ACK_PREFIX["codex"] not in role_prefixes
+    assert _ACK_PREFIX["codex"] == "O"
+
+
+def test_unknown_provider_fallback_is_not_a_role_letter():
+    """解析不出 provider 时的兜底前缀不能是任何角色前缀。"""
+    from ai_collab.role_prefix import UNKNOWN_PROVIDER_PREFIX
+
+    role_prefixes = set(_role_prefixes().values())
+    assert UNKNOWN_PROVIDER_PREFIX not in role_prefixes
+    assert UNKNOWN_PROVIDER_PREFIX == "Z"
+
+
+def test_no_two_providers_share_the_same_prefix():
+    prefixes = list(_ACK_PREFIX.values())
+    assert len(prefixes) == len(set(prefixes))
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

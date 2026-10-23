@@ -301,8 +301,8 @@
 ├─────────────────────────────────────────────────────┤
 │  当前命令映射:                                       │
 │                                                     │
-│  A.RUN → AGENT_ARCH (架构师)                        │
-│  X.RUN → AGENT_EXEC (主执行者)                      │
+│  A.RUN → AGENT_EXEC (主执行者)                      │
+│  X.RUN → AGENT_ARCH (架构师)                        │
 │  C.RUN → AGENT_TEST (测试验证)                      │
 │                                                     │
 │  自定义命令:                                         │

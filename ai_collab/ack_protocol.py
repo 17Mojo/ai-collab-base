@@ -15,8 +15,13 @@ EXPLICIT_ACK_SOURCE_PREFIXES = ("cli-ack", "chat-ack")
 _ACK_PREFIX = {
     "claude_code": "C",
     "codearts_agent": "A",
-    "codex": "X",
+    # 初版是 "X"（与 AGENT_ARCH 的角色前缀 X 撞车），2026-10-23 改为 "O"。
+    "codex": "O",
 }
+
+# 解析不出 assignee 时的兜底前缀：角色字母池之外的保留字母。
+# 历史上是 "X" —— 正好是 AGENT_ARCH 的角色前缀，会把"未解析"伪装成真实角色。
+_UNKNOWN_ASSIGNEE_PREFIX = "Z"
 
 # PROTOCOL.md §ACK 行定义：status 只能是 ok / blocked / noop。
 # 之前 codearts_agent 默认发 "completed"，不在协议枚举内，会让
@@ -84,7 +89,7 @@ def ack_prefix_for_assignee(
             normalized, assignee_role=assignee_role, workspace=workspace
         )
     except Exception:  # pragma: no cover - 解析器不可用时退回兜底表
-        return _ACK_PREFIX.get(normalized, "X")
+        return _ACK_PREFIX.get(normalized, _UNKNOWN_ASSIGNEE_PREFIX)
 
 
 def ack_status_for_assignee(assignee: str) -> str:

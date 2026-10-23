@@ -72,9 +72,15 @@ collaboration/tasks/TASK_*.md
 权威来源是 `config/agent-orchestration.json` 的 `command_prefixes`；
 `ai_collab/role_prefix.py` 负责把角色/provider 两套命名空间收敛成一套。
 
-> ⚠️ **已知残留**：未绑定的 `codex` provider 兜底前缀也是 `X`，
-> 与 `AGENT_ARCH` 的 `X.RUN` 撞车。目前 `codex` 没有绑定角色席位，
-> 实际不影响派发；等它被绑定时需要重新分配前缀。
+> ✅ **2026-10-23 已修复**：`codex` 的 provider 兜底前缀原为 `X`，
+> 与 `AGENT_ARCH` 的 `X.RUN` 撞车 —— `X.ACK` 既可能是 codex 的 ACK，
+> 也可能是 claude_code 当 AGENT_ARCH 的 ACK，发送方无法判定。
+> 根因是同一个字母被两套命名空间各自独立征用（详见
+> `collaboration/results/RESULT-PREFIX-DISJOINTNESS-2026-10-23.md`）。
+> 现在 `codex` 的兜底前缀是 `O`（角色字母池之外），
+> 解析不出 provider 时的兜底改成保留字母 `Z`。
+> `tests/unit/test_ack_prefix_consistency.py` 里的不变量测试守住这条规则：
+> **provider 兜底前缀只能与它实际绑定的那个角色共用字母。**
 
 ### 2. 控制面注册
 

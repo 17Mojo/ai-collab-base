@@ -190,7 +190,9 @@ def has_explicit_ack(ack_state: dict[str, Any], task_id: str) -> bool:
 def ack_prefix_for(assignee: str) -> str:
     # 与 ai_collab/ack_protocol.py 的 _ACK_PREFIX 保持一致
     # （tests/unit/test_ack_prefix_consistency.py 会强制两者同步）。
-    return {"claude_code": "C", "codearts_agent": "A", "codex": "X"}.get(assignee, "A")
+    # 兜底用角色字母池之外的保留字母 "Z"：历史上的 "A" 正好是
+    # AGENT_EXEC 的角色前缀，会把"未解析"伪装成真实角色。
+    return {"claude_code": "C", "codearts_agent": "A", "codex": "O"}.get(assignee, "Z")
 
 
 def ack_status_for(assignee: str) -> str:

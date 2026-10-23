@@ -125,7 +125,7 @@
         "documentation"
       ],
       "last_check": "2026-10-22T17:49:34+08:00",
-      "fallback_ack_prefix": "X"
+      "fallback_ack_prefix": "O"
     }
   },
   "runtime_policy": {
@@ -267,7 +267,7 @@
               "testing",
               "documentation"
             ],
-            "fallback_ack_prefix": "X",
+            "fallback_ack_prefix": "O",
             "last_check": "2026-10-22T17:49:34+08:00"
           }
         },
@@ -418,7 +418,7 @@
               "documentation"
             ],
             "last_check": "2026-10-22T17:49:34+08:00",
-            "fallback_ack_prefix": "X"
+            "fallback_ack_prefix": "O"
           }
         },
         "runtime_policy": {
@@ -568,7 +568,7 @@
               "documentation"
             ],
             "last_check": "2026-10-22T17:49:34+08:00",
-            "fallback_ack_prefix": "X"
+            "fallback_ack_prefix": "O"
           }
         },
         "runtime_policy": {

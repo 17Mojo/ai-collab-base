@@ -41,13 +41,15 @@ DISPLAY_NAME = {
 RUN_HINT = {
     "claude_code": "C.RUN",
     "codearts_agent": "A.RUN",
-    "codex": "X.RUN",
+    # codex 的 provider 兜底前缀历史上是 "X"，与 AGENT_ARCH 的角色前缀 X 撞车；
+    # 2026-10-23 改为角色字母池之外的 "O"。
+    "codex": "O.RUN",
 }
 
 ACK_HINT = {
     "claude_code": "C.ACK",
     "codearts_agent": "A.ACK",
-    "codex": "X.ACK",
+    "codex": "O.ACK",
 }
 
 REFRESH_TRIGGER_PHRASES = {
