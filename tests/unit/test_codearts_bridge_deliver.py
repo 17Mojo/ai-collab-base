@@ -99,6 +99,16 @@ def test_resolve_credentials_reads_credential_file(
 ):
     monkeypatch.delenv("OPENCODE_SERVER_PASSWORD", raising=False)
     monkeypatch.delenv("CODEARTS_KERNEL_PASSWORD", raising=False)
+    # 用户名也必须从环境里清掉：`resolve_credentials()` 让**环境变量优先于
+    # 凭据文件**（密码、用户名都是这个优先级，见 resolve_credentials 实现）。
+    # 以前只清了密码变量，于是这个用例的成败取决于跑测试的进程环境里有没有
+    # `OPENCODE_SERVER_USERNAME`：
+    #   - 开发者 shell 里通常没有 → 用例通过；
+    #   - CodeArts 会话由 kernel 进程派生，继承了 kernel 的环境（有该变量）
+    #     → 用户名变成 "codearts"（DEFAULT_USERNAME 同形，更难看出是环境问题），
+    #     用例失败，断言变成 ('codearts', 'from-file') != ('who', 'from-file')。
+    # 也就是说：这条用例在**桥接真正运行的场景下反而是红的**。
+    monkeypatch.delenv("OPENCODE_SERVER_USERNAME", raising=False)
     credential_file = tmp_path / "kernel-bridge.env"
     credential_file.write_text(
         'OPENCODE_SERVER_PASSWORD="from-file"\n# comment\nOPENCODE_SERVER_USERNAME=who\n',
@@ -136,7 +146,7 @@ def test_discover_kernel_prefers_alive_pid(
     dead = tmp_path / "Vscode_dead" / "server_config.properties"
     alive.parent.mkdir(parents=True)
     dead.parent.mkdir(parents=True)
-    alive.write_text("pid=%d\nport=14934\n" % os.getpid(), encoding="utf-8")
+    alive.write_text(f"pid={os.getpid()}\nport=14934\n", encoding="utf-8")
     dead.write_text("pid=999999\nport=1\n", encoding="utf-8")
     # 让 dead 的 mtime 更新，验证"存活优先"而不是"最新优先"
     os.utime(dead, (2_000_000_000, 2_000_000_000))
