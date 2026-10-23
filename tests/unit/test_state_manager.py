@@ -1009,7 +1009,7 @@ def test_update_task_contract_updates_fields_without_touching_status(tmp_path: P
         task_id="TASK-CONTRACT-UPDATE-001",
         ai_type="codearts_agent",
         description="contract field update",
-        files=["hermes_target/hermes_agent/engines/consensus_engine.py"],
+        files=["external_target/engines/consensus_engine.py"],
         vscode_context={"source": "unit-test"},
         change_id="bugfix/no-spec",
         assignee="codearts_agent",
@@ -1017,7 +1017,7 @@ def test_update_task_contract_updates_fields_without_touching_status(tmp_path: P
         primary_skill="backend-architect",
         support_skills=["testing"],
         acceptance_commands=["python3 -m pytest -q"],
-        result_file="hermes_target/RESULT-TASK-CONTRACT-UPDATE-001.md",
+        result_file="external_target/RESULT-TASK-CONTRACT-UPDATE-001.md",
         contract_required=True,
     )
 
@@ -1025,13 +1025,13 @@ def test_update_task_contract_updates_fields_without_touching_status(tmp_path: P
 
     result = manager.update_task_contract(
         "TASK-CONTRACT-UPDATE-001",
-        acceptance_commands=["PYTHONPATH=hermes_target python3 -m pytest -q"],
+        acceptance_commands=["PYTHONPATH=external_target python3 -m pytest -q"],
         note="补 PYTHONPATH 前缀",
     )
 
     task = manager.state["tasks"]["TASK-CONTRACT-UPDATE-001"]
     assert task["status"] == before_status
-    assert task["acceptance_commands"] == ["PYTHONPATH=hermes_target python3 -m pytest -q"]
+    assert task["acceptance_commands"] == ["PYTHONPATH=external_target python3 -m pytest -q"]
     assert "acceptance_commands" in result["updated_fields"]
     assert any("补 PYTHONPATH 前缀" in note for note in task["notes"])
 
@@ -1045,7 +1045,7 @@ def test_update_task_contract_ignores_empty_values(tmp_path: Path, monkeypatch):
         task_id="TASK-CONTRACT-EMPTY-001",
         ai_type="codearts_agent",
         description="empty contract update",
-        files=["hermes_target/hermes_agent/engines/consensus_engine.py"],
+        files=["external_target/engines/consensus_engine.py"],
         vscode_context={"source": "unit-test"},
         change_id="bugfix/no-spec",
         assignee="codearts_agent",
@@ -1053,7 +1053,7 @@ def test_update_task_contract_ignores_empty_values(tmp_path: Path, monkeypatch):
         primary_skill="backend-architect",
         support_skills=["testing"],
         acceptance_commands=["python3 -m pytest -q"],
-        result_file="hermes_target/RESULT-TASK-CONTRACT-EMPTY-001.md",
+        result_file="external_target/RESULT-TASK-CONTRACT-EMPTY-001.md",
         contract_required=True,
     )
 
@@ -1091,7 +1091,7 @@ def test_update_task_contract_sets_assignee_role(tmp_path: Path, monkeypatch):
         task_id="TASK-ROLE-001",
         ai_type="codearts_agent",
         description="role contract",
-        files=["hermes_target/hermes_agent/engines/consensus_engine.py"],
+        files=["external_target/engines/consensus_engine.py"],
         vscode_context={"source": "unit-test"},
         change_id="bugfix/no-spec",
         assignee="codearts_agent",
@@ -1100,7 +1100,7 @@ def test_update_task_contract_sets_assignee_role(tmp_path: Path, monkeypatch):
         primary_skill="backend-architect",
         support_skills=["testing"],
         acceptance_commands=["python3 -m pytest -q"],
-        result_file="hermes_target/RESULT-TASK-ROLE-001.md",
+        result_file="external_target/RESULT-TASK-ROLE-001.md",
         contract_required=True,
     )
 
@@ -1166,7 +1166,7 @@ def test_register_task_derives_assignee_role_from_orchestration(tmp_path: Path, 
         primary_skill="backend-architect",
         support_skills=["testing"],
         acceptance_commands=["python3 -m pytest -q"],
-        result_file="hermes_target/RESULT-TASK-ROLE-DERIVE-001.md",
+        result_file="external_target/RESULT-TASK-ROLE-DERIVE-001.md",
         contract_required=True,
     )
 
@@ -1190,7 +1190,7 @@ def test_contract_validation_requires_assignee_role(tmp_path: Path, monkeypatch)
         primary_skill="backend-architect",
         support_skills=["testing"],
         acceptance_commands=["python3 -m pytest -q"],
-        result_file="hermes_target/RESULT-TASK-ROLE-MISSING-001.md",
+        result_file="external_target/RESULT-TASK-ROLE-MISSING-001.md",
         contract_required=True,
     )
 

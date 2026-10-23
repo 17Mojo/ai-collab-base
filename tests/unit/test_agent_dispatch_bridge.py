@@ -387,11 +387,11 @@ def test_dispatch_orders_carry_task_contract(tmp_path):
         "assignee_role": "AGENT_EXEC",
         "status": "planning",
         "updated_at": "2026-03-03T14:00:00+08:00",
-        "description": "把 consensus_engine 移植到 Hermes 并把覆盖率提到 80%",
-        "files": ["hermes_target/hermes_agent/engines/consensus_engine.py"],
-        "change_id": "migrate-parallel-architecture-to-hermes",
-        "acceptance_commands": ["pytest -q hermes_target/hermes_agent/tests/unit/"],
-        "result_file": "hermes_target/RESULT-TASK-CONTRACT-001.md",
+        "description": "把 consensus_engine 交付到外部系统并把覆盖率提到 80%",
+        "files": ["external_target/engines/consensus_engine.py"],
+        "change_id": "external-consensus-port",
+        "acceptance_commands": ["pytest -q external_target/tests/unit/"],
+        "result_file": "external_target/RESULT-TASK-CONTRACT-001.md",
     }
     _write_state(workspace, payload)
 
@@ -402,10 +402,10 @@ def test_dispatch_orders_carry_task_contract(tmp_path):
         workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
     ).read_text(encoding="utf-8")
 
-    assert "**任务描述**: 把 consensus_engine 移植到 Hermes 并把覆盖率提到 80%" in orders
-    assert "`hermes_target/hermes_agent/engines/consensus_engine.py`" in orders
-    assert "`hermes_target/RESULT-TASK-CONTRACT-001.md`" in orders
-    assert "`migrate-parallel-architecture-to-hermes`" in orders
+    assert "**任务描述**: 把 consensus_engine 交付到外部系统并把覆盖率提到 80%" in orders
+    assert "`external_target/engines/consensus_engine.py`" in orders
+    assert "`external_target/RESULT-TASK-CONTRACT-001.md`" in orders
+    assert "`external-consensus-port`" in orders
     assert "`AGENT_EXEC`" in orders
     assert "#### 执行步骤" in orders
 
@@ -476,9 +476,9 @@ def test_dispatch_orders_include_codearts_tool_constraints(tmp_path):
         "status": "planning",
         "updated_at": "2026-03-03T14:00:00+08:00",
         "description": "补 consensus_engine 单元测试",
-        "files": ["hermes_target/hermes_agent/tests/unit/test_consensus_engine.py"],
-        "result_file": "hermes_target/RESULT-TASK-TOOLS-001.md",
-        "acceptance_commands": ["pytest -q hermes_target/hermes_agent/tests/unit/"],
+        "files": ["external_target/tests/unit/test_consensus_engine.py"],
+        "result_file": "external_target/RESULT-TASK-TOOLS-001.md",
+        "acceptance_commands": ["pytest -q external_target/tests/unit/"],
     }
     _write_state(workspace, payload)
 
@@ -538,8 +538,8 @@ def test_tool_constraints_survive_trigger_payload(tmp_path):
         "status": "planning",
         "updated_at": "2026-03-03T14:00:00+08:00",
         "description": "补 consensus_engine 单元测试",
-        "result_file": "hermes_target/RESULT-TASK-TOOLS-003.md",
-        "acceptance_commands": ["pytest -q hermes_target/hermes_agent/tests/unit/"],
+        "result_file": "external_target/RESULT-TASK-TOOLS-003.md",
+        "acceptance_commands": ["pytest -q external_target/tests/unit/"],
     }
     _write_state(workspace, payload)
 

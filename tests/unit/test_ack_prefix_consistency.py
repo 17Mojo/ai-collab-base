@@ -73,7 +73,7 @@ def test_codearts_ack_line_is_protocol_conformant():
     line = build_ack_line(
         assignee="codearts_agent",
         task_id="TASK-P0-CONSENSUS-ENGINE-001",
-        result_file="hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md",
+        result_file="external_target/RESULT-P0-CONSENSUS-ENGINE-001.md",
     )
     assert line.startswith("A.ACK|task=")
     assert "|status=ok|" in line
