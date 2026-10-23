@@ -13,6 +13,7 @@ import importlib.util
 import json
 import os
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -1970,6 +1971,559 @@ def test_inbox_copy_carries_fallback_trace_fields(
     assert "fallback_used" in text
     assert "model_attempts" in text
     assert "model_requested" in text
+
+
+# ---------------------------------------------------------------------------
+# R1b：等回执超时 ≠ 投递失败
+#
+# 真机教训（2026-10-23 17:34 那一轮派单本身）：POST /session/{id}/message
+# 等回执 120 秒超时 → 抛 TimeoutError（不是 BridgeError，降级链和 main()
+# 都没接住）→ 脚本以 traceback 结束、退出码 1 → 适配器判 failed → failed
+# 是可重试状态 → 下一轮再投一次 → 对方那边再建一个会话 → 两个会话并发
+# 改同一个工作区（2026-10-22 22:01 事故的成因）。
+#
+# 所以超时时**先核实**（GET /session/{id}/message）：
+#   - 看得到本条用户消息 → 消息已被 kernel 接受 → 视为投递成功
+#     （退出码 0、不降级、不重投），留痕 accepted_without_receipt=true；
+#   - 看不到 → 消息确实没被接受 → 这次候选才算失败（换下一个候选）。
+# ---------------------------------------------------------------------------
+
+
+class _TimeoutKernel:
+    """等回执超时的 kernel 桩。
+
+    - `accepted_calls`：第几次投递算"消息已被 kernel 接受"（1 基）；
+      不在集合里 → 核实时返回空列表（= 消息确实没被接受）。
+    - `with_assistant`：核实时能否看到 assistant 消息（能看到才取得到
+      实际用掉的模型；看不到 → model_used 为空、model_applied 为 null）。
+    """
+
+    def __init__(
+        self,
+        *,
+        accepted_calls: set[int] | None = None,
+        with_assistant: bool = False,
+        receipt_timeout: int = 600,
+    ) -> None:
+        self.accepted_calls = accepted_calls or set()
+        self.with_assistant = with_assistant
+        self.receipt_timeout = receipt_timeout
+        self.sessions: list[str] = []
+        self.calls = 0
+        self.messages: dict[str, list[str]] = {}
+
+    def create_session(self, *, workspace: Path, title: str) -> str:
+        session_id = f"ses_new_{len(self.sessions) + 1}"
+        self.sessions.append(session_id)
+        self.messages[session_id] = []
+        return session_id
+
+    def send_message(
+        self,
+        *,
+        session_id: str,
+        workspace: Path,
+        message: str,
+        agent: str,
+        model: dict[str, str] | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        self.calls += 1
+        self.messages.setdefault(session_id, []).append(message)
+        raise bridge.BridgeTimeoutError(
+            f"POST /session/{session_id}/message 等待超时（{timeout}s）: timed out"
+        )
+
+    def list_messages(self, *, session_id: str, workspace: Path) -> list[dict[str, Any]]:
+        if self.calls not in self.accepted_calls:
+            return []
+        created = int(time.time() * 1000)
+        items: list[dict[str, Any]] = [
+            {
+                "info": {"role": "user", "time": {"created": created}, "id": f"msg_{index}"},
+                "parts": [{"type": "text", "text": text}],
+            }
+            for index, text in enumerate(self.messages.get(session_id, []))
+        ]
+        if self.with_assistant:
+            items.append(
+                {
+                    "info": {
+                        "role": "assistant",
+                        "providerID": "inferhub-provider",
+                        "modelID": "glm-5.3",
+                    },
+                    "parts": [{"type": "text", "text": "已完成"}],
+                }
+            )
+        return items
+
+
+def test_receipt_timeout_accepted_is_success_without_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """R1b 用例 1：等回执超时但核实到消息已被接受 → 成功、不降级、不重投。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    kernel = _TimeoutKernel(accepted_calls={1})
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(bridge, "KernelClient", lambda **kwargs: kernel)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["accepted_without_receipt"] is True
+    # agent 可能还在跑 → 回执里没有 assistant 消息 → model_used 空、
+    # model_applied null（**不许**因此判成"模型没生效"触发假降级）。
+    assert payload["model_used"] == ""
+    assert payload["model_applied"] is None
+    assert payload["fallback_used"] is False
+    # 不降级、不重投：只投递了一次、只建了一个会话。
+    assert kernel.calls == 1
+    assert len(kernel.sessions) == 1
+    assert payload["model_attempts"] == [
+        {
+            "model": "inferhub-provider/glm-5.3",
+            "ok": True,
+            "error": "",
+            "accepted_without_receipt": True,
+        }
+    ]
+
+
+def test_receipt_timeout_accepted_keeps_actual_model_from_assistant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """R1b 用例 2：核实到 assistant 消息 → model_used 取实际用掉的模型。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    kernel = _TimeoutKernel(accepted_calls={1}, with_assistant=True)
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(bridge, "KernelClient", lambda **kwargs: kernel)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["accepted_without_receipt"] is True
+    assert payload["model_used"] == "inferhub-provider/glm-5.3"
+    assert payload["model_applied"] is True
+    assert payload["fallback_used"] is False
+
+
+def test_receipt_timeout_not_accepted_falls_back_to_next_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """R1b 用例 3：核实不到消息（确实没被接受）→ 这次候选失败，换下一个。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    kernel = _TimeoutKernel(accepted_calls={2})
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(bridge, "KernelClient", lambda **kwargs: kernel)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["accepted_without_receipt"] is True
+    # 第一次没被接受 → 失败并换候选；第二次被接受 → 成功即止。
+    assert kernel.calls == 2
+    assert len(kernel.sessions) == 2
+    attempts = payload["model_attempts"]
+    assert len(attempts) == 2
+    assert attempts[0]["ok"] is False
+    assert "等回执超时" in attempts[0]["error"]
+    assert attempts[1]["ok"] is True
+    assert attempts[1]["accepted_without_receipt"] is True
+
+
+def test_receipt_timeout_all_candidates_fail_exits_with_reasons(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """R1b 用例 4：所有候选都超时且都没被接受 → 退出码 2 + 逐条原因。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    kernel = _TimeoutKernel()
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(bridge, "KernelClient", lambda **kwargs: kernel)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--model-fallback", "kimi-k3",
+            "--json",
+        ]
+    )
+
+    assert code == 2
+    captured = capsys.readouterr()
+    assert captured.out.strip() == ""
+    assert "glm-5.3" in captured.err
+    assert "kimi-k3" in captured.err
+    assert "等回执超时" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_receipt_timeout_single_candidate_exits_two_without_traceback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """R1b 用例 5：单候选（无降级链）超时且没被接受 → 退出码 2，不许 traceback。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    kernel = _TimeoutKernel()
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(bridge, "KernelClient", lambda **kwargs: kernel)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 2
+    captured = capsys.readouterr()
+    assert captured.out.strip() == ""
+    assert "等回执超时" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_receipt_timeout_is_forwarded_to_kernel_client(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """R1b 用例 6：--receipt-timeout 单独管等回执窗口，默认 600 秒。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    kernel = _TimeoutKernel(accepted_calls={1, 2})
+    captured: dict[str, Any] = {}
+
+    def _factory(**kwargs: Any) -> _TimeoutKernel:
+        captured.update(kwargs)
+        return kernel
+
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(bridge, "KernelClient", _factory)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert captured["receipt_timeout"] == bridge.DEFAULT_RECEIPT_TIMEOUT
+    capsys.readouterr()
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--model", "glm-5.3",
+            "--receipt-timeout", "42",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert captured["receipt_timeout"] == 42
+    # --timeout 仍然管短请求，两者分开。
+    assert captured["timeout"] == 120
+    capsys.readouterr()
+
+
+def test_accepted_without_receipt_is_written_to_receipt_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """R1b 用例 7：accepted_without_receipt 落进回执文件。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    kernel = _TimeoutKernel(accepted_calls={1})
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
+    monkeypatch.setattr(bridge, "KernelClient", lambda **kwargs: kernel)
+
+    code = bridge.main(
+        [
+            "--workspace", str(tmp_path),
+            "--event-file", str(event),
+            "--kernel-url", "http://127.0.0.1:14934",
+            "--intervention-id", "int-accepted-1",
+            "--model", "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    capsys.readouterr()
+    receipt_path = tmp_path / "logs" / "codearts_delivery_receipt.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["accepted_without_receipt"] is True
+    assert receipt["model_used"] == ""
+    assert receipt["model_applied"] is None
+    assert receipt["model_attempts"][0]["accepted_without_receipt"] is True
+
+
+def test_request_wraps_socket_timeout_into_bridge_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """R1b 用例 8：socket 超时必须被包成 BridgeTimeoutError，不许裸逃逸。"""
+
+    def _fake_urlopen(request, timeout=None):
+        raise TimeoutError("timed out")
+
+    monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    with pytest.raises(bridge.BridgeTimeoutError) as excinfo:
+        client.send_message(
+            session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build"
+        )
+
+    assert isinstance(excinfo.value, bridge.BridgeError)
+    assert "等待超时" in str(excinfo.value)
+
+
+def test_request_wraps_connection_error_into_bridge_error(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """R1b 用例 9：连接中断也收口成 BridgeError，不许 traceback 逃逸。"""
+
+    def _fake_urlopen(request, timeout=None):
+        raise ConnectionResetError("peer closed")
+
+    monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    with pytest.raises(bridge.BridgeError):
+        client.send_message(
+            session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build"
+        )
+
+
+def test_verify_message_accepted_ignores_messages_from_before_the_send(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """R1b 用例 10：发送之前的旧消息不算"本条被接受"。"""
+    sent_at_ms = int(time.time() * 1000)
+
+    class _Kernel:
+        def list_messages(self, *, session_id, workspace):
+            return [
+                {
+                    "info": {
+                        "role": "user",
+                        "time": {"created": sent_at_ms - 600_000},
+                        "id": "msg_old",
+                    },
+                    "parts": [{"type": "text", "text": "正文"}],
+                }
+            ]
+
+    accepted, assistants = bridge.verify_message_accepted(
+        _Kernel(),  # type: ignore[arg-type]
+        session_id="ses_1",
+        workspace=Path("/tmp/ws"),
+        message="正文",
+        sent_at_ms=sent_at_ms,
+    )
+
+    assert accepted is False
+    assert assistants == []
+
+
+def test_verify_message_accepted_matches_by_content(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """R1b 用例 11：内容匹配即认定已被接受，并带回其后的 assistant 消息。"""
+    sent_at_ms = int(time.time() * 1000)
+
+    class _Kernel:
+        def list_messages(self, *, session_id, workspace):
+            return [
+                {
+                    "info": {
+                        "role": "user",
+                        "time": {"created": sent_at_ms},
+                        "id": "msg_new",
+                    },
+                    "parts": [{"type": "text", "text": "正文"}],
+                },
+                {
+                    "info": {
+                        "role": "assistant",
+                        "providerID": "inferhub-provider",
+                        "modelID": "glm-5.3",
+                    },
+                    "parts": [{"type": "text", "text": "已完成"}],
+                },
+            ]
+
+    accepted, assistants = bridge.verify_message_accepted(
+        _Kernel(),  # type: ignore[arg-type]
+        session_id="ses_1",
+        workspace=Path("/tmp/ws"),
+        message="正文",
+        sent_at_ms=sent_at_ms,
+    )
+
+    assert accepted is True
+    assert len(assistants) == 1
+    assert bridge._first_assistant_model_info(assistants) == {
+        "providerID": "inferhub-provider",
+        "modelID": "glm-5.3",
+    }
+
+
+
+def test_verify_message_accepted_ignores_identical_message_from_before_the_send():
+    """R1b 用例 12：只有"发送之前的同内容旧消息"不算本条被接受。"""
+    sent_at_ms = int(time.time() * 1000)
+
+    class _Kernel:
+        def list_messages(self, *, session_id, workspace):
+            return [
+                {
+                    "info": {
+                        "role": "user",
+                        "time": {"created": sent_at_ms - 600_000},
+                        "id": "msg_old",
+                    },
+                    "parts": [{"type": "text", "text": "正文"}],
+                }
+            ]
+
+    accepted, assistants = bridge.verify_message_accepted(
+        _Kernel(),  # type: ignore[arg-type]
+        session_id="ses_1",
+        workspace=Path("/tmp/ws"),
+        message="正文",
+        sent_at_ms=sent_at_ms,
+    )
+
+    assert accepted is False
+    assert assistants == []
+
+
+def test_verify_message_accepted_accepts_message_without_timestamp():
+    """R1b 用例 13：kernel 没给时间戳时，内容匹配也算已接受。"""
+    sent_at_ms = int(time.time() * 1000)
+
+    class _Kernel:
+        def list_messages(self, *, session_id, workspace):
+            return [
+                {
+                    "info": {"role": "user", "id": "msg_nodate"},
+                    "parts": [{"type": "text", "text": "正文"}],
+                }
+            ]
+
+    accepted, assistants = bridge.verify_message_accepted(
+        _Kernel(),  # type: ignore[arg-type]
+        session_id="ses_1",
+        workspace=Path("/tmp/ws"),
+        message="正文",
+        sent_at_ms=sent_at_ms,
+    )
+
+    assert accepted is True
+    assert assistants == []
+
+
+
+def test_verify_message_accepted_rejects_unrelated_recent_message():
+    """R1b 用例 14：会话里有别的（刚发的）用户消息也不算本条被接受。
+
+    放宽成"有用户消息就算接受"会把"本条根本没发出去"误判成成功 →
+    投递被静默吞掉，再也不会有人重投。
+    """
+    sent_at_ms = int(time.time() * 1000)
+
+    class _Kernel:
+        def list_messages(self, *, session_id, workspace):
+            return [
+                {
+                    "info": {
+                        "role": "user",
+                        "time": {"created": sent_at_ms + 1000},
+                        "id": "msg_other",
+                    },
+                    "parts": [{"type": "text", "text": "另一条完全无关的正文"}],
+                }
+            ]
+
+    accepted, assistants = bridge.verify_message_accepted(
+        _Kernel(),  # type: ignore[arg-type]
+        session_id="ses_1",
+        workspace=Path("/tmp/ws"),
+        message="正文",
+        sent_at_ms=sent_at_ms,
+    )
+
+    assert accepted is False
+    assert assistants == []
+
 
 
 if __name__ == "__main__":

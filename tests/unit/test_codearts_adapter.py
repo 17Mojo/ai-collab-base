@@ -756,3 +756,86 @@ def test_codearts_adapter_model_fallback_placeholder_is_optional(tmp_path: Path)
 
     assert report["queued_count"] == 1
     assert (workspace / "model.txt").read_text(encoding="utf-8") == "glm-5.3"
+
+
+# ---------------------------------------------------------------------------
+# R1b：等回执超时 ≠ 投递失败 —— 回执里的 accepted_without_receipt 要透出
+# ---------------------------------------------------------------------------
+
+
+def test_codearts_adapter_reads_accepted_without_receipt_from_receipt(tmp_path: Path):
+    """被接受但没等到回执 → delivery 里 accepted_without_receipt=True。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-accepted-1", message="请执行。")
+    _write_delivery_receipt(
+        workspace,
+        {
+            "intervention_id": "int-accepted-1",
+            "session_id": "ses_x",
+            "model_requested": "inferhub-provider/glm-5.3",
+            "model_used": "",
+            "model_applied": None,
+            "fallback_used": False,
+            "accepted_without_receipt": True,
+            "model_attempts": [
+                {
+                    "model": "inferhub-provider/glm-5.3",
+                    "ok": True,
+                    "error": "",
+                    "accepted_without_receipt": True,
+                }
+            ],
+            "generated_at": "2026-10-23T19:00:00",
+        },
+    )
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    delivery = report["deliveries"][0]
+    assert delivery["action"] == "queued"
+    assert delivery["accepted_without_receipt"] is True
+    # 没有回执里就没有这个字段 → 留空字符串（与 model_used 同口径）。
+    assert delivery["model_used"] == ""
+    assert delivery["model_applied"] is None
+
+    summary_text = (workspace / report["summary_file"]).read_text(encoding="utf-8")
+    assert "accepted_without_receipt=`true`" in summary_text
+
+
+def test_codearts_adapter_leaves_accepted_without_receipt_empty_without_receipt(
+    tmp_path: Path,
+):
+    """没有回执文件 → accepted_without_receipt 留空，不许猜。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-accepted-2", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    delivery = report["deliveries"][0]
+    assert delivery["action"] == "queued"
+    assert delivery["accepted_without_receipt"] == ""

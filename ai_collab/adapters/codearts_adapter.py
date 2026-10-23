@@ -292,12 +292,21 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
             fallback_note = (
                 "true" if fallback is True else "false" if fallback is False else "（无回执）"
             )
+            accepted_flag = item.get("accepted_without_receipt")
+            accepted_note = (
+                "true"
+                if accepted_flag is True
+                else "false"
+                if accepted_flag is False
+                else "（无回执）"
+            )
             lines.append(
                 f"- `{item.get('intervention_id', '')}` action=`{item.get('action', '')}` "
                 f"status=`{item.get('delivery_status', '')}` "
                 f"model=`{item.get('model', '') or '（kernel 决定）'}` "
                 f"model_used=`{used_note}` model_applied=`{applied_note}` "
-                f"fallback_used=`{fallback_note}`"
+                f"fallback_used=`{fallback_note}` "
+                f"accepted_without_receipt=`{accepted_note}`"
             )
             if item.get("event_file"):
                 lines.append(f"  event_file: `{item.get('event_file', '')}`")
@@ -387,6 +396,9 @@ def run_codearts_pull_adapter(
             "model_used": "",
             "model_applied": "",
             "fallback_used": "",
+            # 被 kernel 接受但没等到回执（等回执超时 ≠ 投递失败）。
+            # "" = 没有回执；True/False = 回执里的取值。
+            "accepted_without_receipt": "",
         }
 
         if error:
@@ -469,6 +481,9 @@ def run_codearts_pull_adapter(
                 fallback = receipt.get("fallback_used")
                 if isinstance(fallback, bool):
                     delivery["fallback_used"] = fallback
+                accepted = receipt.get("accepted_without_receipt")
+                if isinstance(accepted, bool):
+                    delivery["accepted_without_receipt"] = accepted
             ack_report = ack_intervention(
                 workspace=workspace,
                 intervention_id=intervention_id,

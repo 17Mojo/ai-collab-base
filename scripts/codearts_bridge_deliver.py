@@ -46,6 +46,16 @@ kernel 自己会新建 CodeArts 会话并把 markdown 当成用户消息投进�
 回执里都带 `model_requested` / `model_used` / `model_applied` /
 `fallback_used` / `model_attempts` 留痕字段。
 
+**等回执超时 ≠ 投递失败（R1b）** —— `POST /session/{id}/message` 是**同步**
+等 assistant 回执的，真实派单要跑几分钟。等回执窗口由 `--receipt-timeout`
+（默认 600 秒）单独控制，与 `--timeout`（建会话 / 查注册表这类短请求）分开。
+窗口内没等到回执时**先核实**（`GET /session/{id}/message`）：
+
+- 看得到本条用户消息（或其后已有 assistant 消息）→ 消息已被 kernel 接受
+  → **视为投递成功**（退出码 0、不降级、不重投），留痕
+  `accepted_without_receipt=true`；
+- 看不到 → 消息确实没被接受 → 这次候选才算失败（换下一个候选）。
+
 鉴权是 HTTP Basic。密码由运行环境提供，本脚本不硬编码、不落盘：
 
     1. 环境变量 `OPENCODE_SERVER_PASSWORD`（用户名默认 `codearts`，
@@ -68,6 +78,7 @@ from __future__ import annotations
 import argparse
 import ast
 import base64
+import http.client
 import json
 import os
 import re
@@ -97,6 +108,16 @@ INBOX_DIR = "collaboration/monitoring/codearts_inbox"
 SESSION_REGISTRY = "logs/session_registry_state.json"
 DELIVERY_RECEIPT_RELATIVE = "logs/codearts_delivery_receipt.json"
 
+# 等回执窗口（秒）：发消息 → 收到 assistant 回执的最长等待时间。
+# 与 --timeout（建会话 / 查 provider 注册表这类短请求）**分开**：
+# 真实派单要跑几分钟（读契约 + 跑测试），用短超时会把"agent 还在跑"
+# 误判成"投递失败"，进而触发重投 → 两个会话并发改同一个工作区。
+DEFAULT_RECEIPT_TIMEOUT = 600
+
+# 核实"消息是否被接受"时允许的时间戳误差（毫秒）：kernel 与本机同机同钟，
+# 留 5 秒余量防时钟抖动。
+ACCEPT_TIME_TOLERANCE_MS = 5_000
+
 # 非 JSON 响应（kernel 部分 GET 路由返回 Python 字面量格式）解析失败时的兜底保留长度。
 # 原先写死 2000，会把会话列表截断到只剩第一条消息 —— 静默丢信息，最难查的一类。
 MAX_RAW_RESPONSE_CHARS = 200_000
@@ -117,6 +138,20 @@ SESSION_ID_PATTERN = re.compile(r"^ses_[A-Za-z0-9]+$")
 
 class BridgeError(RuntimeError):
     """投递失败，调用方应以非零码退出。"""
+
+
+class BridgeTimeoutError(BridgeError):
+    """请求超时。
+
+    单独一个类型，是为了让"等回执超时"能被单独识别：它**不**等于
+    投递失败 —— 消息很可能已经被 kernel 接受并在执行，只是回执没在
+    窗口内到。必须先核实（见 verify_message_accepted），再决定成败。
+    """
+
+    def __init__(self, message: str, *, method: str = "", path: str = "") -> None:
+        super().__init__(message)
+        self.method = method
+        self.path = path
 
 
 def _fail(message: str) -> int:
@@ -559,9 +594,12 @@ class KernelClient:
         password: str,
         timeout: int = 120,
         workspace: Path | None = None,
+        receipt_timeout: int = DEFAULT_RECEIPT_TIMEOUT,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        # 等回执窗口与短请求超时分开（见 DEFAULT_RECEIPT_TIMEOUT）。
+        self.receipt_timeout = receipt_timeout
         # 工作区作用域：kernel 的 provider 注册表是**按项目**查的
         # （不带 directory 的 /provider 会返回空注册表，见 provider_registry）。
         self.workspace = workspace
@@ -575,6 +613,7 @@ class KernelClient:
         *,
         query: dict[str, str] | None = None,
         body: dict[str, Any] | None = None,
+        timeout: float | None = None,
     ) -> dict[str, Any]:
         url = f"{self.base_url}{path}"
         if query:
@@ -586,8 +625,9 @@ class KernelClient:
         request.add_header("Authorization", self._auth)
         if data is not None:
             request.add_header("Content-Type", "application/json")
+        wait = self.timeout if timeout is None else timeout
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=wait) as response:
                 raw = response.read().decode("utf-8", errors="replace")
                 status = response.status
         except urllib.error.HTTPError as exc:
@@ -595,6 +635,16 @@ class KernelClient:
             raise BridgeError(f"{method} {path} 返回 HTTP {exc.code}: {detail}") from exc
         except urllib.error.URLError as exc:
             raise BridgeError(f"无法连接 kernel {self.base_url}: {exc.reason}") from exc
+        except TimeoutError as exc:
+            # socket.timeout 就是 TimeoutError（Python 3.10+ 起是别名），
+            # 所以这一句同时接住了 socket 超时与 urllib 抛出的读超时。
+            raise BridgeTimeoutError(
+                f"{method} {path} 等待超时（{wait}s）: {exc}", method=method, path=path
+            ) from exc
+        except ConnectionError as exc:
+            raise BridgeError(f"与 kernel {self.base_url} 的连接中断: {exc}") from exc
+        except http.client.HTTPException as exc:
+            raise BridgeError(f"{method} {path} 响应不完整: {exc}") from exc
         if not raw.strip():
             return {"http_status": status}
         decoded: Any = parse_kernel_payload(raw)
@@ -646,6 +696,7 @@ class KernelClient:
         message: str,
         agent: str,
         model: dict[str, str] | None = None,
+        timeout: float | None = None,
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "parts": [{"type": "text", "text": message}],
@@ -661,7 +712,27 @@ class KernelClient:
             f"/session/{urllib.parse.quote(session_id)}/message",
             query={"directory": str(workspace)},
             body=body,
+            timeout=self.receipt_timeout if timeout is None else timeout,
         )
+
+    def list_messages(self, *, session_id: str, workspace: Path) -> list[dict[str, Any]]:
+        """列出会话里的消息（核实"消息是否已被 kernel 接受"用）。
+
+        kernel 的 `/session/{id}/message` 返回消息数组，每条形如
+        `{"info": {"role": "user", "time": {"created": 1792748077184}, ...},
+        "parts": [{"type": "text", "text": "..."}]}`。
+        """
+        payload = self.request(
+            "GET",
+            f"/session/{urllib.parse.quote(session_id)}/message",
+            query={"directory": str(workspace)},
+        )
+        items = payload.get("raw")
+        if isinstance(items, str):
+            items = parse_kernel_payload(items)
+        if not isinstance(items, list):
+            return []
+        return [dict(item) for item in items if isinstance(item, dict)]
 
     # -- cron ---------------------------------------------------------------
 
@@ -817,8 +888,13 @@ def deliver_with_model_fallback(
                 {"model": model_resolved, "ok": False, "error": str(exc)}
             )
             continue
+        accepted_without_receipt = bool(delivery.get("accepted_without_receipt"))
         model_used = extract_used_model(delivery.get("response"))
-        if model_used and model_used != model_resolved:
+        if (
+            model_used
+            and model_used != model_resolved
+            and not accepted_without_receipt
+        ):
             attempts.append(
                 {
                     "model": model_resolved,
@@ -829,7 +905,14 @@ def deliver_with_model_fallback(
                 }
             )
             continue
-        attempts.append({"model": model_resolved, "ok": True, "error": ""})
+        attempt: dict[str, Any] = {"model": model_resolved, "ok": True, "error": ""}
+        if accepted_without_receipt:
+            # 消息已被 kernel 接受、只是没等到回执 → 这是**成功**：
+            # 绝不换下一个候选（重投会在对方那边再建一个会话，
+            # 两个会话并发改同一个工作区）。
+            attempt["accepted_without_receipt"] = True
+        attempts.append(attempt)
+        delivery["accepted_without_receipt"] = accepted_without_receipt
         delivery["model_requested"] = first_requested or candidates[0]
         delivery["model_used"] = model_used
         if not model_used:
@@ -860,6 +943,7 @@ def write_delivery_receipt(*, workspace: Path, delivery: dict[str, Any]) -> str:
         "model_used": delivery.get("model_used", ""),
         "model_applied": delivery.get("model_applied"),
         "fallback_used": bool(delivery.get("fallback_used")),
+        "accepted_without_receipt": bool(delivery.get("accepted_without_receipt")),
         "model_attempts": list(delivery.get("model_attempts") or []),
         "generated_at": datetime.now().isoformat(timespec="seconds"),
     }
@@ -878,6 +962,211 @@ def _next_minute_cron() -> str:
     """
     target = datetime.now() + timedelta(minutes=1)
     return f"{target.minute} {target.hour} * * *"
+
+
+# --------------------------------------------------------------------------
+# 等回执与"消息是否被接受"的核实
+#
+# `POST /session/{id}/message` 是**同步**等 assistant 回执的：agent 跑完
+# 才回。真实派单要几分钟（读契约 + 跑测试），回执窗口短了就会在 agent
+# 还在跑的时候超时。
+#
+# 真机教训（2026-10-23 17:34 那一轮派单本身）：120 秒等回执超时 →
+# 抛 TimeoutError（**不是** BridgeError，降级链和 main() 都没接住）→
+# 脚本以 traceback 结束、退出码 1 → 适配器判 failed → failed 是可重试
+# 状态 → 下一轮再投一次 → 对方那边再建一个会话 → 两个会话并发改同一个
+# 工作区（2026-10-22 22:01 事故的成因）。
+#
+# 所以：**超时不等于失败**。超时时先核实（GET /session/{id}/message）：
+#   - 看得到本条用户消息（或其后已有 assistant 消息）→ 消息已被 kernel
+#     接受 → 视为投递成功（退出码 0、不降级、不重投），留痕
+#     `accepted_without_receipt=true`；
+#   - 看不到 → 消息确实没被接受 → 这次候选才算失败（换下一个候选）。
+# --------------------------------------------------------------------------
+
+
+def _message_text(message: dict[str, Any]) -> str:
+    """取消息正文（拼所有 text part）。"""
+    parts = message.get("parts")
+    if not isinstance(parts, list):
+        return ""
+    chunks: list[str] = []
+    for part in parts:
+        if isinstance(part, dict) and part.get("type") == "text":
+            text = part.get("text")
+            if isinstance(text, str):
+                chunks.append(text)
+    return "\n".join(chunks)
+
+
+def _message_created_ms(message: dict[str, Any]) -> int:
+    """取消息创建时间（epoch 毫秒）；取不到返回 0。"""
+    info = message.get("info")
+    if not isinstance(info, dict):
+        return 0
+    time_info = info.get("time")
+    if isinstance(time_info, dict):
+        created = time_info.get("created")
+        if isinstance(created, (int, float)):
+            return int(created)
+    return 0
+
+
+def _message_matches(sent_text: str, candidate_text: str) -> bool:
+    """本条消息是否就是刚发出去的那条。
+
+    kernel 是**原样**存正文的（真机实测），但容忍两种偏差：正文被截断
+    （候选是原文的前缀）、尾部被改写（原文的前缀出现在候选里）。
+    """
+    sent = str(sent_text or "").strip()
+    candidate = str(candidate_text or "").strip()
+    if not sent or not candidate:
+        return False
+    if sent == candidate:
+        return True
+    if len(candidate) >= 20 and sent.startswith(candidate):
+        return True
+    prefix = sent[:120]
+    return len(prefix) >= 20 and prefix in candidate
+
+
+def _assistant_messages_after(
+    messages: list[dict[str, Any]], index: int
+) -> list[dict[str, Any]]:
+    """某条用户消息之后的 assistant 消息（agent 已经在跑的证据）。"""
+    result: list[dict[str, Any]] = []
+    for other in messages[index + 1 :]:
+        info = other.get("info")
+        if isinstance(info, dict) and str(info.get("role") or "") == "assistant":
+            result.append(other)
+    return result
+
+
+def _first_assistant_model_info(assistants: list[dict[str, Any]]) -> dict[str, str]:
+    """从 assistant 消息里取实际用掉的模型（providerID/modelID）。"""
+    for item in assistants:
+        info = item.get("info")
+        if not isinstance(info, dict):
+            continue
+        provider = str(info.get("providerID") or info.get("providerId") or "")
+        model = str(info.get("modelID") or info.get("modelId") or "")
+        if provider and model:
+            return {"providerID": provider, "modelID": model}
+        if model:
+            return {"providerID": "", "modelID": model}
+    return {}
+
+
+def verify_message_accepted(
+    client: KernelClient,
+    *,
+    session_id: str,
+    workspace: Path,
+    message: str,
+    sent_at_ms: int,
+) -> tuple[bool, list[dict[str, Any]]]:
+    """核实消息是否已被 kernel 接受。
+
+    返回 `(accepted, assistant_messages)`：
+
+    - accepted=True：看到了本条用户消息（或发送之后还有新的用户消息）；
+    - assistant_messages：该用户消息之后的 assistant 消息（取实际模型用）。
+
+    核实本身失败（kernel 读不到）→ 抛 BridgeError：无法确认 ≠ 确认成功。
+    """
+    last_error = ""
+    messages: list[dict[str, Any]] = []
+    for attempt in range(3):
+        try:
+            messages = client.list_messages(session_id=session_id, workspace=workspace)
+            last_error = ""
+            break
+        except BridgeError as exc:
+            last_error = str(exc)
+            if attempt < 2:
+                time.sleep(1.0)
+    else:
+        raise BridgeError(
+            f"等回执超时后核实失败（无法确认消息是否被 kernel 接受）: {last_error}"
+        )
+
+    sent_text = str(message or "")
+    matched_recent: list[int] = []  # 内容匹配 **且** 时间确认是发送之后
+    matched_undated: list[int] = []  # 内容匹配但 kernel 没给时间戳
+
+    for index, item in enumerate(messages):
+        info = item.get("info")
+        if not isinstance(info, dict):
+            continue
+        if str(info.get("role") or "") != "user":
+            continue
+        created = _message_created_ms(item)
+        is_recent = bool(created) and created >= sent_at_ms - ACCEPT_TIME_TOLERANCE_MS
+        is_undated = not created
+        text_hit = _message_matches(sent_text, _message_text(item))
+        if text_hit and is_recent:
+            matched_recent.append(index)
+        elif text_hit and is_undated:
+            matched_undated.append(index)
+
+    if matched_recent:
+        return True, _assistant_messages_after(messages, matched_recent[-1])
+    if matched_undated:
+        return True, _assistant_messages_after(messages, matched_undated[-1])
+    # 核不到本条消息 → 消息确实没被 kernel 接受（判失败）。
+    # 这里**不**放宽成"会话里有别的用户消息就算接受"：那会把"本条没发出去"
+    # 误判成成功 → 投递被静默吞掉，再也不会有人重投。
+    return False, []
+
+
+def send_message_awaiting_receipt(
+    client: KernelClient,
+    *,
+    session_id: str,
+    workspace: Path,
+    message: str,
+    agent: str,
+    model: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """发消息并等回执；**超时不等于失败** —— 先核实消息是否已被接受。
+
+    返回 `{"response": ..., "accepted_without_receipt": bool}`：
+
+    - 正常拿到回执 → accepted_without_receipt=False；
+    - 等回执超时但核实到消息已被 kernel 接受 → accepted_without_receipt=True，
+      response 用核实到的 assistant 消息取证实际模型（agent 可能还在跑，
+      没有 assistant 消息就留空）——**视为投递成功**（不降级、不重投）；
+    - 等回执超时且核实不到消息 → 抛 BridgeError（这次候选才算失败）。
+    """
+    sent_at_ms = int(time.time() * 1000)
+    try:
+        response = client.send_message(
+            session_id=session_id,
+            workspace=workspace,
+            message=message,
+            agent=agent,
+            model=model,
+        )
+    except BridgeTimeoutError as exc:
+        accepted, assistants = verify_message_accepted(
+            client,
+            session_id=session_id,
+            workspace=workspace,
+            message=message,
+            sent_at_ms=sent_at_ms,
+        )
+        if not accepted:
+            raise BridgeError(
+                f"等回执超时（{client.receipt_timeout}s）且核实未发现消息被 kernel 接受: {exc}"
+            ) from exc
+        used_info = _first_assistant_model_info(assistants)
+        receipt: dict[str, Any] = {"info": used_info} if used_info else {}
+        return {
+            "response": receipt,
+            "accepted_without_receipt": True,
+            "receipt_timeout_error": str(exc),
+        }
+    return {"response": response, "accepted_without_receipt": False}
 
 
 # --------------------------------------------------------------------------
@@ -926,14 +1215,20 @@ def deliver_via_session(
     model: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """快路径：直发已有会话。"""
-    response = client.send_message(
+    result = send_message_awaiting_receipt(
+        client,
         session_id=session_id,
         workspace=workspace,
         message=message,
         agent=agent,
         model=model,
     )
-    return {"channel": "session", "session_id": session_id, "response": response}
+    return {
+        "channel": "session",
+        "session_id": session_id,
+        "response": result["response"],
+        "accepted_without_receipt": bool(result.get("accepted_without_receipt")),
+    }
 
 
 def deliver_via_new_session(
@@ -951,7 +1246,8 @@ def deliver_via_new_session(
     """
     title = session_title_from_message(message)
     session_id = client.create_session(workspace=workspace, title=title)
-    response = client.send_message(
+    result = send_message_awaiting_receipt(
+        client,
         session_id=session_id,
         workspace=workspace,
         message=message,
@@ -962,7 +1258,8 @@ def deliver_via_new_session(
         "channel": "new_session",
         "session_id": session_id,
         "session_title": title,
-        "response": response,
+        "response": result["response"],
+        "accepted_without_receipt": bool(result.get("accepted_without_receipt")),
     }
 
 
@@ -1344,6 +1641,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--timeout", type=int, default=120, help="请求超时（秒）")
     parser.add_argument(
+        "--receipt-timeout",
+        type=int,
+        default=DEFAULT_RECEIPT_TIMEOUT,
+        help=(
+            "等回执窗口（秒）：发消息后等待 assistant 回执的最长时间"
+            f"（默认 {DEFAULT_RECEIPT_TIMEOUT}）。与 --timeout 分开 —— "
+            "--timeout 管建会话/查注册表这类短请求，等回执要按真实派单耗时给"
+        ),
+    )
+    parser.add_argument(
         "--channel",
         choices=("auto", "cron", "session", "new_session"),
         default="",
@@ -1460,6 +1767,7 @@ def main(argv: list[str] | None = None) -> int:
         password=password,
         timeout=args.timeout,
         workspace=workspace,
+        receipt_timeout=args.receipt_timeout,
     )
 
     # 模型降级链：候选 >= 2 才启用；单候选保持既有行为（失败就是失败，
@@ -1477,6 +1785,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         except BridgeError as exc:
             return _fail(f"模型降级链投递失败: {exc}")
+        except (TimeoutError, ConnectionError) as exc:
+            return _fail(f"模型降级链投递失败（网络异常）: {type(exc).__name__}: {exc}")
         if delivery is None:
             for attempt in attempts:
                 print(
@@ -1500,6 +1810,8 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except BridgeError as exc:
                 return _fail(f"解析模型失败: {exc}")
+            except (TimeoutError, ConnectionError) as exc:
+                return _fail(f"解析模型失败（网络异常）: {type(exc).__name__}: {exc}")
 
         try:
             if channel == "session":
@@ -1557,9 +1869,15 @@ def main(argv: list[str] | None = None) -> int:
                     )
         except BridgeError as exc:
             return _fail(str(exc))
+        except (TimeoutError, ConnectionError) as exc:
+            # 兜底：网络层异常不允许以 traceback 逃逸（必须是非零退出码
+            # + 明确原因，调用方才敢按"可重试"处理）。
+            return _fail(f"投递失败（网络异常）: {type(exc).__name__}: {exc}")
 
     delivery["intervention_id"] = args.intervention_id
     delivery["assignee"] = args.assignee
+    # R1b：消息被 kernel 接受但没等到回执（等回执超时 ≠ 投递失败）。
+    delivery["accepted_without_receipt"] = bool(delivery.get("accepted_without_receipt"))
     if not use_fallback_chain:
         # 回执取证：model_used 是 kernel **实际**用掉的模型，model_applied 判断
         # 有没有静默回落（请求 A、实际 B → False）。
@@ -1587,16 +1905,21 @@ def main(argv: list[str] | None = None) -> int:
                     f"静默回落：请求 {model_resolved}，"
                     f"实际用了 {delivery['model_used']}"
                 )
-            delivery["model_attempts"] = [
-                {
-                    "model": model_resolved or args.model,
-                    "ok": (
-                        delivery["model_applied"] is not False
-                        and model_payload is not None
-                    ),
-                    "error": attempt_error,
-                }
-            ]
+            attempt_ok = (
+                delivery["model_applied"] is not False
+                and model_payload is not None
+            )
+            attempt_item: dict[str, Any] = {
+                "model": model_resolved or args.model,
+                "ok": attempt_ok,
+                "error": attempt_error,
+            }
+            if delivery.get("accepted_without_receipt"):
+                # 被 kernel 接受但没等到回执 → 投递**成功**（哪怕回执里的
+                # 模型不一样也不能判失败：重投会在对方那边再建一个会话）。
+                attempt_item["ok"] = True
+                attempt_item["accepted_without_receipt"] = True
+            delivery["model_attempts"] = [attempt_item]
         else:
             delivery["model_attempts"] = []
         if model_warning:
