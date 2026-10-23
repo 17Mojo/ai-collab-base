@@ -438,6 +438,7 @@ def _generate_trigger_payload_files(
     assignees = _resolve_trigger_assignees(config, target=target)
     generated_at = generated_at or datetime.now().isoformat()
     output_files: list[str] = []
+    payload_files: dict[str, str] = {}
     payloads: dict[str, str] = {}
     assignee_roles = _resolve_assignee_roles(workspace)
 
@@ -454,16 +455,154 @@ def _generate_trigger_payload_files(
         payload_file = Path(workspace) / output_dir_rel / f"{payload_prefix}_{assignee}_latest.md"
         payload_file.parent.mkdir(parents=True, exist_ok=True)
         payload_file.write_text(payload, encoding="utf-8")
-        output_files.append(str(payload_file.relative_to(workspace)))
+        relpath = str(payload_file.relative_to(workspace))
+        output_files.append(relpath)
+        payload_files[assignee] = relpath
         payloads[assignee] = payload
 
     return {
         "assignees": assignees,
         "output_files": output_files,
+        "payload_files": payload_files,
         "payloads": payloads,
         "generated_at": generated_at,
         "orders_exists": orders_file.exists(),
         "section_assignees": sorted(section_map.keys()),
+    }
+
+
+DISPATCH_INTERVENTION_REASON_CODE = "dispatch_triggered"
+DISPATCH_INTERVENTION_SEVERITY = "low"
+# 派单干预里可以复用的未决状态：在途（等 ACK）与待投递。
+# failed 不算 —— 复用一条已失败的记录等于永远投不出去。
+DISPATCH_INTERVENTION_REUSABLE_STATUSES = {"pending_operator_delivery", "queued_for_delivery"}
+
+
+def _enqueue_dispatch_interventions(
+    *,
+    workspace: str,
+    payload_files: dict[str, str],
+    trigger_phrase: str,
+    dry_run: bool,
+) -> list[dict[str, Any]]:
+    """派单即入队：把触发 payload 挂进 intervention 队列。
+
+    为什么需要这一段：干预队列原本**只有** `session_health` 的 ACK 静默看门狗会写，
+    于是「派单 → 对方开始干」之间要空等 120s
+    （`ai_collab/ack_watchdog.py` 的 `DEFAULT_THRESHOLD_SECONDS`）。
+    派单当场入队后，下一轮 adapter 轮询就能直接投出去。
+
+    两条必须遵守的约束（都踩过坑）：
+
+    1. **状态必须是 `pending_operator_delivery`**（= `delivery_mode="manual"`）。
+       `"bridge"` 模式的默认状态是 `queued_for_delivery`，那属于**在途**，
+       会被 codearts adapter 的在途过滤器整个跳过
+       （`ai_collab/intervention_queue.py` 的 `IN_FLIGHT_DELIVERY_STATUSES`）。
+    2. **同一 assignee 只留一条未决干预**。重复入队会让 adapter 投两次，
+       在对方那边开出两个并发会话改同一个工作区。
+       这里按 (session_id, assignee, reason_code) 查未决记录，命中就复用。
+    """
+    if dry_run:
+        return []
+
+    from ai_collab.intervention_queue import enqueue_intervention, inspect_interventions
+
+    root = Path(workspace)
+    queued: list[dict[str, Any]] = []
+    for assignee, artifact_relpath in sorted(payload_files.items()):
+        artifact_relpath = str(artifact_relpath).strip()
+        if not artifact_relpath:
+            continue
+        session_id = f"dispatch-{assignee}"
+        existing = inspect_interventions(
+            workspace=root,
+            session_id=session_id,
+            assignee=assignee,
+            reason_code=DISPATCH_INTERVENTION_REASON_CODE,
+            only_open=True,
+        )
+        reusable = [
+            item
+            for item in list(existing.get("interventions", []) or [])
+            if str(item.get("delivery_status") or "").strip().lower()
+            in DISPATCH_INTERVENTION_REUSABLE_STATUSES
+        ]
+        if reusable:
+            current = reusable[0]
+            queued.append(
+                {
+                    "assignee": assignee,
+                    "intervention_id": str(current.get("intervention_id") or ""),
+                    "delivery_status": str(current.get("delivery_status") or ""),
+                    "action": "reused_open",
+                    "message_artifact": artifact_relpath,
+                }
+            )
+            continue
+
+        record = enqueue_intervention(
+            workspace=root,
+            session_id=session_id,
+            assignee=assignee,
+            reason_code=DISPATCH_INTERVENTION_REASON_CODE,
+            severity=DISPATCH_INTERVENTION_SEVERITY,
+            message_artifact=artifact_relpath,
+            delivery_mode="manual",
+            source_signal=trigger_phrase,
+        )
+        intervention = record.get("intervention", {})
+        queued.append(
+            {
+                "assignee": assignee,
+                "intervention_id": str(intervention.get("intervention_id") or ""),
+                "delivery_status": str(intervention.get("delivery_status") or ""),
+                "action": "queued",
+                "message_artifact": artifact_relpath,
+            }
+        )
+    return queued
+
+
+def _deliver_dispatch_interventions(
+    *,
+    workspace: str,
+    assignees: list[str],
+    dry_run: bool,
+) -> dict[str, Any]:
+    """派单即送达：入队之后立刻跑一次 codearts 拉取适配器。
+
+    为什么不在这里直接调 kernel：投递细节（选会话 / cron 兜底 / 失败上报 /
+    成功后翻成在途）全在适配器里，这里只做「触发一次适配器」，
+    不重复实现投递逻辑，也就不会和适配器的锁纪律分叉。
+
+    只跑 codearts 拉取适配器 —— 本仓只有它配了可用的 bridgeCommand；
+    claude_code / codex 的干预由各自的适配器在下一轮 `sessions health` 投递。
+    """
+    if dry_run:
+        return {"skipped": "dry_run"}
+    if "codearts_agent" not in assignees:
+        return {"skipped": "no_codearts_target"}
+
+    try:
+        from ai_collab.adapters.codearts_adapter import run_codearts_pull_adapter
+    except Exception as exc:  # pragma: no cover - 导入失败不应让派单整体失败
+        return {"error": f"adapter import failed: {exc}"}
+
+    try:
+        report = run_codearts_pull_adapter(
+            workspace=Path(workspace),
+            dry_run=False,
+            allow_delivery=True,
+        )
+    except Exception as exc:
+        return {"error": f"adapter run failed: {exc}"}
+
+    return {
+        "candidate_count": report.get("candidate_count"),
+        "queued_count": report.get("queued_count"),
+        "failed_count": report.get("failed_count"),
+        "skipped_in_flight_count": report.get("skipped_in_flight_count"),
+        "report_file": report.get("report_file"),
     }
 
 
@@ -2915,6 +3054,20 @@ def cmd_trigger(args):
     payloads = payload_sync["payloads"]
     generated_at = payload_sync["generated_at"]
 
+    # 派单即入队：让首轮投递不必等 120s 的 ACK 静默看门狗。
+    dispatch_interventions = _enqueue_dispatch_interventions(
+        workspace=workspace,
+        payload_files=payload_sync.get("payload_files", {}),
+        trigger_phrase=intent.raw_phrase,
+        dry_run=bool(args.dry_run),
+    )
+    # 派单即送达：入队后立刻跑一次适配器，别等下一轮轮询。
+    dispatch_delivery = _deliver_dispatch_interventions(
+        workspace=workspace,
+        assignees=list(assignees),
+        dry_run=bool(args.dry_run),
+    )
+
     if args.copy:
         assignee = assignees[0]
         copy_result = subprocess.run(["pbcopy"], input=payloads[assignee], text=True, check=False)
@@ -2934,6 +3087,8 @@ def cmd_trigger(args):
         or str(dispatch_config.get("report", "logs/task_dispatch_report.json")),
         "output_files": output_files,
         "copied_to_clipboard": bool(args.copy),
+        "dispatch_interventions": dispatch_interventions,
+        "dispatch_delivery": dispatch_delivery,
     }
 
     report_file = Path(workspace) / trigger_report_rel
@@ -2954,6 +3109,20 @@ def cmd_trigger(args):
     print(f"派单指令包: {orders_file.relative_to(workspace)}")
     for path in output_files:
         print(f"会话指令: {path}")
+    for item in dispatch_interventions:
+        print(
+            f"干预入队: {item.get('assignee')} | {item.get('action')} | "
+            f"{item.get('delivery_status')} | {item.get('message_artifact')}"
+        )
+    if dispatch_delivery.get("error"):
+        print(f"投递失败: {dispatch_delivery.get('error')}")
+    elif not dispatch_delivery.get("skipped"):
+        print(
+            f"投递结果: candidates={dispatch_delivery.get('candidate_count')} "
+            f"queued={dispatch_delivery.get('queued_count')} "
+            f"failed={dispatch_delivery.get('failed_count')} "
+            f"skipped_in_flight={dispatch_delivery.get('skipped_in_flight_count')}"
+        )
     print(f"报告路径: {trigger_report_rel}")
     print(f"历史路径: {trigger_history_rel}")
 
