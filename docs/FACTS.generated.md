@@ -1,50 +1,74 @@
 # 项目事实快照
 
-**生成时间**: 2026-10-22T07:56:32Z
+**生成时间**: 2026-10-23T01:45:09Z
 **生成方式**: scripts/gen_facts.sh（自动生成，请勿手工编辑）
 **仓库路径**: /Users/raymondna/Documents/AI-collab/ai-collab-base
-**仓库 HEAD**: 3ae6ccad351e779028cb1f6f39d1552ef11b6117
-**当前分支**: refactor/slimming-2026-09-20
+**仓库 HEAD**: 85973f7ca8c763f5e48cbf512e6118f7ba60e4d3
+**当前分支**: feat/codearts-collab-wiring
 
 ## 1. Git 状态
 ```
 $ git status --short --branch
-## refactor/slimming-2026-09-20...origin/refactor/slimming-2026-09-20
+## feat/codearts-collab-wiring...origin/main [ahead 33]
+ M .github/workflows/test.yml
+ M collaboration/guides/CODEARTS_DISPATCH_GUIDE.md
+ M collaboration/guides/THREE_TIER_PLANNING_METHODOLOGY.md
  M collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md
-D  docs/FACTS_2026-10-21_193044.md
+ M collaboration/results/RESULT-CODEARTS-COLLAB-WIRING-2026-10-22.md
+RM hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md -> collaboration/results/RESULT-P0-CONSENSUS-ENGINE-001.md
+ M collaboration/results/RESULT-P1-GOV-CONVERGE-001.md
+ M collaboration/tasks/TASK-P0-CONSENSUS-ENGINE-001.md
+ M collaboration/tasks/TASK-P1-GOV-CONVERGE-001.md
+ M docs/CONCURRENT_GUARD_DESIGN.md
+ M docs/FACTS.generated.md
+D  hermes_target/config.yaml
+D  hermes_target/hermes_agent/engines/__init__.py
+D  hermes_target/hermes_agent/engines/consensus_engine.py
+D  hermes_target/hermes_agent/tests/unit/test_consensus_engine.py
+ M memory/.sync-manifest.json
+ M memory/MEMORY.md
+ M memory/project.md
+ M memory/project_dual_agent_config_sync.md
+ D memory/project_hermes_port_line.md
+ M openspec/changes/add-concurrent-workspace-guard/proposal.md
+ M openspec/changes/add-concurrent-workspace-guard/tasks.md
+D  openspec/changes/migrate-parallel-architecture-to-hermes/proposal.md
+D  openspec/changes/migrate-parallel-architecture-to-hermes/specs/hermes-parallel-architecture/spec.md
+D  openspec/changes/migrate-parallel-architecture-to-hermes/tasks.md
  M pyproject.toml
- M scripts/gen_facts.sh
-?? docs/FACTS.generated.md
+ M tests/unit/test_ack_prefix_consistency.py
+ M tests/unit/test_agent_dispatch_bridge.py
+ M tests/unit/test_state_manager.py
 ```
 
 ## 2. 最近 20 次提交
 ```
-3ae6cca fix(hermes): 修复 consensus_engine 语法错误与 IntegrationMode 假枚举
-01f67c2 fix(ci): 修复 test.yml 的 ruff 步骤，恢复被遮蔽的覆盖率门禁
-157cb2c fix(test): 消除新增测试文件的 lint 回归，使 ruff 错误数回到 main 基线
-b27cbc1 test(pack): 为 pack 执行测试补真实断言，清零 return-not-none 警告
-9590f0b fix(laya-client): 校验响应 JSON 类型，清零 mypy 最后一个错误
-fd0f556 chore(scripts): 新增 gen_facts.sh 生成项目事实快照
-048bffa fix(test): 隔离模板库测试写入目录，消除仓库根目录污染
-50da6c8 test(context): 补强 enhanced_query 路径与 state_manager P2 覆盖率缺口
-56f0cf2 test(adapter): 新增 16 个单元测试覆盖适配器契约与 NotebookLM 集成
-e0a7d2c feat(pack): 新增 ReviewWorkflow 数据类支持 AI-Pair 审查模式
-61e6b07 test(laya-client): 新增 27 个单元测试覆盖自动路由与错误分层
-23518e2 feat(laya-client): 新增 Laya MLX API 同步客户端
-b679b0d test(concurrent-guard): 新增 23 个单元测试含冲突样本回归
-952a855 feat(concurrent-guard): 新增并发工作区守护服务层
-4a6aa18 docs(protocol): 新增第十四章并发工作区安全及设计文档
-672f496 chore: harden .gitignore against regenerated artifacts
-3aed955 chore: clean root-level artifacts and archive pack exports
-9e0c8b7 chore(extension): archive 36 one-off debug scripts (4,643 lines)
-8191c6b docs: replace obsolete `python3 -m src.cli` references
-6030087 chore: remove dead src/ directory (3,564 lines)
+85973f7 feat(purge): 僵尸 cron 任务清理 —— 官方删除路由 + 文件级兜底
+1cb3b8c chore(monitoring): 刷新自动生成摘要（回执桥接 + 一致性审计 3/3）
+61afa3f docs(result): 对齐回执桥接的结果文件契约（## 测试结论 + 验收命令逐字一致）
+4f49318 chore(monitoring): 刷新自动生成摘要（干预队列已全部 resolved）
+5b9160e fix(prefix): 补齐 229062d 漏改的 3 份角色前缀映射副本
+e88e1c8 fix(prefix): ACK 前缀字母池不相交——codex 的 X→O，未知 provider 的 X→Z
+7af5ae3 feat(bridge): 投递残留体检——僵尸 cron 任务不再沉在 kernel 里
+bbfb81b chore(monitoring): 刷新自动生成摘要（干预队列已全部 resolved）
+df2ddec docs(result): 补写成功交付证据与中止根因（write/task 工具带死会话）
+b46a5f6 chore(memory): 同步 CodeArts 记忆镜像（2 条 feedback）并刷新监控摘要
+0e8ac69 feat(hermes): CodeArts 交付 consensus_engine 移植与单测（54 用例 / 覆盖率 95%）
+ce8a3b9 fix(dispatch): payload 写明工具约束 —— write/task 会把 CodeArts 会话卡死并中止
+ccfceba chore(monitoring): 刷新自动生成摘要
+909ddcc docs(result): 更正提交号引用
+c13176a docs(result): 补写真机链路实测证据与五个缺陷
+73abaa9 fix(intervention): 重派时重新武装在途干预，否则派单链路在最后一步断掉
+5c21bb7 fix(health): 干预正文直接指向 payload 的执行步骤
+b3e7319 fix(dispatch): payload 必须带任务契约，否则接收方无从下手
+e35ce49 chore(monitoring): 刷新自动生成摘要
+78e6994 docs(result): 补写真机链路实测证据与三个缺陷
 ```
 
 ## 3. 远端同步状态
 ```
 # 基于当前分支的 upstream（@{u}），不硬编码 main
-unpushed(ahead of upstream)=0
+unpushed(ahead of upstream)=33
 behind(upstream ahead of us)=0
 ```
 
@@ -103,9 +127,6 @@ behind(upstream ahead of us)=0
 ./config
 ./data
 ./docs
-./hermes_target
-./hermes_target/hermes_agent
-./hermes_target/openclaw-mac
 ./htmlcov_total
 ./local-backend
 ./local-backend/app
@@ -117,6 +138,7 @@ behind(upstream ahead of us)=0
 ./local-backend/monitoring
 ./logs
 ./logs/api
+./logs/backups
 ./logs/claude-code
 ./logs/faults
 ./logs/monitoring_backup
@@ -124,6 +146,8 @@ behind(upstream ahead of us)=0
 ./logs/playwright-results
 ./logs/tasks_backup
 ./logs/trae-ai
+./logs/workspace_forensics
+./memory
 ./notifications
 ./notifications/handoffs
 ./openspec
@@ -138,6 +162,7 @@ behind(upstream ahead of us)=0
 ./products
 ./products/vscode-extension
 ./rules
+./rules/archive
 ./scripts
 ./src
 ./src/ai_collab_system.egg-info
@@ -165,12 +190,12 @@ ai_collab
 src
 $ python3 -m ai_collab.cli --help
 usage: python3 -m ai_collab.cli [-h] [-w WORKSPACE] [-v]
-                                {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,dispatch,trigger,2x,receipt,run,workspace-guard,spawn-agent-guard,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack} ...
+                                {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,orchestration,dispatch,trigger,2x,receipt,run,workspace-guard,spawn-agent-guard,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack} ...
 
 AI 协作开发系统 - Claude Code + GitHub Copilot
 
 positional arguments:
-  {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,dispatch,trigger,2x,receipt,run,workspace-guard,spawn-agent-guard,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack}
+  {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,orchestration,dispatch,trigger,2x,receipt,run,workspace-guard,spawn-agent-guard,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack}
                         命令
     activate            激活 AI 协作系统
     check               检查文件冲突
@@ -186,6 +211,7 @@ positional arguments:
     status              显示系统状态
     codex               CC Claude Codex 集成
     controller          工单控制器（常驻轮询）
+    orchestration       角色编排配置（绑定状态、角色激活、快照、历史）
     dispatch            自动派单桥接（生成 Agent 执行指令包）
     trigger             暗语触发派单（2X DISPATCH）
     2x                  极简派单入口：2x claude/codearts/codex/all
@@ -233,7 +259,6 @@ options:
   ai-collab pack bump --name demo-pack --type patch
   ai-collab pack history --name demo-pack
 
-  # 兼容性检查
 ```
 
 ## 7. 角色编排配置
@@ -257,13 +282,13 @@ $ cat config/agent-orchestration.json
         "refactoring"
       ],
       "binding": {
-        "provider": "claude_code",
-        "model_variant": "sonnet",
+        "provider": "codearts_agent",
+        "model_variant": null,
         "status": "active"
       },
       "raci_role": "R",
       "created_at": null,
-      "activated_at": "2026-09-13T20:47:46.107765"
+      "activated_at": "2026-10-22T18:10:56.928912"
     },
     "AGENT_ARCH": {
       "role_id": "AGENT_ARCH",
@@ -309,14 +334,66 @@ $ cat config/agent-orchestration.json
     }
   },
   "command_prefixes": {
-    "A.RUN": "AGENT_ARCH",
-    "X.RUN": "AGENT_EXEC",
+    "A.RUN": "AGENT_EXEC",
     "C.RUN": "AGENT_TEST",
+    "X.RUN": "AGENT_ARCH",
     "custom_prefixes": {},
     "custom_allowed": true,
     "history_compatible": true
   },
-  "provider_registry": {},
+  "provider_registry": {
+    "claude_code": {
+      "provider_name": "claude_code",
+      "display_name": "Claude Code",
+      "connection_status": "connected",
+      "supports_sub_agent": true,
+      "model_variants": [
+        "opus",
+        "sonnet",
+        "haiku"
+      ],
+      "capabilities": [
+        "implementation",
+        "refactoring",
+        "testing",
+        "architecture",
+        "documentation"
+      ],
+      "last_check": "2026-10-22T17:49:34+08:00",
+      "fallback_ack_prefix": "C"
+    },
+    "codearts_agent": {
+      "provider_name": "codearts_agent",
+      "display_name": "CodeArts Agent",
+      "connection_status": "detected",
+      "supports_sub_agent": false,
+      "model_variants": [],
+      "capabilities": [
+        "implementation",
+        "testing",
+        "documentation",
+        "validation"
+      ],
+      "last_check": "2026-10-22T17:49:34+08:00",
+      "fallback_ack_prefix": "A"
+    },
+    "codex": {
+      "provider_name": "codex",
+      "display_name": "Codex",
+      "connection_status": "unavailable",
+      "supports_sub_agent": false,
+      "model_variants": [],
+      "capabilities": [
+        "architecture",
+        "research",
+        "implementation",
+        "testing",
+        "documentation"
+      ],
+      "last_check": "2026-10-22T17:49:34+08:00",
+      "fallback_ack_prefix": "O"
+    }
+  },
   "runtime_policy": {
     "allow_hot_reload": true,
     "require_confirmation": true,
@@ -324,13 +401,517 @@ $ cat config/agent-orchestration.json
     "max_roles": 10,
     "auto_activate_dormant": false
   },
-  "snapshots": [],
+  "snapshots": [
+    {
+      "snapshot_id": "snap_001",
+      "timestamp": "2026-10-22T18:09:15.027231",
+      "trigger": "auto_before_change",
+      "note": "Before activating AGENT_EXEC",
+      "config_copy": {
+        "version": "2.0.0",
+        "binding_status": "active",
+        "startup_mode": "multi_agent",
+        "roles": {
+          "AGENT_EXEC": {
+            "role_id": "AGENT_EXEC",
+            "display_name": "主执行者",
+            "duties": [
+              "代码实现",
+              "重构",
+              "Bug修复"
+            ],
+            "required_capabilities": [
+              "implementation",
+              "refactoring"
+            ],
+            "binding": {
+              "provider": "codearts_agent",
+              "model_variant": null,
+              "status": "active"
+            },
+            "raci_role": "R",
+            "created_at": null,
+            "activated_at": "2026-10-22T17:49:34.107765"
+          },
+          "AGENT_ARCH": {
+            "role_id": "AGENT_ARCH",
+            "display_name": "架构师",
+            "duties": [
+              "架构设计",
+              "技术选型",
+              "代码审查"
+            ],
+            "required_capabilities": [
+              "architecture",
+              "design"
+            ],
+            "binding": {
+              "provider": "claude_code",
+              "model_variant": "sonnet",
+              "status": "active"
+            },
+            "raci_role": "A",
+            "created_at": null,
+            "activated_at": "2026-09-13T20:47:46.107773"
+          },
+          "AGENT_TEST": {
+            "role_id": "AGENT_TEST",
+            "display_name": "测试验证",
+            "duties": [
+              "单元测试",
+              "集成测试",
+              "质量保证"
+            ],
+            "required_capabilities": [
+              "testing",
+              "validation"
+            ],
+            "binding": {
+              "provider": "claude_code",
+              "model_variant": "sonnet",
+              "status": "active"
+            },
+            "raci_role": "C",
+            "created_at": null,
+            "activated_at": "2026-09-13T20:47:46.107774"
+          }
+        },
+        "command_prefixes": {
+          "A.RUN": "AGENT_EXEC",
+          "X.RUN": "AGENT_ARCH",
+          "C.RUN": "AGENT_TEST",
+          "custom_prefixes": {},
+          "custom_allowed": true,
+          "history_compatible": true
+        },
+        "provider_registry": {
+          "claude_code": {
+            "provider_name": "claude_code",
+            "display_name": "Claude Code",
+            "connection_status": "connected",
+            "supports_sub_agent": true,
+            "model_variants": [
+              "opus",
+              "sonnet",
+              "haiku"
+            ],
+            "capabilities": [
+              "implementation",
+              "refactoring",
+              "testing",
+              "architecture",
+              "documentation"
+            ],
+            "fallback_ack_prefix": "C",
+            "last_check": "2026-10-22T17:49:34+08:00"
+          },
+          "codearts_agent": {
+            "provider_name": "codearts_agent",
+            "display_name": "CodeArts Agent",
+            "connection_status": "detected",
+            "supports_sub_agent": false,
+            "model_variants": [],
+            "capabilities": [
+              "implementation",
+              "testing",
+              "documentation",
+              "validation"
+            ],
+            "fallback_ack_prefix": "A",
+            "last_check": "2026-10-22T17:49:34+08:00"
+          },
+          "codex": {
+            "provider_name": "codex",
+            "display_name": "Codex",
+            "connection_status": "unavailable",
+            "supports_sub_agent": false,
+            "model_variants": [],
+            "capabilities": [
+              "architecture",
+              "research",
+              "implementation",
+              "testing",
+              "documentation"
+            ],
+            "fallback_ack_prefix": "O",
+            "last_check": "2026-10-22T17:49:34+08:00"
+          }
+        },
+        "runtime_policy": {
+          "allow_hot_reload": true,
+          "require_confirmation": true,
+          "snapshot_before_change": true,
+          "max_roles": 10,
+          "auto_activate_dormant": false
+        },
+        "cold_start_config": {
+          "initialized_at": null,
+          "initial_provider": null,
+          "initial_mode": null,
+          "wizard_completed": false
+        }
+      }
+    },
+    {
+      "snapshot_id": "snap_002",
+      "timestamp": "2026-10-22T18:10:56.853086",
+      "trigger": "manual",
+      "note": "prune nested snapshot copies",
+      "config_copy": {
+        "version": "2.0.0",
+        "binding_status": "active",
+        "startup_mode": "multi_agent",
+        "roles": {
+          "AGENT_EXEC": {
+            "role_id": "AGENT_EXEC",
+            "display_name": "主执行者",
+            "duties": [
+              "代码实现",
+              "重构",
+              "Bug修复"
+            ],
+            "required_capabilities": [
+              "implementation",
+              "refactoring"
+            ],
+            "binding": {
+              "provider": "codearts_agent",
+              "model_variant": null,
+              "status": "active"
+            },
+            "raci_role": "R",
+            "created_at": null,
+            "activated_at": "2026-10-22T18:09:15.027321"
+          },
+          "AGENT_ARCH": {
+            "role_id": "AGENT_ARCH",
+            "display_name": "架构师",
+            "duties": [
+              "架构设计",
+              "技术选型",
+              "代码审查"
+            ],
+            "required_capabilities": [
+              "architecture",
+              "design"
+            ],
+            "binding": {
+              "provider": "claude_code",
+              "model_variant": "sonnet",
+              "status": "active"
+            },
+            "raci_role": "A",
+            "created_at": null,
+            "activated_at": "2026-09-13T20:47:46.107773"
+          },
+          "AGENT_TEST": {
+            "role_id": "AGENT_TEST",
+            "display_name": "测试验证",
+            "duties": [
+              "单元测试",
+              "集成测试",
+              "质量保证"
+            ],
+            "required_capabilities": [
+              "testing",
+              "validation"
+            ],
+            "binding": {
+              "provider": "claude_code",
+              "model_variant": "sonnet",
+              "status": "active"
+            },
+            "raci_role": "C",
+            "created_at": null,
+            "activated_at": "2026-09-13T20:47:46.107774"
+          }
+        },
+        "command_prefixes": {
+          "A.RUN": "AGENT_EXEC",
+          "X.RUN": "AGENT_ARCH",
+          "C.RUN": "AGENT_TEST",
+          "custom_prefixes": {},
+          "custom_allowed": true,
+          "history_compatible": true
+        },
+        "provider_registry": {
+          "claude_code": {
+            "provider_name": "claude_code",
+            "display_name": "Claude Code",
+            "connection_status": "connected",
+            "supports_sub_agent": true,
+            "model_variants": [
+              "opus",
+              "sonnet",
+              "haiku"
+            ],
+            "capabilities": [
+              "implementation",
+              "refactoring",
+              "testing",
+              "architecture",
+              "documentation"
+            ],
+            "last_check": "2026-10-22T17:49:34+08:00",
+            "fallback_ack_prefix": "C"
+          },
+          "codearts_agent": {
+            "provider_name": "codearts_agent",
+            "display_name": "CodeArts Agent",
+            "connection_status": "detected",
+            "supports_sub_agent": false,
+            "model_variants": [],
+            "capabilities": [
+              "implementation",
+              "testing",
+              "documentation",
+              "validation"
+            ],
+            "last_check": "2026-10-22T17:49:34+08:00",
+            "fallback_ack_prefix": "A"
+          },
+          "codex": {
+            "provider_name": "codex",
+            "display_name": "Codex",
+            "connection_status": "unavailable",
+            "supports_sub_agent": false,
+            "model_variants": [],
+            "capabilities": [
+              "architecture",
+              "research",
+              "implementation",
+              "testing",
+              "documentation"
+            ],
+            "last_check": "2026-10-22T17:49:34+08:00",
+            "fallback_ack_prefix": "O"
+          }
+        },
+        "runtime_policy": {
+          "allow_hot_reload": true,
+          "require_confirmation": true,
+          "snapshot_before_change": true,
+          "max_roles": 10,
+          "auto_activate_dormant": false
+        },
+        "cold_start_config": {
+          "initialized_at": null,
+          "initial_provider": null,
+          "initial_mode": null,
+          "wizard_completed": false
+        }
+      }
+    },
+    {
+      "snapshot_id": "snap_003",
+      "timestamp": "2026-10-22T18:10:56.928851",
+      "trigger": "auto_before_change",
+      "note": "Before activating AGENT_EXEC",
+      "config_copy": {
+        "version": "2.0.0",
+        "binding_status": "active",
+        "startup_mode": "multi_agent",
+        "roles": {
+          "AGENT_EXEC": {
+            "role_id": "AGENT_EXEC",
+            "display_name": "主执行者",
+            "duties": [
+              "代码实现",
+              "重构",
+              "Bug修复"
+            ],
+            "required_capabilities": [
+              "implementation",
+              "refactoring"
+            ],
+            "binding": {
+              "provider": "codearts_agent",
+              "model_variant": null,
+              "status": "active"
+            },
+            "raci_role": "R",
+            "created_at": null,
+            "activated_at": "2026-10-22T18:09:15.027321"
+          },
+          "AGENT_ARCH": {
+            "role_id": "AGENT_ARCH",
+            "display_name": "架构师",
+            "duties": [
+              "架构设计",
+              "技术选型",
+              "代码审查"
+            ],
+            "required_capabilities": [
+              "architecture",
+              "design"
+            ],
+            "binding": {
+              "provider": "claude_code",
+              "model_variant": "sonnet",
+              "status": "active"
+            },
+            "raci_role": "A",
+            "created_at": null,
+            "activated_at": "2026-09-13T20:47:46.107773"
+          },
+          "AGENT_TEST": {
+            "role_id": "AGENT_TEST",
+            "display_name": "测试验证",
+            "duties": [
+              "单元测试",
+              "集成测试",
+              "质量保证"
+            ],
+            "required_capabilities": [
+              "testing",
+              "validation"
+            ],
+            "binding": {
+              "provider": "claude_code",
+              "model_variant": "sonnet",
+              "status": "active"
+            },
+            "raci_role": "C",
+            "created_at": null,
+            "activated_at": "2026-09-13T20:47:46.107774"
+          }
+        },
+        "command_prefixes": {
+          "A.RUN": "AGENT_EXEC",
+          "X.RUN": "AGENT_ARCH",
+          "C.RUN": "AGENT_TEST",
+          "custom_prefixes": {},
+          "custom_allowed": true,
+          "history_compatible": true
+        },
+        "provider_registry": {
+          "claude_code": {
+            "provider_name": "claude_code",
+            "display_name": "Claude Code",
+            "connection_status": "connected",
+            "supports_sub_agent": true,
+            "model_variants": [
+              "opus",
+              "sonnet",
+              "haiku"
+            ],
+            "capabilities": [
+              "implementation",
+              "refactoring",
+              "testing",
+              "architecture",
+              "documentation"
+            ],
+            "last_check": "2026-10-22T17:49:34+08:00",
+            "fallback_ack_prefix": "C"
+          },
+          "codearts_agent": {
+            "provider_name": "codearts_agent",
+            "display_name": "CodeArts Agent",
+            "connection_status": "detected",
+            "supports_sub_agent": false,
+            "model_variants": [],
+            "capabilities": [
+              "implementation",
+              "testing",
+              "documentation",
+              "validation"
+            ],
+            "last_check": "2026-10-22T17:49:34+08:00",
+            "fallback_ack_prefix": "A"
+          },
+          "codex": {
+            "provider_name": "codex",
+            "display_name": "Codex",
+            "connection_status": "unavailable",
+            "supports_sub_agent": false,
+            "model_variants": [],
+            "capabilities": [
+              "architecture",
+              "research",
+              "implementation",
+              "testing",
+              "documentation"
+            ],
+            "last_check": "2026-10-22T17:49:34+08:00",
+            "fallback_ack_prefix": "O"
+          }
+        },
+        "runtime_policy": {
+          "allow_hot_reload": true,
+          "require_confirmation": true,
+          "snapshot_before_change": true,
+          "max_roles": 10,
+          "auto_activate_dormant": false
+        },
+        "cold_start_config": {
+          "initialized_at": null,
+          "initial_provider": null,
+          "initial_mode": null,
+          "wizard_completed": false
+        }
+      }
+    }
+  ],
   "history": [
     {
       "timestamp": "2026-09-13T20:47:46.107780",
       "event": "mode_switched",
       "details": {
         "new_mode": "multi_agent"
+      }
+    },
+    {
+      "timestamp": "2026-10-22T17:49:34+08:00",
+      "event": "role_activated",
+      "details": {
+        "role_id": "AGENT_EXEC",
+        "provider": "codearts_agent",
+        "model_variant": null,
+        "previous_provider": "claude_code",
+        "reason": "Claude Code 与 CodeArts 共创分工：CodeArts 承接 AGENT_EXEC(R) 实现位，Claude Code 退守 AGENT_ARCH(A) 架构 + AGENT_TEST(C) 验证"
+      }
+    },
+    {
+      "timestamp": "2026-10-22T18:09:15.027316",
+      "event": "snapshot_created",
+      "details": {
+        "snapshot_id": "snap_001",
+        "trigger": "auto_before_change"
+      }
+    },
+    {
+      "timestamp": "2026-10-22T18:09:15.027330",
+      "event": "role_activated",
+      "details": {
+        "role_id": "AGENT_EXEC",
+        "provider": "codearts_agent",
+        "model_variant": null
+      }
+    },
+    {
+      "timestamp": "2026-10-22T18:10:56.853138",
+      "event": "snapshot_created",
+      "details": {
+        "snapshot_id": "snap_002",
+        "trigger": "manual"
+      }
+    },
+    {
+      "timestamp": "2026-10-22T18:10:56.928908",
+      "event": "snapshot_created",
+      "details": {
+        "snapshot_id": "snap_003",
+        "trigger": "auto_before_change"
+      }
+    },
+    {
+      "timestamp": "2026-10-22T18:10:56.928917",
+      "event": "role_activated",
+      "details": {
+        "role_id": "AGENT_EXEC",
+        "provider": "codearts_agent",
+        "model_variant": null
       }
     }
   ],
@@ -368,7 +949,7 @@ tests/unit/test_workspace_guard_extra.py::test_module_exports
 
 =========================== short test summary info ============================
 SKIPPED [1] tests/unit/test_database_indexes.py:17: backend database not found at /Users/raymondna/Documents/AI-collab/ai-collab-base/local-backend/data/client_tokens.db
-2665 tests collected in 0.81s
+2817 tests collected in 0.77s
 ```
 
 ## 10. 活跃任务
