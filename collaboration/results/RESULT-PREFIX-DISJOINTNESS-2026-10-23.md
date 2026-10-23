@@ -186,17 +186,18 @@ provider 侧的前缀约定是"取 provider 名字里的一个字母"
 ## 执行命令
 
 ```bash
-# 验证命令
-python3 -m pytest tests/unit/test_ack_prefix_consistency.py \
-                 tests/unit/test_role_prefix.py \
-                 tests/unit/test_dispatch_trigger.py -q
+# 验收命令（与工单 acceptance_commands 逐字一致，回执桥接会做子串校验）
+python3 -m pytest tests/unit/test_ack_prefix_consistency.py -q
 python3 -m pytest tests/ -q
+
+# 补充验证
+python3 -m pytest tests/unit/test_role_prefix.py tests/unit/test_dispatch_trigger.py -q
+python3 -m pytest tests/unit --cov=ai_collab --cov-report=term -q
 python3 -m ruff check ai_collab/ scripts/
-python3 -m mypy ai_collab/role_prefix.py ai_collab/ack_protocol.py \
-          ai_collab/dispatch_trigger.py ai_collab/orchestration.py
+python3 -m mypy ai_collab/
 ```
 
-## 验证结果
+## 测试结论
 
 | 项 | 结果 |
 |---|---|
