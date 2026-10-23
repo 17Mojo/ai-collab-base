@@ -695,3 +695,122 @@ def test_dispatch_still_ships_failed_task_for_rework(tmp_path):
     assert report["candidate_count"] == 1
     assert report["dispatched_count"] == 1
     assert report["dispatched_tasks"] == ["TASK-FAIL-001"]
+
+
+# ---------------------------------------------------------------------------
+# 指令包内容必须只反映**本轮**（2026-10-23 真机实测修的缺陷）
+#
+# 真机派单时，给 CodeArts 的 payload 里同时出现了：
+#   - TASK-P0-CONSENSUS-ENGINE-001（早已 completed，却在派单账本里躺着）
+#   - TASK-P1-PROMPT-TRENDING-001（全新任务）被标成「被 review 拒绝」
+# 两条都是给对方的**假信息 / 无效信息**。
+# ---------------------------------------------------------------------------
+
+
+def _orders_text(workspace: Path) -> str:
+    return (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+
+
+def test_completed_task_from_earlier_round_never_reaches_orders(tmp_path):
+    """上一轮派过、这轮已完成的任务，不得再出现在指令包里。
+
+    回归：指令包之前装的是派单账本（dispatch_state.items）全量累计，
+    账本只增不减 —— 于是已 completed 的历史任务被一轮轮重发给对方。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-OLD-001"] = _task("TASK-OLD-001", "planning")
+    payload["tasks"]["TASK-NEW-001"] = _task("TASK-NEW-001", "planning")
+    _write_state(workspace, payload)
+
+    first = _run_dispatch(workspace)
+    assert first.returncode == 0, first.stderr
+    assert "TASK-OLD-001" in _orders_text(workspace)
+
+    # 第一轮之后：老任务做完了，新任务还没开工
+    payload["tasks"]["TASK-OLD-001"]["status"] = "completed"
+    _write_state(workspace, payload)
+
+    second = _run_dispatch(workspace, "--redispatch", "--include-pending")
+    assert second.returncode == 0, second.stderr
+
+    orders = _orders_text(workspace)
+    assert "TASK-OLD-001" not in orders
+    assert "TASK-NEW-001" in orders
+
+
+def test_new_task_gets_no_rework_notice(tmp_path):
+    """全新任务不得带任何「返工/再次派发」说明。
+
+    回归：判据读的是**本轮自己刚写进账本的 order**，于是判据退化成
+    「当前状态是不是 pending」—— 一个从没派发过的新任务被标成
+    「被 review 拒绝。原状态: pending / 新状态: pending」。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-FRESH-001"] = _task("TASK-FRESH-001", "pending")
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace, "--include-pending")
+    assert result.returncode == 0, result.stderr
+
+    orders = _orders_text(workspace)
+    assert "TASK-FRESH-001" in orders
+    assert "返工重派说明" not in orders
+    assert "再次派发说明" not in orders
+    assert "被 review 拒绝" not in orders
+
+
+def test_repeated_dispatch_without_rejection_notes_does_not_claim_review_rejection(tmp_path):
+    """派发过但 notes 里没有驳回记录时，不得断言「被 review 拒绝」。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-RETRY-001"] = _task("TASK-RETRY-001", "planning")
+    payload["tasks"]["TASK-RETRY-001"]["notes"] = ["[2026-10-23] 登记任务，验收命令已确认"]
+    _write_state(workspace, payload)
+
+    first = _run_dispatch(workspace)
+    assert first.returncode == 0, first.stderr
+
+    second = _run_dispatch(workspace, "--redispatch")
+    assert second.returncode == 0, second.stderr
+
+    orders = _orders_text(workspace)
+    assert "再次派发说明（必须先读）" in orders
+    assert "返工重派说明" not in orders
+    assert "被 review 拒绝" not in orders
+    # 事实性陈述必须保留
+    assert "登记任务，验收命令已确认" in orders
+    assert "禁止因为 result_file 已存在或任务曾到过 testing 就回复 noop。" in orders
+
+
+def test_rejection_notes_switch_to_rework_notice(tmp_path):
+    """notes 里有驳回记录时，才使用「返工重派说明」的说法。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-REWORK-001"] = _task("TASK-REWORK-001", "planning")
+    payload["tasks"]["TASK-REWORK-001"]["notes"] = [
+        "[2026-10-23] review 驳回：验收命令缺覆盖率门禁"
+    ]
+    _write_state(workspace, payload)
+
+    first = _run_dispatch(workspace)
+    assert first.returncode == 0, first.stderr
+
+    second = _run_dispatch(workspace, "--redispatch")
+    assert second.returncode == 0, second.stderr
+
+    orders = _orders_text(workspace)
+    assert "返工重派说明（必须先读）" in orders
+    assert "被 review 拒绝" in orders
+    assert "review 驳回：验收命令缺覆盖率门禁" in orders

@@ -297,3 +297,128 @@ def test_delivery_runs_adapter_for_codearts_target(tmp_path: Path):
     # 投递成功后状态翻成「在途」，避免下一轮重复投递开出第二个会话
     items = inspect_interventions(workspace=workspace, only_open=True)["interventions"]
     assert items[0]["delivery_status"] == "queued_for_delivery"
+
+
+# ---------------------------------------------------------------------------
+# 4. ACK 落地必须收口派单干预（2026-10-23 真机实测修的缺陷）
+#
+# 现象：11:10 那一轮派单投出去了，CodeArts 11:16 就回了 ACK，
+# 但干预一直停在 `queued_for_delivery`（在途）。在途项会被 codearts
+# adapter 的在途过滤器**整个跳过且不报错** —— 于是**第二轮派单被静默吞掉**，
+# 对方根本收不到，只能等 120s 的 ACK 看门狗重新武装。
+# ---------------------------------------------------------------------------
+
+
+def _write_payload_with_tasks(workspace: Path, relpath: str, task_ids: list[str]) -> None:
+    payload = workspace / relpath
+    payload.parent.mkdir(parents=True, exist_ok=True)
+    body = ["# Session Handoff Payload", ""]
+    for task_id in task_ids:
+        body.extend([f"### {task_id}", "", "任务内容", ""])
+    payload.write_text("\n".join(body), encoding="utf-8")
+
+
+def _bridge_ack(workspace: Path, task_id: str, assignee: str = "codearts_agent") -> None:
+    from ai_collab.ack_protocol import record_ack_bridge
+
+    record_ack_bridge(
+        workspace=workspace,
+        task_id=task_id,
+        assignee=assignee,
+        result_file=f"collaboration/results/RESULT-{task_id}.md",
+        completed_at="2026-10-23T12:00:00",
+        source="cli-ack",
+        bridged_at="2026-10-23T12:00:01",
+    )
+
+
+def test_dispatch_intervention_records_round_task_ids(tmp_path: Path):
+    """干预记录必须带上本轮任务清单 —— 收口判断全靠它。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    relpath = "collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md"
+    _write_payload_with_tasks(workspace, relpath, ["TASK-IDS-001", "TASK-IDS-002"])
+
+    queued = _enqueue(workspace, {"codearts_agent": relpath})
+
+    assert queued[0]["task_ids"] == ["TASK-IDS-001", "TASK-IDS-002"]
+    items = inspect_interventions(workspace=workspace, only_open=True)["interventions"]
+    assert items[0]["task_ids"] == ["TASK-IDS-001", "TASK-IDS-002"]
+
+
+def test_ack_closes_in_flight_dispatch_intervention(tmp_path: Path):
+    """ACK 落地后，在途的派单干预必须收口。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    relpath = "collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md"
+    _write_payload_with_tasks(workspace, relpath, ["TASK-ACK-001"])
+
+    queued = _enqueue(workspace, {"codearts_agent": relpath})
+    intervention_id = queued[0]["intervention_id"]
+
+    # 适配器投递成功 → 翻成在途
+    ack_intervention(
+        workspace=workspace,
+        intervention_id=intervention_id,
+        delivery_status="queued_for_delivery",
+        delivery_mode="bridge",
+    )
+    in_flight = inspect_interventions(workspace=workspace, only_open=True)["interventions"]
+    assert in_flight[0]["delivery_status"] in IN_FLIGHT_DELIVERY_STATUSES
+
+    # ACK 落地
+    _bridge_ack(workspace, "TASK-ACK-001")
+
+    still_open = inspect_interventions(workspace=workspace, only_open=True)["interventions"]
+    assert still_open == []
+
+
+def test_second_dispatch_is_not_swallowed_after_ack(tmp_path: Path):
+    """ACK 落地后的第二轮派单必须能投出去 —— 不能被在途过滤器静默跳过。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(workspace, {"enabled": False})
+    relpath = "collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md"
+    _write_payload_with_tasks(workspace, relpath, ["TASK-ACK-002"])
+
+    first = _enqueue(workspace, {"codearts_agent": relpath})
+    ack_intervention(
+        workspace=workspace,
+        intervention_id=first[0]["intervention_id"],
+        delivery_status="queued_for_delivery",
+        delivery_mode="bridge",
+    )
+    _bridge_ack(workspace, "TASK-ACK-002")
+
+    # 第二轮派单：必须开出新干预，而不是复用那条在途记录
+    second = _enqueue(workspace, {"codearts_agent": relpath})
+    assert second[0]["action"] == "queued"
+    assert second[0]["intervention_id"] != first[0]["intervention_id"]
+    assert second[0]["delivery_status"] == "pending_operator_delivery"
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+    assert report["candidate_count"] == 1
+    assert report["skipped_in_flight_count"] == 0
+
+
+def test_second_dispatch_is_still_blocked_while_round_is_unfinished(tmp_path: Path):
+    """上一轮没回 ACK 时，在途记录必须继续拦住第二轮 —— 不能开出并发会话。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    relpath = "collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md"
+    _write_payload_with_tasks(workspace, relpath, ["TASK-ACK-003"])
+
+    first = _enqueue(workspace, {"codearts_agent": relpath})
+    ack_intervention(
+        workspace=workspace,
+        intervention_id=first[0]["intervention_id"],
+        delivery_status="queued_for_delivery",
+        delivery_mode="bridge",
+    )
+
+    second = _enqueue(workspace, {"codearts_agent": relpath})
+
+    assert second[0]["action"] == "reused_open"
+    assert second[0]["intervention_id"] == first[0]["intervention_id"]
+    items = inspect_interventions(workspace=workspace, only_open=True)["interventions"]
+    assert len(items) == 1

@@ -300,6 +300,37 @@ def upsert_ack_bridge_item(
     return record
 
 
+def _resolve_dispatch_intervention_on_ack(
+    *,
+    workspace: Path,
+    task_id: str,
+    assignee: str,
+) -> None:
+    """ACK 落地 → 收口该执行方的派单干预。
+
+    为什么必须有这一步：派单干预投出去后被适配器翻成「在途」
+    （`queued_for_delivery`），而在途项会被 codearts adapter 的在途过滤器
+    **整个跳过且不报错**。于是下一轮派单复用了同一条在途记录时，
+    适配器直接跳过 —— **第二轮派单被静默吞掉**（2026-10-23 真机实测）。
+
+    ACK 落地 = 这一轮派单结束 = 干预收口。收口后下一轮才会开出新干预。
+
+    这里用**函数内延迟 import** 打断循环依赖：`intervention_queue` 在模块级
+    import `ack_protocol`，反向只能延迟。收口失败不得影响 ACK 记录本身，
+    所以整段兜住异常。
+    """
+    try:
+        from .intervention_queue import resolve_dispatch_intervention_for_ack
+
+        resolve_dispatch_intervention_for_ack(
+            workspace=workspace,
+            task_id=task_id,
+            assignee=assignee,
+        )
+    except Exception:
+        return
+
+
 def record_ack_bridge(
     *,
     workspace: Path,
@@ -333,4 +364,9 @@ def record_ack_bridge(
     )
     if not dry_run:
         write_json(state_file, payload)
+        _resolve_dispatch_intervention_on_ack(
+            workspace=workspace,
+            task_id=task_id,
+            assignee=assignee,
+        )
     return record

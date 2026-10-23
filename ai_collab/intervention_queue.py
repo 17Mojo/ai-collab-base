@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
@@ -38,6 +38,10 @@ IN_FLIGHT_DELIVERY_STATUSES = {"queued_for_delivery"}
 # 语义上区别于「在途」——在途是被动等 ACK，重新武装是主动决定再发一次。
 REARMED_DELIVERY_STATUS = "pending_operator_delivery"
 
+# 派单干预的 reason_code：由「派单即入队」接线写入
+# （`ai_collab/cli/_cli_main.py` 的 `_enqueue_dispatch_interventions`）。
+DISPATCH_REASON_CODE = "dispatch_triggered"
+
 
 @dataclass
 class InterventionRecord:
@@ -53,6 +57,13 @@ class InterventionRecord:
     updated_at: str
     resolved_at: str
     source_signal: str
+    # 本轮派出去的任务清单。
+    #
+    # 干预的「在途」状态（queued_for_delivery）等对方 ACK 才算结束，
+    # 而「这一轮是否已经全部 ACK 落地」只能靠任务清单判断 ——
+    # 没有它就只能退化成「这个执行方有 ACK 就算结束」，多任务的一轮里
+    # 会提前收口，导致对方开出第二个并发会话改同一个工作区。
+    task_ids: list[str] = field(default_factory=list)
 
 
 def _now_iso() -> str:
@@ -419,6 +430,7 @@ def enqueue_intervention(
     intervention_id: str | None = None,
     created_at: str | None = None,
     source_signal: str = "",
+    task_ids: list[str] | None = None,
     state_path: str | None = None,
     history_path: str | None = None,
     summary_path: str | None = None,
@@ -447,6 +459,7 @@ def enqueue_intervention(
         updated_at=timestamp,
         resolved_at=timestamp if resolved_status in TERMINAL_DELIVERY_STATUSES else "",
         source_signal=str(source_signal).strip(),
+        task_ids=[str(t).strip() for t in (task_ids or []) if str(t).strip()],
     )
 
     state_file, history_file, summary_file = _resolve_paths(
@@ -571,6 +584,161 @@ def resolve_intervention(
         history_path=history_path,
         summary_path=summary_path,
     )
+
+
+def _ack_bridge_items(workspace: Path) -> dict[str, Any]:
+    """读 ACK 桥接账本（谁回了 ACK、什么时候回的）。
+
+    读不到就当空账本 —— 判断「这一轮派单是否结束」属于辅助判断，
+    不该因为账本损坏而让 ACK 记录本身失败。
+    """
+    try:
+        from .ack_protocol import load_ack_bridge_state
+
+        _, _, items = load_ack_bridge_state(workspace)
+    except Exception:
+        return {}
+    return items if isinstance(items, dict) else {}
+
+
+def dispatch_round_is_complete(
+    *,
+    workspace: Path,
+    task_ids: list[str] | None = None,
+    assignee: str = "",
+) -> bool:
+    """这一轮派单是否已经收口（任务都收到 ACK 了）。
+
+    `task_ids` 非空时按任务清单逐条判；为空（2026-10-23 之前入队的历史记录
+    没有存清单）时退化成「该执行方有 ACK 就算收口」——只影响历史遗留记录。
+    """
+    items = _ack_bridge_items(workspace)
+    acked = {str(tid).strip() for tid in items if str(tid).strip()}
+    normalized = [str(t).strip() for t in (task_ids or []) if str(t).strip()]
+    if normalized:
+        return all(tid in acked for tid in normalized)
+
+    normalized_assignee = _normalize_assignee(assignee)
+    if not normalized_assignee:
+        return False
+    return any(
+        _normalize_assignee(item.get("assignee")) == normalized_assignee
+        for item in items.values()
+        if isinstance(item, dict)
+    )
+
+
+def resolve_dispatch_intervention_for_ack(
+    *,
+    workspace: Path,
+    task_id: str,
+    assignee: str,
+    state_path: str | None = None,
+    history_path: str | None = None,
+    summary_path: str | None = None,
+) -> dict[str, Any]:
+    """ACK 落地后收口该执行方的**派单干预**。
+
+    为什么必须有这一步（2026-10-23 真机实测）：
+
+    派单干预入队后是「待投递」，投出去后被适配器翻成「在途」
+    （`queued_for_delivery`）。在途项会被 codearts adapter 的在途过滤器
+    **整个跳过**，而且**不报错**。于是下一轮派单一旦复用了同一条在途记录，
+    适配器就会跳过它 —— **第二轮派单被静默吞掉**，对方根本收不到，
+    只能等 120s 的 ACK 看门狗重新武装。
+
+    ACK 落地 = 这一轮派单结束 = 干预应当收口。收口之后，下一轮派单会开出
+    一条新干预（`only_open` 会过滤掉已收口的），正常投出去。
+    """
+    normalized_assignee = _normalize_assignee(assignee)
+    normalized_task_id = str(task_id or "").strip()
+
+    state_file, history_file, summary_file = _resolve_paths(
+        workspace=workspace,
+        state_path=state_path,
+        history_path=history_path,
+        summary_path=summary_path,
+    )
+    _, payload, items = load_intervention_state(
+        workspace,
+        state_path=state_path,
+        history_path=history_path,
+        summary_path=summary_path,
+    )
+
+    resolved: list[str] = []
+    kept_open: list[str] = []
+
+    for intervention_id, record in list(items.items()):
+        if not isinstance(record, dict):
+            continue
+        if str(record.get("reason_code") or "").strip().lower() != DISPATCH_REASON_CODE:
+            continue
+        if _normalize_assignee(record.get("assignee")) != normalized_assignee:
+            continue
+        status = str(record.get("delivery_status") or "").strip().lower()
+        if status in TERMINAL_DELIVERY_STATUSES:
+            continue
+
+        round_tasks = [
+            str(t).strip() for t in (record.get("task_ids") or []) if str(t).strip()
+        ]
+        if round_tasks:
+            outstanding = [
+                tid
+                for tid in round_tasks
+                if not dispatch_round_is_complete(workspace=workspace, task_ids=[tid])
+            ]
+            if outstanding:
+                kept_open.append(intervention_id)
+                continue
+        else:
+            # 老记录没有任务清单：兜底按「该执行方有 ACK 就算这一轮结束」
+            if not dispatch_round_is_complete(
+                workspace=workspace, assignee=normalized_assignee
+            ):
+                kept_open.append(intervention_id)
+                continue
+
+        record["delivery_status"] = "resolved"
+        record["updated_at"] = _now_iso()
+        record["resolved_at"] = _now_iso()
+        resolved.append(intervention_id)
+
+    if not resolved:
+        return {
+            "resolved": [],
+            "kept_open": kept_open,
+            "state_file": str(state_file.relative_to(workspace)),
+        }
+
+    payload["generated_at"] = _now_iso()
+    write_json(state_file, payload)
+
+    for intervention_id in resolved:
+        _append_history(
+            history_file,
+            {
+                "generated_at": _now_iso(),
+                "event": "dispatch_round_completed",
+                "intervention_id": intervention_id,
+                "assignee": normalized_assignee,
+                "delivery_mode": "manual",
+                "delivery_status": "resolved",
+                "task_id": normalized_task_id,
+            },
+        )
+
+    report = _build_summary_payload(
+        workspace=workspace,
+        payload=payload,
+        mode="ack",
+        summary_file=summary_file,
+    )
+    report["resolved"] = resolved
+    report["kept_open"] = kept_open
+    report["state_file"] = str(state_file.relative_to(workspace))
+    return report
 
 
 def rearm_interventions(

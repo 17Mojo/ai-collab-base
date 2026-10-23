@@ -7,6 +7,7 @@ AI 协作开发系统 - CLI 工具
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -477,6 +478,26 @@ DISPATCH_INTERVENTION_SEVERITY = "low"
 # failed 不算 —— 复用一条已失败的记录等于永远投不出去。
 DISPATCH_INTERVENTION_REUSABLE_STATUSES = {"pending_operator_delivery", "queued_for_delivery"}
 
+# 触发 payload 里的任务块标题（`### TASK-xxx`）。
+# 它是「这一轮派了哪些任务」的唯一载体 —— 干预记录要靠它判断
+# 「这一轮是不是已经全部 ACK 落地」。
+_DISPATCH_TASK_HEADING_RE = re.compile(r"^###\s+(TASK-[A-Za-z0-9._-]+)\s*$", re.MULTILINE)
+
+
+def _extract_payload_task_ids(workspace: Path, artifact_relpath: str) -> list[str]:
+    """从触发 payload 里读出本轮的任务清单。"""
+    path = workspace / str(artifact_relpath)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    task_ids: list[str] = []
+    for match in _DISPATCH_TASK_HEADING_RE.finditer(text):
+        task_id = match.group(1).strip()
+        if task_id and task_id not in task_ids:
+            task_ids.append(task_id)
+    return task_ids
+
 
 def _enqueue_dispatch_interventions(
     *,
@@ -505,7 +526,12 @@ def _enqueue_dispatch_interventions(
     if dry_run:
         return []
 
-    from ai_collab.intervention_queue import enqueue_intervention, inspect_interventions
+    from ai_collab.intervention_queue import (
+        dispatch_round_is_complete,
+        enqueue_intervention,
+        inspect_interventions,
+        resolve_intervention,
+    )
 
     root = Path(workspace)
     queued: list[dict[str, Any]] = []
@@ -514,6 +540,7 @@ def _enqueue_dispatch_interventions(
         if not artifact_relpath:
             continue
         session_id = f"dispatch-{assignee}"
+        task_ids = _extract_payload_task_ids(root, artifact_relpath)
         existing = inspect_interventions(
             workspace=root,
             session_id=session_id,
@@ -529,16 +556,37 @@ def _enqueue_dispatch_interventions(
         ]
         if reusable:
             current = reusable[0]
-            queued.append(
-                {
-                    "assignee": assignee,
-                    "intervention_id": str(current.get("intervention_id") or ""),
-                    "delivery_status": str(current.get("delivery_status") or ""),
-                    "action": "reused_open",
-                    "message_artifact": artifact_relpath,
-                }
-            )
-            continue
+            current_status = str(current.get("delivery_status") or "").strip().lower()
+            current_task_ids = [
+                str(t).strip() for t in (current.get("task_ids") or []) if str(t).strip()
+            ]
+            # 在途（已投出、等 ACK）且上一轮已经全部 ACK 落地 → 收口旧的、开新的。
+            #
+            # 不这么做的话，在途记录会被适配器的在途过滤器整个跳过（且不报错），
+            # **这一轮派单被静默吞掉**，对方收不到 —— 2026-10-23 真机实测：
+            # 11:10 那一轮投出去了，ACK 11:16 就落地了，但干预一直停在
+            # queued_for_delivery，于是下一轮派单全部落空。
+            if current_status == "queued_for_delivery" and dispatch_round_is_complete(
+                workspace=root,
+                task_ids=current_task_ids,
+                assignee=assignee,
+            ):
+                resolve_intervention(
+                    workspace=root,
+                    intervention_id=str(current.get("intervention_id") or ""),
+                )
+            else:
+                queued.append(
+                    {
+                        "assignee": assignee,
+                        "intervention_id": str(current.get("intervention_id") or ""),
+                        "delivery_status": current_status,
+                        "action": "reused_open",
+                        "message_artifact": artifact_relpath,
+                        "task_ids": list(task_ids),
+                    }
+                )
+                continue
 
         record = enqueue_intervention(
             workspace=root,
@@ -549,6 +597,7 @@ def _enqueue_dispatch_interventions(
             message_artifact=artifact_relpath,
             delivery_mode="manual",
             source_signal=trigger_phrase,
+            task_ids=task_ids,
         )
         intervention = record.get("intervention", {})
         queued.append(
@@ -558,6 +607,7 @@ def _enqueue_dispatch_interventions(
                 "delivery_status": str(intervention.get("delivery_status") or ""),
                 "action": "queued",
                 "message_artifact": artifact_relpath,
+                "task_ids": list(task_ids),
             }
         )
     return queued

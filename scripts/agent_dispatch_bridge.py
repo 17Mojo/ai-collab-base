@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Agent Dispatch Bridge - 自动派单桥接脚本"""
 import argparse
+import copy
 import json
 import sys
 from datetime import datetime
@@ -11,6 +12,23 @@ from pathlib import Path
 # 历史任务重新塞进 payload 发给对方（2026-10-23 真机实测：5 个已完成的
 # 历史任务被重派给 CodeArts，其中一个指向已删除的目录）。
 TERMINAL_TASK_STATUSES = {"completed", "cancelled"}
+
+# 「上一轮被 review 打回」的关键词。
+#
+# 本仓**没有**可机读的「review 驳回」信号：PROTOCOL / state_manager 都不记
+# 状态历史，唯一的载体是任务的 notes。所以只能从 notes 里认这几个词。
+# 认不出来就不下「被 review 拒绝」的断言 —— 给对方的指令包里不能有假信息。
+REWORK_MARKERS = (
+    "reject",
+    "rejected",
+    "reopen",
+    "rework",
+    "驳回",
+    "打回",
+    "返工",
+    "退回",
+    "不通过",
+)
 
 
 def read_state(workspace: Path) -> dict:
@@ -71,10 +89,76 @@ ASSIGNEE_DISPLAY_NAMES = {
 }
 
 
+def _rework_notice_lines(
+    *,
+    order: dict,
+    task: dict,
+    previous: dict,
+) -> list[str]:
+    """渲染「再次派发 / 返工重派」说明块；没有依据就返回空列表。
+
+    之前这个块的判据是 `previous["status"] == "pending"`，而 `previous`
+    取的是**本轮刚写进 dispatch_state 的 order**（渲染前就写进去了）——
+    于是判据退化成「当前任务状态是不是 pending」，跟「是否返工」毫无关系。
+
+    真机实测（2026-10-23）：一个**全新**任务（TASK-P1-PROMPT-TRENDING-001，
+    从没派发过）被标成「此任务之前已 dispatch，但被 review 拒绝。
+    原状态: pending / 新状态: pending」，还附上「禁止回复 noop」——
+    这是把假信息发给对方，对方据此可以跳过真实工作。
+
+    修法有两条：
+    1. `previous` 必须是**上一轮**的派单快照（见 dispatch_once 里的
+       `previous_items`），不是本轮自己刚写的；
+    2. 本仓没有可机读的「review 驳回」信号（PROTOCOL / state_manager 都不记
+       状态历史，notes 是唯一载体），所以**只陈述有证据的事实**：
+       派发过没有、notes 有什么、上一轮产出在不在。
+       「被 review 拒绝」这句话只在 notes 里确实有驳回标记时才说。
+    """
+    if not previous:
+        return []
+
+    task_notes = [str(n).strip() for n in (task.get("notes") or []) if str(n).strip()]
+    result_file = str(order.get("result_file") or "").strip()
+
+    notes_text = " ".join(task_notes).lower()
+    rejected = any(marker in notes_text for marker in REWORK_MARKERS)
+
+    lines: list[str] = []
+    if rejected:
+        lines.append("### 返工重派说明（必须先读）")
+    else:
+        lines.append("### 再次派发说明（必须先读）")
+    lines.append("")
+    lines.append(f"**任务**: {order.get('task_id')}")
+    lines.append(f"**上次派发时间**: {previous.get('dispatched_at') or '未知'}")
+    lines.append(f"**上次派发时状态**: {previous.get('status') or '未知'}")
+    lines.append(f"**本次派发时状态**: {order.get('status') or '未知'}")
+    lines.append("")
+    if task_notes:
+        lines.append("**任务 notes（上一轮记录，含 review 反馈）**:")
+        lines.append("")
+        for note in task_notes:
+            lines.append(f"- {note}")
+        lines.append("")
+    if result_file:
+        lines.append(f"**结果文件**: `{result_file}`")
+        lines.append("")
+    if rejected:
+        lines.append("此任务之前已 dispatch，但被 review 拒绝。")
+        lines.append("重新 dispatch 前请先读 `notes` 字段了解拒绝原因。")
+    else:
+        lines.append("此任务之前已派发过。若上一轮被 review 驳回，原因记录在上面的 notes 里。")
+        lines.append("重新执行前请先读 notes，确认上一轮做到哪一步、问题在哪。")
+    lines.append("")
+    lines.append("**禁止因为 result_file 已存在或任务曾到过 testing 就回复 noop。**")
+    lines.append("")
+    return lines
+
+
 def write_orders_markdown(
     workspace: Path,
     orders: list,
-    dispatch_state: dict = None,
+    previous_dispatch_items: dict = None,
     task_lookup: dict = None,
     orders_relpath: str = DEFAULT_ORDERS_RELPATH,
 ) -> None:
@@ -82,8 +166,8 @@ def write_orders_markdown(
     # （trigger 读的是 config 里配置的 orders 路径），整条派单链路直接断掉。
     md_file = workspace / orders_relpath
     md_file.parent.mkdir(parents=True, exist_ok=True)
-    if dispatch_state is None:
-        dispatch_state = {"items": {}}
+    if previous_dispatch_items is None:
+        previous_dispatch_items = {}
     if task_lookup is None:
         task_lookup = {}
     lines = [
@@ -107,36 +191,13 @@ def write_orders_markdown(
         lines.append("")
         for o in assignee_orders:
             lines.append("")
-            # Check if this task was previously dispatched
-            existing = dispatch_state.get("items", {}).get(o["task_id"])
-            is_reopened = existing and existing.get("status") == "pending"
-
-            if is_reopened:
-                lines.append("### 返工重派说明（必须先读）")
-                lines.append("")
-                lines.append(f"**任务**: {o['task_id']}")
-                lines.append(f"**原状态**: {existing.get('status')}")
-                lines.append(f"**新状态**: {o.get('status')}")
-                lines.append("")
-                # Include notes from task
-                task_notes = task_lookup.get(o["task_id"], {}).get("notes", [])
-                if task_notes:
-                    lines.append("**任务 notes (review 反馈)**:")
-                    lines.append("")
-                    for note in task_notes:
-                        lines.append(f"- {note}")
-                    lines.append("")
-                lines.append("此任务之前已 dispatch，但被 review 拒绝。")
-                lines.append("重新 dispatch 前请先读 `notes` 字段了解拒绝原因。")
-                lines.append("")
-                lines.append(
-                    "**禁止因为 result_file 已存在或任务曾到过 testing 就回复 noop。**"
-                )
-                lines.append("")
+            task = task_lookup.get(o["task_id"], {}) or {}
+            # 「是否返工重派」只看**上一轮**的派单快照（见 dispatch_once）。
+            previous = previous_dispatch_items.get(o["task_id"])
+            lines.extend(_rework_notice_lines(order=o, task=task, previous=previous))
 
             lines.append(f"### {o['task_id']}")
             lines.append("")
-            task = task_lookup.get(o["task_id"], {}) or {}
             contract = _task_contract_lines(o, task, workspace)
             if contract:
                 lines.extend(contract)
@@ -350,6 +411,15 @@ def dispatch_once(args) -> int:
     dispatch_state = read_dispatch_state(workspace)
     tasks = state.get("tasks", {})
 
+    # 本轮开始**之前**的派单快照。
+    #
+    # 「是否返工重派」必须拿上一轮的快照来判断：之前渲染指令包时读的是
+    # dispatch_state["items"]，而本轮的 order 在渲染前就写进了同一个 dict，
+    # 于是 `previous` 永远是「本轮自己刚写的」——判据退化成
+    # 「当前任务状态是不是 pending」，于是**每个新任务**都被标成
+    # 「被 review 拒绝」（真机实测：TASK-P1-PROMPT-TRENDING-001）。
+    previous_items = copy.deepcopy(dispatch_state.get("items", {}) or {})
+
     candidates: list[str] = []
     candidate_tasks: list[dict] = []  # Task objects with status
     dispatched: list[str] = []
@@ -405,11 +475,17 @@ def dispatch_once(args) -> int:
 
     write_report(workspace, report)
     if args.orders:
-        orders = list(dispatch_state.get("items", {}).values())
+        # 指令包只装**本轮**要派发的任务。
+        #
+        # 之前装的是 dispatch_state["items"] 全量累计 —— 那份账本只增不减，
+        # 于是历史上已完成的任务会被一轮轮塞进 payload 发给对方
+        # （真机实测：TASK-P0-CONSENSUS-ENGINE-001 已 completed，
+        # 仍出现在给 CodeArts 的 payload 里，白白占掉对方一轮会话）。
+        orders = [build_order(task) for task in candidate_tasks]
         # Build task lookup for note extraction
         task_lookup = {tid: task for tid, task in tasks.items()}
         write_orders_markdown(
-            workspace, orders, dispatch_state, task_lookup, args.orders
+            workspace, orders, previous_items, task_lookup, args.orders
         )
     if args.history and not args.dry_run:
         write_history(workspace, json.dumps({"event": "dispatch", "count": len(dispatched)}))
