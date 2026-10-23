@@ -1,10 +1,14 @@
 {
   "source": "/Users/raymondna/.codeartsdoer/memory/-Users-raymondna-Documents-AI-collab-ai-collab-base",
-  "generated_at": "2026-10-23T09:43:33.399281+00:00",
+  "generated_at": "2026-10-23T11:17:49.003747+00:00",
   "files": [
     "MEMORY.md",
     "feedback_ack_cli_generated.md",
+    "feedback_answer_shape.md",
     "feedback_codearts_session_tooling.md",
+    "feedback_codearts_tooling_constraints.md",
+    "feedback_delivery_outcome_semantics.md",
+    "feedback_dispatch_execution_protocol.md",
     "feedback_dispatch_payload_freshness.md",
     "feedback_empirical_test_before_solution_choice.md",
     "feedback_exact_output_format.md",
@@ -28,5 +32,5 @@
     "reference_local_llm_endpoint.md",
     "user.md"
   ],
-  "count": 25
+  "count": 29
 }

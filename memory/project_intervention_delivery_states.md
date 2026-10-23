@@ -1,10 +1,8 @@
 ---
 name: project-intervention-delivery-states
 description: 干预队列的投递状态语义——入队必须用 delivery_mode="manual"（pending_operator_delivery），用 "bridge" 会被在途过滤器静默跳过，投递根本不会发生且不报错
-metadata:
-  node_type: memory
-  type: project
-  originSessionId: c2fb234d-c724-4b6f-9574-ce5f97b4d115
+type: project
+from: Agent
 ---
 
 干预队列（`ai_collab/intervention_queue.py`）里的 `delivery_status` 决定

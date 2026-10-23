@@ -1,5 +1,7 @@
 ---
+name: user
 description: 用户角色与偏好信息
+type: reference
 from: Agent
 ---
 

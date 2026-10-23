@@ -10,12 +10,13 @@
 - [产品路线 A/B 决策门禁（真机 3 平台回归 + 第一个外部用户）](project_route_decision.md) — AI Collaboration System 路线拍板（路线 A Prompt Pack 面向创作者 vs 路线 B Agent 协作控制面产品化）唯一缺失的真证是「真机 3 平台回归 + 第一个外部用户」，截至 2026-10-22 实验未启动
 - [任务契约 change_id 白名单与非法值的修正方式](project_task_change_id_whitelist.md) — ai_collab 任务契约校验器对 change_id 只认 bugfix/no-spec、legacy/task-contract-migration 或 openspec 真实变更；工单写 feature/no-spec 会被 tasks update 拒收（invalid=[change_id]），需用 --change-id 修正并留痕
 
-## User
-- [user.md](user.md) — 用户角色与偏好信息
-
 ## Feedback
 - [ACK/receipt 必须由 CLI 生成且先 RUN-RESET 再 RUN](feedback_ack_cli_generated.md) — 派单流程硬性规范——ACK/receipt 禁止手写，须用 python3 -m ai_collab.cli ack ... 生成并原样回复；RUN 静默无 ACK 时先 A.RUN-RESET 再 A.RUN
+- [回答形态规范（目标反推清单 / 就绪度按线判定 / 两者的适用边界）](feedback_answer_shape.md) — 用户已给明确目标时应反推应做项清单而非并列可选项；问就绪度时按工作线逐项判定再给二选一授权；两者适用场景不同，不可混用
 - [CodeArts 派单执行的工具约束（禁 write/edit、禁派生代理、写文件用 bash heredoc）](feedback_codearts_session_tooling.md) — 真机实测 CodeArts 会话中 write/edit 工具与派生 subagent 会卡死并中止会话；派单任务写文件一律用 bash heredoc
+- [CodeArts 会话工具约束（禁 write/edit、禁派生子代理；并行 bash 改单条逐个执行）](feedback_codearts_tooling_constraints.md) — 真机实测 CodeArts 会话中 write/edit 与派生 subagent 会卡死并中止会话，写文件一律用 bash heredoc；并行批次中单条命令失败可致整批 abort，校验多路径改用单条逐个执行
+- [投递结果判定口径——等回执超时≠投递失败](feedback_delivery_outcome_semantics.md) — 派单投递中「等回执超时」不得直接判失败；必须先向 kernel 核实消息是否被接受，否则误报 failed 会触发重投并在对方新开会话，造成双会话并发改同一工作区
+- [CodeArts 派单执行全流程规范（新鲜度 → RUN-RESET → RUN → 结果文件 → CLI ACK）](feedback_dispatch_execution_protocol.md) — 派单流程硬性规范——payload 先校验新鲜度（≤5 分钟）、系统级 RUN 只许单条 cli run、ACK/receipt 禁手写须用 cli ack 生成、结果文件须含 PROTOCOL §7.3 四段+可解析状态行+测试结论小节、终态收口 completed
 - [派单 payload 必须先校验新鲜度，系统级 RUN 只允许单条 cli run](feedback_dispatch_payload_freshness.md) — 收到派单 payload 后先比对 logs/task_dispatch_report.json 的 generated_at（≤5 分钟），过期用 cli trigger 一键重生成；系统级 RUN 只许 python3 -m ai_collab.cli run，禁止拆成 dispatch/receipt/benefit 串联
 - [方案选型前先做可行性实测，不凭直觉论证](feedback_empirical_test_before_solution_choice.md) — 用户要求「先做链接可行性实测，再定软链还是生成方案」；涉及技术选型时先跑实测拿到退出码/行为级真证，再给判定与方案
 - [严格输出格式约束须逐字照办](feedback_exact_output_format.md) — 用户给出字数/格式/字符集约束（如只回一个词）时，输出必须仅含被要求内容，不加解释、前后缀或 Markdown 包裹
@@ -31,3 +32,4 @@
 ## Reference
 - [laya 本地决策引擎服务（127.0.0.1:8421）](reference_laya_decision_engine.md) — 用户本地部署的 MLX 双模型决策引擎，区别于通用对话 LLM，用于结构化决策问题（分类/打分/真伪判断）
 - [本地 LLM 决策建议服务（127.0.0.1:1234）](reference_local_llm_endpoint.md) — 用户调用的本地 LLM 服务地址，用于对"需确认的决策点"给出建议
+- [user](user.md) — 用户角色与偏好信息
