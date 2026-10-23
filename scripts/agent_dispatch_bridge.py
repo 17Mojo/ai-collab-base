@@ -6,6 +6,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# 终态任务：已收口或已作废，不再进入派单候选。
+# 少了这个守卫，`--redispatch` / `--include-pending` 会把已 completed 的
+# 历史任务重新塞进 payload 发给对方（2026-10-23 真机实测：5 个已完成的
+# 历史任务被重派给 CodeArts，其中一个指向已删除的目录）。
+TERMINAL_TASK_STATUSES = {"completed", "cancelled"}
+
 
 def read_state(workspace: Path) -> dict:
     state_file = workspace / "logs" / "collaboration_state.json"
@@ -276,6 +282,7 @@ def classify_task(task: dict, existing: dict, args) -> dict:
     """Classify a task for dispatch.
 
     Logic:
+    0. Terminal tasks (completed/cancelled): never dispatched
     1. New task (not in dispatch_state): always candidate
     2. Existing + --redispatch: reopened/candidate (regardless of --include-pending)
     3. Existing + status=planning (not redispatched): keep in candidate (or already)
@@ -293,6 +300,16 @@ def classify_task(task: dict, existing: dict, args) -> dict:
     include_pending = args.include_pending
     redispatch = args.redispatch
     dry_run = args.dry_run
+
+    # 终态任务不再派发（2026-10-23 实测修的缺陷）。
+    #
+    # 现象：`--redispatch` 分支写的是「any status reopened」，没有排除终态；
+    # `--include-pending` 分支同样把 completed 放行。于是真机派单时
+    # 5 个**已 completed** 的历史任务被重新塞进 payload 发给了 CodeArts ——
+    # 其中包括 TASK-P0-CONSENSUS-ENGINE-001（它指向已删除的 hermes_target/），
+    # 白白占掉对方一轮会话。
+    if status in TERMINAL_TASK_STATUSES:
+        return {"candidate": False, "dispatched": False, "already": False, "reopened": False}
 
     if not existing:
         # New task: subject to --include-pending filter

@@ -563,3 +563,135 @@ def test_tool_constraints_survive_trigger_payload(tmp_path):
     assert "#### 执行环境约束（真机实测，必须遵守）" in trigger_payload
     assert "cat > path/to/file.py <<'EOF'" in trigger_payload
 
+
+
+# ---------------------------------------------------------------------------
+# 终态任务不得再被派发（2026-10-23 真机实测修的缺陷）
+#
+# 现象：`--redispatch` 分支写的是「any status reopened」，没有排除终态；
+# `--include-pending` 分支同样把 completed 放行。真机派单时 5 个**已 completed**
+# 的历史任务被重新塞进 payload 发给了 CodeArts —— 其中一个指向已删除的目录，
+# 白白占掉对方一轮会话。
+# ---------------------------------------------------------------------------
+
+
+def _task(task_id: str, status: str, assignee: str = "codearts_agent") -> dict:
+    return {
+        "task_id": task_id,
+        "ai_type": assignee,
+        "assignee": assignee,
+        "status": status,
+        "updated_at": "2026-10-23T11:00:00+08:00",
+        "acceptance_commands": ["python3 -m ai_collab.cli status -v"],
+        "result_file": f"collaboration/results/RESULT_{task_id}.md",
+    }
+
+
+def test_dispatch_redispatch_skips_completed_task(tmp_path):
+    """--redispatch 不得把已 completed 的任务重新派出去。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-DONE-001"] = _task("TASK-DONE-001", "completed")
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace, "--redispatch", "--include-pending")
+    assert result.returncode == 0, result.stderr
+
+    report = json.loads(
+        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
+    )
+    assert report["candidate_count"] == 0
+    assert report["dispatched_count"] == 0
+    assert "TASK-DONE-001" not in report["dispatched_tasks"]
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+    assert "TASK-DONE-001" not in orders
+
+
+def test_dispatch_include_pending_skips_completed_task(tmp_path):
+    """--include-pending 也不得把已 completed 的任务放行。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-DONE-002"] = _task("TASK-DONE-002", "completed")
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace, "--include-pending")
+    assert result.returncode == 0, result.stderr
+
+    report = json.loads(
+        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
+    )
+    assert report["candidate_count"] == 0
+    assert report["dispatched_count"] == 0
+
+
+def test_dispatch_skips_cancelled_task(tmp_path):
+    """已作废的任务同样不再派发。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-CANCEL-001"] = _task("TASK-CANCEL-001", "cancelled")
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace, "--redispatch", "--include-pending")
+    assert result.returncode == 0, result.stderr
+
+    report = json.loads(
+        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
+    )
+    assert report["candidate_count"] == 0
+    assert report["dispatched_count"] == 0
+
+
+def test_dispatch_still_ships_pending_task_alongside_completed_one(tmp_path):
+    """终态任务被跳过时，真正的待办任务仍要照常派出去。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-DONE-003"] = _task("TASK-DONE-003", "completed")
+    payload["tasks"]["TASK-LIVE-001"] = _task("TASK-LIVE-001", "pending")
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace, "--redispatch", "--include-pending")
+    assert result.returncode == 0, result.stderr
+
+    report = json.loads(
+        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
+    )
+    assert report["candidate_count"] == 1
+    assert report["dispatched_count"] == 1
+    assert report["dispatched_tasks"] == ["TASK-LIVE-001"]
+
+    orders = (
+        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
+    ).read_text(encoding="utf-8")
+    assert "TASK-LIVE-001" in orders
+    assert "TASK-DONE-003" not in orders
+
+
+def test_dispatch_still_ships_failed_task_for_rework(tmp_path):
+    """failed 不是终态 —— 返工重派必须仍然能派出去。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-FAIL-001"] = _task("TASK-FAIL-001", "failed")
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace, "--include-pending")
+    assert result.returncode == 0, result.stderr
+
+    report = json.loads(
+        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
+    )
+    assert report["candidate_count"] == 1
+    assert report["dispatched_count"] == 1
+    assert report["dispatched_tasks"] == ["TASK-FAIL-001"]
