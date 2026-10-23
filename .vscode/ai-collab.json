@@ -27,7 +27,13 @@
   "sessionOrchestration": {
     "codeartsAdapter": {
       "enabled": true,
-      "bridgeCommand": "python3 scripts/codearts_bridge_deliver.py --workspace {workspace} --event-file {event_file} --artifact-file {artifact_file} --intervention-id {intervention_id} --session-id {session_id} --assignee {assignee} --reason-code {reason_code}",
+      "bridgeCommand": "python3 scripts/codearts_bridge_deliver.py --workspace {workspace} --event-file {event_file} --artifact-file {artifact_file} --intervention-id {intervention_id} --session-id {session_id} --assignee {assignee} --reason-code {reason_code} --channel \"{channel}\" --model \"{model}\"",
+      "models": [
+        "glm-5.3",
+        "deepseek-v4.1-flash",
+        "kimi-k3"
+      ],
+      "modelPolicy": "round_robin",
       "deliveryStatusOnSuccess": "queued_for_delivery",
       "report": "logs/codearts_adapter_report.json",
       "history": "logs/codearts_adapter_history.jsonl",

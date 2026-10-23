@@ -66,6 +66,75 @@ def _adapter_mode(workspace: Path) -> tuple[bool, str, str]:
     return enabled, bridge_command, delivery_status
 
 
+def _adapter_model_config(workspace: Path) -> tuple[list[str], str]:
+    """模型池与轮换策略（来自 `.vscode/ai-collab.json` 的 codeartsAdapter 块）。
+
+    `models` 支持两种写法：
+
+    - `"glm-5.3"` —— 只给 modelID，providerID 由桥接脚本实时从 kernel
+      注册表解析（provider 换名/换家时不会因为配置写死而失效）；
+    - `{"providerID": "inferhub-provider", "modelID": "glm-5.3"}` —— 显式指定。
+    """
+    config = _load_codearts_adapter_config(workspace)
+    raw_models = config.get("models")
+    models: list[str] = []
+    if isinstance(raw_models, list):
+        for item in raw_models:
+            if isinstance(item, dict):
+                provider = str(item.get("providerID") or "").strip()
+                model = str(item.get("modelID") or "").strip()
+                if model:
+                    models.append(f"{provider}/{model}" if provider else model)
+            elif isinstance(item, str):
+                text = item.strip()
+                if text:
+                    models.append(text)
+    policy = str(config.get("modelPolicy") or "round_robin").strip().lower()
+    return models, policy
+
+
+def _prior_model_pinned_count(history_file: Path) -> int:
+    """历史上**钉了模型**的投递次数（轮换指针）。
+
+    只数真正带上模型的投递：早期没钉模型的投递不该推进轮换指针，
+    否则第一次钉模型就会从池子中间开始，看起来像"随机选的"。
+    """
+    if not history_file.exists():
+        return 0
+    total = 0
+    try:
+        for line in history_file.read_text(encoding="utf-8").splitlines():
+            text = line.strip()
+            if not text:
+                continue
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(payload, dict):
+                continue
+            try:
+                total += int(payload.get("model_pinned_count") or 0)
+            except (TypeError, ValueError):
+                continue
+    except OSError:
+        return 0
+    return total
+
+
+def select_delivery_model(
+    *, models: list[str], policy: str, prior_count: int
+) -> str:
+    """按策略挑一个模型；返回空串表示"不钉模型，由 kernel 决定"。"""
+    if not models:
+        return ""
+    if policy in ("none", "off", "disabled"):
+        return ""
+    if policy in ("fixed", "first", "pinned"):
+        return models[0]
+    return models[prior_count % len(models)]
+
+
 def _append_history(path: Path, payload: dict[str, Any]) -> None:
     snapshot = {
         "generated_at": payload.get("generated_at"),
@@ -74,6 +143,8 @@ def _append_history(path: Path, payload: dict[str, Any]) -> None:
         "queued_count": payload.get("queued_count", 0),
         "artifact_only_count": payload.get("artifact_only_count", 0),
         "failed_count": payload.get("failed_count", 0),
+        # 钉了模型的投递次数：模型池轮换指针的依据（只数真正带模型的）。
+        "model_pinned_count": payload.get("model_pinned_count", 0),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
@@ -131,6 +202,8 @@ def _run_bridge_command(
     event_file: Path,
     artifact_file: Path,
     intervention: dict[str, Any],
+    model: str = "",
+    channel: str = "",
 ) -> subprocess.CompletedProcess[str]:
     rendered = command.format(
         workspace=str(workspace),
@@ -140,6 +213,8 @@ def _run_bridge_command(
         session_id=str(intervention.get("session_id") or ""),
         assignee=str(intervention.get("assignee") or ""),
         reason_code=str(intervention.get("reason_code") or ""),
+        model=model,
+        channel=channel,
     )
     if platform.system() == "Windows":
         cmd = ["cmd", "/C", rendered]
@@ -165,16 +240,22 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
         f"- artifact_only_count: `{report.get('artifact_only_count', 0)}`",
         f"- failed_count: `{report.get('failed_count', 0)}`",
         f"- skipped_in_flight_count: `{report.get('skipped_in_flight_count', 0)}`",
+        f"- model_pool: `{', '.join(str(m) for m in (report.get('model_pool') or [])) or '（未配置）'}`",
+        f"- model_policy: `{report.get('model_policy', '')}`",
+        f"- model_pinned_count: `{report.get('model_pinned_count', 0)}`",
         "",
         "## Deliveries",
         "",
     ]
+    if report.get("model_wiring_warning"):
+        lines.extend([f"> ⚠️ {report['model_wiring_warning']}", ""])
     deliveries = list(report.get("deliveries", []) or [])
     if deliveries:
         for item in deliveries:
             lines.append(
                 f"- `{item.get('intervention_id', '')}` action=`{item.get('action', '')}` "
-                f"status=`{item.get('delivery_status', '')}`"
+                f"status=`{item.get('delivery_status', '')}` "
+                f"model=`{item.get('model', '') or '（kernel 决定）'}`"
             )
             if item.get("event_file"):
                 lines.append(f"  event_file: `{item.get('event_file', '')}`")
@@ -215,6 +296,18 @@ def run_codearts_pull_adapter(
     payload = inspect_interventions(workspace=workspace, assignee="codearts_agent", only_open=True)
     candidates = list(payload.get("interventions", []) or [])
 
+    # 模型池接线：模型只有在 bridgeCommand 真的带 {model} 占位符时才送得出去。
+    # 没接线就如实记进报告 —— 静默不生效是最难查的一类。
+    model_pool, model_policy = _adapter_model_config(workspace)
+    model_pointer = _prior_model_pinned_count(history_file)
+    model_wired = "{model}" in bridge_command
+    model_pinned_count = 0
+    model_wiring_warning = ""
+    if model_pool and not model_wired:
+        model_wiring_warning = (
+            "bridgeCommand 未包含 {model} 占位符，模型池未接线（本次投递不钉模型）"
+        )
+
     # 在途（已投递、等 ACK）的 intervention 不重复投递——否则每轮轮询都会在
     # 对方那边新建一个会话，两个会话并发改同一个工作区。
     in_flight_ids: list[str] = []
@@ -245,6 +338,7 @@ def run_codearts_pull_adapter(
             "event_file": "",
             "action": "",
             "error": "",
+            "model": "",
         }
 
         if error:
@@ -284,12 +378,28 @@ def run_codearts_pull_adapter(
             deliveries.append(delivery)
             continue
 
+        model = ""
+        # 默认仍是 cron（kernel 自建会话）；只有真的钉上模型才切 new_session。
+        channel = "cron"
+        if model_pool and model_wired:
+            model = select_delivery_model(
+                models=model_pool, policy=model_policy, prior_count=model_pointer
+            )
+            if model:
+                # 钉了模型就必须走 new_session —— cron 通道由 kernel 决定模型。
+                channel = "new_session"
+                model_pointer += 1
+                model_pinned_count += 1
+        delivery["model"] = model
+
         result = _run_bridge_command(
             workspace=workspace,
             command=bridge_command,
             event_file=event_file,
             artifact_file=artifact_file,
             intervention=intervention,
+            model=model,
+            channel=channel,
         )
         if result.returncode == 0:
             ack_report = ack_intervention(
@@ -333,8 +443,13 @@ def run_codearts_pull_adapter(
         "skipped_in_flight_count": len(in_flight_ids),
         "skipped_in_flight_ids": in_flight_ids,
         "force_redeliver": force_redeliver,
+        "model_pool": model_pool,
+        "model_policy": model_policy,
+        "model_pinned_count": model_pinned_count,
         "deliveries": deliveries,
     }
+    if model_wiring_warning:
+        report["model_wiring_warning"] = model_wiring_warning
 
     summary_file.parent.mkdir(parents=True, exist_ok=True)
     summary_file.write_text(build_summary_markdown(report=report), encoding="utf-8")

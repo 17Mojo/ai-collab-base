@@ -16,6 +16,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
+from typing import Any
 
 import pytest
 
@@ -447,14 +448,372 @@ def test_repo_bridge_command_is_a_valid_format_template():
         session_id="codearts-agent-bridge",
         assignee="codearts_agent",
         reason_code="stale_payload",
+        model="glm-5.3",
+        channel="new_session",
     )
     assert "codearts_bridge_deliver.py" in rendered
     assert "/tmp/ws" in rendered
+    assert "glm-5.3" in rendered
 
 
 def test_repo_codearts_adapter_is_enabled():
     config = json.loads(VSCODE_CONFIG.read_text(encoding="utf-8"))
     assert config["sessionOrchestration"]["codeartsAdapter"]["enabled"] is True
+
+
+# ---------------------------------------------------------------------------
+# 模型钉死（--model）
+#
+# kernel 的 cron 路由自己决定模型，调用方无法干预 —— 要钉死模型只能
+# 自建会话 + 消息体带 model。回执里的 info.modelID 是**实际**用掉的模型，
+# 用它来防"静默回落"。
+# ---------------------------------------------------------------------------
+
+
+def test_repo_codearts_adapter_declares_model_pool():
+    adapter = json.loads(VSCODE_CONFIG.read_text(encoding="utf-8"))[
+        "sessionOrchestration"
+    ]["codeartsAdapter"]
+    models = adapter.get("models") or []
+    assert {"glm-5.3", "deepseek-v4.1-flash", "kimi-k3"} <= set(models)
+    assert "{model}" in adapter["bridgeCommand"]
+    assert "{channel}" in adapter["bridgeCommand"]
+
+
+def test_send_message_body_carries_model(monkeypatch: pytest.MonkeyPatch):
+    captured: dict[str, Any] = {}
+
+    class _Response:
+        status = 200
+
+        def read(self) -> bytes:
+            return b'{"ok":true}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def _fake_urlopen(request, timeout=None):
+        captured["body"] = json.loads(request.data.decode("utf-8"))
+        return _Response()
+
+    monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    client.send_message(
+        session_id="ses_abc",
+        workspace=Path("/tmp/ws"),
+        message="你好",
+        agent="build",
+        model={"providerID": "inferhub-provider", "modelID": "glm-5.3"},
+    )
+
+    body = captured["body"]
+    assert body["model"] == {"providerID": "inferhub-provider", "modelID": "glm-5.3"}
+    assert body["agent"] == "build"
+
+
+def test_send_message_body_omits_model_when_not_given(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """不钉模型时**不要**发 model 字段 —— 保持 kernel 默认行为不变。"""
+    captured: dict[str, object] = {}
+
+    class _Response:
+        status = 200
+
+        def read(self) -> bytes:
+            return b'{"ok":true}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        bridge.urllib.request,
+        "urlopen",
+        lambda request, timeout=None: (
+            captured.setdefault("body", json.loads(request.data.decode("utf-8"))),
+            _Response(),
+        )[1],
+    )
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    client.send_message(
+        session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build"
+    )
+
+    assert "model" not in captured["body"]
+
+
+def test_create_session_returns_session_id(monkeypatch: pytest.MonkeyPatch):
+    captured: dict[str, Any] = {}
+
+    class _Response:
+        status = 200
+
+        def read(self) -> bytes:
+            return b'{"id":"ses_new1","title":"t"}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def _fake_urlopen(request, timeout=None):
+        captured["url"] = request.full_url
+        captured["body"] = json.loads(request.data.decode("utf-8"))
+        return _Response()
+
+    monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    session_id = client.create_session(workspace=Path("/tmp/ws"), title="派单")
+
+    assert session_id == "ses_new1"
+    assert str(captured["url"]).startswith("http://127.0.0.1:14934/session?")
+    assert "directory=" in str(captured["url"])
+    assert captured["body"] == {"title": "派单"}
+
+
+def test_create_session_raises_when_response_has_no_id(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    class _Response:
+        status = 200
+
+        def read(self) -> bytes:
+            return b'{"weird":true}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response()
+    )
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    with pytest.raises(bridge.BridgeError):
+        client.create_session(workspace=Path("/tmp/ws"), title="t")
+
+
+def test_resolve_model_resolves_provider_from_registry(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        bridge,
+        "provider_registry",
+        lambda client: {"glm-5.3": "inferhub-provider", "kimi-k3": "inferhub-provider"},
+    )
+
+    model, resolved, warning = bridge.resolve_model(object(), spec="glm-5.3")
+
+    assert model == {"providerID": "inferhub-provider", "modelID": "glm-5.3"}
+    assert resolved == "inferhub-provider/glm-5.3"
+    assert warning == ""
+
+
+def test_resolve_model_accepts_explicit_provider(monkeypatch: pytest.MonkeyPatch):
+    """显式给了 provider 就不必查注册表。"""
+
+    def _boom(client):
+        raise AssertionError("显式 provider 时不该查注册表")
+
+    monkeypatch.setattr(bridge, "provider_registry", _boom)
+
+    model, resolved, warning = bridge.resolve_model(object(), spec="myprov/my-model")
+
+    assert model == {"providerID": "myprov", "modelID": "my-model"}
+    assert resolved == "myprov/my-model"
+    assert warning == ""
+
+
+def test_resolve_model_warns_when_model_not_in_registry(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """注册表里没有 → 如实降级 + 告警，绝不静默假装钉住了。"""
+    monkeypatch.setattr(bridge, "provider_registry", lambda client: {"kimi-k3": "p"})
+
+    model, resolved, warning = bridge.resolve_model(object(), spec="no-such-model")
+
+    assert model is None
+    assert "no-such-model" in warning
+    assert "未指定模型" in warning
+
+
+def test_extract_used_model_reads_info_block():
+    payload = {"info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}}
+
+    assert bridge.extract_used_model(payload) == "inferhub-provider/glm-5.3"
+
+
+def test_extract_used_model_reads_raw_list():
+    payload = {"raw": [{"info": {"providerID": "p", "modelID": "m"}}]}
+
+    assert bridge.extract_used_model(payload) == "p/m"
+
+
+def test_extract_used_model_returns_empty_when_absent():
+    assert bridge.extract_used_model({"nothing": 1}) == ""
+
+
+def test_session_title_from_message_takes_first_line():
+    assert bridge.session_title_from_message("# 标题\n\n正文") == "标题"
+    assert bridge.session_title_from_message("") == "codearts-dispatch"
+
+
+def test_main_rejects_model_with_cron_channel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """cron 通道由 kernel 决定模型，配 --model 必须**明确失败**，不能假绿。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+
+    code = bridge.main(
+        [
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--channel",
+            "cron",
+            "--model",
+            "glm-5.3",
+        ]
+    )
+
+    assert code == 2
+    assert "cron" in capsys.readouterr().err
+
+
+def test_main_defaults_to_new_session_when_model_given(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """给了模型就必须走 new_session（cron 钉不住模型）。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "KernelClient", lambda **_: object())
+    monkeypatch.setattr(
+        bridge,
+        "resolve_model",
+        lambda client, *, spec: (
+            {"providerID": "inferhub-provider", "modelID": spec},
+            f"inferhub-provider/{spec}",
+            "",
+        ),
+    )
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+    captured: dict[str, object] = {}
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        captured["model"] = model
+        return {
+            "channel": "new_session",
+            "session_id": "ses_new",
+            "response": {
+                "info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}
+            },
+        }
+
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    assert captured["model"] == {
+        "providerID": "inferhub-provider",
+        "modelID": "glm-5.3",
+    }
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["channel"] == "new_session"
+    assert payload["model_requested"] == "inferhub-provider/glm-5.3"
+    assert payload["model_used"] == "inferhub-provider/glm-5.3"
+    assert payload["model_applied"] is True
+
+
+def test_main_reports_silent_fallback_in_model_applied(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """请求 A、实际 B → model_applied 必须是 False（不能装作钉住了）。"""
+    event = _write_event(
+        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
+    )
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
+    monkeypatch.setattr(bridge, "KernelClient", lambda **_: object())
+    monkeypatch.setattr(
+        bridge,
+        "resolve_model",
+        lambda client, *, spec: (
+            {"providerID": "inferhub-provider", "modelID": spec},
+            f"inferhub-provider/{spec}",
+            "",
+        ),
+    )
+    monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
+
+    def _fake_deliver(client, *, workspace, message, agent, model=None):
+        return {
+            "channel": "new_session",
+            "session_id": "ses_new",
+            "response": {
+                "info": {
+                    "providerID": "minimax",
+                    "modelID": "MiniMax-M3.1-Flash-Preview",
+                }
+            },
+        }
+
+    monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
+
+    code = bridge.main(
+        [
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--json",
+        ]
+    )
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["model_applied"] is False
+    assert payload["model_used"] == "minimax/MiniMax-M3.1-Flash-Preview"
 
 
 # ---------------------------------------------------------------------------

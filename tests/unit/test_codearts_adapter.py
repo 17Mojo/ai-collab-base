@@ -300,3 +300,152 @@ def test_codearts_adapter_marks_failed_when_artifact_is_missing(tmp_path: Path):
     queue = inspect_interventions(workspace=workspace, only_open=True)
     assert queue["intervention_count"] == 1
     assert queue["interventions"][0]["delivery_status"] == "failed"
+
+
+# ---------------------------------------------------------------------------
+# 模型池接线
+# ---------------------------------------------------------------------------
+
+
+def _enqueue_one(workspace: Path, *, intervention_id: str, message: str) -> None:
+    artifact_relpath = (
+        "collaboration/monitoring/session_interventions/"
+        f"SESSION_INTERVENTION_{intervention_id}_latest.md"
+    )
+    _write_intervention_artifact(workspace, artifact_relpath, message)
+    enqueue_intervention(
+        workspace=workspace,
+        session_id="codearts-main",
+        assignee="codearts_agent",
+        reason_code="stale_payload",
+        severity="high",
+        message_artifact=artifact_relpath,
+        intervention_id=intervention_id,
+    )
+
+
+def test_codearts_adapter_pins_model_into_bridge_command(tmp_path: Path):
+    """配了模型池 → bridgeCommand 必须收到 {model}，且通道切到 new_session。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\"; "
+                "printf '%s' \"{channel}\" > \"{workspace}/channel.txt\""
+            ),
+            "models": ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-model-1", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert report["model_pool"] == ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"]
+    assert report["model_pinned_count"] == 1
+    assert report["deliveries"][0]["model"] == "glm-5.3"
+    assert (workspace / "model.txt").read_text(encoding="utf-8") == "glm-5.3"
+    assert (workspace / "channel.txt").read_text(encoding="utf-8") == "new_session"
+
+
+def test_codearts_adapter_rotates_model_pool_across_rounds(tmp_path: Path):
+    """轮换：每轮换一个模型，指针只被"钉了模型"的投递推进。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s\\n' \"{model}\" >> \"{workspace}/models.txt\""
+            ),
+            "models": ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+
+    for index in range(3):
+        _enqueue_one(
+            workspace,
+            intervention_id=f"int-rot-{index}",
+            message=f"第 {index} 轮",
+        )
+        report = run_codearts_pull_adapter(workspace=workspace)
+        assert report["queued_count"] == 1
+
+    models = (workspace / "models.txt").read_text(encoding="utf-8").split()
+    assert models == ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"]
+
+
+def test_codearts_adapter_without_model_pool_keeps_cron_channel(tmp_path: Path):
+    """没配模型池 → 保持旧行为（cron 通道，模型由 kernel 决定）。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{channel}\" > \"{workspace}/channel.txt\"; "
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+            ),
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-nomodel", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert report["model_pinned_count"] == 0
+    assert report["deliveries"][0]["model"] == ""
+    assert (workspace / "channel.txt").read_text(encoding="utf-8") == "cron"
+    assert (workspace / "model.txt").read_text(encoding="utf-8") == ""
+
+
+def test_codearts_adapter_warns_when_bridge_command_has_no_model_placeholder(
+    tmp_path: Path,
+):
+    """模型池配了但命令里没有 {model} → 如实告警，不能静默不生效。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/out.txt\"",
+            "models": ["glm-5.3"],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-nowire", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert report["model_pinned_count"] == 0
+    assert "未接线" in report["model_wiring_warning"]
+
+
+def test_codearts_adapter_fixed_policy_always_uses_first_model(tmp_path: Path):
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": "printf '%s\\n' \"{model}\" >> \"{workspace}/models.txt\"",
+            "models": ["glm-5.3", "kimi-k3"],
+            "modelPolicy": "fixed",
+        },
+    )
+
+    for index in range(2):
+        _enqueue_one(workspace, intervention_id=f"int-fixed-{index}", message="x")
+        run_codearts_pull_adapter(workspace=workspace)
+
+    models = (workspace / "models.txt").read_text(encoding="utf-8").split()
+    assert models == ["glm-5.3", "glm-5.3"]

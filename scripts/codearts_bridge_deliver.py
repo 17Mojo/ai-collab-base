@@ -28,6 +28,17 @@ kernel 自己会新建 CodeArts 会话并把 markdown 当成用户消息投进�
 `directory` 查询参数在所有会话路由上都是必填的：缺失时 `/session` 静默
 返回空数组，是最容易踩的坑。
 
+**模型钉死（`--model`）** —— cron 路由**自己决定**用哪个模型，调用方无法
+指定（实测：不带 model 的投递全部落在 kernel 的默认模型上）。要钉死模型
+只能自己建会话、再用带 model 的消息体投递：
+
+    POST /session?directory=<ws>                   # 自建会话
+    POST /session/{id}/message?directory=<ws>      # 消息体带 model
+
+消息体里的 model 形如 `{"providerID": "...", "modelID": "..."}`。回执里的
+`info.providerID` / `info.modelID` 是**实际**用掉的模型 —— 用它来防
+"静默回落"（注册表里有 ≠ 真的被选中）。
+
 鉴权是 HTTP Basic。密码由运行环境提供，本脚本不硬编码、不落盘：
 
     1. 环境变量 `OPENCODE_SERVER_PASSWORD`（用户名默认 `codearts`，
@@ -373,6 +384,137 @@ def parse_kernel_payload(raw: str) -> Any:
         return None
 
 
+# --------------------------------------------------------------------------
+# 模型解析
+#
+# 模型有两个来源，语义完全不同：
+#   1. kernel 的 `/provider` 注册表 —— 有哪些模型可用（但注册 ≠ 真能用）；
+#   2. 投递消息体里的 model 字段 —— 决定**这次**用哪个模型。
+#
+# 只给 modelID 时，providerID 从注册表实时解析（provider 改名/换家时不会
+# 因为配置里写死而失效）；注册表里查不到就**如实降级**并告警，绝不假装
+# 钉住了模型。
+# --------------------------------------------------------------------------
+
+
+def parse_model_spec(spec: str) -> tuple[str, str]:
+    """'provider/model' → ('provider', 'model')；'model' → ('', 'model')。"""
+    text = str(spec or "").strip()
+    if not text:
+        return "", ""
+    provider, sep, model = text.partition("/")
+    if sep:
+        return provider.strip(), model.strip()
+    return "", text
+
+
+def provider_registry(client: KernelClient) -> dict[str, str]:
+    """kernel 的模型注册表：model_id → provider_id。"""
+    payload = client.request("GET", "/provider")
+    mapping: dict[str, str] = {}
+    providers = payload.get("all") if isinstance(payload, dict) else None
+    if isinstance(providers, list):
+        for provider in providers:
+            if not isinstance(provider, dict):
+                continue
+            provider_id = str(provider.get("id") or "")
+            models = provider.get("models")
+            if isinstance(models, dict):
+                items = list(models.keys())
+            elif isinstance(models, list):
+                items = [
+                    str(item.get("id")) for item in models if isinstance(item, dict) and item.get("id")
+                ]
+            else:
+                items = []
+            for model_id in items:
+                mapping[str(model_id)] = provider_id
+    return mapping
+
+
+def resolve_model(
+    client: KernelClient, *, spec: str
+) -> tuple[dict[str, str] | None, str, str]:
+    """解析模型规格。
+
+    返回 `(model_payload, resolved, warning)`：
+
+    - `model_payload` 为 None 表示**模型没有生效**（未指定 / 不在注册表里）；
+      这时 `warning` 必非空 —— 绝不静默降级。
+    - `resolved` 是 `provider/model` 形态的最终模型标识。
+    """
+    provider, model = parse_model_spec(spec)
+    if not model:
+        return None, "", ""
+    if not provider:
+        registry = provider_registry(client)
+        provider = registry.get(model, "")
+        if not provider:
+            # 注册表键大小写敏感（"GLM-5.2" 与 "glm-5.3" 混用），加不敏感兜底
+            canonical = {k.lower(): k for k in registry}.get(model.lower(), "")
+            if canonical:
+                provider = registry.get(canonical, "")
+                model = canonical
+    if not provider:
+        return (
+            None,
+            model,
+            f"模型 {model} 不在 kernel 注册表中，本次投递未指定模型（由 kernel 决定）",
+        )
+    return {"providerID": provider, "modelID": model}, f"{provider}/{model}", ""
+
+
+def extract_used_model(payload: Any) -> str:
+    """从回执里取**实际**用掉的模型（`provider/model`）。
+
+    回执形状有两种：直接带 `info`，或 `raw` 列表里每项带 `info`。
+    """
+    holders: list[dict[str, Any]] = []
+    if isinstance(payload, dict):
+        info = payload.get("info")
+        if isinstance(info, dict):
+            holders.append(info)
+        holders.append(payload)
+        raw = payload.get("raw")
+        if isinstance(raw, list):
+            for item in raw:
+                if isinstance(item, dict) and isinstance(item.get("info"), dict):
+                    holders.append(item["info"])
+    for holder in holders:
+        provider = str(holder.get("providerID") or holder.get("providerId") or "")
+        model = str(holder.get("modelID") or holder.get("modelId") or "")
+        if provider and model:
+            return f"{provider}/{model}"
+        if model:
+            return model
+    return ""
+
+
+def extract_session_id(payload: Any) -> str:
+    """从响应里取 `ses_` 会话 ID。"""
+    if isinstance(payload, dict):
+        for key in ("id", "sessionID", "session_id"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        for key in ("info", "session"):
+            nested = payload.get(key)
+            if isinstance(nested, dict):
+                value = nested.get("id")
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+    return ""
+
+
+def session_title_from_message(message: str) -> str:
+    """会话标题：取正文第一行（与 kernel cron 路由的命名习惯一致）。"""
+    for line in str(message or "").splitlines():
+        text = line.strip().lstrip("#").strip()
+        if text:
+            return text[:80]
+    return "codearts-dispatch"
+
+
 class KernelClient:
     """CodeArts Doer kernel（opencode）HTTP 客户端。"""
 
@@ -443,6 +585,22 @@ class KernelClient:
             return [dict(item) for item in items if isinstance(item, dict)]
         return []
 
+    def create_session(self, *, workspace: Path, title: str) -> str:
+        """自建会话，返回 `ses_` 会话 ID。
+
+        kernel 的 cron 路由自己建会话，但**模型由 kernel 决定**；要钉死模型
+        只能自己建会话，再用带 model 的消息体投递。
+        """
+        payload = self.request(
+            "POST", "/session", query={"directory": str(workspace)}, body={"title": title}
+        )
+        session_id = extract_session_id(payload)
+        if not session_id:
+            raise BridgeError(
+                f"创建会话失败: {json.dumps(payload, ensure_ascii=False)[:300]}"
+            )
+        return session_id
+
     def send_message(
         self,
         *,
@@ -450,11 +608,17 @@ class KernelClient:
         workspace: Path,
         message: str,
         agent: str,
+        model: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "parts": [{"type": "text", "text": message}],
             "agent": agent,
         }
+        if model:
+            body["model"] = {
+                "providerID": str(model.get("providerID") or ""),
+                "modelID": str(model.get("modelID") or ""),
+            }
         return self.request(
             "POST",
             f"/session/{urllib.parse.quote(session_id)}/message",
@@ -582,12 +746,47 @@ def deliver_via_session(
     message: str,
     session_id: str,
     agent: str,
+    model: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """快路径：直发已有会话。"""
     response = client.send_message(
-        session_id=session_id, workspace=workspace, message=message, agent=agent
+        session_id=session_id,
+        workspace=workspace,
+        message=message,
+        agent=agent,
+        model=model,
     )
     return {"channel": "session", "session_id": session_id, "response": response}
+
+
+def deliver_via_new_session(
+    client: KernelClient,
+    *,
+    workspace: Path,
+    message: str,
+    agent: str,
+    model: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """自建会话 + 投递（模型可钉死）。
+
+    这是**唯一能钉死模型**的通道：cron 路由自己建会话、自己选模型，
+    调用方无法干预。
+    """
+    title = session_title_from_message(message)
+    session_id = client.create_session(workspace=workspace, title=title)
+    response = client.send_message(
+        session_id=session_id,
+        workspace=workspace,
+        message=message,
+        agent=agent,
+        model=model,
+    )
+    return {
+        "channel": "new_session",
+        "session_id": session_id,
+        "session_title": title,
+        "response": response,
+    }
 
 
 # --------------------------------------------------------------------------
@@ -952,12 +1151,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--reason-code", default="", help="干预原因码")
     parser.add_argument("--kernel-url", default="", help="kernel 地址（默认自动发现）")
     parser.add_argument("--agent", default=DEFAULT_AGENT, help="目标 agent 名称")
+    parser.add_argument(
+        "--model",
+        default="",
+        help="钉死本次投递使用的模型（modelID 或 providerID/modelID）",
+    )
     parser.add_argument("--timeout", type=int, default=120, help="请求超时（秒）")
     parser.add_argument(
         "--channel",
-        choices=("auto", "cron", "session"),
-        default="cron",
-        help="投递通道；cron=由 kernel 新建会话（默认），session=直发已有会话，auto=有会话走 session",
+        choices=("auto", "cron", "session", "new_session"),
+        default="",
+        help=(
+            "投递通道；空=有 --model 走 new_session，否则走 cron（保持旧行为）；"
+            "cron=由 kernel 新建会话（模型由 kernel 决定，**不能**配 --model）；"
+            "session=直发已有会话；new_session=自建会话（模型可钉死）"
+        ),
     )
     parser.add_argument(
         "--allow-process-env-discovery",
@@ -1010,6 +1218,14 @@ def main(argv: list[str] | None = None) -> int:
     except BridgeError as exc:
         return _fail(str(exc))
 
+    # 通道选择：默认保持旧行为（cron），只有钉了模型才走 new_session。
+    channel = args.channel or ("new_session" if args.model else "cron")
+    if channel == "cron" and args.model:
+        return _fail(
+            "cron 通道由 kernel 决定模型，无法配合 --model 使用；"
+            "请改用 --channel new_session（自建会话 + 消息体带模型）"
+        )
+
     kernel_url = args.kernel_url
     if not kernel_url:
         try:
@@ -1022,7 +1238,8 @@ def main(argv: list[str] | None = None) -> int:
         result = {
             "mode": "dry-run",
             "kernel_url": kernel_url,
-            "channel": args.channel,
+            "channel": channel,
+            "model_requested": args.model,
             "message_length": len(message),
             "message_preview": message[:500],
         }
@@ -1044,8 +1261,20 @@ def main(argv: list[str] | None = None) -> int:
         timeout=args.timeout,
     )
 
+    # 解析模型：查不到就如实降级并告警（不静默假装钉住了）。
+    model_payload: dict[str, str] | None = None
+    model_resolved = ""
+    model_warning = ""
+    if args.model:
+        try:
+            model_payload, model_resolved, model_warning = resolve_model(
+                client, spec=args.model
+            )
+        except BridgeError as exc:
+            return _fail(f"解析模型失败: {exc}")
+
     try:
-        if args.channel == "session":
+        if channel == "session":
             session_id = resolve_direct_session(
                 client, workspace=workspace, explicit=args.session_id
             )
@@ -1057,10 +1286,19 @@ def main(argv: list[str] | None = None) -> int:
                 message=message,
                 session_id=session_id,
                 agent=args.agent,
+                model=model_payload,
             )
-        elif args.channel == "cron":
+        elif channel == "new_session":
+            delivery = deliver_via_new_session(
+                client,
+                workspace=workspace,
+                message=message,
+                agent=args.agent,
+                model=model_payload,
+            )
+        elif channel == "cron":
             delivery = deliver_via_cron(client, workspace=workspace, message=message)
-        else:
+        else:  # auto
             session_id = resolve_direct_session(
                 client, workspace=workspace, explicit=args.session_id
             )
@@ -1071,6 +1309,15 @@ def main(argv: list[str] | None = None) -> int:
                     message=message,
                     session_id=session_id,
                     agent=args.agent,
+                    model=model_payload,
+                )
+            elif model_payload:
+                delivery = deliver_via_new_session(
+                    client,
+                    workspace=workspace,
+                    message=message,
+                    agent=args.agent,
+                    model=model_payload,
                 )
             else:
                 delivery = deliver_via_cron(client, workspace=workspace, message=message)
@@ -1079,6 +1326,26 @@ def main(argv: list[str] | None = None) -> int:
 
     delivery["intervention_id"] = args.intervention_id
     delivery["assignee"] = args.assignee
+    # 回执取证：model_used 是 kernel **实际**用掉的模型，model_applied 判断
+    # 有没有静默回落（请求 A、实际 B → False）。
+    delivery["model_requested"] = model_resolved or args.model
+    delivery["model_used"] = extract_used_model(delivery.get("response"))
+    if model_payload is None:
+        delivery["model_applied"] = None
+    elif not delivery["model_used"]:
+        delivery["model_applied"] = None  # 回执里没带模型信息，无法证实
+    else:
+        delivery["model_applied"] = delivery["model_used"] == model_resolved
+    if model_warning:
+        delivery["model_warning"] = model_warning
+        print(f"[codearts-bridge] 警告: {model_warning}", file=sys.stderr)
+    if delivery.get("model_applied") is False:
+        print(
+            "[codearts-bridge] 警告: 请求模型 "
+            f"{delivery['model_requested']} 未生效，实际用了 "
+            f"{delivery['model_used']}",
+            file=sys.stderr,
+        )
     try:
         # 体检是辅助信息：失败不能影响已经成功的投递。
         delivery["cron_residue"] = inspect_cron_residue(client, workspace=workspace)
@@ -1097,15 +1364,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         print(json.dumps({"mode": "apply", **delivery}, ensure_ascii=False, indent=2))
     else:
+        model_note = delivery.get("model_used") or "未指定"
         if delivery.get("channel") == "cron":
             print(
                 f"[codearts-bridge] 已投递（cron 通道）task_id="
-                f"{delivery.get('task_id', '')}"
+                f"{delivery.get('task_id', '')} 模型={model_note}"
             )
         else:
             print(
                 f"[codearts-bridge] 已投递到 CodeArts 会话 "
-                f"{delivery.get('session_id', '')}"
+                f"{delivery.get('session_id', '')} 模型={model_note}"
             )
     return 0
 
