@@ -56,6 +56,7 @@ import re
 import sqlite3
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -676,6 +677,17 @@ def _residue_is_running_refusal(message: str) -> bool:
     return any(marker.lower() in lowered for marker in RESIDUE_RUNNING_REFUSAL_MARKERS)
 
 
+def _read_cron_store() -> tuple[dict[str, Any] | None, str | None]:
+    """读 kernel 的 cron 存储。返回 (payload, error)。"""
+    try:
+        payload = json.loads(CRON_STORE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return None, f"读取 cron 存储失败: {exc}"
+    if not isinstance(payload, dict):
+        return None, "cron 存储结构异常：根节点不是对象"
+    return payload, None
+
+
 def _remove_from_cron_store(task_ids: list[str]) -> dict[str, Any]:
     """文件级兜底：把指定任务从 kernel 的 cron 存储里摘掉。
 
@@ -684,48 +696,60 @@ def _remove_from_cron_store(task_ids: list[str]) -> dict[str, Any]:
     读写都落在磁盘上），并且有文件监听器在改动后 reload。
     所以运行中直接改这个文件是安全的 —— 不需要停 kernel。
 
-    写入用「临时文件 + rename」并遵守 kernel 自己的锁文件，
-    避免与 kernel 的回写撞车。
+    写入用「临时文件 + rename」（与 kernel 自己的做法一致），
+    临时文件名带 pid，避免与 kernel 的临时文件撞名。
+
+    **锁文件纪律**：`scheduled_tasks.lock` 是 kernel 自己的锁
+    （由它按 {process, timestamp} 判定新鲜度）。
+    本函数**只读它、绝不删它** —— 删掉别人持有的锁会让 kernel
+    以为自己没在写，从而与本进程并发写同一份存储。
+    检测到锁存在时，重新读一次存储再写，尽量把「读-写」窗口压到最小，
+    并把冲突事实报给调用方。
     """
     if not CRON_STORE_PATH.exists():
         return {"ok": False, "error": f"cron 存储不存在: {CRON_STORE_PATH}"}
-    try:
-        payload = json.loads(CRON_STORE_PATH.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        return {"ok": False, "error": f"读取 cron 存储失败: {exc}"}
+
+    lock_path = CRON_STORE_PATH.with_name("scheduled_tasks.lock")
+    lock_conflict = lock_path.exists()
+
+    payload, error = _read_cron_store()
+    if error:
+        return {"ok": False, "error": error}
 
     tasks = payload.get("tasks")
     if not isinstance(tasks, list):
         return {"ok": False, "error": "cron 存储结构异常：缺少 tasks 列表"}
 
+    if lock_conflict:
+        # kernel 正在写：等它一下，然后**重新读**再算，避免用陈旧快照覆盖。
+        time.sleep(0.2)
+        payload, error = _read_cron_store()
+        if error:
+            return {"ok": False, "error": error, "lock_conflict": True}
+        tasks = payload.get("tasks")
+        if not isinstance(tasks, list):
+            return {"ok": False, "error": "cron 存储结构异常：缺少 tasks 列表", "lock_conflict": True}
+
     targets = set(task_ids)
     kept = [t for t in tasks if str(t.get("id") or "") not in targets]
     removed = [str(t.get("id") or "") for t in tasks if str(t.get("id") or "") in targets]
     if not removed:
-        return {"ok": True, "removed": [], "note": "目标不在存储里，无需改动"}
+        return {"ok": True, "removed": [], "note": "目标不在存储里，无需改动", "lock_conflict": lock_conflict}
 
     payload["tasks"] = kept
-    lock_path = CRON_STORE_PATH.with_name("scheduled_tasks.lock")
-    lock_taken = False
+    tmp_path = CRON_STORE_PATH.with_name(f"{CRON_STORE_PATH.name}.{os.getpid()}.tmp")
     try:
-        if lock_path.exists():
-            lock_taken = True
-        tmp_path = CRON_STORE_PATH.with_suffix(".json.tmp")
         tmp_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
         tmp_path.replace(CRON_STORE_PATH)
     except OSError as exc:
-        return {"ok": False, "error": f"写回 cron 存储失败: {exc}"}
-    finally:
-        if lock_taken:
-            # kernel 的锁文件由它自己按 {process, timestamp} 判定新鲜度，
-            # 这里只做「自己创建过就清掉」的最保守处理。
-            try:
-                lock_path.unlink()
-            except OSError:
-                pass
-    return {"ok": True, "removed": removed, "kept": len(kept)}
+        try:
+            tmp_path.unlink()
+        except OSError:
+            pass
+        return {"ok": False, "error": f"写回 cron 存储失败: {exc}", "lock_conflict": lock_conflict}
+    return {"ok": True, "removed": removed, "kept": len(kept), "lock_conflict": lock_conflict}
 
 
 def purge_cron_residue(

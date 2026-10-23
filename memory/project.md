@@ -105,7 +105,24 @@ from: Agent
   3. `pyproject.toml` 的 `[tool.pytest.ini_options] testpaths = ["tests"]` 是白名单，**保留**（这是兜底防线，不是临时补丁）；若未来测试置于 tests/ 之外需同步更新 testpaths；
   4. 工单的 `acceptance_commands` 必须**指向本仓可复跑的命令**，不得指向已删除或不在本仓依赖内的路径。
 
-## 质量基线快照（2026-10-22 现场核验，slimming 分支领先 main 20 提交）
+## ACK 前缀与回执协议（2026-10-23 修复并验证）
+- **规则：角色优先于 provider。** 工单声明了 `assignee_role` 时，ACK 前缀取**角色**的命令前缀，不是 provider 的兜底字母。AGENT_EXEC → `A.ACK`、AGENT_TEST → `C.ACK`、**AGENT_ARCH → `X.ACK`**。
+- **Why**: claude_code 的 provider 兜底字母是 `C`（它占的 AGENT_TEST 席），但它同时占 AGENT_ARCH 席 —— 那一席的角色字母是 `X`。修复前只有回执桥接路径是 provider 优先，于是 claude_code 以 AGENT_ARCH 身份发回的 ACK 落成 `C.ACK`，与协议 §6.1 规定不一致（实测：两个 AGENT_ARCH 工单的 ACK 记录都是 `C.ACK`）。
+- **How to apply**:
+  1. CodeArts 侧收到 ACK 时**不要**按前缀字母反查发送方 —— 仓库内不存在「前缀 → provider」的反向查找，归属一律靠 `task_id` + `source`（`has_explicit_ack`）。
+  2. `claude_code` 发来的 ACK 可能是 `X.ACK`（当它坐 AGENT_ARCH 席），也可能是 `C.ACK`（当它坐 AGENT_TEST 席）。
+  3. 前缀映射的**单一事实源**是 `ai_collab/role_prefix.py::resolve_hints`；任何新增的 ACK 产生路径都必须走它，不要另写 provider 优先的兜底。
+- **踩过的坑（方法论）**: 我曾据 `build_ack_line()` 的**默认参数**（`assignee_role=None` ⇒ provider 优先）就断言「CLI ACK 路径也是 provider 优先」，还据此写进了后续动作清单 —— 实际 `cmd_ack` 早在 `229062d` 就传了角色。**从函数签名推断调用行为前，先读调用点**；默认参数 ≠ 实际传参。
+- **不变量测试**: `tests/unit/test_ack_prefix_derivation.py`（18 条，2026-10-23 新建）守「两条派生路径同源 + 角色落进 ACK 记录」。
+
+## CodeArts kernel cron 清理纪律（2026-10-23 实测）
+- **kernel 的 cron 存储是纯文件、无内存任务表**（二进制实测：`addTask`/`removeTask`/`expireTask` 每次都 `readTasks()` → `writeCronTasks()`，写走临时文件 + rename）。⇒ **运行中直接改 `~/.codeartsdoer/vscode-data/cron/scheduled_tasks.json` 是权威且安全的，不需要停 kernel**。（旧记忆「必须先停 kernel 否则会被覆盖回来」是错的，已纠正。）
+- **官方删除路由存在但不在 `/doc`**：`POST /cag/cron/tasks/delete?directory=<ws>`（body `{"ids":[...]}`）。`/cag/*` 路由挂在 OpenAPI 文档之外，**「不在 /doc」≠「路由不存在」**。
+- **该路由会拒绝「正在执行」的任务**（kernel 原话：`任务正在执行，无法删除，如需操作，请先终止该任务`）。这类任务卡在调度器的 `in-flight` 集合里 —— 手动触发后对方会话中途死掉，fire 的 promise 永不落定，`finally` 里的 `inFlight.delete` 永远不执行。`reloadTasks()` 会替换 `state.tasks` 但**不清** `inFlight`，且调度器是模块级单例、无重置路由 ⇒ 只有重启 kernel 进程能清 `inFlight`（但 `inFlight` 不影响磁盘状态，所以文件级兜底足以真正摘掉记录）。
+- **文件级兜底工具**：`python3 scripts/codearts_bridge_deliver.py --workspace . --purge-residue`（先走官方路由，被拒再走文件兜底），`--check-residue` 只体检不改动。2026-10-23 已用它清掉 `296fc444`。
+- **锁纪律（硬规则）**：`scheduled_tasks.lock` 是 kernel 自己的锁（按 `{process, timestamp}` 判新鲜度）。**任何外部写入只读它、绝不删它** —— 删掉别人持有的锁会让 kernel 以为自己没在写，从而并发写同一份存储。写回要用「临时文件 + rename」，临时文件名带 pid 避免与 kernel 的临时文件撞名。
+- **Why**: 僵尸 cron 的本质是「会话中途死掉 ⇒ 调度器 in-flight 泄漏 ⇒ 官方路由拒删」，不是配置问题。手工改 JSON 是唯一可行的清理路径，因此锁纪律与原子写必须严格。
+
 - 全量测试: **2660 passed / 0 failed / 6 skipped**（36s，Python 3.14.6）
 - 单元+覆盖率（对齐 CI 口径含 omit）: 2344 passed，**TOTAL 88%**（14581 stmts / 1698 missed）
 - mypy: **0 错误**（99 源文件）；ruff: 全绿

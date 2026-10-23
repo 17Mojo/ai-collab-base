@@ -270,9 +270,14 @@ def upsert_ack_bridge_item(
     resolved_source = source
     if is_explicit_ack_source(existing_source) and not is_explicit_ack_source(source):
         resolved_source = existing_source
+    # 角色（PROTOCOL §7.3）必须**落进记录**：ACK 前缀由它决定，
+    # 记录里丢了它，后续任何一次只拿到 provider 的写入都会把前缀降级回
+    # provider 兜底字母（同一个工单出现两种前缀的记录）。
+    resolved_role = str(assignee_role or existing.get("assignee_role") or "").strip()
     record = {
         "task_id": task_id,
         "assignee": assignee,
+        "assignee_role": resolved_role or None,
         "result_file": result_file,
         "ack_line": ack_line,
         "receipt_completed_at": completed_at,

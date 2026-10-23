@@ -1092,8 +1092,16 @@ def cmd_ack(args):
             or f"collaboration/results/RESULT_{task_id}.md"
         )
         status = explicit_status or "ok"
+        # 工单已不在状态机里，但历史 ACK 记录可能带着角色（PROTOCOL §7.3）——
+        # 有角色就按角色取前缀，与当初 CLI 发的 ACK 行保持同源。
+        existing_role = str(existing_ack.get("assignee_role") or "").strip()
         ack_line = build_ack_line(
-            assignee=assignee, task_id=task_id, result_file=result_file, status=status
+            assignee=assignee,
+            task_id=task_id,
+            result_file=result_file,
+            status=status,
+            assignee_role=existing_role or None,
+            workspace=Path(workspace),
         )
         result_path = Path(result_file)
         if not result_path.is_absolute():

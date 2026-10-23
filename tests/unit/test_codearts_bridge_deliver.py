@@ -15,7 +15,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -905,6 +905,112 @@ def test_purge_residue_cli_flag_runs_purge(tmp_path: Path, monkeypatch, capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["purged"] == ["296fc444"]
     assert kernel.delete_calls == [["296fc444"]]
+
+
+# ---------------------------------------------------------------------------
+# 文件级兜底的锁纪律（2026-10-23）
+#
+# `scheduled_tasks.lock` 是 kernel 自己的锁。
+# 兜底删除**只读它、绝不删它** —— 删掉别人持有的锁会让 kernel
+# 认为自己没在写，从而与本进程并发写同一份存储。
+# ---------------------------------------------------------------------------
+
+
+def test_remove_from_cron_store_never_deletes_kernel_lock(tmp_path: Path, monkeypatch):
+    """kernel 正在写（锁文件在）时，兜底删除不得把锁文件带走。"""
+    store = tmp_path / "cron" / "scheduled_tasks.json"
+    _write_store(store, ["a1", "b2"])
+    lock = store.with_name("scheduled_tasks.lock")
+    lock.write_text('{"process": 1, "timestamp": 0}', encoding="utf-8")
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+    # 用 stub 替换 time 模块（raising=False）：这样本用例在旧实现上
+    # 也会因为「锁被删掉」而失败，而不是因为缺少 time 属性而失败。
+    monkeypatch.setattr(
+        bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False
+    )
+
+    result = bridge._remove_from_cron_store(["b2"])
+
+    assert result["ok"] is True
+    assert result["removed"] == ["b2"]
+    assert lock.exists(), "不能删除 kernel 自己持有的锁文件"
+    assert lock.read_text(encoding="utf-8") == '{"process": 1, "timestamp": 0}'
+
+
+def test_remove_from_cron_store_reports_lock_conflict(tmp_path: Path, monkeypatch):
+    """锁冲突必须如实报出来（运维要能看到这次写入有竞态风险）。"""
+    store = tmp_path / "cron" / "scheduled_tasks.json"
+    _write_store(store, ["a1", "b2"])
+    store.with_name("scheduled_tasks.lock").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+    # 用 stub 替换 time 模块（raising=False）：这样本用例在旧实现上
+    # 也会因为「锁被删掉」而失败，而不是因为缺少 time 属性而失败。
+    monkeypatch.setattr(
+        bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False
+    )
+
+    result = bridge._remove_from_cron_store(["b2"])
+
+    assert result["lock_conflict"] is True
+
+
+def test_remove_from_cron_store_reports_no_lock_conflict(tmp_path: Path, monkeypatch):
+    store = tmp_path / "cron" / "scheduled_tasks.json"
+    _write_store(store, ["a1", "b2"])
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+
+    result = bridge._remove_from_cron_store(["b2"])
+
+    assert result["lock_conflict"] is False
+
+
+def test_remove_from_cron_store_rereads_store_after_lock_conflict(
+    tmp_path: Path, monkeypatch
+):
+    """锁冲突时重新读一次存储：kernel 在这期间加的任务不能被覆盖掉。"""
+    store = tmp_path / "cron" / "scheduled_tasks.json"
+    _write_store(store, ["a1", "b2"])
+    store.with_name("scheduled_tasks.lock").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+    # 用 stub 替换 time 模块（raising=False）：这样本用例在旧实现上
+    # 也会因为「锁被删掉」而失败，而不是因为缺少 time 属性而失败。
+    monkeypatch.setattr(
+        bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False
+    )
+
+    calls = {"n": 0}
+    real_read = bridge._read_cron_store
+
+    def _fake_read():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return real_read()
+        payload, error = real_read()
+        if error:
+            return None, error
+        payload["tasks"].append({"id": "c3", "status": "active"})
+        return payload, None
+
+    monkeypatch.setattr(bridge, "_read_cron_store", _fake_read)
+
+    result = bridge._remove_from_cron_store(["b2"])
+
+    assert result["ok"] is True
+    assert result["removed"] == ["b2"]
+    payload = json.loads(store.read_text(encoding="utf-8"))
+    assert sorted(t["id"] for t in payload["tasks"]) == ["a1", "c3"]
+
+
+def test_remove_from_cron_store_leaves_no_temp_file(tmp_path: Path, monkeypatch):
+    """临时文件必须被 rename 掉，不能在 kernel 的目录里留垃圾。"""
+    store = tmp_path / "cron" / "scheduled_tasks.json"
+    _write_store(store, ["a1", "b2"])
+    monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
+
+    bridge._remove_from_cron_store(["b2"])
+
+    leftovers = [p.name for p in store.parent.iterdir() if p.name.endswith(".tmp")]
+    assert leftovers == []
 
 
 if __name__ == "__main__":

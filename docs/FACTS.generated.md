@@ -1,48 +1,35 @@
 # 项目事实快照
 
-**生成时间**: 2026-10-23T01:45:09Z
+**生成时间**: 2026-10-23T02:20:45Z
 **生成方式**: scripts/gen_facts.sh（自动生成，请勿手工编辑）
 **仓库路径**: /Users/raymondna/Documents/AI-collab/ai-collab-base
-**仓库 HEAD**: 85973f7ca8c763f5e48cbf512e6118f7ba60e4d3
+**仓库 HEAD**: 9c6596aed7b5fb6004d14b8ad85e62a93e25c69c
 **当前分支**: feat/codearts-collab-wiring
 
 ## 1. Git 状态
 ```
 $ git status --short --branch
-## feat/codearts-collab-wiring...origin/main [ahead 33]
- M .github/workflows/test.yml
- M collaboration/guides/CODEARTS_DISPATCH_GUIDE.md
- M collaboration/guides/THREE_TIER_PLANNING_METHODOLOGY.md
+## feat/codearts-collab-wiring...origin/main [ahead 39]
+ M ai_collab/ack_protocol.py
+ M ai_collab/cli/_cli_main.py
  M collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md
- M collaboration/results/RESULT-CODEARTS-COLLAB-WIRING-2026-10-22.md
-RM hermes_target/RESULT-P0-CONSENSUS-ENGINE-001.md -> collaboration/results/RESULT-P0-CONSENSUS-ENGINE-001.md
- M collaboration/results/RESULT-P1-GOV-CONVERGE-001.md
- M collaboration/tasks/TASK-P0-CONSENSUS-ENGINE-001.md
- M collaboration/tasks/TASK-P1-GOV-CONVERGE-001.md
- M docs/CONCURRENT_GUARD_DESIGN.md
  M docs/FACTS.generated.md
-D  hermes_target/config.yaml
-D  hermes_target/hermes_agent/engines/__init__.py
-D  hermes_target/hermes_agent/engines/consensus_engine.py
-D  hermes_target/hermes_agent/tests/unit/test_consensus_engine.py
- M memory/.sync-manifest.json
- M memory/MEMORY.md
- M memory/project.md
- M memory/project_dual_agent_config_sync.md
- D memory/project_hermes_port_line.md
- M openspec/changes/add-concurrent-workspace-guard/proposal.md
- M openspec/changes/add-concurrent-workspace-guard/tasks.md
-D  openspec/changes/migrate-parallel-architecture-to-hermes/proposal.md
-D  openspec/changes/migrate-parallel-architecture-to-hermes/specs/hermes-parallel-architecture/spec.md
-D  openspec/changes/migrate-parallel-architecture-to-hermes/tasks.md
- M pyproject.toml
- M tests/unit/test_ack_prefix_consistency.py
- M tests/unit/test_agent_dispatch_bridge.py
- M tests/unit/test_state_manager.py
+ M scripts/agent_receipt_bridge.py
+ M scripts/codearts_bridge_deliver.py
+ M tests/unit/test_codearts_bridge_deliver.py
+?? collaboration/results/RESULT-PREFIX-DERIVATION-2026-10-23.md
+?? collaboration/tasks/TASK-P1-PREFIX-DERIVATION-001.md
+?? tests/unit/test_ack_prefix_derivation.py
 ```
 
 ## 2. 最近 20 次提交
 ```
+9c6596a chore(monitoring): 刷新终态一致性审计摘要
+b104ffc chore(monitoring): 刷新自动生成摘要（事实快照 + 终态一致性审计）
+e70b94c chore(memory): 记忆镜像去外部化 + 落「仓库边界」硬规则
+2f72286 test(cleanup): 测试 fixture 里的外部项目路径中性化
+c07cab5 docs(cleanup): 文档与指南去掉外部项目框架，保留历史事实
+019332c refactor(cleanup): 删除外部项目副本目录 hermes_target/ 与其变更提案
 85973f7 feat(purge): 僵尸 cron 任务清理 —— 官方删除路由 + 文件级兜底
 1cb3b8c chore(monitoring): 刷新自动生成摘要（回执桥接 + 一致性审计 3/3）
 61afa3f docs(result): 对齐回执桥接的结果文件契约（## 测试结论 + 验收命令逐字一致）
@@ -57,18 +44,12 @@ b46a5f6 chore(memory): 同步 CodeArts 记忆镜像（2 条 feedback）并刷新
 ce8a3b9 fix(dispatch): payload 写明工具约束 —— write/task 会把 CodeArts 会话卡死并中止
 ccfceba chore(monitoring): 刷新自动生成摘要
 909ddcc docs(result): 更正提交号引用
-c13176a docs(result): 补写真机链路实测证据与五个缺陷
-73abaa9 fix(intervention): 重派时重新武装在途干预，否则派单链路在最后一步断掉
-5c21bb7 fix(health): 干预正文直接指向 payload 的执行步骤
-b3e7319 fix(dispatch): payload 必须带任务契约，否则接收方无从下手
-e35ce49 chore(monitoring): 刷新自动生成摘要
-78e6994 docs(result): 补写真机链路实测证据与三个缺陷
 ```
 
 ## 3. 远端同步状态
 ```
 # 基于当前分支的 upstream（@{u}），不硬编码 main
-unpushed(ahead of upstream)=33
+unpushed(ahead of upstream)=39
 behind(upstream ahead of us)=0
 ```
 
@@ -949,7 +930,7 @@ tests/unit/test_workspace_guard_extra.py::test_module_exports
 
 =========================== short test summary info ============================
 SKIPPED [1] tests/unit/test_database_indexes.py:17: backend database not found at /Users/raymondna/Documents/AI-collab/ai-collab-base/local-backend/data/client_tokens.db
-2817 tests collected in 0.77s
+2840 tests collected in 0.65s
 ```
 
 ## 10. 活跃任务

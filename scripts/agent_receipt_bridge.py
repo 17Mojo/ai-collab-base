@@ -16,6 +16,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+# 本脚本刻意不依赖 ai_collab 包（可以被单独拷走执行），
+# 但 ACK 前缀的**解析规则**必须与 ai_collab.role_prefix 同源 ——
+# 否则同一个工单，CLI ACK 路径给 X.ACK、桥接路径给 C.ACK，两处记录自相矛盾。
+# 折中：把仓库根加进 sys.path，import 失败时再退回本地兜底表。
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 
 class ReceiptErrorCategory(Enum):
     """回执错误分类。"""
@@ -187,12 +195,45 @@ def has_explicit_ack(ack_state: dict[str, Any], task_id: str) -> bool:
     return item.get("source") == "cli-ack"
 
 
-def ack_prefix_for(assignee: str) -> str:
-    # 与 ai_collab/ack_protocol.py 的 _ACK_PREFIX 保持一致
-    # （tests/unit/test_ack_prefix_consistency.py 会强制两者同步）。
-    # 兜底用角色字母池之外的保留字母 "Z"：历史上的 "A" 正好是
-    # AGENT_EXEC 的角色前缀，会把"未解析"伪装成真实角色。
-    return {"claude_code": "C", "codearts_agent": "A", "codex": "O"}.get(assignee, "Z")
+def _prefix_workspace(workspace: Path | None) -> Path:
+    """选一个**已经存在编排配置**的目录作为前缀解析的输入。
+
+    `OrchestrationConfig.load()` 在找不到配置时会把模板 copy 进目标目录 ——
+    回执桥接只想「读前缀」，不该在别人的工作区里落文件。
+    """
+    candidate = Path(workspace) if workspace else _REPO_ROOT
+    if (candidate / "config" / "agent-orchestration.json").exists():
+        return candidate
+    return _REPO_ROOT
+
+
+def ack_prefix_for(
+    assignee: str,
+    *,
+    assignee_role: str | None = None,
+    workspace: Path | None = None,
+) -> str:
+    """执行方 → ACK 前缀。
+
+    **角色优先**（PROTOCOL §7.3）：工单声明了 `assignee_role` 就取该角色的
+    命令前缀（AGENT_ARCH → X），否则才退回 provider 兜底表。
+    解析器是 `ai_collab.role_prefix` —— 前缀映射的单一事实源；
+    本脚本不依赖 ai_collab 包，import 失败时退回下面的硬编码表
+    （与 ai_collab/ack_protocol.py 的 _ACK_PREFIX 保持一致，
+    tests/unit/test_ack_prefix_consistency.py 会强制两者同步）。
+    兜底用角色字母池之外的保留字母 "Z"：历史上的 "A" 正好是
+    AGENT_EXEC 的角色前缀，会把"未解析"伪装成真实角色。
+    """
+    try:
+        from ai_collab.role_prefix import resolve_ack_prefix
+
+        return resolve_ack_prefix(
+            assignee,
+            assignee_role=assignee_role,
+            workspace=_prefix_workspace(workspace),
+        )
+    except Exception:  # pragma: no cover - ai_collab 不可用时退回兜底表
+        return {"claude_code": "C", "codearts_agent": "A", "codex": "O"}.get(assignee, "Z")
 
 
 def ack_status_for(assignee: str) -> str:
@@ -261,11 +302,19 @@ def run_receipt(args) -> int:
             task["completed_at"] = task.get("updated_at")
             # 更新 ACK bridge 状态
             rel = task.get("result_file", "")
+            # 角色决定 ACK 前缀：同一个 provider 可以占多个席位
+            # （claude_code 同时是 AGENT_ARCH 与 AGENT_TEST），
+            # 不带角色就只能落到 provider 兜底字母上。
+            assignee_role = str(task.get("assignee_role") or "").strip()
+            prefix = ack_prefix_for(
+                assignee, assignee_role=assignee_role or None, workspace=workspace
+            )
             ack_state.setdefault("items", {})[tid] = {
                 "task_id": tid,
                 "assignee": assignee,
+                "assignee_role": assignee_role or None,
                 "result_file": rel,
-                "ack_line": f"{ack_prefix_for(assignee)}.ACK|task={tid}|status={ack_status_for(assignee)}|result={rel}",
+                "ack_line": f"{prefix}.ACK|task={tid}|status={ack_status_for(assignee)}|result={rel}",
                 "receipt_completed_at": task.get("updated_at"),
                 "bridged_at": task.get("updated_at"),
                 "bridge_count": 1,
