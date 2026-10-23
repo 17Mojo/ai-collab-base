@@ -1,13 +1,13 @@
 # Missing ACK Bridge Summary（自动生成）
 
-- 生成时间: `2026-10-23T08:54:16.833965`
+- 生成时间: `2026-10-23T11:10:54.441359`
 - 模式: `apply`
 - 候选任务: `0`
 - 新补桥: `0`
-- 已补桥跳过: `3`
-- 显式 ACK 残留: `0`
+- 已补桥跳过: `4`
+- 显式 ACK 残留: `1`
 - 其他规则跳过: `0`
-- 规则跳过总计: `0`
+- 规则跳过总计: `1`
 - 错误: `0`
 
 ## 已补桥任务
@@ -20,7 +20,7 @@
 
 ## 显式 ACK 残留
 
-- 无
+- `TASK-P1-DISPATCH-ENQUEUE-001`: explicit ACK required; auto-bridge disabled for claude_code
 
 ## 其他跳过项
 
