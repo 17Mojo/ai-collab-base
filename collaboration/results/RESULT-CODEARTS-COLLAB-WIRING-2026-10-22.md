@@ -569,11 +569,34 @@ bash / read 写文件，**没有再触发过一次 `write` 或 `task`**，会话
   `DELETE` / `pause` / `complete` 等路径**全部不存在**（都落到 SPA 的
   HTML 回退页），kernel 没有提供任务撤销接口。
 
-### 13.2 残留
+### 13.2 残留：僵尸 cron 任务 `296fc444`
 
 `296fc444` 这个一次性 cron 任务在 CodeArts 侧会话死掉后
-卡在 `status=active` / `isRunning=true` / `nextFireTime=22:56:00`（已过期），
+卡在 `status=active` / `isRunning=true` / `nextFireTime=2026-10-22T22:56:00`（已过期），
 成了僵尸任务。kernel 没有撤销接口，bridge 侧清不掉，需人工在 CodeArts 侧处理。
+
+2026-10-23 补充调查，把定性做实了（证据见开发日志 §12）：
+
+| 问题 | 结论 | 依据 |
+|---|---|---|
+| 会不会自己复发 | **不会** | 9.5 小时无新会话；目标会话 `ses_e9be3df` 自 23:00:54 起沉寂 |
+| 会不会挡住新投递 | **不会** | 同一 projectPath 在 00:47 成功建了 `aa844576` |
+| 重启 kernel / VS Code 能清掉吗 | **不能** | kernel 进程 22:08:23 启动，而 22:01 创建的 `74686bbf` 今天仍在列表里 ⇒ 任务落盘持久化 |
+| 有没有 API 能删 | **没有** | `/doc` 的 36 条路由无任何 cron 路由；`/cag/cron/tasks/{id}`、`/{id}/cancel`、`DELETE` 全部落回 SPA |
+| `nextFireTime` 停在过去说明什么 | 是**残留字段**不是待触发计划 | 成功的 `aa844576` 形态完全相同（cron 在下一分钟、手动 fire 提前 33 秒）却干净收成 `expired`；两者 `lastResult.triggerType` 都只有 `manual` |
+
+⇒ 根因不是"定时器到期"，而是**手动触发后对方的运行中途死掉**（`write` 调用挂死，
+见 §12.6）→ kernel 收不到完成回调 → 状态停在 `active/isRunning=true`。
+
+处置：**接受它**（惰性、零影响），并新增残留体检让它**可见**——
+`python3 scripts/codearts_bridge_deliver.py --workspace . --check-residue`
+列出全部僵尸任务、其 `sessionID`、过期的 `nextFireTime`，并标出
+`staleNextFire=true`；每次成功投递的报告里也会自动带上 `cron_residue` 段。
+若一定要清掉，持久化落点是
+`~/.codeartsdoer/vscode-data/cron/scheduled_tasks.json`，
+且**必须先停 kernel 再改文件**（kernel 在状态变化时会回写该文件，
+运行中改会被内存里的旧值覆盖回来）。
+
 （成功那次的 `aa844576` 在会话结束后同样会变成同类残留。）
 
 ---

@@ -350,6 +350,50 @@ pull adapter 走常规路径自动投递 → bridge → kernel → 对方新会�
 对方会话建立 → 00:50:36 交付测试文件 → 00:53:11 交付结果文件 → 收口。
 全程无 `--force-redeliver`、无并发会话。
 
+### 投递任务残留体检（僵尸 cron 任务）
+
+kernel 里每建一个一次性 cron 任务就留一条记录，正常终态是
+`status=expired + isRunning=false + nextFireTime 被清空`。
+如果对方的运行**中途死掉**（会话中止），kernel 收不到完成回调，
+这条记录就会卡在 `active / isRunning=true` —— 也就是「僵尸任务」。
+
+体检命令（只读，不投递）：
+
+```bash
+python3 scripts/codearts_bridge_deliver.py --workspace . --check-residue
+```
+
+```json
+{
+  "total": 3,
+  "stuck_count": 1,
+  "stuck": [{
+    "id": "296fc444", "status": "active", "isRunning": true,
+    "sessionID": "ses_e9be3df37ffeKQoP3YMR0lBw5m",
+    "nextFireTimeLocal": "2026-10-22T22:56:00",
+    "staleNextFire": true
+  }],
+  "note": "僵尸投递任务：kernel 侧没有删除路由，需人工清理。…"
+}
+```
+
+每次成功投递后，投递报告里也会自动带上 `cron_residue` 段 ——
+**残留会自己浮出来，不用再靠人记得去查**。
+
+判定口径与已验证的处置结论（2026-10-23 真机实测）：
+
+| 问题 | 结论 |
+|------|------|
+| 会自己复发吗 | 不会。实测 9.5 小时无新会话，目标会话早已沉寂 |
+| 会挡住新投递吗 | 不会。同一 projectPath 照样能建新任务 |
+| 重启 kernel / VS Code 能清掉吗 | **不能**。任务落盘持久化，跨进程存活 |
+| 有没有 API 能删 | **没有**。`/doc` 的 36 条路由里没有任何 cron 路由；`/cag/cron/tasks/{id}`、`/cag/cron/tasks/{id}/cancel`、`DELETE /cag/cron/tasks` 全部落回 SPA 页面 |
+| `nextFireTime` 停在过去说明什么 | 手动触发未走完成回调的**残留字段**，不是待触发的计划 |
+
+⇒ 只能人工清理（CodeArts Doer 侧 UI）。上游真正要防的是
+「会话中途死掉」—— 那正是 `write`/`edit`/`task` 三个工具造成的，
+已由 payload 工具约束堵住。
+
 ### kernel 响应格式不统一（排查时必读）
 
 kernel 的序列化**不统一**：

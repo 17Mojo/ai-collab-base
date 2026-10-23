@@ -13,6 +13,7 @@ import importlib.util
 import json
 import os
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType
 
@@ -537,6 +538,163 @@ def test_setup_credentials_uses_env_password_when_present(
         encoding="utf-8"
     )
     assert "env-provided-pw" not in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# 投递任务残留体检（僵尸 cron 任务）
+# ---------------------------------------------------------------------------
+
+
+class _ResidueKernel:
+    def __init__(self, tasks: list[dict[str, object]]) -> None:
+        self.tasks = tasks
+
+    def list_cron_tasks(self, *, workspace: Path):
+        return self.tasks
+
+
+def test_inspect_cron_residue_flags_active_running_task():
+    kernel = _ResidueKernel(
+        [
+            {
+                "id": "aa844576",
+                "status": "expired",
+                "isRunning": False,
+                "cron": "48 0 * * *",
+            },
+            {
+                "id": "296fc444",
+                "status": "active",
+                "isRunning": True,
+                "cron": "56 22 * * *",
+                "sessionID": "ses_e9be3df",
+                "lastResult": {"firedAt": 1792686927000, "status": "running"},
+            },
+        ]
+    )
+
+    residue = bridge.inspect_cron_residue(
+        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+    )
+
+    assert residue["total"] == 2
+    assert residue["stuck_count"] == 1
+    assert residue["stuck"][0]["id"] == "296fc444"
+    assert residue["stuck"][0]["sessionID"] == "ses_e9be3df"
+    assert "人工清理" in residue["note"]
+
+
+def test_inspect_cron_residue_marks_past_next_fire_as_stale():
+    """nextFireTime 停在过去 = 手动触发未走完成回调的残留，不是待触发的计划。"""
+    past_ms = int(
+        (datetime.now() - timedelta(hours=9)).timestamp() * 1000
+    )
+    kernel = _ResidueKernel(
+        [
+            {
+                "id": "296fc444",
+                "status": "active",
+                "isRunning": True,
+                "nextFireTime": past_ms,
+            }
+        ]
+    )
+
+    residue = bridge.inspect_cron_residue(
+        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+    )
+
+    stuck = residue["stuck"][0]
+    assert stuck["staleNextFire"] is True
+    assert stuck["nextFireTimeLocal"] is not None
+
+
+def test_inspect_cron_residue_future_next_fire_is_not_stale():
+    future_ms = int((datetime.now() + timedelta(days=1)).timestamp() * 1000)
+    kernel = _ResidueKernel(
+        [
+            {
+                "id": "296fc444",
+                "status": "active",
+                "isRunning": True,
+                "nextFireTime": future_ms,
+            }
+        ]
+    )
+
+    residue = bridge.inspect_cron_residue(
+        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+    )
+
+    assert residue["stuck"][0]["staleNextFire"] is False
+
+
+def test_inspect_cron_residue_clean_when_no_stuck_task():
+    kernel = _ResidueKernel(
+        [{"id": "aa844576", "status": "expired", "isRunning": False}]
+    )
+
+    residue = bridge.inspect_cron_residue(
+        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+    )
+
+    assert residue["stuck_count"] == 0
+    assert residue["stuck"] == []
+    assert "无僵尸投递任务" in residue["note"]
+
+
+def test_list_cron_tasks_parses_json_body(monkeypatch: pytest.MonkeyPatch):
+    class _Response:
+        status = 200
+
+        def read(self) -> bytes:
+            return b'{"tasks":[{"id":"aa844576","status":"expired","isRunning":false}]}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response()
+    )
+
+    client = bridge.KernelClient(
+        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
+    )
+    tasks = client.list_cron_tasks(workspace=Path("/tmp/ws"))
+
+    assert [task["id"] for task in tasks] == ["aa844576"]
+
+
+def test_main_check_residue_does_not_deliver(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    """--check-residue 只体检，不投递、不建会话。"""
+    monkeypatch.setattr(
+        bridge, "resolve_credentials", lambda **_: ("codearts", "pw")
+    )
+    monkeypatch.setattr(
+        bridge,
+        "KernelClient",
+        lambda **_: _ResidueKernel(
+            [{"id": "296fc444", "status": "active", "isRunning": True}]
+        ),
+    )
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("体检模式不应触发投递")
+
+    monkeypatch.setattr(bridge, "deliver_via_cron", _boom)
+    monkeypatch.setattr(bridge, "deliver_via_session", _boom)
+
+    code = bridge.main(["--workspace", str(tmp_path), "--check-residue"])
+
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["stuck_count"] == 1
+    assert payload["stuck"][0]["id"] == "296fc444"
 
 
 if __name__ == "__main__":

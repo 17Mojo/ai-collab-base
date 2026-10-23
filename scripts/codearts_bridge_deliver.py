@@ -68,6 +68,11 @@ DEFAULT_USERNAME = "codearts"
 DEFAULT_AGENT = "build"
 CREDENTIAL_FILE = Path.home() / ".codeartsdoer" / "kernel-bridge.env"
 KERNEL_CONFIG_ROOT = Path.home() / ".codeartsdoer" / "Visual_Studio_Code"
+# kernel 侧 cron 任务的持久化落点（真机实测 2026-10-23）。
+# kernel 在任务状态变化时会把内存里的任务表回写到这个文件，
+# 所以「手工删记录」必须先停 kernel 再改文件，改完再启动——
+# 否则下一次回写会把删掉的僵尸从内存里写回来。
+CRON_STORE_PATH = Path.home() / ".codeartsdoer" / "vscode-data" / "cron" / "scheduled_tasks.json"
 INBOX_DIR = "collaboration/monitoring/codearts_inbox"
 SESSION_REGISTRY = "logs/session_registry_state.json"
 
@@ -492,6 +497,18 @@ class KernelClient:
             body={"ids": task_ids},
         )
 
+    def list_cron_tasks(self, *, workspace: Path) -> list[dict[str, Any]]:
+        """列出本工作区下的 cron 任务（投递任务的生命周期记录）。"""
+        payload = self.request("GET", "/cag/cron/tasks", query={"directory": str(workspace)})
+        items = payload.get("tasks")
+        if not isinstance(items, list):
+            items = payload.get("raw")
+        if isinstance(items, str):
+            items = parse_kernel_payload(items)
+        if isinstance(items, list):
+            return [dict(item) for item in items if isinstance(item, dict)]
+        return []
+
 
 def _next_minute_cron() -> str:
     """下一分钟的一次性 cron 表达式（5 段，本地时区）。
@@ -551,6 +568,81 @@ def deliver_via_session(
         session_id=session_id, workspace=workspace, message=message, agent=agent
     )
     return {"channel": "session", "session_id": session_id, "response": response}
+
+
+# --------------------------------------------------------------------------
+# 投递任务残留体检
+# --------------------------------------------------------------------------
+
+# 判定"僵尸任务"的口径（真机实测，2026-10-23）：
+#   正常终态 → status=expired, isRunning=false, nextFireTime 被清空
+#   僵尸     → status=active,  isRunning=true,  nextFireTime 停在触发前的时间点
+# 触发原因：手动 fire 之后对方的运行没有走完完成回调，kernel 就再也不会
+# 把这条任务转成 expired。实测它**不会**自己复发（9 小时无新会话），
+# 也**不影响**同 projectPath 的新投递（同目录成功建过新任务），
+# 但 kernel 侧没有删除路由，只能人工清理 —— 所以我们改成"看得见"。
+RESIDUE_STUCK_STATUSES = {"active"}
+RESIDUE_STUCK_RUNNING = True
+
+
+def _epoch_ms_to_iso(value: Any) -> str | None:
+    """kernel 用 epoch 毫秒表示时间戳；转成可读的本地时间。"""
+    if not isinstance(value, (int, float)) or value <= 0:
+        return None
+    try:
+        return datetime.fromtimestamp(value / 1000).isoformat(timespec="seconds")
+    except (OverflowError, OSError, ValueError):
+        return None
+
+
+def inspect_cron_residue(client: KernelClient, *, workspace: Path) -> dict[str, Any]:
+    """体检 kernel 侧本工作区的投递任务残留。
+
+    返回结构刻意做成纯数据，方便塞进投递报告（JSON），
+    也方便 `--check-residue` 单独打印。
+    """
+    tasks = client.list_cron_tasks(workspace=workspace)
+    stuck: list[dict[str, Any]] = []
+    for task in tasks:
+        status = str(task.get("status") or "").strip().lower()
+        running = task.get("isRunning")
+        if status in RESIDUE_STUCK_STATUSES and running is RESIDUE_STUCK_RUNNING:
+            last_result = task.get("lastResult")
+            next_fire = task.get("nextFireTime")
+            next_fire_iso = _epoch_ms_to_iso(next_fire)
+            stuck.append(
+                {
+                    "id": str(task.get("id") or ""),
+                    "status": status,
+                    "isRunning": running,
+                    "cron": task.get("cron"),
+                    "createdAt": task.get("createdAt"),
+                    "sessionID": task.get("sessionID"),
+                    "lastResult": last_result if isinstance(last_result, dict) else None,
+                    "nextFireTime": next_fire,
+                    "nextFireTimeLocal": next_fire_iso,
+                    # nextFireTime 停在过去 = 手动触发没走完成回调的残留，
+                    # 不是待触发的计划（真机实测：9 小时没有复发）。
+                    "staleNextFire": bool(
+                        next_fire_iso is not None
+                        and datetime.fromisoformat(next_fire_iso) < datetime.now()
+                    ),
+                }
+            )
+    return {
+        "total": len(tasks),
+        "stuck_count": len(stuck),
+        "stuck": stuck,
+        "store_path": str(CRON_STORE_PATH) if CRON_STORE_PATH.exists() else None,
+        "note": (
+            "僵尸投递任务：kernel 侧没有删除路由，需人工清理。"
+            "实测不影响新投递（不会自己复发、不阻塞同目录建任务）。"
+            "若要直接删记录：先停 kernel（否则状态回写会把记录写回来），"
+            f"再从 {CRON_STORE_PATH} 移除对应条目，最后启动 kernel。"
+        )
+        if stuck
+        else "无僵尸投递任务",
+    }
 
 
 def resolve_direct_session(
@@ -653,6 +745,27 @@ def _setup_credentials(*, kernel_url: str) -> int:
 # --------------------------------------------------------------------------
 
 
+def _check_residue_only(*, workspace: Path, kernel_url: str) -> int:
+    """只做残留体检：列出 kernel 侧本工作区的僵尸投递任务，不投递。"""
+    resolved_url = kernel_url
+    if not resolved_url:
+        try:
+            host, port, _pid = _discover_kernel()
+            resolved_url = f"http://{host}:{port}"
+        except BridgeError as exc:
+            return _fail(str(exc))
+    try:
+        username, password = resolve_credentials(kernel_url=resolved_url)
+        client = KernelClient(
+            base_url=resolved_url, username=username, password=password
+        )
+        residue = inspect_cron_residue(client, workspace=workspace)
+    except BridgeError as exc:
+        return _fail(str(exc))
+    print(json.dumps(residue, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="把控制面 payload 投递到 CodeArts Doer (opencode kernel)"
@@ -688,6 +801,11 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument("--dry-run", action="store_true", help="只解析不发送")
+    parser.add_argument(
+        "--check-residue",
+        action="store_true",
+        help="只体检 kernel 侧本工作区的投递任务残留（僵尸 cron 任务），不做投递",
+    )
     parser.add_argument("--json", action="store_true", help="以 JSON 输出结果")
     args = parser.parse_args(argv)
 
@@ -697,6 +815,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.setup_credentials:
         return _setup_credentials(kernel_url=args.kernel_url)
+
+    if args.check_residue:
+        return _check_residue_only(workspace=workspace, kernel_url=args.kernel_url)
 
     try:
         message = extract_message(
@@ -775,6 +896,11 @@ def main(argv: list[str] | None = None) -> int:
 
     delivery["intervention_id"] = args.intervention_id
     delivery["assignee"] = args.assignee
+    try:
+        # 体检是辅助信息：失败不能影响已经成功的投递。
+        delivery["cron_residue"] = inspect_cron_residue(client, workspace=workspace)
+    except BridgeError as exc:
+        print(f"[codearts-bridge] 提示: 残留体检失败（不影响本次投递）: {exc}", file=sys.stderr)
     try:
         delivery["inbox_copy"] = write_inbox_copy(
             workspace=workspace,
