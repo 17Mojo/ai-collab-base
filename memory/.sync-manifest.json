@@ -1,6 +1,6 @@
 {
   "source": "/Users/raymondna/.codeartsdoer/memory/-Users-raymondna-Documents-AI-collab-ai-collab-base",
-  "generated_at": "2026-10-23T04:17:35.513150+00:00",
+  "generated_at": "2026-10-23T04:32:27.318612+00:00",
   "files": [
     "MEMORY.md",
     "feedback_ack_cli_generated.md",
@@ -16,6 +16,7 @@
     "feedback_verification_static_vs_behavioral.md",
     "project.md",
     "project_claude_code_model_window.md",
+    "project_cli_exit_code_defect.md",
     "project_dual_agent_config_sync.md",
     "project_intervention_delivery_states.md",
     "project_route_decision.md",
@@ -23,5 +24,5 @@
     "reference_local_llm_endpoint.md",
     "user.md"
   ],
-  "count": 20
+  "count": 21
 }

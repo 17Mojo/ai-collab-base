@@ -3,6 +3,7 @@
 ## Project
 - [AI Collaboration System 项目状态与技术债追踪](project.md) — AI Collaboration System 项目状态、技术债、并行协作风险与测试环境陷阱
 - [Claude Code 对未注册自定义模型按 200k 上下文窗口假设](project_claude_code_model_window.md) — 模型 ID 为 MiniMax-M3.1-Flash 等未在 Claude Code 注册表内的自定义模型时，报 unrecognized_model 并按 200k 窗口计算；属噪音告警而非任务失败
+- [CLI 退出码传递缺陷与 R6 禁止修改清单](project_cli_exit_code_defect.md) — 2026-10-23 TASK-P1-TRENDING-CLI-001 验收发现 ai_collab/cli/__main__.py 丢弃 main() 返回值，子命令 return 1 到不了进程退出码（browse 分支同理）；该文件属 R6 禁改清单，故只报告未修
 - [双 Agent（CodeArts + Claude Code）配置一致性与实时同步核查](project_dual_agent_config_sync.md) — 2026-10-22 核查结论：CodeArts 与 Claude Code 的规则文件/记忆目录既无 symlink 也无任何同步机制；治理门禁期望根 AGENTS.md 但缺失；用户目标是「配置信息一致 + 链接 + 实时同步」
 - [project-intervention-delivery-states](project_intervention_delivery_states.md) — 干预队列的投递状态语义——入队必须用 delivery_mode="manual"（pending_operator_delivery），用 "bridge" 会被在途过滤器静默跳过，投递根本不会发生且不报错
 - [产品路线 A/B 决策门禁（真机 3 平台回归 + 第一个外部用户）](project_route_decision.md) — AI Collaboration System 路线拍板（路线 A Prompt Pack 面向创作者 vs 路线 B Agent 协作控制面产品化）唯一缺失的真证是「真机 3 平台回归 + 第一个外部用户」，截至 2026-10-22 实验未启动
