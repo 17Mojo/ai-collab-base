@@ -238,8 +238,8 @@ logs/AGENT_TEST/2026-05/2026-05-15_TASK-003.md
 <PREFIX>.RUN
 
 标准前缀:
-X.RUN → AGENT_EXEC（主执行者）
-A.RUN → AGENT_ARCH（架构师）
+A.RUN → AGENT_EXEC（主执行者）
+X.RUN → AGENT_ARCH（架构师）
 C.RUN → AGENT_TEST（测试验证）
 
 自定义前缀:

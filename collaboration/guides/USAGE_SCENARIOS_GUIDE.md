@@ -87,8 +87,8 @@ AGENT_TEST → Claude Code (Haiku)
 
 **工作流程**:
 ```text
-1. X.RUN → AGENT_EXEC (Sonnet) 执行日常任务
-2. A.RUN → AGENT_ARCH (Opus) 处理复杂架构决策
+1. A.RUN → AGENT_EXEC (Sonnet) 执行日常任务
+2. X.RUN → AGENT_ARCH (Opus) 处理复杂架构决策
 3. C.RUN → AGENT_TEST (Haiku) 快速验证测试
 ```
 
@@ -200,7 +200,7 @@ AGENT_PERF → Claude Code (Opus variant)
 工作流程:
 1. 配置 Prompt Pack 定义对话流程
 2. Pack Executor 触发任务
-3. X.RUN → AGENT_EXEC 执行
+3. A.RUN → AGENT_EXEC 执行
 4. 结果回传 → Pack 继续下一步
 ```
 
@@ -347,8 +347,8 @@ graph TD
     H --> I
     
     I --> J{任务类型?}
-    J -->|实现| K[X.RUN → AGENT_EXEC]
-    J -->|架构| L[A.RUN → AGENT_ARCH]
+    J -->|实现| K[A.RUN → AGENT_EXEC]
+    J -->|架构| L[X.RUN → AGENT_ARCH]
     J -->|测试| M[C.RUN → AGENT_TEST]
     
     K --> N[完成/ACK]

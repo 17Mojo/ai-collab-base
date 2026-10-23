@@ -61,13 +61,6 @@ FALLBACK_ACK_PREFIX: dict[str, str] = {
 # 现在用一个角色池之外的保留字母，表示"未解析"。
 UNKNOWN_PROVIDER_PREFIX = "Z"
 
-# provider → 默认角色代号（编排配置缺失时使用）
-FALLBACK_ROLE_BY_PROVIDER: dict[str, str] = {
-    "codearts_agent": "AGENT_EXEC",
-    "claude_code": "AGENT_ARCH",
-    "codex": "AGENT_TEST",
-}
-
 
 def _load_orchestration(workspace: Path | str | None) -> Any | None:
     try:
@@ -85,23 +78,6 @@ def _load_orchestration(workspace: Path | str | None) -> Any | None:
     except OSError:
         return None
     return config
-
-
-def resolve_role_for_provider(
-    provider_id: str,
-    *,
-    workspace: Path | str | None = None,
-) -> str | None:
-    """provider → 角色代号（优先编排配置，其次兜底表）。"""
-    normalized = str(provider_id or "").strip().lower()
-    if not normalized:
-        return None
-    config = _load_orchestration(workspace)
-    if config is not None:
-        role_id = config.get_role_for_provider(normalized)
-        if role_id:
-            return str(role_id)
-    return FALLBACK_ROLE_BY_PROVIDER.get(normalized)
 
 
 def resolve_run_hint(

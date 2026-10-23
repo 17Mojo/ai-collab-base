@@ -113,11 +113,11 @@
       "properties": {
         "A.RUN": {
           "type": "string",
-          "description": "Maps to role_id for architecture tasks"
+          "description": "Maps to role_id for execution tasks"
         },
         "X.RUN": {
           "type": "string",
-          "description": "Maps to role_id for execution tasks"
+          "description": "Maps to role_id for architecture tasks"
         },
         "C.RUN": {
           "type": "string",

@@ -15,9 +15,10 @@ ORCHESTRATION_CONFIG = REPO_ROOT / "config" / "agent-orchestration.json"
 def _write_orchestration_config(workspace: Path) -> None:
     """把仓库真实的编排配置复制到测试工作区。
 
-    `OrchestrationConfig` 在缺少配置文件时会用内置默认值建一份，
-    那份默认值的 AGENT_EXEC → X.RUN，与仓库配置（A.RUN → AGENT_EXEC）
-    不一致；不复制就会测到另一套前缀映射。
+    `OrchestrationConfig` 在缺少配置文件时会用内置默认值建一份：
+    前缀映射现在与仓库配置一致了，但内置默认没有 role 绑定和
+    provider_registry，派发时会解析不到 provider、落到兜底席位。
+    不复制就会测到另一套绑定状态。
     """
     config_dir = workspace / "config"
     config_dir.mkdir(parents=True, exist_ok=True)

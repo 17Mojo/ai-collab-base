@@ -216,7 +216,7 @@
 - `OrchestrationRole` 类：角色绑定（provider / model_variant / status）
 - `OrchestrationConfig` 类：编排配置管理器
   - 3 个默认角色：AGENT_EXEC（R）、AGENT_ARCH（A）、AGENT_TEST（C）
-  - 命令前缀：`A.RUN → AGENT_ARCH`、`X.RUN → AGENT_EXEC`、`C.RUN → AGENT_TEST`
+  - 命令前缀：`A.RUN → AGENT_EXEC`、`X.RUN → AGENT_ARCH`、`C.RUN → AGENT_TEST`
   - `create_snapshot()`：`runtime_policy.snapshot_before_change = true` 时自动快照
   - `rollback_to_snapshot()`：回滚配置
   - `is_cold_start_needed()`：检测冷启动状态

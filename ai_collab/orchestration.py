@@ -251,14 +251,20 @@ class OrchestrationConfig:
         }
     }
 
+    # 角色 → 命令前缀的权威映射。
+    # 2026-10-22 的 229062d 把 A/X 对调成现在的样子（A.RUN→AGENT_EXEC、
+    # X.RUN→AGENT_ARCH），但只改了 config/agent-orchestration.json，
+    # 这里的内置默认值和 config/agent-orchestration.template.json 仍是旧映射。
+    # 结果：任何新工作区从模板冷启动，都会拿回 A.RUN→AGENT_ARCH / X.RUN→AGENT_EXEC
+    # 的倒挂版本 —— 正好把 229062d 想修掉的那个语义又装回去。
     DEFAULT_COMMAND_PREFIXES = {
-        "A.RUN": "AGENT_ARCH",
-        "X.RUN": "AGENT_EXEC",
+        "A.RUN": "AGENT_EXEC",
+        "X.RUN": "AGENT_ARCH",
         "C.RUN": "AGENT_TEST"
     }
 
     # provider → ACK 前缀的兜底映射。
-    # ACK 前缀的权威来源应是角色的 command_prefix（如 X.RUN → AGENT_EXEC），
+    # ACK 前缀的权威来源应是角色的 command_prefix（如 A.RUN → AGENT_EXEC），
     # 这里是 provider 直连场景下的兜底值。
     DEFAULT_FALLBACK_ACK_PREFIX = {
         "claude_code": "C",
@@ -777,8 +783,8 @@ class ColdStartWizard:
         # Step 4: Configure command prefixes
         print("\n[步骤 4] 命令前缀配置:")
         prefixes = self.config.config.get("command_prefixes", {})
-        print(f"  A.RUN → {prefixes.get('A.RUN', 'AGENT_ARCH')}")
-        print(f"  X.RUN → {prefixes.get('X.RUN', 'AGENT_EXEC')}")
+        print(f"  A.RUN → {prefixes.get('A.RUN', 'AGENT_EXEC')}")
+        print(f"  X.RUN → {prefixes.get('X.RUN', 'AGENT_ARCH')}")
         print(f"  C.RUN → {prefixes.get('C.RUN', 'AGENT_TEST')}")
 
         customize = input("\n是否自定义命令前缀? (y/n): ").strip().lower()
@@ -805,7 +811,7 @@ class ColdStartWizard:
             print(f"    - {role.display_name} → {provider_info}{variant_display}")
 
         print("\n下一步:")
-        print("  - 开始任务执行: 使用 X.RUN 命令")
+        print("  - 开始任务执行: 使用 A.RUN 命令")
         print("  - 调整配置: 输入 /menu 打开控制面板")
         print("  - 添加更多服务商: /menu → [2] Agent 绑定 → [接入新 Agent]")
 

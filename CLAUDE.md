@@ -159,8 +159,8 @@ Agent providers are bound dynamically through `config/agent-orchestration.json`:
 ### Command Protocol
 
 ```text
-X.RUN → Triggers AGENT_EXEC
-A.RUN → Triggers AGENT_ARCH
+A.RUN → Triggers AGENT_EXEC
+X.RUN → Triggers AGENT_ARCH
 C.RUN → Triggers AGENT_TEST (or custom mapping)
 ```
 

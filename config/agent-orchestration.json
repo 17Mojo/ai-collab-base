@@ -211,8 +211,8 @@
           }
         },
         "command_prefixes": {
-          "A.RUN": "AGENT_ARCH",
-          "X.RUN": "AGENT_EXEC",
+          "A.RUN": "AGENT_EXEC",
+          "X.RUN": "AGENT_ARCH",
           "C.RUN": "AGENT_TEST",
           "custom_prefixes": {},
           "custom_allowed": true,
@@ -361,8 +361,8 @@
           }
         },
         "command_prefixes": {
-          "A.RUN": "AGENT_ARCH",
-          "X.RUN": "AGENT_EXEC",
+          "A.RUN": "AGENT_EXEC",
+          "X.RUN": "AGENT_ARCH",
           "C.RUN": "AGENT_TEST",
           "custom_prefixes": {},
           "custom_allowed": true,
@@ -511,8 +511,8 @@
           }
         },
         "command_prefixes": {
-          "A.RUN": "AGENT_ARCH",
-          "X.RUN": "AGENT_EXEC",
+          "A.RUN": "AGENT_EXEC",
+          "X.RUN": "AGENT_ARCH",
           "C.RUN": "AGENT_TEST",
           "custom_prefixes": {},
           "custom_allowed": true,

@@ -55,8 +55,8 @@ AGENT_DOC       文档编写      Consulted      文档撰写、使用说明
 
 | 命令前缀 | 触发角色 | 用途 |
 |---------|---------|------|
-| `X.RUN` | AGENT_EXEC | 执行任务 |
-| `A.RUN` | AGENT_ARCH | 架构决策 |
+| `A.RUN` | AGENT_EXEC | 执行任务 |
+| `X.RUN` | AGENT_ARCH | 架构决策 |
 | `C.RUN` | AGENT_TEST | 测试验证 |
 
 ### 🚀 快速开始
