@@ -4039,6 +4039,7 @@ def cmd_pack(args):
                 "category": getattr(args, "category", None),
                 "sort": getattr(args, "sort", "popularity"),
                 "limit": getattr(args, "limit", 20),
+                "days": getattr(args, "days", 7),
             },
         )()
         return _handle_store_command(store_args, packs_root)
@@ -4275,11 +4276,15 @@ def _handle_store_command(args, packs_root):
             print(f"  {pack.name} (v{pack.version}) - {pack.rating:.1f}★")
 
     elif args.store_subcommand == "trending":
-        packs = search_engine.get_trending_packs(days=7, limit=args.limit)
-        print("\n热门 Pack (7天内):")
+        if args.days <= 0:
+            print(f"错误: --days 必须为正整数（收到 {args.days}）")
+            return 1
+
+        packs = search_engine.get_trending_packs(days=args.days, limit=args.limit)
+        print(f"\n热门 Pack ({args.days}天内):")
         for idx, pack in enumerate(packs, 1):
             print(f"  {idx}. {pack.name} (v{pack.version})")
-            print(f"     {pack.rating:.1f}★ | {pack.downloads} 下载")
+            print(f"     {pack.rating:.1f}★ | 累计 {pack.downloads} 下载")
 
     return 0
 
@@ -5457,6 +5462,12 @@ def main():
 
     trending_parser = pack_subparsers.add_parser("trending", help="热门 Pack")
     trending_parser.add_argument("--limit", type=int, default=10, help="数量限制")
+    trending_parser.add_argument(
+        "--days",
+        type=int,
+        default=7,
+        help="统计窗口天数：按最近 N 天内的下载次数排序",
+    )
 
     # pack rate 子命令
     rate_parser = pack_subparsers.add_parser("rate", help="评分系统")
