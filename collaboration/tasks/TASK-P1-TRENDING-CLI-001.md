@@ -1,7 +1,7 @@
 ---
 task_id: TASK-P1-TRENDING-CLI-001
 change_id: bugfix/no-spec
-status: planning
+status: completed
 priority: P1
 assignee: codearts_agent
 assignee_role: AGENT_EXEC
