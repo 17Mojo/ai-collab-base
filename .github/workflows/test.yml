@@ -76,6 +76,42 @@ jobs:
           python -m pytest tests/integration/ -v --tb=short
         continue-on-error: true  # 临时保留，避免新发现的失败阻塞其他 job
 
+  performance-tests:
+    # 复核发现 #2：tests/perf/ 此前不在 PR 门禁内，这类性能回归在 PR 阶段不可见。
+    # 纳入门禁的前提是「测量口径本身是确定的」——2026-10-24 已把性能用例的
+    # HOME 隔离掉（tests/perf/conftest.py），基线不再依赖运行者的机器历史。
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e . 2>/dev/null || true
+
+      - name: Run performance baseline
+        # 墙钟阈值在共享 runner 上有机器速度噪声（最紧的 cli_help 阈值 1.0s，
+        # 本机冷启动实测 0.29~0.32s），故给 2 次重试。
+        # 重试不是掩盖回归：测量口径的确定性由 tests/unit/test_perf_isolation_guard.py
+        # 钉住（隔离后与运行者的机器历史解耦，倍率约 90 倍）。
+        run: |
+          for attempt in 1 2 3; do
+            if python -m pytest tests/perf/ -v --tb=short; then
+              echo "✅ 性能基线通过（第 $attempt 次尝试）"
+              exit 0
+            fi
+            echo "⚠️ 性能基线第 $attempt 次未通过，重试中…"
+            sleep 5
+          done
+          echo "❌ 性能基线连续 3 次未通过"
+          exit 1
+
   chrome-extension-tests:
     runs-on: ubuntu-latest
     steps:
