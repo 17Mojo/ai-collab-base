@@ -146,6 +146,27 @@ PR 覆盖 18 个 commit，实质是 5 块交付：
 - R5.3 确认 `memory/` 是**只读镜像**（由 `scripts/sync_agent_memory.py` 从
   `~/.codeartsdoer/memory/` 单向同步），本次改动**没有**手改镜像而绕过源。
 
+### R5.5 复核⑥：派单链新鲜度校验修复（`bdc302f`，PR 范围追加）
+
+派单报告 `logs/task_dispatch_report.json` 原来只写 `timestamp` 键，而 payload
+新鲜度校验读的是 `generated_at` → **刚生成 0 秒的 payload 也被判成「过期」**，
+连带 `session_health` 恒报 `stale_payload` 假告警。已修（三处 + 4 条用例）。
+
+请独立复核：
+
+- R5.5.1 跑 `python3 -m pytest tests/unit/test_dispatch_trigger_freshness.py tests/unit/test_agent_dispatch_bridge.py tests/unit/test_ack_watchdog.py -q` → 全绿。
+- R5.5.2 **反向验证**：把 `scripts/agent_dispatch_bridge.py` 里的
+  `"generated_at": report_timestamp,` 删掉，再跑上面那三个文件，
+  期望**失败**（新增的 2 条桥接用例变红）。之后**立刻还原**并举证。
+- R5.5.3 复核 payload 里教给对方的 grep 命令**在真实报告上能跑通**：
+  `cat logs/task_dispatch_report.json | grep -E 'generated_at|timestamp'` → rc=0。
+  （原写法 `grep -E '"(generated_at|timestamp)"'` 在 shell 里会因引号/括号配对
+  报 `syntax error near unexpected token ')'` —— 这条是被新增用例当场抓到的。）
+- R5.5.4 端到端自证：跑一次 `python3 -m ai_collab.cli run --include-pending`
+  后，对 `collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md` 里的
+  `GeneratedAt` 与 `logs/task_dispatch_report.json` 的 `generated_at` 算时间差，
+  断言 **≤ 5 分钟**（修复前这里恒判过期）。
+
 ### R6 权限边界（硬约束）
 
 | 允许 | 禁止 |
