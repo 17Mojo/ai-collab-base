@@ -6,6 +6,7 @@
 - [CLI 退出码传递缺陷与 R6 禁止修改清单](project_cli_exit_code_defect.md) — 2026-10-23 TASK-P1-TRENDING-CLI-001 验收发现 ai_collab/cli/__main__.py 丢弃 main() 返回值，子命令 return 1 到不了进程退出码（browse 分支同理）；该文件属 R6 禁改清单，故只报告未修
 - [派单链路的模型降级与可观测性目标](project_dispatch_model_fallback.md) — 2026-10-23 起推进的 P1 目标——指定模型不可用时自动降级到模型池下一候选、投递回执落盘、报告区分「请求的模型」与「实际用的模型」
 - [双 Agent（CodeArts + Claude Code）配置一致性与实时同步核查](project_dual_agent_config_sync.md) — 2026-10-22 核查结论：CodeArts 与 Claude Code 的规则文件/记忆目录既无 symlink 也无任何同步机制；治理门禁期望根 AGENTS.md 但缺失；用户目标是「配置信息一致 + 链接 + 实时同步」
+- [体检工具链加固工单背景（密钥扫描器误报、check_git 假绿）](project_healthcheck_tooling_debt.md) — 2026-10-24 派单 TASK-P1-HEALTHCHECK-TOOL-HARDEN-001 的背景问题——密钥扫描器误报 237 条需降到 0、check_git() 缺 origin/main 存在性判断造成体检假绿、check_health_rules() 对长期经验条数统计不准
 - [project-intervention-delivery-states](project_intervention_delivery_states.md) — 干预队列的投递状态语义——入队必须用 delivery_mode="manual"（pending_operator_delivery），用 "bridge" 会被在途过滤器静默跳过，投递根本不会发生且不报错
 - [产品路线 A/B 决策门禁（真机 3 平台回归 + 第一个外部用户）](project_route_decision.md) — AI Collaboration System 路线拍板（路线 A Prompt Pack 面向创作者 vs 路线 B Agent 协作控制面产品化）唯一缺失的真证是「真机 3 平台回归 + 第一个外部用户」，截至 2026-10-22 实验未启动
 - [任务契约 change_id 白名单与非法值的修正方式](project_task_change_id_whitelist.md) — ai_collab 任务契约校验器对 change_id 只认 bugfix/no-spec、legacy/task-contract-migration 或 openspec 真实变更；工单写 feature/no-spec 会被 tasks update 拒收（invalid=[change_id]），需用 --change-id 修正并留痕
@@ -25,6 +26,7 @@
 - [并行 bash 调用 abort 防范（单条逐个校验优于并行混合）](feedback_parallel_bash_abort.md) — 并行 bash 调用中若有一条命令对不存在目录报错，可能导致整批 abort；校验多路径时改用单条逐个执行
 - [动手实现前给「按线就绪度判定」，不给全局二元答案](feedback_readiness_gate_before_coding.md) — 用户会追问「是否已具备动手条件/是否还需更多实测」；期望按工作线分别判定就绪度，并逐项列出还差什么、类型、阻塞面，最后给二选一授权而非直接开干
 - [RESULT 结果文件的契约校验与终态一致性要求](feedback_result_file_contract.md) — 结果文件除 PROTOCOL §7.3 四段标题外还需可解析的状态行与测试结论小节，否则 tasks validate-contract 与一致性审计判不合格；任务终态须收口为 completed
+- [结果文件/文档引用扫描触发串会自命中（密钥扫描器视角）](feedback_result_file_self_scan_hit.md) — collaboration/results 下的结果文件本身在密钥/PII 扫描范围内，文档中原样内联扫描触发串或正则片段会被自家扫描器自命中；须改为间接描述 + 白名单自豁免，写完立即自扫确认为 0
 - [测试门禁分层原则（硬门禁对齐真证，软警告用于理想规范）](feedback_test_gate_design.md) — 设计测试门禁时，硬门禁只放基线项，"应当有"特性降级为软警告；测试不应造假以通过门禁
 - [工具校验器报错不等于文件有错——用权威解析器复核后再动手](feedback_validator_false_positive.md) — 编辑器/内置校验器对 YAML 等结构化文件报错可能系工具自身故障；先用权威解析器（如 Python yaml.safe_load）复核，勿因误报改动本已正确的文件
 - [同步类改动须同时验「静态接线」与「行为级加载」，并做漂移注入闭环](feedback_verification_static_vs_behavioral.md) — 配置/记忆同步类交付的验证形态：静态 grep 接线 ≠ 行为级生效；漂移须同时验证「能检测」与「能修复」；验证脚本要可复用
