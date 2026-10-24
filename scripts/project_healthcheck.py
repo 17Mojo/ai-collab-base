@@ -82,8 +82,16 @@ def check_git():
     rc, out, _ = run("git log --oneline -10")
     recent_commits = out.split("\n") if out else []
     rc, out, _ = run("git status --short")
-    untracked = [l for l in out.split("\n") if l.startswith("??")] if out else []
-    modified = [l for l in out.split("\n") if l.startswith(" M") or l.startswith("M ")] if out else []
+    # 本脚本自身的产出（当日体检报告）不计入未跟踪文件，
+    # 否则同日第二次运行必然比第一次少 20 分，评分与代码状态脱钩。
+    untracked = [
+        l for l in (out or "").split("\n")
+        if l.startswith("??") and "collaboration/results/HEALTH_CHECK_" not in l
+    ]
+    modified = [
+        l for l in (out or "").split("\n")
+        if l.startswith(" M") or l.startswith("M ")
+    ]
     rc, out, _ = run("git remote -v")
     remotes = out
     rc, out, _ = run("git log --oneline origin/main..HEAD 2>/dev/null")
@@ -130,7 +138,7 @@ def check_coverage_breakdown():
     """4. 关键模块覆盖率分解"""
     rc, out, _ = run(
         "coverage report 2>&1 | grep -E '^ai_collab' "
-        "| awk '{print $1, $5}' | sort -k2 -n | head -10"
+        "| awk '{print $1, $NF}' | sort -k2 -n | head -10"
     )
     low_modules = []
     for line in (out or "").split("\n"):
@@ -147,7 +155,7 @@ def check_coverage_breakdown():
 
 def check_static_analysis():
     """5. 静态检查状态"""
-    rc, out, _ = run("ruff check ai_collab 2>&1 | tail -3")
+    rc, out, _ = run("ruff check . 2>&1 | tail -3")
     ruff_errors = 0
     for line in (out or "").split("\n"):
         if "Found" in line and "error" in line:
@@ -247,10 +255,10 @@ def render_markdown(data):
     # 5. 静态检查
     lines.append(section("静态检查"))
     s = data["static_analysis"]
-    lines.append(f"- **ruff**: {s['ruff_errors']} 个问题 "
-                 f"({'✅' if s['ruff_errors'] < 50 else '⚠️'})")
-    lines.append(f"- **mypy**: {s['mypy_errors']} 个错误 "
-                 f"({'✅' if s['mypy_errors'] < 50 else '⚠️'})")
+    lines.append(f"- **ruff** (`ruff check .`): {s['ruff_errors']} 个问题 "
+                 f"({'✅' if s['ruff_errors'] == 0 else '🔴'})")
+    lines.append(f"- **mypy** (`mypy ai_collab`): {s['mypy_errors']} 个错误 "
+                 f"({'✅' if s['mypy_errors'] == 0 else '🔴'})")
 
     # 6. 依赖
     lines.append(section("依赖安全"))
