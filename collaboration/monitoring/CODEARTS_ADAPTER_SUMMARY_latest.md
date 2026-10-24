@@ -1,17 +1,22 @@
 # CodeArts Adapter Summary（自动生成）
 
-- generated_at: `2026-10-24T11:03:29.160801`
+- generated_at: `2026-10-24T19:06:17.342109`
 - mode: `apply`
-- candidate_count: `1`
-- queued_count: `1`
+- candidate_count: `0`
+- queued_count: `0`
 - artifact_only_count: `0`
 - failed_count: `0`
-- skipped_in_flight_count: `0`
+- skipped_in_flight_count: `1`
 - model_pool: `inferhub-provider/glm-5.3, inferhub-provider/deepseek-v4.1-flash, inferhub-provider/kimi-k3`
 - model_policy: `round_robin`
-- model_pinned_count: `1`
+- model_pinned_count: `0`
 
 ## Deliveries
 
-- `intervention-b67c79923fe44b93898138c0c849016f` action=`queued` status=`queued_for_delivery` model=`inferhub-provider/deepseek-v4.1-flash` model_used=`inferhub-provider/deepseek-v4.1-flash` model_applied=`true` fallback_used=`false` accepted_without_receipt=`true`
-  event_file: `collaboration/monitoring/codearts_pull_events/CODEARTS_PULL_EVENT_intervention-b67c79923fe44b93898138c0c849016f_latest.md`
+- 无
+
+## Skipped (In Flight)
+
+已投递、等待对方 ACK，未重复投递：
+
+- `intervention-78942f2c84b94e37a1d1c5af69b58e3c`
