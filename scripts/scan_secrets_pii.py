@@ -55,6 +55,28 @@ RULES += [
         ],
     },
     {
+        # 纯数字裸值密码（PIN 形态）：见下方正则，6 位以上纯数字。
+        # 上面 B 段要求「含数字且含字母」，纯数字会漏掉，这里补一条独立规则。
+        # 阈值 6 位，且不跨行、不吃标识符。
+        "rule_id": "password_literal_bare_numeric",
+        "pattern": re.compile(r'''(?i)password[ \t]*[=:][ \t]*(\d{6,})(?![0-9])'''),
+        "placeholder_indicators": [
+            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
+        ],
+    },
+    {
+        # 短裸值密码（6–11 位、字母开头数字结尾）：见下方正则。
+        # 12 位以上交给 B 段，避免同一处命中记两条；不含短横线，
+        # 因此「标识符调用」形态（见 R2 契约正文）不会被误命中。
+        "rule_id": "password_literal_bare_short",
+        "pattern": re.compile(
+            r'''(?i)password[ \t]*[=:][ \t]*([A-Za-z][A-Za-z0-9]{4,14}\d)(?![A-Za-z0-9_\-])'''
+        ),
+        "placeholder_indicators": [
+            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
+        ],
+    },
+    {
         "rule_id": "us_ssn",
         "pattern": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
         "placeholder_indicators": [],
@@ -126,6 +148,9 @@ def scan_workspace(workspace: Path) -> dict:
                     has_alpha = any(ch.isalpha() for ch in value)
                     if not (has_digit and has_alpha):
                         continue
+                if rule["rule_id"] == "password_literal_bare_short" and len(value) >= 12:
+                    # 12 位以上由 password_literal_bare 覆盖，避免同一处命中记两条
+                    continue
                 matched_text = match.group(0)
                 line_num = content.count("\n", 0, match.span()[0]) + 1
                 if f"{rel_path}:{line_num}" in allow:

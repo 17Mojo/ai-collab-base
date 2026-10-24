@@ -105,3 +105,73 @@ def test_allowlist_exempts_finding(tmp_path: Path) -> None:
     after = module.scan_workspace(tmp_path)
     assert after["has_findings"] is False
 
+
+def test_bare_numeric_password_detected(tmp_path: Path) -> None:
+    """纯数字裸值密码必须被检出。
+
+    `password_literal_bare` 要求「含数字且含字母」，纯数字（PIN 形态）会漏掉；
+    这条用例守护 `password_literal_bare_numeric` 规则不被删掉。
+    """
+    module = _load_module()
+    # 字面量拆开写，避免本文件自身被密钥扫描器命中（扫描面包含测试源码）
+    (tmp_path / "config.py").write_text(
+        "pass" + "word = " + "12345678" + "\n", encoding="utf-8"
+    )
+
+    report = module.scan_workspace(tmp_path)
+    assert report["has_findings"] is True
+    assert any(
+        item["rule_id"] == "password_literal_bare_numeric" for item in report["findings"]
+    )
+
+
+def test_bare_short_password_detected(tmp_path: Path) -> None:
+    """短裸值密码（字母开头、数字结尾、6–11 位）必须被检出。
+
+    改造前旧规则会命中裸值短密码，两段式改造后一度漏检，
+    由 `password_literal_bare_short` 补回。
+    """
+    module = _load_module()
+    (tmp_path / "config.py").write_text(
+        "pass" + "word = " + "hunter2" + "\n", encoding="utf-8"
+    )
+
+    report = module.scan_workspace(tmp_path)
+    assert report["has_findings"] is True
+    assert any(
+        item["rule_id"] == "password_literal_bare_short" for item in report["findings"]
+    )
+
+
+def test_bare_identifier_still_not_flagged(tmp_path: Path) -> None:
+    """补规则不得把标识符形态重新变成噪声。
+
+    「标识符调用」「类型标注」「None」「算法名」四种形态都应保持不被命中。
+    """
+    module = _load_module()
+    (tmp_path / "config.py").write_text(
+        "pass" + "word = resolve_credentials(...)\n"
+        "pass" + "word: str\n"
+        "pass" + "word = None\n"
+        "pass" + "word = sha1\n",
+        encoding="utf-8",
+    )
+
+    report = module.scan_workspace(tmp_path)
+    assert report["has_findings"] is False
+
+
+def test_long_bare_password_not_double_reported(tmp_path: Path) -> None:
+    """12 位以上裸值只由 `password_literal_bare` 记一条，不重复计两条。"""
+    module = _load_module()
+    (tmp_path / "config.py").write_text(
+        "pass" + "word = " + "abcdefghij12" + "\n", encoding="utf-8"
+    )
+
+    report = module.scan_workspace(tmp_path)
+    password_rules = [
+        item["rule_id"]
+        for item in report["findings"]
+        if item["rule_id"].startswith("password")
+    ]
+    assert password_rules == ["password_literal_bare"]
