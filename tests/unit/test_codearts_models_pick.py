@@ -73,7 +73,7 @@ def test_pick_returns_first_model_with_matching_receipt(
     _patch_kernel(monkeypatch)
     _patch_registry(monkeypatch)
 
-    def _fake_probe(client, *, model_id, provider_id, workspace, timeout):
+    def _fake_probe(client, *, model_id, provider_id, workspace, timeout, cleanup=True):
         # glm-5.3 真实推理成功但回执落在别的模型上（静默回落）→ 不算可用。
         if model_id == "glm-5.3":
             return _probe_result(
@@ -108,7 +108,7 @@ def test_pick_outputs_plain_model_without_json(
     monkeypatch.setattr(
         check,
         "probe_model",
-        lambda client, *, model_id, provider_id, workspace, timeout: _probe_result(
+        lambda client, *, model_id, provider_id, workspace, timeout, cleanup=True: _probe_result(
             model_id, provider_id, usable=True, used_model=f"{provider_id}/{model_id}"
         ),
     )
@@ -130,7 +130,7 @@ def test_pick_fails_without_any_usable_model(
     monkeypatch.setattr(
         check,
         "probe_model",
-        lambda client, *, model_id, provider_id, workspace, timeout: _probe_result(
+        lambda client, *, model_id, provider_id, workspace, timeout, cleanup=True: _probe_result(
             model_id, provider_id, usable=False, used_model=""
         ),
     )
@@ -155,7 +155,7 @@ def test_pick_fails_without_any_usable_model_json(
     monkeypatch.setattr(
         check,
         "probe_model",
-        lambda client, *, model_id, provider_id, workspace, timeout: _probe_result(
+        lambda client, *, model_id, provider_id, workspace, timeout, cleanup=True: _probe_result(
             model_id, provider_id, usable=False, used_model=""
         ),
     )
@@ -191,7 +191,7 @@ def test_pick_skips_models_missing_from_registry(
     monkeypatch.setattr(
         check,
         "probe_model",
-        lambda client, *, model_id, provider_id, workspace, timeout: _probe_result(
+        lambda client, *, model_id, provider_id, workspace, timeout, cleanup=True: _probe_result(
             model_id, provider_id, usable=True, used_model=f"{provider_id}/{model_id}"
         ),
     )
@@ -212,7 +212,7 @@ def test_pick_stops_at_first_usable_model(
     _patch_registry(monkeypatch)
     probed: list[str] = []
 
-    def _fake_probe(client, *, model_id, provider_id, workspace, timeout):
+    def _fake_probe(client, *, model_id, provider_id, workspace, timeout, cleanup=True):
         probed.append(model_id)
         return _probe_result(
             model_id, provider_id, usable=True, used_model=f"{provider_id}/{model_id}"
@@ -242,6 +242,103 @@ def test_pick_and_watch_are_mutually_exclusive(
     assert code == 2
     err = capsys.readouterr().err
     assert "互斥" in err
+
+
+def test_probe_deletes_its_own_session_by_default():
+    """探测完必须删掉自己建的会话 —— 探测会话不是工作会话，留着是噪音。
+
+    真机背景（2026-10-24）：一次全量探测会在 CodeArts Doer 的会话列表里
+    留下 3 个「One-word reply test」之类的会话，用户要求清掉并别再产生。
+    """
+    calls: list[tuple[str, str, dict[str, str] | None]] = []
+
+    class _Client:
+        def request(self, method, path, *, query=None, body=None):
+            calls.append((method, path, query))
+            if method == "POST" and path == "/session":
+                return {"http_status": 200, "id": "ses_probe_1"}
+            if method == "POST" and path.endswith("/message"):
+                return {
+                    "http_status": 200,
+                    "info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"},
+                    "parts": [{"type": "text", "text": "OK"}],
+                }
+            if method == "DELETE":
+                return {"http_status": 200}
+            raise AssertionError(f"意外的请求: {method} {path}")
+
+    result = check.probe_model(
+        _Client(),
+        model_id="glm-5.3",
+        provider_id="inferhub-provider",
+        workspace=Path("/tmp/ws"),
+        timeout=30,
+    )
+
+    assert result["usable"] is True
+    assert result["session_id"] == "ses_probe_1"
+    assert result["session_cleaned"] is True
+    deletes = [c for c in calls if c[0] == "DELETE"]
+    assert len(deletes) == 1
+    assert deletes[0][1] == "/session/ses_probe_1"
+
+
+def test_probe_keeps_session_when_cleanup_disabled():
+    """--keep-sessions：保留探测会话（排查失败时要看会话里的消息）。"""
+    calls: list[str] = []
+
+    class _Client:
+        def request(self, method, path, *, query=None, body=None):
+            calls.append(method)
+            if method == "POST" and path == "/session":
+                return {"http_status": 200, "id": "ses_probe_2"}
+            if method == "POST":
+                return {
+                    "http_status": 200,
+                    "info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"},
+                    "parts": [{"type": "text", "text": "OK"}],
+                }
+            raise AssertionError(f"意外的请求: {method} {path}")
+
+    result = check.probe_model(
+        _Client(),
+        model_id="glm-5.3",
+        provider_id="inferhub-provider",
+        workspace=Path("/tmp/ws"),
+        timeout=30,
+        cleanup=False,
+    )
+
+    assert result["usable"] is True
+    assert result["session_cleaned"] is False
+    assert "DELETE" not in calls
+
+
+def test_probe_cleanup_failure_does_not_break_result():
+    """删会话失败不能影响探测结论（结论已经取到了）。"""
+
+    class _Client:
+        def request(self, method, path, *, query=None, body=None):
+            if method == "POST" and path == "/session":
+                return {"http_status": 200, "id": "ses_probe_3"}
+            if method == "POST":
+                return {
+                    "http_status": 200,
+                    "info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"},
+                    "parts": [{"type": "text", "text": "OK"}],
+                }
+            raise RuntimeError("删除失败")
+
+    result = check.probe_model(
+        _Client(),
+        model_id="glm-5.3",
+        provider_id="inferhub-provider",
+        workspace=Path("/tmp/ws"),
+        timeout=30,
+    )
+
+    assert result["usable"] is True
+    assert result["session_cleaned"] is False
 
 
 if __name__ == "__main__":

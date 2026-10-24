@@ -199,8 +199,39 @@ def list_models(client, workspace: Path) -> tuple[dict[str, str], str]:
     return mapping, default, mapping_lower
 
 
-def probe_model(client, *, model_id: str, provider_id: str, workspace: Path, timeout: int) -> dict[str, Any]:
-    """真实发一次最小推理，返回探测结果。"""
+def delete_session(client, session_id: str, workspace: Path) -> bool:
+    """删掉探测会话，避免污染 CodeArts Doer 的会话列表。
+
+    探测只是「问一句 OK」，不是工作会话；留在列表里就是噪音（真机实测
+    2026-10-24：一次全量探测会在 Doer 列表里留下 3 个「One-word reply test」
+    之类的会话）。删不掉不算探测失败——探测结论已经取到了。
+    """
+    if not session_id:
+        return False
+    try:
+        response = client.request(
+            "DELETE", f"/session/{session_id}", query={"directory": str(workspace)}
+        )
+        status = response.get("http_status")
+        return bool(status) and 200 <= int(status) < 300
+    except Exception:  # noqa: BLE001 - 清理失败不能影响探测结论
+        return False
+
+
+def probe_model(
+    client,
+    *,
+    model_id: str,
+    provider_id: str,
+    workspace: Path,
+    timeout: int,
+    cleanup: bool = True,
+) -> dict[str, Any]:
+    """真实发一次最小推理，返回探测结果。
+
+    `cleanup=True`（默认）会在探测结束后删掉自己创建的探测会话；传
+    `cleanup=False` 保留会话（排查探测失败时需要看会话里的消息）。
+    """
     result: dict[str, Any] = {
         "model": model_id,
         "provider": provider_id,
@@ -210,13 +241,17 @@ def probe_model(client, *, model_id: str, provider_id: str, workspace: Path, tim
         "reply": "",
         "used_model": "",
         "error": "",
+        "session_id": "",
+        "session_cleaned": False,
     }
     started = time.monotonic()
+    session_id = ""
     try:
         created = client.request(
             "POST", "/session", query={"directory": str(workspace)}, body={"title": "model-probe"}
         )
         session_id = _session_id(created)
+        result["session_id"] = session_id
         if not session_id:
             result["error"] = "创建会话失败：响应里没有 session id"
             return result
@@ -246,6 +281,8 @@ def probe_model(client, *, model_id: str, provider_id: str, workspace: Path, tim
     except Exception as exc:  # noqa: BLE001 - 探测脚本要把任何失败都记下来
         result["error"] = f"{type(exc).__name__}: {exc}"[:300]
     finally:
+        if cleanup and session_id:
+            result["session_cleaned"] = delete_session(client, session_id, workspace)
         result["latency_ms"] = int((time.monotonic() - started) * 1000)
     return result
 
@@ -285,6 +322,14 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument("--json", action="store_true", help="输出 JSON")
+    parser.add_argument(
+        "--keep-sessions",
+        action="store_true",
+        help=(
+            "保留探测会话（默认探测完就删）—— 探测会话不是工作会话，"
+            "留在 CodeArts Doer 的会话列表里只是噪音；排查失败时才需要留"
+        ),
+    )
     args = parser.parse_args(argv)
     if args.pick and args.watch:
         print(
@@ -338,6 +383,8 @@ def main(argv: list[str] | None = None) -> int:
                         "reply": "",
                         "used_model": "",
                         "error": "未在 kernel 注册表中找到该模型",
+                        "session_id": "",
+                        "session_cleaned": False,
                     }
                 )
                 continue
@@ -348,6 +395,7 @@ def main(argv: list[str] | None = None) -> int:
                     provider_id=provider_id,
                     workspace=workspace,
                     timeout=args.timeout,
+                    cleanup=not args.keep_sessions,
                 )
             )
             if args.pick:
