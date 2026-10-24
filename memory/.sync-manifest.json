@@ -1,10 +1,11 @@
 {
   "source": "/Users/raymondna/.codeartsdoer/memory/-Users-raymondna-Documents-AI-collab-ai-collab-base",
-  "generated_at": "2026-10-24T07:20:39.361452+00:00",
+  "generated_at": "2026-10-24T08:00:52.452544+00:00",
   "files": [
     "MEMORY.md",
     "feedback_ack_cli_generated.md",
     "feedback_answer_shape.md",
+    "feedback_ci_isolation_trap.md",
     "feedback_codearts_session_tooling.md",
     "feedback_codearts_tooling_constraints.md",
     "feedback_delivery_outcome_semantics.md",
@@ -28,11 +29,12 @@
     "project_dual_agent_config_sync.md",
     "project_healthcheck_tooling_debt.md",
     "project_intervention_delivery_states.md",
+    "project_openspec_cli_wiring.md",
     "project_route_decision.md",
     "project_task_change_id_whitelist.md",
     "reference_laya_decision_engine.md",
     "reference_local_llm_endpoint.md",
     "user.md"
   ],
-  "count": 31
+  "count": 33
 }
