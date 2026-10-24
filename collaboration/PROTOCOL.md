@@ -345,6 +345,30 @@ OpenSpec 变更获批后，按工单派发实现任务：
 - `assignee_role`（角色代号，如 AGENT_EXEC）
 - `assignee_provider`（实际提供商，从 orchestration 解析）
 
+### 7.4 结果文件四段契约（强制）
+
+> **历史勘误（2026-10-24 复核）**：本契约此前被多处标注为「PROTOCOL §7.3 契约」，
+> 但 §7.3 是**绑定规则**（change_id / assignee_role / assignee_provider），
+> 从未定义结果文件格式——引用与实际内容对不上号。现于本节正式定义，
+> 此前所有「§7.3 四段」表述一律改指本节。
+
+每个执行工单的**结果文件**（`collaboration/results/RESULT_*.md`）必须含四段：
+
+| 段落 | 标题 | 内容要求 |
+|------|------|---------|
+| 执行命令 | `## 执行命令` | 逐条列出实际执行的命令 |
+| 验证结果 | `## 验证结果` | 每条验收命令的**真实输出**；须含「测试结论」小节 |
+| 风险 | `## 风险` | 遗留风险与影响面 |
+| 回滚 | `## 回滚` | 出问题时的回滚方式 |
+
+另需：
+- 一行**可解析的状态行**（如 `- **状态**: completed`）；
+- 工单 `acceptance_commands` 里的每条命令字符串**原样**出现在结果报告中。
+
+**机器校验实现**：`ai_collab/state_manager.py` 的
+`TASK_RESULT_REQUIRED_SECTION_GROUPS` 与 `TASK_RESULT_NEGATIVE_SIGNAL_MARKERS`
+（`tasks validate-contract` 走的就是这套判定）。
+
 ---
 
 ## 八、任务流转
@@ -487,7 +511,7 @@ python3 -m ai_collab.cli sessions handoff
 
 ### 14.3 基线声明
 
-- 任务开始时记录 `baseline_commit`（`gitF rev-parse HEAD`）
+- 任务开始时记录 `baseline_commit`（`git rev-parse HEAD`）
 - 提交前校验 `watch_paths` 未被他人推进（`baseline_commit..HEAD` 区间无变更）
 - 基线过期时先 rebase / 重新核实，禁止直接提交
 - **检测信号**: `concurrent_guard.detect_baseline_staleness(workspace, baseline_commit, watch_paths)`
@@ -508,8 +532,13 @@ python3 -m ai_collab.cli sessions handoff
 |------|------|---------|--------|
 | 分支漂移（G1） | git 真证 | **硬门禁** | ✅ |
 | 基线过期（G2） | git 真证 | **硬门禁** | ✅ |
-| 归属不清（G3） | mtime 启发式 | **软警告** | ❌ |
+| 归属不清（G3） | mtime 启发式 | **软警告** | ❌（见下） |
 | 测试污染（G4） | pytest 配置 | 测试层修复 | ❌ |
+
+> **G3 的例外**：G3 默认只告警不阻断；但配置
+> `concurrentGuard.foreignChangeSeverity: "high"` 时，它会进入
+> **违规列表**并按违规阻断（此时风险级别为 `high`、放行结论为假）。
+> 也就是说「G3 不可阻断」说的是**默认配置**下的行为。
 
 ### 14.6 综合风险评级
 

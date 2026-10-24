@@ -271,7 +271,7 @@ def _task_contract_lines(
         lines.append(f"**结果文件**（必须写）: `{result_file}`")
         lines.append("")
         lines.append(
-            "  按 PROTOCOL §7.3 契约写入四段："
+            "  按 PROTOCOL §7.4 结果文件四段契约写入四段："
             "`## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`。"
         )
         lines.append("")
