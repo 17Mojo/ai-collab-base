@@ -75,6 +75,28 @@ class TestInspectGitContext:
         assert ctx["dirty_total"] == 1
         assert "new_file.py" in ctx["dirty_paths"]
 
+    def test_dirty_paths_normalize_renamed_entry(self, tmp_path):
+        """重命名条目必须只记**新路径**。
+
+        `git status --porcelain` 对重命名给的是 `R  old.py -> new.py`，
+        原样塞进脏文件列表会让下游拿到一个根本不存在的路径
+        （`old.py -> new.py`），按它去 stat 必然落空。
+
+        用 `git mv` 让 rename 进入索引 —— 只有**已暂存**的重命名才会被
+        git 折叠成 `->` 形式（工作区里裸 `mv` 只报 `D` + `??` 两条）。
+        """
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "old.py").write_text("x")
+        _commit(ws)
+        _git(ws, "mv", "old.py", "new.py")
+
+        ctx = inspect_git_context(ws)
+
+        assert ctx["dirty_total"] == 1
+        assert ctx["dirty_paths"] == ["new.py"]
+        assert not any("->" in path for path in ctx["dirty_paths"])
+
 
 class TestBranchDrift:
     def test_drifted(self, tmp_path):
@@ -349,6 +371,39 @@ class TestRunConcurrentGuard:
         loaded = json.loads(report_file.read_text(encoding="utf-8"))
         assert loaded["allowed"] is True
         assert loaded["risk_level"] == "low"
+
+    def test_two_runs_append_two_parseable_history_lines(self, tmp_path):
+        """连续跑两次 → 历史两行，且**每行都能解析成 JSON**。
+
+        现有守护只断言「一次运行 → 一行存在」，钉不住「第二次运行是否
+        真的追加」。若历史改成覆盖写，两行断言会当场变红；若是追加了但
+        写坏（半行 JSON / 多个对象挤一行），逐行 `json.loads` 会当场变红。
+        """
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        _commit(ws)
+
+        first = run_concurrent_guard(
+            workspace=ws,
+            expected_branch="main",
+            guard_config={"enabled": True},
+        )
+        second = run_concurrent_guard(
+            workspace=ws,
+            expected_branch="main",
+            guard_config={"enabled": True},
+        )
+
+        history_file = Path(second["history_file"])
+        assert history_file == Path(first["history_file"])
+        lines = [line for line in history_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+        assert len(lines) == 2, f"历史应为两行，实得 {len(lines)} 行：{lines}"
+
+        parsed = [json.loads(line) for line in lines]
+        assert [item["allowed"] for item in parsed] == [True, True]
+        # 两次运行各自留下自己的结论对象（不是同一份被写两遍）
+        assert all(item.get("generated_at") for item in parsed)
 
     def test_disabled_allows(self, tmp_path):
         ws = tmp_path / "ws"
