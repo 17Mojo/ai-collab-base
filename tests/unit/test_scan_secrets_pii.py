@@ -51,3 +51,57 @@ def test_scan_detects_pii_pattern(tmp_path: Path) -> None:
     report = module.scan_workspace(tmp_path)
     assert report["has_findings"] is True
     assert any(item["rule_id"] == "us_ssn" for item in report["findings"])
+
+
+def test_node_modules_skipped(tmp_path: Path) -> None:
+    module = _load_module()
+    nested = tmp_path / "node_modules" / "pkg"
+    nested.mkdir(parents=True)
+    secret = "sk-" + "ABCDEF" + "GHIJKL" + "MNOPQR" + "STUVWX" + "1234567890"
+    (nested / "bundle.js").write_text(
+        'var cfg = {"password":"' + secret + '"};\n',
+        encoding="utf-8",
+    )
+
+    report = module.scan_workspace(tmp_path)
+    assert report["has_findings"] is False
+
+
+def test_password_short_fixture_not_flagged(tmp_path: Path) -> None:
+    module = _load_module()
+    (tmp_path / "config.py").write_text('password="pw"\n', encoding="utf-8")
+
+    report = module.scan_workspace(tmp_path)
+    assert report["has_findings"] is False
+
+
+def test_password_placeholder_literal_not_flagged(tmp_path: Path) -> None:
+    module = _load_module()
+    (tmp_path / "settings.py").write_text(
+        'password = resolve_credentials()\n'
+        'password="from-file"\n'
+        'password="your-secret-here"\n',
+        encoding="utf-8",
+    )
+
+    report = module.scan_workspace(tmp_path)
+    assert report["has_findings"] is False
+
+
+def test_allowlist_exempts_finding(tmp_path: Path) -> None:
+    module = _load_module()
+    secret = "sk-" + "ABCDEF" + "GHIJKL" + "MNOPQR" + "STUVWX" + "1234567890"
+    (tmp_path / "sample.py").write_text(f'KEY = "{secret}"\n', encoding="utf-8")
+    baseline = module.scan_workspace(tmp_path)
+    assert baseline["has_findings"] is True
+
+    cfg = tmp_path / "config"
+    cfg.mkdir()
+    (cfg / "secrets-scan-allowlist.txt").write_text(
+        "# exempt list\nsample.py:1:test fixture, not a real credential\n",
+        encoding="utf-8",
+    )
+
+    after = module.scan_workspace(tmp_path)
+    assert after["has_findings"] is False
+

@@ -5,6 +5,19 @@ import re
 import sys
 from pathlib import Path
 
+EXCLUDED_DIRS = {
+    "node_modules",
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+}
+
 RULES = [
     {
         "rule_id": "openai_api_key",
@@ -21,10 +34,25 @@ RULES = [
         "pattern": re.compile(r"ghp_[A-Za-z0-9]{36}"),
         "placeholder_indicators": ["your-", "dummy-", "xxxx", "replace-me", "<", "{"],
     },
+]
+
+RULES += [
     {
         "rule_id": "password_literal",
-        "pattern": re.compile(r'(?i)password\s*[=:]\s*["\']?([^\s"\'<{]+)["\']?'),
-        "placeholder_indicators": ["your-", "dummy-", "xxxx", "change-me", "<", "{", "todo"],
+        "pattern": re.compile(r'''(?i)password\s*[=:]\s*(["'])([^"'\n]{3,})\1'''),
+        "placeholder_indicators": [
+            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
+            "pw", "none", "secret", "test", "from-file", "env-provided",
+            "resolve_credentials", "os.environ",
+        ],
+    },
+    {
+        "rule_id": "password_literal_bare",
+        "pattern": re.compile(r'''(?i)password\s*[=:]\s*([A-Za-z0-9][A-Za-z0-9\-]{11,})'''),
+        "placeholder_indicators": [
+            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
+            "resolve_credentials", "os.environ",
+        ],
     },
     {
         "rule_id": "us_ssn",
@@ -39,33 +67,47 @@ def is_placeholder(value: str, indicators: list) -> bool:
     return any(ind in value_lower for ind in indicators)
 
 
-def scan_workspace(workspace: Path) -> dict:
-    """Scan workspace for secrets and PII.
+def _load_allowlist(workspace: Path) -> set:
+    """Load secrets-scan allowlist entries.
 
-    Returns:
-        {
-            "has_findings": bool,
-            "findings": [
-                {
-                    "rule_id": str,
-                    "file": str,
-                    "line": int,
-                    "match": str,
-                }
-            ],
-            "scanned_files": int,
-        }
+    Format per line: ``<relative-file>:<line>:<reason>``; ``#`` lines are
+    comments. Missing / unreadable file yields an empty set (never errors).
     """
+    allow = set()
+    allow_path = workspace / "config" / "secrets-scan-allowlist.txt"
+    try:
+        text = allow_path.read_text(encoding="utf-8")
+    except Exception:
+        return allow
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split(":", 2)
+        if len(parts) >= 2:
+            allow.add(f"{parts[0]}:{parts[1]}")
+    return allow
+
+
+def scan_workspace(workspace: Path) -> dict:
+    """Scan workspace for secrets and PII."""
     findings = []
     scanned_files = 0
 
     if not workspace.exists():
         return {"has_findings": False, "findings": [], "scanned_files": 0}
 
+    allow = _load_allowlist(workspace)
+
     for path in workspace.rglob("*"):
         if not path.is_file():
             continue
-        if path.suffix not in {".py", ".md", ".json", ".env", ".txt", ".yml", ".yaml", ".js", ".ts"}:
+        if EXCLUDED_DIRS & set(path.parts):
+            continue
+        if path.suffix not in {
+            ".py", ".md", ".json", ".env", ".txt",
+            ".yml", ".yaml", ".js", ".ts",
+        }:
             continue
         scanned_files += 1
         try:
@@ -73,16 +115,25 @@ def scan_workspace(workspace: Path) -> dict:
         except Exception:
             continue
 
+        rel_path = str(path.relative_to(workspace))
         for rule in RULES:
             for match in rule["pattern"].finditer(content):
-                matched_text = match.group(0)
-                if is_placeholder(matched_text, rule["placeholder_indicators"]):
+                value = match.group(match.lastindex) if match.lastindex else match.group(0)
+                if is_placeholder(value, rule["placeholder_indicators"]):
                     continue
-                line_num = content[: match.start()].count("\n") + 1
+                if rule["rule_id"] == "password_literal_bare":
+                    has_digit = any(ch.isdigit() for ch in value)
+                    has_alpha = any(ch.isalpha() for ch in value)
+                    if not (has_digit and has_alpha):
+                        continue
+                matched_text = match.group(0)
+                line_num = content.count("\n", 0, match.span()[0]) + 1
+                if f"{rel_path}:{line_num}" in allow:
+                    continue
                 findings.append(
                     {
                         "rule_id": rule["rule_id"],
-                        "file": str(path.relative_to(workspace)),
+                        "file": rel_path,
                         "line": line_num,
                         "match": matched_text,
                     }

@@ -94,6 +94,8 @@ def check_git():
     ]
     rc, out, _ = run("git remote -v")
     remotes = out
+    rc, out, _ = run("git rev-parse --verify origin/main 2>/dev/null")
+    has_origin_main = rc == 0 and bool(out)
     rc, out, _ = run("git log --oneline origin/main..HEAD 2>/dev/null")
     ahead = out.split("\n") if out and out.strip() else []
     return {
@@ -103,6 +105,7 @@ def check_git():
         "untracked_files": untracked,
         "remotes": remotes,
         "ahead_of_origin": ahead,
+        "has_origin_main": has_origin_main,
     }
 
 
@@ -187,13 +190,14 @@ def check_dependencies():
 
 def check_health_rules():
     """7. 应用 CLAUDE.md 中 3 条长期经验"""
-    rc, out, _ = run("grep -c '长期经验' CLAUDE.md 2>/dev/null || echo 0")
+    rc, out, _ = run("grep -c '^### 经验 [0-9]' CLAUDE.md 2>/dev/null || echo 0")
     try:
-        rules_in_claude = int(out) > 0 if out else False
+        rules_count = int(out) if out.strip().isdigit() else 0
     except ValueError:
-        rules_in_claude = False
+        rules_count = 0
     return {
-        "claude_md_has_rules": rules_in_claude,
+        "claude_md_has_rules": rules_count >= 3,
+        "claude_md_rules_count": rules_count,
         "gitignore_present": Path(".gitignore").exists(),
     }
 
@@ -230,8 +234,10 @@ def render_markdown(data):
             lines.append(f"  - `{f}`")
     if g["ahead_of_origin"]:
         lines.append(f"- ⚠️ **领先 origin/main {len(g['ahead_of_origin'])} 个 commit** (未推送)")
-    else:
+    elif g.get("has_origin_main"):
         lines.append("- ✅ 与 origin/main 同步")
+    else:
+        lines.append("- ⚠️ **未知**（本地无 origin/main 引用，无法计算领先量）")
 
     # 3. 代码
     lines.append(section("代码规模"))
@@ -268,7 +274,7 @@ def render_markdown(data):
     # 7. 健康规则
     lines.append(section("项目健康规则"))
     h = data["health_rules"]
-    lines.append(f"- **CLAUDE.md 含 3 条长期经验**: "
+    lines.append(f"- **CLAUDE.md 含 {h.get('claude_md_rules_count', 0)} 条长期经验**: "
                  f"{'✅' if h['claude_md_has_rules'] else '🔴'}")
     lines.append(f"- **.gitignore 存在**: "
                  f"{'✅' if h['gitignore_present'] else '🔴'}")
