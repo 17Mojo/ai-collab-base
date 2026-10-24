@@ -17,7 +17,6 @@ from ai_collab.role_prefix import (
     resolve_ack_prefix,
     resolve_assignee_roles,
     resolve_hints,
-    resolve_run_hint,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

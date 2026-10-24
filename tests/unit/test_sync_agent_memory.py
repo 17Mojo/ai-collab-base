@@ -18,7 +18,7 @@ def _write_memory(root, name, body, meta=None):
     root.mkdir(parents=True, exist_ok=True)
     front = ""
     if meta is not None:
-        front = "---\n" + "\n".join("{}: {}".format(k, v) for k, v in meta.items()) + "\n---\n\n"
+        front = "---\n" + "\n".join(f"{k}: {v}" for k, v in meta.items()) + "\n---\n\n"
     (root / name).write_text(front + body, encoding="utf-8")
 
 

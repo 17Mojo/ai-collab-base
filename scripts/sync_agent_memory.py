@@ -76,7 +76,7 @@ def build_index(entries):
         for name, meta in groups[group]:
             title = meta.get("name") or name
             desc = meta.get("description", "")
-            lines.append("- [{}]({}) — {}".format(title, name, desc))
+            lines.append(f"- [{title}]({name}) — {desc}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -125,7 +125,7 @@ def main():
     dest = Path(args.dest) if args.dest else repo / "memory"
 
     if not source.is_dir():
-        print("source memory dir not found: {}".format(source))
+        print(f"source memory dir not found: {source}")
         return 1
 
     desired = build_desired(source)
@@ -135,17 +135,17 @@ def main():
     if args.check:
         if changes:
             for action, name in changes:
-                print("{}: {}".format(action, name))
-            print("memory mirror out of sync ({} change(s)); run sync_agent_memory.py".format(len(changes)))
+                print(f"{action}: {name}")
+            print(f"memory mirror out of sync ({len(changes)} change(s)); run sync_agent_memory.py")
             return 1
         if not args.quiet:
-            print("[OK] memory mirror in sync ({} file(s))".format(len(desired)))
+            print(f"[OK] memory mirror in sync ({len(desired)} file(s))")
         return 0
 
     if args.dry_run:
         for action, name in changes:
-            print("{}: {}".format(action, name))
-        print("dry-run: {} change(s)".format(len(changes)))
+            print(f"{action}: {name}")
+        print(f"dry-run: {len(changes)} change(s)")
         return 0
 
     dest.mkdir(parents=True, exist_ok=True)
@@ -166,7 +166,7 @@ def main():
     )
 
     if not args.quiet:
-        print("synced {} file(s) -> {}".format(len(desired), dest))
+        print(f"synced {len(desired)} file(s) -> {dest}")
     return 0
 
 

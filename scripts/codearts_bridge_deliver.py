@@ -603,7 +603,7 @@ class KernelClient:
         # 工作区作用域：kernel 的 provider 注册表是**按项目**查的
         # （不带 directory 的 /provider 会返回空注册表，见 provider_registry）。
         self.workspace = workspace
-        token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+        token = base64.b64encode(f"{username}:{password}".encode()).decode("ascii")
         self._auth = f"Basic {token}"
 
     def request(
