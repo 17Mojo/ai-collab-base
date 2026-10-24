@@ -156,6 +156,26 @@ self.cache: dict[str, dict[str, Any]] = {}
 > "history": "<tmp 内路径>"}`，否则会写进**本仓**的 `logs/workspace_forensics/`
 > （污染工作区）。**这是本条最容易踩的坑，务必显式传路径。**
 
+#### ⚠️ 契约勘误（2026-10-24 复核阶段实测，本工单已关闭）
+
+上面 R4 注意事项里的「否则会写进**本仓**」**与实现不符**，已作废。实测结论：
+
+- 落点规则是 `workspace / report_rel`（`ai_collab/concurrent_guard.py`）——
+  **相对路径**落在**被治理工作区**自己的目录下，**绝对路径**按调用方给的位置落
+  （pathlib 的 `Path / 绝对路径` 语义：右操作数绝对 → 左操作数被丢弃）。
+- 因此**不传** `guard_config` 时，默认落在**被治理工作区**自己的
+  `logs/workspace_forensics/` 下，**不会**写进本仓。
+- 真正会污染本仓的写法是**显式**传入本仓的绝对路径。
+
+显式传 tmp 内部路径**仍是推荐写法**（落点不依赖默认值），但理由是
+「显式胜于隐式」，**不是**「否则会污染本仓」。
+
+复核证据：把实现改成 `Path(__file__).parents[1] / report_rel`（落点写死本仓）后，
+本工单原有 3 条复用用例**全部仍绿**（覆盖缺口）；补了
+`tests/unit/test_concurrent_guard_reuse.py::test_default_report_path_stays_inside_guarded_workspace`
+之后，该 mutation 才被**唯一地**捕获（`1 failed, 3 passed`）。
+详见 `collaboration/results/RESULT-P1-PR2-CODEARTS-REVIEW-2026-10-24.md`。
+
 ### R5 更新 openspec 任务清单
 
 `openspec/changes/add-concurrent-workspace-guard/tasks.md`：
