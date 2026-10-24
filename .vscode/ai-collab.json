@@ -29,9 +29,18 @@
       "enabled": true,
       "bridgeCommand": "python3 scripts/codearts_bridge_deliver.py --workspace {workspace} --event-file {event_file} --artifact-file {artifact_file} --intervention-id {intervention_id} --session-id {session_id} --assignee {assignee} --reason-code {reason_code} --channel \"{channel}\" --model \"{model}\" --model-fallback \"{model_fallback}\"",
       "models": [
-        "glm-5.3",
-        "deepseek-v4.1-flash",
-        "kimi-k3"
+        {
+          "providerID": "inferhub-provider",
+          "modelID": "glm-5.3"
+        },
+        {
+          "providerID": "inferhub-provider",
+          "modelID": "deepseek-v4.1-flash"
+        },
+        {
+          "providerID": "inferhub-provider",
+          "modelID": "kimi-k3"
+        }
       ],
       "modelPolicy": "round_robin",
       "deliveryStatusOnSuccess": "queued_for_delivery",

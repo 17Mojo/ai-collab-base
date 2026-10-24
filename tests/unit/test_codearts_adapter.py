@@ -352,6 +352,75 @@ def test_codearts_adapter_pins_model_into_bridge_command(tmp_path: Path):
     assert (workspace / "channel.txt").read_text(encoding="utf-8") == "new_session"
 
 
+def test_codearts_adapter_renders_explicit_provider_model_form(tmp_path: Path):
+    """显式 provider 写法：模型池写成 {"providerID","modelID"} → 渲染成 provider/model。
+
+    真机意义（2026-10-24）：kernel 的 provider 注册表在重启后可能列不出模型，
+    此时"只给 modelID、由注册表反查 provider"的写法会查不到 → 静默不钉模型。
+    显式写法让桥接脚本完全不必查注册表。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_workspace_config(
+        workspace,
+        {
+            "enabled": True,
+            "bridgeCommand": (
+                "printf '%s' \"{model}\" > \"{workspace}/model.txt\"; "
+                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\""
+            ),
+            "models": [
+                {"providerID": "inferhub-provider", "modelID": "glm-5.3"},
+                {"providerID": "inferhub-provider", "modelID": "kimi-k3"},
+            ],
+            "modelPolicy": "round_robin",
+        },
+    )
+    _enqueue_one(workspace, intervention_id="int-model-explicit", message="请执行。")
+
+    report = run_codearts_pull_adapter(workspace=workspace)
+
+    assert report["queued_count"] == 1
+    assert report["model_pool"] == [
+        "inferhub-provider/glm-5.3",
+        "inferhub-provider/kimi-k3",
+    ]
+    assert report["deliveries"][0]["model"] == "inferhub-provider/glm-5.3"
+    assert (workspace / "model.txt").read_text(encoding="utf-8") == "inferhub-provider/glm-5.3"
+    assert (
+        workspace / "fallback.txt"
+    ).read_text(encoding="utf-8") == "inferhub-provider/kimi-k3"
+
+
+def test_repo_model_pool_pins_provider_explicitly():
+    """仓库自身的派单模型池必须显式写 provider。
+
+    kernel 重启后 provider 注册表可能列不出模型（真机实测 2026-10-23 17:59
+    重启后 inferhub-provider 的 7 个模型从注册表里消失，dispatch 只能静默
+    降级成"不指定模型"）。显式写 provider 后，桥接脚本不再依赖注册表反查，
+    投递路径不会因为注册表暂时查空而丢掉模型钉定。
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    config_path = repo_root / ".vscode" / "ai-collab.json"
+    assert config_path.exists(), f"缺少派单模型池配置: {config_path}"
+
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    adapter = config["sessionOrchestration"]["codeartsAdapter"]
+    models = adapter["models"]
+
+    assert models, "派单模型池不能为空"
+    for item in models:
+        assert isinstance(item, dict), (
+            f"模型池条目必须显式写 providerID（不能只给 modelID）：{item!r}"
+        )
+        assert item.get("providerID"), f"模型池条目缺 providerID：{item!r}"
+        assert item.get("modelID"), f"模型池条目缺 modelID：{item!r}"
+    # 降级链也要一起有 provider：模板渲染成逗号分隔的候选串，缺一个就少一个候选。
+    assert "{model_fallback}" in adapter["bridgeCommand"], (
+        "bridgeCommand 必须带 {model_fallback} 占位符，否则降级链接不通"
+    )
+
+
 def test_codearts_adapter_rotates_model_pool_across_rounds(tmp_path: Path):
     """轮换：每轮换一个模型，指针只被"钉了模型"的投递推进。"""
     workspace = tmp_path / "ws"

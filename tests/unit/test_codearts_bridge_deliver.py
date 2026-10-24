@@ -451,6 +451,7 @@ def test_repo_bridge_command_is_a_valid_format_template():
         reason_code="stale_payload",
         model="glm-5.3",
         channel="new_session",
+        model_fallback="deepseek-v4.1-flash,kimi-k3",
     )
     assert "codearts_bridge_deliver.py" in rendered
     assert "/tmp/ws" in rendered
@@ -476,7 +477,16 @@ def test_repo_codearts_adapter_declares_model_pool():
         "sessionOrchestration"
     ]["codeartsAdapter"]
     models = adapter.get("models") or []
-    assert {"glm-5.3", "deepseek-v4.1-flash", "kimi-k3"} <= set(models)
+    # 模型池条目有两种写法："glm-5.3"（只给 modelID）或
+    # {"providerID": ..., "modelID": ...}（显式给 provider）。这里只关心
+    # **声明了哪几个模型**，两种写法归一化后都比 modelID。
+    model_ids = set()
+    for item in models:
+        if isinstance(item, dict):
+            model_ids.add(str(item.get("modelID") or "").strip())
+        else:
+            model_ids.add(str(item).strip().split("/")[-1])
+    assert {"glm-5.3", "deepseek-v4.1-flash", "kimi-k3"} <= model_ids
     assert "{model}" in adapter["bridgeCommand"]
     assert "{channel}" in adapter["bridgeCommand"]
 
