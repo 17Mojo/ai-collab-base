@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "description": "把 src/ 显式声明为 ESM 包。Node 的 import() 据此确定性地把 src/**/*.js 当作 ES 模块，测试矩阵（tests/adapter-matrix）因此可以直接引入生产 adapter 源码，而不必手抄一份 SELECTORS。vite 构建不受影响——这些文件本来就是 ESM。"
+}

@@ -4,7 +4,7 @@
  */
 
 import PlatformAdapter from "./adapter.js";
-import { findElement, injectTextSmart, delay } from "./adapter-utils.js";
+import { findElement, findElements, findVisibleElement, injectTextSmart, delay } from "./adapter-utils.js";
 
 /** DeepSeek 平台选择器配置 */
 const SELECTORS = {
@@ -67,12 +67,16 @@ class DeepSeekAdapter extends PlatformAdapter {
     return findElement(this.selectors.sendButton);
   }
 
+  /**
+   * 获取消息列表
+   *
+   * 统一走 adapter-utils 的 findElements。旧实现在这里回退到「页面上的全部 div」，
+   * 实测那会把 div 总数当成消息数（真机 Gemini 上读到 104），并连带让基于计数的
+   * 等待逻辑失真——此处返回空集合，与其余 adapter 行为一致。
+   * @returns {Element[]}
+   */
   getMessageList() {
-    for (const sel of this.selectors.messageList) {
-      const els = document.querySelectorAll(sel);
-      if (els.length > 0) return els;
-    }
-    return document.querySelectorAll("div"); // fallback: empty NodeList
+    return findElements(this.selectors.messageList);
   }
 
   async injectText(text) {
@@ -105,11 +109,11 @@ class DeepSeekAdapter extends PlatformAdapter {
   }
 
   isTyping() {
-    // 检查停止按钮
-    const stopButton = findElement(this.selectors.stopButton);
+    // 检查停止按钮（生成中才可见）
+    const stopButton = findVisibleElement(this.selectors.stopButton);
     if (stopButton) return true;
 
-    return findElement(this.selectors.typingIndicator) !== null;
+    return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
   async waitForResponse(timeout = 60000) {

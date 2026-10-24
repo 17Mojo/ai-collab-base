@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-10-25-01",
+  "created_at": "2026-10-25T00:24:16+08:00",
+  "updated_at": "2026-10-25T00:26:11+08:00",
+  "operator": "claude_code",
+  "purpose": "真机回归：L1 DOM 契约 + L2 真实发送",
+  "platforms": [
+    "chatgpt",
+    "claude",
+    "gemini"
+  ],
+  "locales": [
+    "zh-CN",
+    "en-US"
+  ],
+  "records": [
+    {
+      "layer": "L1",
+      "platform": "gemini",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-25T00:26:11+08:00",
+      "evidence": [
+        "探针判定：生产 adapter 在真实 DOM 上找到输入框与发送按钮（aria=发送 / Send message）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-25-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "chatgpt",
+      "status": "unverified",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-25T00:26:11+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-25-zh-CN.json"
+      ],
+      "reason": "无登录态：命中人机校验/机器人拦截页（HTTP 403），DOM 契约未结论——需要已登录的浏览器 profile",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "claude",
+      "status": "unverified",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-25T00:26:11+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-25-zh-CN.json"
+      ],
+      "reason": "无登录态：命中人机校验/机器人拦截页（HTTP 403），DOM 契约未结论——需要已登录的浏览器 profile",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "gemini",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-25T00:26:11+08:00",
+      "evidence": [
+        "探针判定：生产 adapter 在真实 DOM 上找到输入框与发送按钮（aria=发送 / Send message）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-25-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "chatgpt",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-10-25T00:26:11+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-25-en-US.json"
+      ],
+      "reason": "无登录态：命中人机校验/机器人拦截页（HTTP 403），DOM 契约未结论——需要已登录的浏览器 profile",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "claude",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-10-25T00:26:11+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-25-en-US.json"
+      ],
+      "reason": "无登录态：命中人机校验/机器人拦截页（HTTP 403），DOM 契约未结论——需要已登录的浏览器 profile",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "chatgpt",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-25T00:24:33+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "尚未执行：L2 需要已登录的真实账号 + 人工在浏览器里触发 Pack（会真实发送并消耗额度）。本轮只做 L1 准备。",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "claude",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-25T00:24:33+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "尚未执行：L2 需要已登录的真实账号 + 人工在浏览器里触发 Pack（会真实发送并消耗额度）。本轮只做 L1 准备。",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "gemini",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-25T00:24:33+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "尚未执行：L2 需要已登录的真实账号 + 人工在浏览器里触发 Pack（会真实发送并消耗额度）。本轮只做 L1 准备。",
+      "notes": ""
+    }
+  ]
+}

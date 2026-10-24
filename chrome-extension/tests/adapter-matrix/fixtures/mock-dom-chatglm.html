@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!--
+  fixture 契约：用 data-role 标注「这个元素在真实站点里扮演什么角色」，
+  测试矩阵（adapter-test-runner.js）据此把**生产 adapter 的返回值**与快照对账：
+    data-role="chat-input"  输入框（应为 1 个）
+    data-role="send-button" 发送按钮（应为 1 个）
+    data-role="message"     消息（可多个）
+  改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+-->
 <head>
   <meta charset="UTF-8">
   <title>ChatGLM (智谱清言)</title>
 </head>
 <body>
   <!-- Chat Input: contenteditable div -->
-  <div contenteditable="true">
+  <div contenteditable="true" data-role="chat-input">
     <p>解释一下深度学习</p>
   </div>
 
@@ -17,7 +26,7 @@
   <div role="textbox" style="display:none;"></div>
 
   <!-- Send Button -->
-  <button type="submit" aria-label="发送消息" class="send-btn">
+  <button type="submit" aria-label="发送消息" class="send-btn" data-role="send-button">
     <svg><!-- send icon --></svg>
   </button>
 
@@ -28,19 +37,19 @@
   <div class="typing-indicator" style="display:none;"></div>
 
   <!-- Message List -->
-  <div class="chat-message">
+  <div class="chat-message" data-role="message">
     <div class="chat-content">
       <div class="message-text"><p>你好，智谱清言</p></div>
     </div>
   </div>
 
-  <div class="chat-message">
+  <div class="chat-message" data-role="message">
     <div class="chat-content">
       <div class="message-text"><p>你好！我是智谱清言，有什么可以帮你的？</p></div>
     </div>
   </div>
 
-  <div class="chat-message">
+  <div class="chat-message" data-role="message">
     <div class="chat-content">
       <div class="message-text"><p>解释一下深度学习</p></div>
     </div>

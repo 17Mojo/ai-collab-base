@@ -1,57 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <title>Gemini</title>
 </head>
-<body>
-  <!-- Chat Input: contenteditable with aria-label -->
-  <div contenteditable="true" aria-label="Enter a prompt here" class="ql-editor" role="textbox">
-    <p>Explain general relativity</p>
+<!--
+  本 fixture 是**真实站点 DOM 的快照**（2026-10-25，真实 Google Chrome，
+  zh-CN / en-US 两种界面语言各测一次），不是「恰好能让选择器命中」的假 DOM。
+
+  取的是 **zh-CN 形状**，因为缺陷只在中文界面下显形：
+    zh-CN：内层 <button aria-label="发送">
+            → 旧选择器 button[aria-label*="Send"] 命中 0（生产 adapter 找不到发送按钮）
+    en-US：内层 <button aria-label="Send message">
+            → 旧选择器 button[aria-label*="Send"] 命中 1（旧选择器侥幸命中，缺陷不显形）
+  换成中文快照，矩阵才能守住这条回归。
+
+  三处真实形状（与生产 adapter 的选择器一一对应）：
+
+  1. <body> 的 class 里**常驻** enable-lm-loading-animation 这类功能开关名，
+     于是宽松的 [class*="loading"] 会命中 <body> 本身。
+     → 生产侧由 findElement/findVisibleElement 统一排除 html/body。
+
+  2. 发送按钮是 <gem-icon-button class="send-button … has-input submit …">
+     包着**内层** <button aria-label="发送">（英文界面为 "Send message"）。
+     aria-label 随界面语言变化，class 不变 → 生产选择器以 class 优先。
+     注意：has-input 只有在输入框有内容时才出现，这与真实行为一致。
+
+  3. 加载 spinner 是 <div class="loading-content-spinner-container">，
+     **常驻 DOM 但空闲态 display:none**（实测 getComputedStyle.display=none、
+     盒子 0x0）→ 「正在生成」必须按**可见性**判定，不能按「元素存在」判定。
+-->
+<body class="ssr-nav-open enable-lm-loading-animation lr26 enable-lm-fast-follows chrome-context-v39 light-theme viewer-signed-out zero-state-theme">
+  <!-- Chat Input: Quill 编辑器。
+       实测真实 aria-label 含 "Gemini"（命中 aria-label*="Gemini"）、
+       不含 "prompt"（aria-label*="prompt" 实测命中 0）——
+       所以生产选择器的第 1 条在真实站点不命中，这里如实保留，
+       矩阵因此走的是与真机相同的第 2 条。完整文案随站点版本变化。 -->
+  <div contenteditable="true" aria-label="向 Gemini 提问" class="ql-editor" role="textbox" data-role="chat-input">
+    <p>解释一下广义相对论</p>
   </div>
 
   <!-- Fallback textarea -->
   <textarea placeholder="Enter a prompt here" style="display:none;"></textarea>
 
-  <!-- Send Button: custom element -->
-  <send-button aria-label="Send prompt">
-    <button aria-label="Send prompt">
-      <svg><!-- send icon --></svg>
-    </button>
-  </send-button>
+  <!-- Send Button: 真实站点形状（2026-10-25 实测，zh-CN 形状） -->
+  <div data-test-id="send-button-container" class="send-button-container visible persistent-mic">
+    <gem-icon-button class="send-button ... has-input submit ..." aria-disabled="false">
+      <button class="mdc-icon-button mat-mdc-icon-button ..." aria-label="发送" data-role="send-button">
+        <svg><!-- send icon --></svg>
+      </button>
+    </gem-icon-button>
+  </div>
 
-  <!-- Stop Button -->
-  <button aria-label="Stop" style="display:none;">
+  <!-- Stop Button: 生成中才出现。**未实测**（需要登录态 + 一次真实生成），
+       这里用中文界面的常见写法占位；生产选择器用 aria-label 前缀匹配覆盖两种语言。 -->
+  <button aria-label="停止生成" style="display:none;">
     <svg><!-- stop icon --></svg>
   </button>
 
-  <!-- Typing Indicator: material progress bar -->
+  <!-- Loading spinner: 常驻 DOM，空闲态 display:none -->
+  <div class="loading-content-spinner-container ng-star-inserted" style="display:none;"></div>
   <mat-progress-bar style="display:none;"></mat-progress-bar>
 
-  <!-- Loading fallback -->
-  <div class="loading-indicator" style="display:none;"></div>
-
-  <!-- Message List: model-response custom element -->
-  <model-response class="conversation-turn">
+  <!-- Message List: model-response 自定义元素 -->
+  <model-response class="conversation-turn" data-role="message">
     <div class="model-response-text">
-      <div class="markdown"><p>What is machine learning?</p></div>
+      <div class="markdown"><p>什么是机器学习？</p></div>
     </div>
   </model-response>
 
-  <model-response class="conversation-turn">
+  <model-response class="conversation-turn" data-role="message">
     <div class="model-response-text">
-      <div class="markdown"><p>Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience.</p></div>
+      <div class="markdown"><p>机器学习是人工智能的一个分支，使系统能够从经验中学习并不断改进。</p></div>
     </div>
   </model-response>
 
-  <!-- Chat turn fallback -->
+  <!-- 测试脚手架（**不属于真实 DOM 快照**）：首选选择器 model-response 失效后的
+       回退组 .chat-turn。真实站点的回退形状尚未实测（需要登录态 + 一次真实对话）。 -->
   <div class="chat-turn" style="display:none;">
     <message-content>
       <div class="markdown"><p>fallback content</p></div>
     </message-content>
   </div>
-
-  <!-- Conversation turn fallback -->
-  <div class="conversation-turn-element" style="display:none;"></div>
 </body>
 </html>

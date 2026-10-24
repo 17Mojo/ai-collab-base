@@ -5,7 +5,7 @@
 
 import PlatformAdapter from "./adapter.js";
 import DOMObserver from "../utils/dom-observer.js";
-import { findElement, findElements, extractMessageContent } from "./adapter-utils.js";
+import { findElement, findElements, findVisibleElement, extractMessageContent } from "./adapter-utils.js";
 
 /**
  * ChatGPT 选择器配置
@@ -54,7 +54,7 @@ class ChatGPTAdapter extends PlatformAdapter {
    * @returns {HTMLElement|null}
    */
   getChatInput() {
-    return findElement(SELECTORS.chatInput);
+    return findElement(this.selectors.chatInput);
   }
 
   /**
@@ -62,7 +62,7 @@ class ChatGPTAdapter extends PlatformAdapter {
    * @returns {HTMLElement|null}
    */
   getSendButton() {
-    return findElement(SELECTORS.sendButton);
+    return findElement(this.selectors.sendButton);
   }
 
   /**
@@ -70,7 +70,7 @@ class ChatGPTAdapter extends PlatformAdapter {
    * @returns {NodeList}
    */
   getMessageList() {
-    return findElements(SELECTORS.messageList);
+    return findElements(this.selectors.messageList);
   }
 
   /**
@@ -128,11 +128,12 @@ class ChatGPTAdapter extends PlatformAdapter {
    */
   isTyping() {
     // 检查停止按钮
-    const stopButton = findElement(SELECTORS.stopButton);
+    // 停止按钮（生成中才可见）
+    const stopButton = findVisibleElement(this.selectors.stopButton);
     if (stopButton) return true;
 
-    // 检查输入指示器
-    const typingIndicator = findElement(SELECTORS.typingIndicator);
+    // 检查输入指示器（必须做可见性判定：元素常驻 DOM 但 display:none 时不算打字中）
+    const typingIndicator = findVisibleElement(this.selectors.typingIndicator);
     return !!typingIndicator;
   }
 

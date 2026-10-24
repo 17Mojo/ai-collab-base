@@ -1,0 +1,379 @@
+{
+  "generatedAt": "2026-10-24T16:24:04.336Z",
+  "layer": "L1-real-machine-dom-contract",
+  "method": "生产 adapter 经 esbuild 打包注入真实页面，调用真实方法",
+  "readOnly": true,
+  "sendsMessages": false,
+  "sendButtonProbed": true,
+  "browserChannel": "playwright-chromium",
+  "locale": "en-US",
+  "platforms": [
+    {
+      "platform": "chatgpt",
+      "name": "ChatGPT",
+      "url": "https://chatgpt.com/",
+      "outcome": "bot_check",
+      "detail": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）",
+      "probe": {
+        "detected": true,
+        "hasInput": false,
+        "inputTag": null,
+        "inputContentEditable": null,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "#prompt-textarea",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "textarea[placeholder*=\"Message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[data-testid=\"send-button\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Send prompt\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "[data-testid=\"conversation-turn\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".text-base",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[data-testid=\"typing-indicator\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "stopButton": [
+            {
+              "selector": "button[aria-label=\"Stop generating\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".markdown",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[data-message-author-role]",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "Just a moment...",
+        "bodySnippet": ""
+      },
+      "durationMs": 30677,
+      "httpStatus": 403,
+      "composerAppeared": false,
+      "botCheckSignal": "http-status-403"
+    },
+    {
+      "platform": "claude",
+      "name": "Claude.ai",
+      "url": "https://claude.ai/",
+      "outcome": "bot_check",
+      "detail": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）",
+      "probe": {
+        "detected": true,
+        "hasInput": false,
+        "inputTag": null,
+        "inputContentEditable": null,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "div.ProseMirror[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[aria-label=\"Send\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[data-testid=\"send-button\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "[data-testid=\"conversation-turn\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".conversation-turn",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[data-testid=\"typing-indicator\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "stopButton": [
+            {
+              "selector": "button[aria-label=\"Stop generating\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".prose",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[data-testid=\"message-content\"]",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "Just a moment...",
+        "bodySnippet": "claude.ai Performing security verification This website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot. Ray ID: a4fa53838b985fa3 Performance and Security by Clo"
+      },
+      "durationMs": 30549,
+      "httpStatus": 403,
+      "composerAppeared": false,
+      "botCheckSignal": "http-status-403"
+    },
+    {
+      "platform": "gemini",
+      "name": "Gemini",
+      "url": "https://gemini.google.com/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<div>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "div",
+        "inputContentEditable": "true",
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div[contenteditable=\"true\"][aria-label*=\"prompt\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"][aria-label*=\"Gemini\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"].ql-editor",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "[role=\"textbox\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "textarea[placeholder*=\"prompt\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "gem-icon-button.send-button button",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".send-button button",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Send message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Send prompt\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "send-button",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"Send\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "model-response",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".chat-turn",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"conversation-turn\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": ".loading-content-spinner-container",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "mat-progress-bar",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"loading\"]",
+              "matched": true,
+              "tag": "body"
+            }
+          ],
+          "stopButton": [
+            {
+              "selector": "button[aria-label=\"停止生成\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"停止\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Stop\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"Stop\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".model-response-text",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "message-content",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".markdown",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "Google Gemini",
+        "bodySnippet": "Meet Gemini, your personal AI assistant About Gemini Get Gemini App Subscriptions For Business Sign in"
+      },
+      "durationMs": 5661,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": true,
+        "hasSendButton": true,
+        "sendButtonTag": "button",
+        "sendButtonAria": "Send message",
+        "matchedSelectors": [
+          "gem-icon-button.send-button button",
+          ".send-button button",
+          "button[aria-label=\"Send message\"]",
+          "button[aria-label*=\"Send\"]"
+        ],
+        "sendButtonDomPresent": true,
+        "sendButtonDomSelectors": [
+          ".send-button",
+          "gem-icon-button.send-button",
+          "[class*='send-button']"
+        ]
+      },
+      "sendButtonVerdict": "ok"
+    }
+  ],
+  "passed": 1,
+  "unverified": 2,
+  "failed": 0,
+  "verdict": "partially-unverified"
+}

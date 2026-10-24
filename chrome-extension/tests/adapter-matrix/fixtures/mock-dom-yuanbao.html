@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!--
+  fixture 契约：用 data-role 标注「这个元素在真实站点里扮演什么角色」，
+  测试矩阵（adapter-test-runner.js）据此把**生产 adapter 的返回值**与快照对账：
+    data-role="chat-input"  输入框（应为 1 个）
+    data-role="send-button" 发送按钮（应为 1 个）
+    data-role="message"     消息（可多个）
+  改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+-->
 <head>
   <meta charset="UTF-8">
   <title>Yuanbao (腾讯元宝)</title>
 </head>
 <body>
   <!-- Chat Input: Quill editor -->
-  <div class="ql-editor" contenteditable="true" role="textbox">
+  <div class="ql-editor" contenteditable="true" role="textbox" data-role="chat-input">
     <p>讲一个笑话</p>
   </div>
 
@@ -17,7 +26,7 @@
   <textarea style="display:none;"></textarea>
 
   <!-- Send Button -->
-  <button type="submit" aria-label="发送消息" class="send-btn" data-send>
+  <button type="submit" aria-label="发送消息" class="send-btn" data-send" data-role="send-button">
     <svg><!-- send icon --></svg>
   </button>
 
@@ -28,19 +37,19 @@
   <div class="spinner" style="display:none;"></div>
 
   <!-- Message List -->
-  <div class="message-item">
+  <div class="message-item" data-role="message">
     <div class="answer-content">
       <div class="prose"><p>你好，元宝</p></div>
     </div>
   </div>
 
-  <div class="message-item">
+  <div class="message-item" data-role="message">
     <div class="answer-content">
       <div class="prose"><p>你好！我是腾讯元宝，有什么可以帮你的？</p></div>
     </div>
   </div>
 
-  <div class="message-item">
+  <div class="message-item" data-role="message">
     <div class="answer-content">
       <div class="prose"><p>讲一个笑话</p></div>
     </div>

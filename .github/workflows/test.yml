@@ -122,12 +122,33 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Run adapter tests
+      - name: Install dependencies
+        # 不再用 `npm ci 2>/dev/null || npm install` 兜底：锁文件已入库
+        # （chrome-extension/package-lock.json），`npm ci` 失败就是真失败。
+        # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1：矩阵只需要 jsdom，
+        # 不需要浏览器二进制（真机探针不在 CI 里跑，见 docs/REAL_MACHINE_REGRESSION.md）。
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
         run: |
           cd chrome-extension
-          npm ci 2>/dev/null || npm install
-          node tests/test-adapters.js 2>/dev/null || echo "adapter tests skipped"
-          node tests/test-branch-executor.js 2>/dev/null || echo "branch tests skipped"
+          npm ci
+
+      - name: Run adapter matrix (production adapter vs real-DOM snapshot)
+        # 这一步**不再允许失败被吞掉**。此前写的是
+        #   node tests/test-adapters.js 2>/dev/null || echo "adapter tests skipped"
+        # 而那两个文件早已归档到 tests/_archive/，命令必然失败 → 必然走 echo 分支 →
+        # CI 长期绿灯，实际**一个扩展测试都没跑**。
+        # 现在跑的是 adapter-matrix：它 import 生产 adapter 源码（src/platforms/*.js），
+        # 用 fixture 里 data-role 标注的真实 DOM 快照对账，生产选择器漂移会真的报红。
+        run: |
+          cd chrome-extension
+          node tests/adapter-matrix/adapter-test-runner.js
+
+      - name: Build extension bundle
+        # 矩阵绿不代表能构建：把 vite 构建也纳入门禁，防止 adapter 改动把产物打坏。
+        run: |
+          cd chrome-extension
+          npm run build
 
   pack-validation:
     runs-on: ubuntu-latest

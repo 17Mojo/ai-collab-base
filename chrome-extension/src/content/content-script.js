@@ -28,6 +28,7 @@ import { SELECTORS as DEEPSEEK_SELECTORS } from "../platforms/deepseek-adapter.j
 import {
   findElement,
   findElements,
+  findVisibleElement,
   injectTextSmart,
   extractMessageContent,
 } from "../platforms/adapter-utils.js";
@@ -199,14 +200,17 @@ function isTyping() {
   if (!currentConfig) return false;
 
   // 检查停止按钮
+  // 停止按钮与打字指示器都必须做**可见性**判定：真实站点空闲态会把这类元素
+  // 留在 DOM 里（display:none）。按「存在即命中」判定会让 isTyping() 恒为 true，
+  // 于是 handleWaitForResponse 永远等不到「不再打字」，每次执行都超时。
   if (currentConfig.stopButton) {
-    const stopButton = findElement(currentConfig.stopButton);
+    const stopButton = findVisibleElement(currentConfig.stopButton);
     if (stopButton) return true;
   }
 
   // 检查输入指示器
   if (currentConfig.typingIndicator) {
-    const indicator = findElement(currentConfig.typingIndicator);
+    const indicator = findVisibleElement(currentConfig.typingIndicator);
     if (indicator) return true;
   }
 
