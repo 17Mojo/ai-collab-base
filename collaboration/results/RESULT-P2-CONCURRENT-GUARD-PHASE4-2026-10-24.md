@@ -24,7 +24,13 @@ python3 -m pytest tests/ -q
 # 3. lint
 python3 -m ruff check .
 
-# 4. 边界自查（本仓当前状态）
+# 4. 验收命令（原样执行，工单 acceptance_commands 逐条）
+python3 -m pytest tests/unit/test_concurrent_guard.py tests/unit/test_project_boundary_guard.py -q
+python3 -m pytest tests/ -q
+python3 -m ruff check .
+python3 -m pytest tests/unit --collect-only -q
+
+# 5. 边界自查（本仓当前状态）
 find . -path ./.git -prune -o -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print | grep -v '^\./tests/' || echo "（tests/ 之外无测试文件）"
 ```
 
@@ -138,8 +144,10 @@ tmp_path/
 | 命令 | 结果 |
 |---|---|
 | 五个相关测试文件 | `49 passed in 10.56s`（13 本工单新增 + 36 既有守护） |
+| `python3 -m pytest tests/unit/test_concurrent_guard.py tests/unit/test_project_boundary_guard.py -q` | `28 passed in 7.32s` |
 | `python3 -m pytest tests/ -q` | `3008 passed, 6 skipped in 44.47s`（0 failed；基线 2995 → +13） |
 | `python3 -m ruff check .` | `All checks passed!` |
+| `python3 -m pytest tests/unit --collect-only -q` | `2692 tests collected in 0.57s`，rc=0，无收集错误 |
 | `git status --short` | **不含** `logs/` 下的任何新增/修改（tmp repo 报告未污染本仓） |
 
 ## 测试结论
