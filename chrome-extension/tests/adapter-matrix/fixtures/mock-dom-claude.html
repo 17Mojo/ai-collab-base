@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!--
+  fixture 契约：用 data-role 标注「这个元素在真实站点里扮演什么角色」，
+  测试矩阵（adapter-test-runner.js）据此把**生产 adapter 的返回值**与快照对账：
+    data-role="chat-input"  输入框（应为 1 个）
+    data-role="send-button" 发送按钮（应为 1 个）
+    data-role="message"     消息（可多个）
+  改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+-->
 <head>
   <meta charset="UTF-8">
   <title>Claude</title>
 </head>
 <body>
   <!-- Chat Input: ProseMirror contenteditable -->
-  <div class="ProseMirror" contenteditable="true" data-placeholder="Reply to Claude...">
+  <div class="ProseMirror" contenteditable="true" data-placeholder="Reply to Claude..." data-role="chat-input">
     <p>Tell me a story</p>
   </div>
 
   <!-- Send Button -->
-  <button aria-label="Send" data-testid="send-button">
+  <button aria-label="Send" data-testid="send-button" data-role="send-button">
     <svg><!-- send icon --></svg>
   </button>
 
@@ -26,22 +35,28 @@
   </div>
 
   <!-- Message List -->
-  <div data-testid="conversation-turn" class="conversation-turn">
+  <div data-testid="conversation-turn" class="conversation-turn" data-role="message">
     <div class="prose" data-testid="message-content">
       <p>Hello Claude, how are you?</p>
     </div>
   </div>
 
-  <div data-testid="conversation-turn" class="conversation-turn">
+  <div data-testid="conversation-turn" class="conversation-turn" data-role="message">
     <div class="prose" data-testid="message-content">
       <p>I'm doing well! I'd be happy to help. What would you like to know?</p>
     </div>
   </div>
 
-  <div data-testid="conversation-turn" class="conversation-turn">
+  <div data-testid="conversation-turn" class="conversation-turn" data-role="message">
     <div class="prose" data-testid="message-content">
       <p>Tell me a story</p>
     </div>
+  </div>
+
+  <!-- 测试脚手架（不属于真实 DOM）：首选选择器 [data-testid="conversation-turn"]
+       失效后的回退组 .conversation-turn。 -->
+  <div class="conversation-turn" style="display:none;">
+    <div class="prose" data-testid="message-content"><p>fallback</p></div>
   </div>
 </body>
 </html>

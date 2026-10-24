@@ -4,29 +4,116 @@
  */
 
 /**
+ * 判断元素是否是页面根节点（html/body）。
+ *
+ * 2026-10-24 真机实测（Gemini 真实 Chrome）：`<body>` 的 class 里常驻
+ * `enable-lm-loading-animation` 这类**功能开关类**名字，于是
+ * `[class*="loading"]` 这类宽松选择器会稳定命中 `<body>` 本身。
+ * 命中 body 意味着「打字指示器永远存在」→ isTyping() 恒为 true →
+ * waitForResponse 永远等不到「不再打字」→ 每次执行都超时。
+ *
+ * 页面根节点不可能是任何平台的输入框/发送按钮/消息/打字指示器，
+ * 因此统一排除。
+ *
+ * @param {Element|null} el
+ * @returns {boolean}
+ */
+function isPageRoot(el) {
+  return !!el && (el.tagName === 'HTML' || el.tagName === 'BODY');
+}
+
+/**
+ * 判断元素是否处于「渲染可见」状态。
+ *
+ * 只看计算样式（display / visibility / opacity），并沿祖先链向上检查——
+ * 祖先 display:none 时，元素自身的 computed display 仍是 block，
+ * 只查自身会漏判。真实 Gemini 空闲态实测：spinner 元素**常驻 DOM**，
+ * 自身 `display:none`（0x0），祖先链正常，所以自身样式就足以判定。
+ *
+ * 刻意不使用 getBoundingClientRect：jsdom 不实现布局，rect 恒为 0，
+ * 用了会让所有元素都被判为不可见，测试环境将无法验证这条逻辑。
+ *
+ * @param {Element|null} el
+ * @returns {boolean}
+ */
+export function isElementRendered(el) {
+  if (!el || isPageRoot(el)) return false;
+
+  let node = el;
+  while (node && node.nodeType === 1) {
+    const style = window.getComputedStyle ? window.getComputedStyle(node) : null;
+    if (style) {
+      if (style.display === 'none') return false;
+      if (style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+      if (style.opacity === '0') return false;
+    }
+    node = node.parentElement;
+  }
+  return true;
+}
+
+/**
  * 查找元素（支持多个选择器回退）
+ *
+ * 与历史行为的唯一差别：**排除 html/body**。此前 `document.querySelector`
+ * 会把 `<body>` 当作合法命中（见 isPageRoot 的实测说明）。
+ *
  * @param {string[]} selectors - 选择器数组，按优先级排列
  * @returns {HTMLElement|null}
  */
 export function findElement(selectors) {
   for (const selector of selectors) {
-    const el = document.querySelector(selector);
-    if (el) return el;
+    for (const el of document.querySelectorAll(selector)) {
+      if (!isPageRoot(el)) return el;
+    }
+  }
+  return null;
+}
+
+/**
+ * 查找**可见**元素（支持多个选择器回退）。
+ *
+ * 只用于「正在生成中」这类状态信号：元素常驻 DOM 但 display:none 时，
+ * 不应被判定为「正在打字」。真实 Gemini 空闲态实测：spinner 常驻 DOM 且
+ * display:none，若按「存在即命中」判定，isTyping() 会恒为 true。
+ *
+ * 可见性判定见 isElementRendered。
+ *
+ * @param {string[]} selectors - 选择器数组，按优先级排列
+ * @returns {HTMLElement|null}
+ */
+export function findVisibleElement(selectors) {
+  for (const selector of selectors) {
+    for (const el of document.querySelectorAll(selector)) {
+      if (isElementRendered(el)) return el;
+    }
   }
   return null;
 }
 
 /**
  * 查找所有匹配元素（支持多个选择器回退）
+ *
+ * 两处修正：
+ * 1. 排除 html/body（见 isPageRoot）；
+ * 2. **全都不匹配时返回空集合**。历史实现返回 `document.querySelectorAll('div')`
+ *    ——页面上的**全部 div**，而同一行的注释却写着「fallback: empty NodeList」，
+ *    代码与注释互相矛盾。实测该回退正是「页面无对话时 messageCount 报 104」
+ *    的来源：104 是 div 总数，不是消息数。基于这个数字的
+ *    waitForResponse 计数比较也一并失真。
+ *
  * @param {string[]} selectors - 选择器数组，按优先级排列
- * @returns {NodeList}
+ * @returns {Element[]} 匹配的元素数组（不匹配时为空数组）
  */
 export function findElements(selectors) {
   for (const selector of selectors) {
-    const els = document.querySelectorAll(selector);
+    const els = [];
+    for (const el of document.querySelectorAll(selector)) {
+      if (!isPageRoot(el)) els.push(el);
+    }
     if (els.length > 0) return els;
   }
-  return document.querySelectorAll('div'); // fallback: empty NodeList
+  return [];
 }
 
 /**

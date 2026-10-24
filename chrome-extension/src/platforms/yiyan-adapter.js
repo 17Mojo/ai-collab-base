@@ -4,7 +4,7 @@
  */
 
 import PlatformAdapter from "./adapter.js";
-import { findElement, injectTextSmart, delay } from "./adapter-utils.js";
+import { findElement, findElements, findVisibleElement, injectTextSmart, delay } from "./adapter-utils.js";
 
 /** 文心一言选择器配置 */
 const SELECTORS = {
@@ -55,11 +55,15 @@ class YiyanAdapter extends PlatformAdapter {
     return findElement(this.selectors.sendButton);
   }
 
+  /**
+   * 获取消息列表
+   *
+   * 统一走 adapter-utils 的 findElements：messageList 里的**全部**选择器按优先级
+   * 依次尝试（不只是前两个），一个都不命中时返回空集合。
+   * @returns {Element[]}
+   */
   getMessageList() {
-    const els = document.querySelectorAll(this.selectors.messageList[0]);
-    return els.length > 0
-      ? els
-      : document.querySelectorAll(this.selectors.messageList[1]);
+    return findElements(this.selectors.messageList);
   }
 
   async injectText(text) {
@@ -91,7 +95,9 @@ class YiyanAdapter extends PlatformAdapter {
   }
 
   isTyping() {
-    return findElement(this.selectors.typingIndicator) !== null;
+    // 打字指示器必须做可见性判定：真实站点空闲态会把这类元素留在 DOM 里
+    // （display:none），按「存在即命中」判定会让 isTyping() 恒为 true。
+    return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
   async waitForResponse(timeout = 60000) {

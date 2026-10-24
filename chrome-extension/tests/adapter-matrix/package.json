@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "description": "测试矩阵用 ESM：直接 import 生产 adapter 源码（src/platforms/*.js）与 jsdom，不再 require、不再手抄选择器表。"
+}

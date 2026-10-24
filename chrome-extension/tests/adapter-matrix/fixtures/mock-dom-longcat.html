@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!--
+  fixture 契约：用 data-role 标注「这个元素在真实站点里扮演什么角色」，
+  测试矩阵（adapter-test-runner.js）据此把**生产 adapter 的返回值**与快照对账：
+    data-role="chat-input"  输入框（应为 1 个）
+    data-role="send-button" 发送按钮（应为 1 个）
+    data-role="message"     消息（可多个）
+  改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+-->
 <head>
   <meta charset="UTF-8">
   <title>LongCat AI</title>
 </head>
 <body>
   <!-- Chat Input: role textbox -->
-  <div role="textbox" contenteditable="true">
+  <div role="textbox" contenteditable="true" data-role="chat-input">
     <p>Write a haiku about cats</p>
   </div>
 
@@ -14,7 +23,7 @@
   <div contenteditable="true" style="display:none;"></div>
 
   <!-- Send Button: submit button -->
-  <button type="submit">
+  <button type="submit" data-role="send-button">
     <svg><!-- send icon --></svg>
   </button>
 
@@ -27,19 +36,19 @@
   </div>
 
   <!-- Message List -->
-  <div class="message">
+  <div class="message" data-role="message">
     <div class="response-content">
       <div class="prose"><p>What is LongCat?</p></div>
     </div>
   </div>
 
-  <div class="message">
+  <div class="message" data-role="message">
     <div class="response-content">
       <div class="prose"><p>LongCat is an AI assistant. How can I help you?</p></div>
     </div>
   </div>
 
-  <div class="message">
+  <div class="message" data-role="message">
     <div class="response-content">
       <div class="prose"><p>Write a haiku about cats</p></div>
     </div>

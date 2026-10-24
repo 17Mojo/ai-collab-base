@@ -5,7 +5,7 @@
 
 import PlatformAdapter from "./adapter.js";
 import DOMObserver from "../utils/dom-observer.js";
-import { findElement, findElements, extractMessageContent } from "./adapter-utils.js";
+import { findElement, findElements, findVisibleElement, extractMessageContent } from "./adapter-utils.js";
 
 /**
  * Gemini 选择器配置
@@ -21,7 +21,28 @@ const SELECTORS = {
   ],
 
   // 发送按钮
+  //
+  // 2026-10-25 真机实测（真实 Chrome，zh-CN / en-US 各测一次，落地页+输入框有内容）：
+  // 真实的发送按钮是
+  //   <gem-icon-button class="send-button … has-input submit …" aria-disabled="false">
+  //     <button class="mdc-icon-button mat-mdc-icon-button …"
+  //             aria-label="发送"（zh-CN）| "Send message"（en-US）" disabled=false>
+  //   </gem-icon-button>
+  // 外层容器是 <div data-test-id="send-button-container" class="… visible …">。
+  //
+  // 旧选择器（button[aria-label="Send prompt"] / send-button / button[aria-label*="Send"]）
+  // 的命中情况**随界面语言变化**——这正是它长期没被发现的原因：
+  //   zh-CN：0 命中（aria-label 是「发送」，不含 "Send"）→ L1 探针报 adapter_drift，
+  //          即生产 adapter 的发送按钮选择器已与站点漂移；
+  //   en-US：1 命中（`button[aria-label*="Send"]` 侥幸匹配到 "Send message"）——
+  //          英文界面下缺陷被完全掩盖。
+  // 因此优先使用**与语言无关**的 class 选择器，中英文 aria-label 作为补充。
   sendButton: [
+    'gem-icon-button.send-button button',
+    '.send-button button',
+    'button[aria-label="发送"]',
+    'button[aria-label="Send message"]',
+    // 旧选择器保留，兼容历史 DOM
     'button[aria-label="Send prompt"]',
     'send-button',
     'button[aria-label*="Send"]',
@@ -31,8 +52,23 @@ const SELECTORS = {
   messageList: ['model-response', '.chat-turn', '[class*="conversation-turn"]'],
 
   // AI 响应状态
-  typingIndicator: ['mat-progress-bar', '[class*="loading"]'],
-  stopButton: ['button[aria-label="Stop"]', 'button[aria-label*="Stop"]'],
+  //
+  // 真实站点的加载 spinner 是 div.loading-content-spinner-container
+  // （实测：常驻 DOM，空闲态 display:none，故 isTyping 必须做可见性判定）。
+  // 宽泛的 [class*="loading"] 会命中 <body>（其 class 含 enable-lm-loading-animation），
+  // 已由 findVisibleElement/findElement 统一排除页面根节点。
+  typingIndicator: [
+    '.loading-content-spinner-container',
+    'mat-progress-bar',
+    '[class*="loading"]',
+  ],
+  // 停止按钮的 aria-label 同样随语言变化，zh-CN 为「停止生成」
+  stopButton: [
+    'button[aria-label="停止生成"]',
+    'button[aria-label*="停止"]',
+    'button[aria-label="Stop"]',
+    'button[aria-label*="Stop"]',
+  ],
 
   // 消息内容
   messageContent: ['.model-response-text', 'message-content', '.markdown'],
@@ -61,7 +97,7 @@ class GeminiAdapter extends PlatformAdapter {
    * @returns {HTMLElement|null}
    */
   getChatInput() {
-    return findElement(SELECTORS.chatInput);
+    return findElement(this.selectors.chatInput);
   }
 
   /**
@@ -69,15 +105,15 @@ class GeminiAdapter extends PlatformAdapter {
    * @returns {HTMLElement|null}
    */
   getSendButton() {
-    return findElement(SELECTORS.sendButton);
+    return findElement(this.selectors.sendButton);
   }
 
   /**
    * 获取消息列表
-   * @returns {NodeList}
+   * @returns {Element[]}
    */
   getMessageList() {
-    return findElements(SELECTORS.messageList);
+    return findElements(this.selectors.messageList);
   }
 
   /**
@@ -131,13 +167,13 @@ class GeminiAdapter extends PlatformAdapter {
    * @returns {boolean}
    */
   isTyping() {
-    // 检查进度条
-    const progressBar = findElement(SELECTORS.typingIndicator);
-    if (progressBar) return true;
+    // 停止按钮（生成中才出现）——必须做可见性判定：
+    // 真实站点空闲态会把这类元素留在 DOM 里，只是 display:none。
+    const stopButton = findVisibleElement(this.selectors.stopButton);
+    if (stopButton) return true;
 
-    // 检查停止按钮
-    const stopButton = findElement(SELECTORS.stopButton);
-    return !!stopButton;
+    // 检查进度条 / spinner
+    return !!findVisibleElement(this.selectors.typingIndicator);
   }
 
   /**

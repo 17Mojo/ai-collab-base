@@ -1,18 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!--
+  fixture 契约：用 data-role 标注「这个元素在真实站点里扮演什么角色」，
+  测试矩阵（adapter-test-runner.js）据此把**生产 adapter 的返回值**与快照对账：
+    data-role="chat-input"  输入框（应为 1 个）
+    data-role="send-button" 发送按钮（应为 1 个）
+    data-role="message"     消息（可多个）
+  改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+-->
 <head>
   <meta charset="UTF-8">
   <title>ChatGPT</title>
 </head>
 <body>
   <!-- Chat Input: primary textarea -->
-  <div id="prompt-textarea" contenteditable="true" data-placeholder="Message ChatGPT">What is the weather today?</div>
+  <div id="prompt-textarea" contenteditable="true" data-placeholder="Message ChatGPT" data-role="chat-input">What is the weather today?</div>
 
   <!-- Chat Input: fallback textarea -->
   <textarea placeholder="Message ChatGPT" style="display:none;"></textarea>
 
   <!-- Send Button -->
-  <button data-testid="send-button" aria-label="Send prompt">
+  <button data-testid="send-button" aria-label="Send prompt" data-role="send-button">
     <svg><!-- send icon --></svg>
   </button>
 
@@ -27,22 +36,28 @@
   </div>
 
   <!-- Message List -->
-  <div data-testid="conversation-turn" data-message-author-role="user">
+  <div data-testid="conversation-turn" data-role="message" data-message-author-role="user">
     <div class="text-base">
       <div class="markdown"><p>Hello, how are you?</p></div>
     </div>
   </div>
 
-  <div data-testid="conversation-turn" data-message-author-role="assistant">
+  <div data-testid="conversation-turn" data-role="message" data-message-author-role="assistant">
     <div class="text-base">
       <div class="markdown"><p>I'm doing well, thank you! How can I help you today?</p></div>
     </div>
   </div>
 
-  <div data-testid="conversation-turn" data-message-author-role="user">
+  <div data-testid="conversation-turn" data-role="message" data-message-author-role="user">
     <div class="text-base">
       <div class="markdown"><p>What is the weather today?</p></div>
     </div>
+  </div>
+
+  <!-- 测试脚手架（不属于真实 DOM）：首选选择器 [data-testid="conversation-turn"]
+       失效后的回退组 .text-base。矩阵用它验证「回退路径是活的」。 -->
+  <div class="text-base" style="display:none;">
+    <div class="markdown"><p>fallback</p></div>
   </div>
 </body>
 </html>
