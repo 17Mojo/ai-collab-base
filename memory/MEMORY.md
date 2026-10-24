@@ -25,6 +25,7 @@
 - [严格输出格式约束须逐字照办](feedback_exact_output_format.md) — 用户给出字数/格式/字符集约束（如只回一个词）时，输出必须仅含被要求内容，不加解释、前后缀或 Markdown 包裹
 - [按用户既定目标反推应做项，而非并列可选项](feedback_goal_driven_backlog.md) — 用户已给出明确目标时，应从目标逐条反推应落地项并给出「目标↔项↔依据↔优先级」映射；禁止退回到并列的「你可以选 1/2/3」式可选项
 - [交付报告禁列流程仪式（仪式税），门禁改分层触发](feedback_no_ceremony_tax.md) — RESULT/closeout 不得列举 Skill 触发与门禁遵循情况；closeout 只写 5 行；门禁按提交/周/里程碑分层触发
+- [对外可见动作需要当前会话内的明确授权](feedback_outward_actions_need_in_session_approval.md) — 2026-10-24 实测——gh pr create 被 auto-mode 分类器以「Unrequested Commit in a Connected App」拦下，理由是授权只出现在被压缩的会话摘要里而非当前轮次；解决办法是先用 AskUserQuestion 拿到用户当场的明确授权再重试
 - [并行 bash 调用 abort 防范（单条逐个校验优于并行混合）](feedback_parallel_bash_abort.md) — 并行 bash 调用中若有一条命令对不存在目录报错，可能导致整批 abort；校验多路径时改用单条逐个执行
 - [动手实现前给「按线就绪度判定」，不给全局二元答案](feedback_readiness_gate_before_coding.md) — 用户会追问「是否已具备动手条件/是否还需更多实测」；期望按工作线分别判定就绪度，并逐项列出还差什么、类型、阻塞面，最后给二选一授权而非直接开干
 - [RESULT 结果文件的契约校验与终态一致性要求](feedback_result_file_contract.md) — 结果文件除 PROTOCOL §7.3 四段标题外还需可解析的状态行与测试结论小节，否则 tasks validate-contract 与一致性审计判不合格；任务终态须收口为 completed
