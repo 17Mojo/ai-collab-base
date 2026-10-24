@@ -1,7 +1,7 @@
 ---
 task_id: TASK-P1-PR2-CODEARTS-REVIEW-001
 change_id: add-concurrent-workspace-guard
-status: planning
+status: completed
 priority: P1
 assignee: codearts_agent
 assignee_role: AGENT_TEST
@@ -243,3 +243,88 @@ python3 -m ai_collab.cli ack \
 - 既有结果文件（被复核对象的自述，**要核对而不是采信**）：
   `collaboration/results/RESULT-P2-CONCURRENT-GUARD-PHASE4-2026-10-24.md`、
   `collaboration/results/RESULT-P1-CONCURRENT-GUARD-2026-10-24.md`
+
+### ⚠️ 契约勘误（2026-10-24 复核完成后订正，本工单已关闭）
+
+复核方（CodeArts）判定「**有条件通过**」，其发现 #9 指出本工单**部分表述与工具实际用法
+不符**。以下各条**原文保留作为历史记录**，订正结论以本节为准（实测证据附在每条末尾）。
+
+#### 勘误 1 —— R3.2：`openspec status` 必须带 `--change`
+
+本工单原文写 `openspec status` → 4/4 工件齐备。OpenSpec CLI 1.11.0 **裸调用直接报错**：
+
+```text
+✖ Error: Missing required option --change (or --all for every active change). Available changes:
+  add-concurrent-workspace-guard
+```
+
+正确写法与实测输出：
+
+```text
+$ openspec status --change add-concurrent-workspace-guard
+Progress: 4/4 artifacts complete
+[x] proposal   [x] specs   [x] design   [x] tasks
+```
+
+（复核方在结果文件里已按 `--change` 形式实测通过，并已自行注明「工单原文需补参数」。）
+
+#### 勘误 2 —— R3.3：`rules` 是分组 dict，不是 `list[str]`
+
+本工单原文写「`rules` 与 `operations.*.guidance` 的值**必须是字符串数组**」。该表述在
+`rules` 这一项上**不准确**。实测 `yaml.safe_load` 的真实结构：
+
+- `rules` 顶层是 **dict**（分组字典，键为 `proposal` / `specs` / `design` / `tasks`）
+  —— `type(rules) == dict`
+- `rules.proposal` / `rules.specs` / `rules.design` / `rules.tasks`
+  —— 4 项**全部**为 `list[str]`
+- `operations.apply.guidance` —— `list[str]`
+- `operations.archive.guidance` —— `list[str]`
+
+即：**是 `rules` 的各个分组「值」才是字符串数组**，`rules` 顶层本身是 dict。
+第四章验收标准第 3 条「R3.3 用 `yaml.safe_load` 断言过 `openspec/config.yaml` 的数组结构」
+应按上表理解（断言 `rules` 顶层为 dict + 各分组值为 `list[str]` + `operations.*.guidance`
+为 `list[str]`）。「块标量会被静默忽略」这一条的用意不变。
+
+#### 勘误 3 —— R5.5.3：grep 的失败形态记错了（修复本身正确）
+
+本工单原文称原写法 `grep -E '"(generated_at|timestamp)"'` 会「因引号/括号配对报
+`syntax error near unexpected token ')'`」。实测**该说法不成立**：
+
+- 提交版的原形（`git show bdc302f~1:ai_collab/dispatch_trigger.py` 第 190 行）是
+  `cat logs/task_dispatch_report.json | grep generated_at`——**没有** `-E`、**没有**括号。
+- 当时的真实失败形态是 **grep 无命中 → 退出码 1、输出为空**（报告当时只有 `timestamp`
+  键），**不是** shell 语法错误。这一点用例自己的 docstring
+  （`tests/unit/test_dispatch_trigger_freshness.py:335-339`）本来就写对了。
+- 三种写法的实测结果：
+  - `grep -E '"(generated_at|timestamp)"'`（工单原文所称）→ **rc=0 跑通**，有命中
+  - `grep -E 'generated_at|timestamp'`（本次修复后的写法）→ rc=0，有命中
+  - `grep -E (generated_at|timestamp)`（**不加引号**）→ rc=2，
+    `syntax error near unexpected token '('`
+
+  只有**不加引号**的那一种才报语法错误，且报的是 `(`，**不是** `)`。
+- **修复本身正确**：把模式放宽为 `generated_at|timestamp`，使命令在两种键名下都命中
+  （原写法在只有 `timestamp` 键的旧报告上 rc=1、输出为空 → 接收方无法完成第 1 步）。
+  错的只是**对失败形态的记录**。
+
+#### 勘误 4 —— 第六章「协议」引的章节号
+
+本工单原文写 `collaboration/PROTOCOL.md`（§7.3 收口要求、第十四章）。收口用的
+**结果文件四段契约在 §7.4**（`## 执行命令` / `## 验证结果` / `## 测试结论` / `## 风险` /
+`## 回滚`）；**§7.3 是绑定规则**（change_id / assignee_role / assignee_provider）。
+「第十四章」不变。
+
+#### 勘误 5 —— frontmatter `status`
+
+本工单 frontmatter 原文为 `status: planning`，与 `logs/collaboration_state.json` 中该工单的
+实际终态（`completed`，`completed_at=2026-10-24T19:11:01`）不一致，已订正为 `completed`。
+
+#### 实测证据（2026-10-24，作者侧独立复现）
+
+- `openspec status` → `✖ Error: Missing required option --change ...`
+- `openspec status --change add-concurrent-workspace-guard` → `Progress: 4/4 artifacts complete`
+- `yaml.safe_load` 结构断言 → `rules` 为 dict；4 个分组值与 2 个 `operations.*.guidance` 均为 `list[str]`
+- `git show bdc302f~1:ai_collab/dispatch_trigger.py` → 第 190 行为 `grep generated_at`
+- `git show bdc302f:ai_collab/dispatch_trigger.py` → 第 190 行为 `grep -E 'generated_at|timestamp'`
+- 三种 grep 形式的 rc 如勘误 3 所列
+
+复核结论与问题清单见 `collaboration/results/RESULT-P1-PR2-CODEARTS-REVIEW-2026-10-24.md`。
