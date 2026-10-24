@@ -186,8 +186,8 @@ def build_handoff_payload(
     lines.append("在执行任务前，必须先校验本 payload 的新鲜度：")
     lines.append("")
     lines.append("```bash")
-    lines.append("# 1. 检查 dispatch report 中的 generated_at")
-    lines.append("cat logs/task_dispatch_report.json | grep generated_at")
+    lines.append("# 1. 检查 dispatch report 中的派单时间")
+    lines.append("cat logs/task_dispatch_report.json | grep -E 'generated_at|timestamp'")
     lines.append("")
     lines.append("# 2. 对比本 payload 的 GeneratedAt 与 dispatch report")
     lines.append("# 如果时间差 > 5 分钟，则 payload 已过期")
@@ -284,13 +284,15 @@ def check_payload_freshness(
             return result
 
         report_data = json.loads(report_path.read_text(encoding="utf-8"))
-        dispatch_generated_at = report_data.get("generated_at")
+        # 报告里有两个时间键：`generated_at`（payload 校验读它）与 `timestamp`
+        # （历史键）。两者都认——只认一个会让「刚生成的 payload」被判成过期。
+        dispatch_generated_at = report_data.get("generated_at") or report_data.get("timestamp")
         if not dispatch_generated_at:
             result = {
                 "is_fresh": False,
                 "age_minutes": None,
                 "dispatch_generated_at": None,
-                "warning": "Dispatch report 缺少 generated_at 字段",
+                "warning": "Dispatch report 缺少 generated_at/timestamp 字段",
                 "fix_command": refresh_command,
             }
             if record_stats:

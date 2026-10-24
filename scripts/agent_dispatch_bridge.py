@@ -460,6 +460,7 @@ def dispatch_once(args) -> int:
             mode=args.notebooklm_mode,
         )
 
+    report_timestamp = datetime.now().isoformat()
     report = {
         "candidate_count": len(candidates),
         "dispatched_count": len(dispatched),
@@ -470,7 +471,12 @@ def dispatch_once(args) -> int:
         "already_dispatched_tasks": already,
         "candidate_tasks": candidate_tasks,
         "reopened_tasks": reopened,
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": report_timestamp,
+        # `generated_at` 是 payload 新鲜度校验读的键名
+        # （ai_collab/dispatch_trigger.py::check_payload_freshness）。
+        # 之前报告只写 `timestamp`，校验恒判「缺少 generated_at」→ 永远过期。
+        # 两个键都写：新键给校验用，旧键保持向后兼容。
+        "generated_at": report_timestamp,
     }
 
     write_report(workspace, report)

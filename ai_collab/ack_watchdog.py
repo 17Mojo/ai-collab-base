@@ -220,7 +220,11 @@ def _refresh_assignee_payload(
     if dispatch_report_file.exists():
         try:
             dispatch_report = json.loads(dispatch_report_file.read_text(encoding="utf-8"))
-            payload_generated_at = str(dispatch_report.get("generated_at") or generated_at)
+            # 报告里 `generated_at` 与 `timestamp` 是同一个值（前者给新鲜度校验用），
+            # 两个键都认，避免只认一个时静默退回调用方传入的时间。
+            payload_generated_at = str(
+                dispatch_report.get("generated_at") or dispatch_report.get("timestamp") or generated_at
+            )
         except (json.JSONDecodeError, OSError, TypeError, ValueError):
             payload_generated_at = generated_at
     if orders_file.exists():

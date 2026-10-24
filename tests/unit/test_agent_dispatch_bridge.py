@@ -814,3 +814,77 @@ def test_rejection_notes_switch_to_rework_notice(tmp_path):
     assert "返工重派说明（必须先读）" in orders
     assert "被 review 拒绝" in orders
     assert "review 驳回：验收命令缺覆盖率门禁" in orders
+
+
+def test_dispatch_report_exposes_generated_at_for_freshness_check(tmp_path):
+    """报告必须带 `generated_at`——payload 新鲜度校验读的就是这个键。
+
+    2026-10-24 实测缺陷：报告只写 `timestamp`，而
+    `ai_collab/dispatch_trigger.py::check_payload_freshness` 读 `generated_at`
+    → 校验恒判「缺少 generated_at」→ **刚生成的 payload 也被判成过期**，
+    连带 `session_health` 恒报 `stale_payload` 假告警。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-DISPATCH-001"] = {
+        "task_id": "TASK-DISPATCH-001",
+        "ai_type": "claude_code",
+        "assignee": "claude_code",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "acceptance_commands": ["python3 -m pytest -q tests/unit/test_cli.py"],
+        "result_file": "collaboration/results/RESULT_TASK-DISPATCH-001.md",
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    report_file = workspace / "logs" / "task_dispatch_report.json"
+    report = json.loads(report_file.read_text(encoding="utf-8"))
+
+    assert "generated_at" in report, "报告缺少 generated_at（payload 新鲜度校验读它）"
+    assert report["generated_at"] == report["timestamp"], "两个时间键必须是同一个值"
+
+
+def test_dispatch_report_generated_at_passes_freshness_check(tmp_path):
+    """端到端：报告里的 generated_at 喂给 check_payload_freshness 必须是「新鲜」。
+
+    这条锁住的是**真机行为**：派单 → 写报告 → 读报告判新鲜度。
+    修复前这里恒为 is_fresh=False。
+    """
+    from ai_collab.dispatch_trigger import check_payload_freshness
+
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-DISPATCH-001"] = {
+        "task_id": "TASK-DISPATCH-001",
+        "ai_type": "claude_code",
+        "assignee": "claude_code",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "acceptance_commands": ["python3 -m pytest -q tests/unit/test_cli.py"],
+        "result_file": "collaboration/results/RESULT_TASK-DISPATCH-001.md",
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace)
+    assert result.returncode == 0, result.stderr
+
+    report_file = workspace / "logs" / "task_dispatch_report.json"
+    report = json.loads(report_file.read_text(encoding="utf-8"))
+
+    freshness = check_payload_freshness(
+        payload_generated_at=report["generated_at"],
+        dispatch_report_path=report_file,
+        assignee="claude_code",
+        threshold_minutes=5,
+        record_stats=False,
+    )
+
+    assert freshness["is_fresh"] is True, freshness
+    assert freshness["warning"] is None

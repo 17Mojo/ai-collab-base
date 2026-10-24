@@ -111,7 +111,7 @@ class TestCheckPayloadFreshness:
         )
 
     def test_dispatch_report_missing_generated_at(self, tmp_path):
-        """Test handling of dispatch report without generated_at field."""
+        """Test handling of dispatch report without generated_at/timestamp field."""
         dispatch_report = tmp_path / "dispatch_report.json"
         dispatch_report.write_text(json.dumps({"other_field": "value"}))
 
@@ -123,11 +123,32 @@ class TestCheckPayloadFreshness:
         )
 
         assert result["is_fresh"] is False
-        assert "缺少 generated_at 字段" in result["warning"]
+        assert "缺少 generated_at" in result["warning"]
         assert (
             result["fix_command"]
             == "python3 -m ai_collab.cli trigger --phrase '2X DISPATCH CODEX' --target codex"
         )
+
+    def test_dispatch_report_with_only_timestamp_is_accepted(self, tmp_path):
+        """只写 `timestamp` 的旧报告也必须能判新鲜度（向后兼容兜底）。
+
+        2026-10-24 实测：派单桥接脚本写的键是 `timestamp`，而新鲜度校验读
+        `generated_at` → 刚生成的 payload 恒被判成「过期」。修复后桥接脚本
+        两个键都写；这条用例守住**旧报告**也能被正确读。
+        """
+        now = datetime.now()
+        dispatch_report = tmp_path / "dispatch_report.json"
+        dispatch_report.write_text(json.dumps({"timestamp": now.isoformat()}))
+
+        result = check_payload_freshness(
+            payload_generated_at=now.isoformat(),
+            dispatch_report_path=dispatch_report,
+            threshold_minutes=5,
+            record_stats=False,
+        )
+
+        assert result["is_fresh"] is True, result
+        assert result["dispatch_generated_at"] == now.isoformat()
 
     def test_invalid_dispatch_report_json(self, tmp_path):
         """Test handling of invalid JSON in dispatch report."""
@@ -306,3 +327,48 @@ class TestGlobalStats:
         assert stats.fresh_count == 1
 
         reset_freshness_stats()
+
+
+class TestPayloadFreshnessInstructions:
+    """payload 里的新鲜度校验说明必须**可执行**。
+
+    2026-10-24 实测缺陷：payload 教对方
+    `cat logs/task_dispatch_report.json | grep generated_at`，
+    但报告当时只有 `timestamp` 键 → grep 退出码 1、输出为空 →
+    接收方无法完成第 1 步，只能自行猜测（最坏情况：重跑 trigger，
+    在对方那边开第二个会话，造成双会话并发改同一工作区）。
+    """
+
+    def test_freshness_snippet_matches_a_real_dispatch_report(self, tmp_path):
+        """payload 给出的 grep 命令，必须能在真实报告格式上命中。"""
+        import re
+        import subprocess
+
+        from ai_collab.dispatch_trigger import build_handoff_payload
+
+        report = tmp_path / "task_dispatch_report.json"
+        report.write_text(
+            json.dumps({"timestamp": "2026-03-03T14:00:00", "generated_at": "2026-03-03T14:00:00"}),
+            encoding="utf-8",
+        )
+
+        payload = build_handoff_payload(
+            assignee="codearts_agent",
+            trigger_phrase="2X DISPATCH CodeArts",
+            orders_relpath="collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md",
+            section_markdown="",
+            generated_at="2026-03-03T14:00:00",
+        )
+
+        # 抽出 payload 里教给对方的 grep 命令
+        match = re.search(r"^cat (\S+) \| grep (.+)$", payload, re.M)
+        assert match, "payload 里找不到新鲜度校验的 grep 命令"
+        report_path, grep_pattern = match.group(1), match.group(2)
+
+        # 用真实报告跑这条命令，替换路径为测试里的报告
+        command = f"cat {report} | grep {grep_pattern}"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+
+        assert result.returncode == 0, f"payload 教的命令在真实报告上失败：{command!r}"
+        assert "generated_at" in result.stdout
+        assert report_path  # 路径存在性由调用方保证，这里只锁命令形态
