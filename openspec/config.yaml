@@ -1,0 +1,89 @@
+schema: spec-driven
+
+# 项目上下文：创建工件时展示给 AI。
+context: |
+  项目：AI Collaboration System —— 本地优先（local-first）的 AI 协作控制面。
+  形态：Chrome 扩展 + VSCode 扩展 + 本地 FastAPI 后端 + SQLite 单文件库（data/packs.db）。
+  运行地址 http://127.0.0.1:8000，零云依赖、零配置。
+
+  技术栈：
+  - Python >= 3.8（声明值），CI 矩阵 3.10 / 3.11 / 3.12；注意标准库 tomllib 是 3.11+
+  - pytest 8.x，asyncio_mode = "auto"，testpaths = ["tests"]
+  - ruff 0.16.8，规则 E,F,W,I,B,UP,N，line-length 120
+  - GitHub Actions：lint.yml 仅在 push 到 main 或 PR 到 main 时运行；
+    feature 分支推送不触发 CI，只有 PR 才跑门禁
+
+  协作模型：Claude Code 与 CodeArts 双 Agent，共用同一个工作区。角色由
+  config/agent-orchestration.json 编排（AGENT_EXEC / AGENT_ARCH / AGENT_TEST / AGENT_DOC /
+  AGENT_PERF / AGENT_OPS）；运行时**项目配置**读的是 .vscode/ai-collab.json。
+  协议见 collaboration/PROTOCOL.md（v3.0），工作准则见 collaboration/COLLABORATION_GUIDELINES.md。
+
+  文件位置约定（强制）：
+  - 工单：collaboration/tasks/TASK_*.md（不得放仓库根目录）
+  - 结果报告：collaboration/results/RESULT_*.md（不得放仓库根目录）
+  - 开发日志：logs/claude-code/YYYY-MM/*.md（必须有）
+  - 记忆镜像：memory/ 是**只读**镜像，由 scripts/sync_agent_memory.py 从 CodeArts 记忆
+    源单向同步生成——不要手工编辑镜像，改源后跑同步脚本。
+
+  写作风格：中文正文与注释；代码标识符用英文；commit message 用 conventional commits
+  格式 + 中文正文。
+
+  门禁分层原则（沿用既有约定）：只有 **git 硬证据**（分支漂移、基线过期）可以阻断；
+  启发式判断（如 mtime 归属检测）一律降级为软警告。测试不应造假以通过门禁。
+
+  硬性禁止：
+  - 仓库内不得存放外部项目副本（2026-09-26 事故根因：pytest 收集到副本里的测试）
+  - 不得为了让门禁变绿而修改测试断言或反向改造产品
+
+# 各工件的附加规则。
+rules:
+  proposal:
+    - >-
+      必须包含 Why / What Changes / Capabilities / Impact 四段，Impact 里要写清
+      Affected specs 与 Non-goals。
+    - >-
+      **配置类改动必须写实际会被运行时读取的文件**。例：并发门禁的配置接在
+      .vscode/ai-collab.json（VSCodeIntegration.get_project_config()），
+      而不是 config/agent-orchestration.json（那是角色编排配置）。
+    - >-
+      若实现与初稿设计不一致，就地写明修正与理由，不要让两份文档各说各话。
+  specs:
+    - >-
+      每条 requirement 至少一个 #### Scenario（正好 4 个 #），WHEN/THEN 格式。
+    - >-
+      新能力（ADDED）必须带 ## Purpose，50 字符以上——否则归档时会留下 TBD 占位。
+    - >-
+      只写可观测行为：输入、输出、错误条件、对外可见的约束。不要写类名/函数名/
+      框架选型/实现步骤（那些属于 design.md 与 tasks.md）。
+    - >-
+      场景要写**真实可复现**的触发条件，不要写「系统应当正常工作」这类空话。
+  design:
+    - >-
+      记录**取舍**：每个关键决策写清为什么选 A 不选 B、备选方案是什么。
+    - >-
+      已被实测推翻的假设要就地标注修正（含证据位置），不要保留已失效的表述。
+    - >-
+      不复述 proposal 的动机、不复述 specs 的需求——指向它们即可。
+  tasks:
+    - 一行一个可交付动作，粒度控制在一次提交内可完成。
+    - 勾选时在下方附**实测证据**（命令 + 关键输出），不写「已完成」了事。
+    - 偏离原任务的实现选择要写明理由。
+
+operations:
+  apply:
+    guidance:
+      - >-
+        改 ai_collab/ 下任何 .py 之前，先 grep 相关测试文件确认守护范围；
+        改完先跑相关测试再跑全套。
+      - >-
+        任务收口需要：结果报告含 PROTOCOL §7.3 四段（执行命令/验证结果/测试结论/
+        风险/回滚）+ 可解析的状态行；工单 acceptance_commands 里的每条命令字符串
+        必须**原样**出现在结果报告里。
+      - >-
+        ACK/receipt 必须由 CLI 生成（python3 -m ai_collab.cli ack ...），禁止手写。
+  archive:
+    guidance:
+      - 归档前用 openspec validate <change> --strict 确认零错误。
+      - >-
+        归档摘要要写清本次变更的实际交付与未覆盖项，不要写「并发问题已根治」这类
+        超出实现范围的结论。

@@ -24,7 +24,14 @@
 |------|------|---|
 | `collaboration/PROTOCOL.md` | 新增第十四章「并发工作区安全」 | 治理层 |
 | `ai_collab/cli/_cli_main.py` | 接入 `_run_concurrent_guard_gate` | CLI |
-| `config/agent-orchestration.json` | 新增 `concurrentGuard` 配置段 | 配置 |
+| `.vscode/ai-collab.json` | 新增 `concurrentGuard` 配置段 | 配置 |
+
+> **配置源修正（与实现一致）**：本提案初稿写的是 `config/agent-orchestration.json`，
+> 但实测**运行时配置源不是该文件**——`VSCodeIntegration.get_project_config()` 读的是
+> `.vscode/ai-collab.json`（`ai_collab/integrations/vscode.py:77`）；
+> `config/agent-orchestration.json` 是**角色编排**配置，语义不同。
+> 实现改接 `.vscode/ai-collab.json`，`config/agent-orchestration.json` 及其
+> schema/template **未改动**。详见 [`design.md`](design.md) 决策 D3。
 
 ### 接口设计
 
@@ -45,6 +52,11 @@ assess_concurrent_risk(workspace, *, expected_branch, baseline_commit, watch_pat
 | mtime 启发式误报（G3） | 中 | 降级软警告，不阻断 |
 | 分支约定过严影响现有流程 | 中 | `expectedBranch` 默认 None（跳过） |
 | 与并行协作者工作区冲突 | 高 | 本变更不修改他人未提交改动；实施前先核实归属 |
+
+## Capabilities
+
+- `concurrent-workspace-safety`（新增）：git 工作区并发风险的检测、评级、放行判定与留痕。
+  规格见 [`specs/concurrent-workspace-safety/spec.md`](specs/concurrent-workspace-safety/spec.md)。
 
 ## Impact
 

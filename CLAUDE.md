@@ -1,23 +1,25 @@
-<!-- OPENSPEC:START -->
 # OpenSpec Instructions
 
-These instructions are for AI assistants working in this project.
+OpenSpec 规范驱动开发工作流已在本仓落地（`openspec init --tools claude,codeartsagent`）。
+以下三处是**权威来源**，开工前按需查阅：
 
-Always open `@/openspec/AGENTS.md` when the request:
+| 位置 | 内容 |
+|---|---|
+| `openspec/config.yaml` | 项目上下文 + 各工件的书写规则（proposal/specs/design/tasks）+ apply/archive 操作指引 |
+| `.claude/skills/openspec-*/SKILL.md` | Claude Code 侧工作流技能（propose / apply-change / archive-change / explore / sync-specs / update-change） |
+| `.codeartsdoer/skills/openspec-*/SKILL.md` | CodeArts 侧同名技能 |
 
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
+**何时用 OpenSpec**（对应技能会自动触发，也可显式调用）：
 
-Use `@/openspec/AGENTS.md` learn:
+- 需求提到提案、规格、变更、计划（proposal / spec / change / plan）
+- 引入新能力、破坏性变更、架构调整，或较大的性能/安全改动
+- 需求含糊、需要先有权威规格再动手
 
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
+**工件落点**：`openspec/changes/<change-id>/`，四个工件 `proposal.md` / `specs/<capability>/spec.md` / `design.md` / `tasks.md`。
+命令行校验：`openspec validate <change-id> --strict`；进度：`openspec status --change <change-id>`。
 
-Keep this managed block so 'openspec update' can refresh the instructions.
+**维护**：`openspec update` 刷新上面两组技能文件（不改动本段文字）。
 
-<!-- OPENSPEC:END -->
 
 # CLAUDE.md
 
