@@ -60,10 +60,10 @@ python3 scripts/project_healthcheck.py   # 连跑两次验证评分幂等
 | 批次 | 内容 | 状态 |
 |------|------|------|
 | 1.1 | `ruff check .` 的 14 条 → 0（含 `scripts/sync_agent_memory.py` 的 9 条；用户已把该文件的执行权交回 Claude Code） | ✅ commit `4af0efd` |
-| 2.1 / 5.1 / 5.2 | 密钥扫描器去噪 + `check_git()` origin/main 存在性 + `check_health_rules()` 精确计数 | 🔄 已派单 CodeArts（`TASK-P1-HEALTHCHECK-TOOL-HARDEN-001`） |
-| 1.2 | 推送 70+ 个未推送 commit 并修正 upstream | ⏳ 待执行 |
-| 4.2 | `add-concurrent-workspace-guard` Phase 2+3 与 Phase 4 分别开工单 | ⏳ 待执行 |
-| 2.2 | 解除 `lint.yml:38` 的 `\|\| true` | ⏳ 待 CodeArts 交付并复核后再做 |
+| 2.1 / 5.1 / 5.2 | 密钥扫描器去噪 + `check_git()` origin/main 存在性 + `check_health_rules()` 精确计数 | ✅ CodeArts 交付 commit `95608ee`；复核方发现**未披露的检出回退**并补两条零噪声规则 commit `13d8bc9` |
+| 1.2 | 推送 70+ 个未推送 commit 并修正 upstream | ✅ commit `68428a6`（实推 82 个 commit，upstream 由 `origin/main` 改为 `origin/feat/codearts-collab-wiring`） |
+| 4.2 | `add-concurrent-workspace-guard` Phase 2+3 与 Phase 4 分别开工单 | ✅ commit `cac3be6`（`TASK-P1-CONCURRENT-GUARD-001` / `TASK-P2-CONCURRENT-GUARD-PHASE4-001`，均 `status: planning`） |
+| 2.2 | 解除 `lint.yml:38` 的 `\|\| true` | ✅ commit `fe0669f`（前置条件：CodeArts 交付后实测扫描器 0 命中、rc=0） |
 
 ## 验证结果
 
