@@ -42,6 +42,18 @@
 
 ## Phase 4: 项目边界（暂缓）
 
-- [ ] 4.1 pytest 收集边界：仓库内不存放外部项目副本，`testpaths` 限定 `tests/`
-- [ ] 4.2 修 `test_consensus_engine.py` 导入 + 并发守护
-- [ ] 4.3 验证 concurrent guard 在任意共享工作区的复用
+- [x] 4.1 pytest 收集边界：仓库内不存放外部项目副本，`testpaths` 限定 `tests/`
+      > 由 `tests/unit/test_project_boundary_guard.py` 守护（5 条）：`testpaths`
+      > 取 pytest 自身解析出的生效值；`tests/` 之外无 pytest 会收集的测试文件、
+      > 无越界 conftest.py；主套件 `--collect-only` 无收集错误；守护用例自身位于
+      > `tests/` 之下。
+- [x] 4.2 修 `test_consensus_engine.py` 导入 + 并发守护
+      > 导入本就正常（`from ai_collab.engines.consensus_engine import ConsensusEngine`
+      > 解析成功，既有 20 条用例全绿）；并发守护由
+      > `tests/unit/test_consensus_engine_concurrency.py` 补齐（5 条），
+      > 把 `ConsensusEngine.cache` 的**当前**无锁语义钉成契约，并在
+      > `generate_consensus` 的 docstring 里写明。
+- [x] 4.3 验证 concurrent guard 在任意共享工作区的复用
+      > 由 `tests/unit/test_concurrent_guard_reuse.py` 守护（3 条）：在与本仓无关的
+      > mini git repo 上实跑，报告落在该 repo 内、本仓 `logs/` 未被写入；
+      > 同一套守卫在本仓上报告仍落在本仓 `logs/workspace_forensics/`。

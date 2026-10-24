@@ -86,7 +86,22 @@ class ConsensusEngine:
         )
 
     async def generate_consensus(self, topic: str) -> dict[str, Any]:
-        """生成通识内容"""
+        """生成通识内容。
+
+        并发契约（2026-10-24 固化，见 `tests/unit/test_consensus_engine_concurrency.py`）：
+
+        - `self.cache` 是**实例级、无锁**的普通 dict；
+        - 并发请求**同一 topic** 时可能**重复计算**（多个协程同时 cache miss，
+          各自算一遍）。幂等性由 dict 的单键赋值语义保证——不会把字典写坏，
+          但**不保证只算一次**，也不保证各协程拿到同一份 `timestamp`；
+        - 并发请求**不同 topic** 时互不影响（dict 按键隔离）；
+        - 命中缓存的重复调用走 cache 路径，不再触发 provider；
+        - 单个协程抛异常不影响其它协程（异常由调用方的
+          `asyncio.gather(..., return_exceptions=True)` 收集）。
+
+        本方法**没有**加锁，也**不应**在本次改动中顺手加锁——改并发语义
+        （加锁 / 去重 / 保证只算一次）属于另一个工单。
+        """
         if topic in self.cache:
             return self.cache[topic]
 
