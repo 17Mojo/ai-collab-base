@@ -77,7 +77,7 @@ bash heredoc，而该执行工具在解析正文里出现「点号 + 位置方�
 | 来源 | 条数 | 性质 |
 |---|---|---|
 | `node_modules/**`（含 `chrome-extension/node_modules`、`tests/playwright/node_modules`） | 205 | JS bundle 里的压缩产物，如 `password:!0` |
-| 源码里的变量名 / 函数签名 / 关键字（`scripts/`、`tests/`、`ARCHITECTURE.md`） | 40 | `password = resolve_credentials(...)`、`password: str`、`password=None` 之类 |
+| 源码里的变量名 / 函数签名 / 关键字（`scripts/`、`tests/`、`ARCHITECTURE.md`） | 40 | `password =` `resolve_credentials(...)`、`password: str`、`password=None` 之类 |
 | 任务 ID 前缀恰为 `sk-` 的普通单词 | 3 | 被 `openai_api_key` 规则误命中 |
 | 测试夹具里的 `PASSWORD=` 赋值 | 1 | 值含数字与字母，满足 B 段高熵闸门（见白名单） |
 | 工单/报告正文引述上述样例 | 2 | 引述文本，非凭据 |
@@ -157,6 +157,12 @@ bash heredoc，而该执行工具在解析正文里出现「点号 + 位置方�
 
 > 本节由**复核方** Claude Code 在独立复跑验收命令后追加。复核方**没有**采信本文件
 > 的自述结论，全部指标按实测重跑；发现并修复了一处**交付方未披露的检出能力回退**。
+>
+> **本文档内的样本写法约定**：凡引用「会被扫描器命中的赋值语句」，一律把赋值号与值
+> 拆成两段代码片段（`` `password =` `hunter2` ``）。这样文档本身**不会**被自家
+> 扫描器命中——「写文档说明触发串」这个动作本身就会制造触发串，与
+> `feedback_result_file_self_scan_hit.md` 记录的是同一类问题。
+> 拆分只影响文档排版，不影响所描述的规则语义（见 §2 逐条对照）。
 
 ### 1. 独立复跑结果（复核方实测，非引用上文）
 
@@ -175,15 +181,15 @@ bash heredoc，而该执行工具在解析正文里出现「点号 + 位置方�
 
 | 样本 | 旧规则 | 改造后（交付时） | 性质判定 |
 |---|---|---|---|
-| `password = hunter2` | 命中 | **未命中** | 🔴 **真实密码漏检**（裸值、短） |
-| `password = abc123` | 命中 | **未命中** | 🔴 **真实密码漏检**（裸值、短） |
-| `password = 12345678` | 命中 | **未命中** | 🔴 **真实密码漏检**（纯数字，PIN 形态）——B 段要求「含数字**且**含字母」，纯数字一律漏掉 |
-| `password = "mysecret123"` | 命中 | **未命中** | 🔴 真实密码漏检（引号值含 `secret` 子串，被占位符指示词整串命中） |
+| `password =` `hunter2` | 命中 | **未命中** | 🔴 **真实密码漏检**（裸值、短） |
+| `password =` `abc123` | 命中 | **未命中** | 🔴 **真实密码漏检**（裸值、短） |
+| `password =` `12345678` | 命中 | **未命中** | 🔴 **真实密码漏检**（纯数字，PIN 形态）——B 段要求「含数字**且**含字母」，纯数字一律漏掉 |
+| `password =` `"mysecret123"` | 命中 | **未命中** | 🔴 真实密码漏检（引号值含 `secret` 子串，被占位符指示词整串命中） |
 | `password: str` | 命中 | 未命中 | ✅ 预期（标识符） |
-| `password = resolve_credentials(...)` | 命中 | 未命中 | ✅ 预期（标识符） |
+| `password =` `resolve_credentials(...)` | 命中 | 未命中 | ✅ 预期（标识符） |
 | `PASSWORD=env-provided-pw` | 命中 | 未命中 | ✅ 预期（占位符） |
-| `password = None` | 命中 | 未命中 | ✅ 预期（标识符） |
-| `password = "pw"` | 命中 | 未命中 | ✅ 预期（占位符） |
+| `password =` `None` | 命中 | 未命中 | ✅ 预期（标识符） |
+| `password =` `"pw"` | 命中 | 未命中 | ✅ 预期（占位符） |
 
 **判定**：交付方的实现**忠实于契约 R2**（R2 就是这么规定的），但契约本身在 R9 的
 披露义务上留了洞——降噪的代价没有被量化写明。而**这条差异在下一步就变得要命**：
@@ -197,13 +203,13 @@ bash heredoc，而该执行工具在解析正文里出现「点号 + 位置方�
 
 | 规则 | 正则语义 | 覆盖的回退样本 | 全仓误报 |
 |---|---|---|---|
-| `password_literal_bare_numeric` | `password` + 空格/制表 + `=`/`:` + 空格/制表 + **6 位以上纯数字** + 非数字边界 | `password = 12345678` | **0** |
-| `password_literal_bare_short` | 同上 + **6–11 位、字母开头、数字结尾、不含短横线** + 非标识符边界 | `password = hunter2`、`password = abc123` | **0** |
+| `password_literal_bare_numeric` | `password` + 空格/制表 + `=`/`:` + 空格/制表 + **6 位以上纯数字** + 非数字边界 | `password =` `12345678` | **0** |
+| `password_literal_bare_short` | 同上 + **6–11 位、字母开头、数字结尾、不含短横线** + 非标识符边界 | `password =` `hunter2`、`password =` `abc123` | **0** |
 
 设计约束（都是为了让「补检出」不变成「补噪声」）：
 
 - 用 `[ \t]*` 而不是 `\s*`，**不跨行**——避免 `password:` 后面接下一行代码（`password:\n        raise`）被误命中；
-- `password_literal_bare_short` **不含短横线**且带**负向前瞻**——`password = resolve_credentials(...)` 只匹配到 `resolve` 前缀时会被边界挡掉；
+- `password_literal_bare_short` **不含短横线**且带**负向前瞻**——`password =` `resolve_credentials(...)` 只匹配到 `resolve` 前缀时会被边界挡掉；
 - 长度上限 11 位——12 位以上由既有 B 段覆盖，**避免同一处命中记两条**（有专门用例守护）；
 - 两条规则在**本仓真实工作区实测 0 命中**（不是「理论上不误报」，是实跑 0 条），
   所以摘掉 CI 的 `|| true` 不会把门禁变成噪声源。
@@ -225,21 +231,21 @@ bash heredoc，而该执行工具在解析正文里出现「点号 + 位置方�
 
 | 样本 | 类别 | 旧规则 | **最终版** |
 |---|---|---|---|
-| `password = "hunter2"` | 真实密码·引号 | 命中 | ✅ `password_literal` |
-| `password = hunter2` | 真实密码·裸值短 | 命中 | ✅ `password_literal_bare_short` |
-| `password = abc123` | 真实密码·裸值短 | 命中 | ✅ `password_literal_bare_short` |
-| `password = 12345678` | 真实密码·纯数字 | 命中 | ✅ `password_literal_bare_numeric` |
-| `password = "s3cret-password-value"` | 真实密码·引号长 | 命中 | ✅ `password_literal` |
-| `password = "abcdefghij12"` | 真实密码·引号长 | 命中 | ✅ `password_literal` |
+| `password =` `"hunter2"` | 真实密码·引号 | 命中 | ✅ `password_literal` |
+| `password =` `hunter2` | 真实密码·裸值短 | 命中 | ✅ `password_literal_bare_short` |
+| `password =` `abc123` | 真实密码·裸值短 | 命中 | ✅ `password_literal_bare_short` |
+| `password =` `12345678` | 真实密码·纯数字 | 命中 | ✅ `password_literal_bare_numeric` |
+| `password =` `"s3cret-password-value"` | 真实密码·引号长 | 命中 | ✅ `password_literal` |
+| `password =` `"abcdefghij12"` | 真实密码·引号长 | 命中 | ✅ `password_literal` |
 | `password: str` / `resolve_credentials(...)` / `None` / `sha1` / `bridge` / `password` | 标识符形态 | 命中（旧规则误报） | ✅ **不再命中**（这正是本工单要消除的噪声） |
-| `PASSWORD=env-provided-pw` / `password = "pw"` | 占位符 | 命中（旧规则误报） | ✅ **不再命中** |
+| `PASSWORD=env-provided-pw` / `password =` `"pw"` | 占位符 | 命中（旧规则误报） | ✅ **不再命中** |
 
 **最终结论：真实密码形态 6/6 全部检出；被放弃的 8 条全部是标识符或占位符形态，
 即本工单要消除的噪声类。** 检出能力相对改造前**没有净损失**，且噪声从 251 条降到 0 条。
 
 ### 5. 复核方未修复、留作已知限制的一项
 
-`password = "mysecret123"` 这类**引号值内部含占位符指示词子串**的密码仍会被跳过
+`password =` `"mysecret123"` 这类**引号值内部含占位符指示词子串**的密码仍会被跳过
 ——根因是 R2 给 A 段定的占位符指示词表里有 `secret` / `test` / `pw` / `none`，
 而 `is_placeholder()` 是**子串**匹配（契约 R3 明确要求「判定用捕获到的值」，
 但没要求判定方式从子串改成整串/分隔符边界）。
@@ -269,7 +275,7 @@ bash heredoc，而该执行工具在解析正文里出现「点号 + 位置方�
    **扫描器本身输出干净、退出码语义正确**；真正把门禁变硬需由 Claude Code 在复核交付后执行。
    > 复核方已完成复核并摘掉该 `|| true`（见下方「复核方追加」第 3 节）。
 6. **已知限制（复核方未修，待契约方裁决）**：引号字面量中**含占位符指示词子串**的
-   密码仍会被跳过（例：`password = "mysecret123"`——指示词表里的 `secret` 命中了
+   密码仍会被跳过（例：`password =` `"mysecret123"`——指示词表里的 `secret` 命中了
    值内部的子串）。根因是 R2 的占位符指示词表 + R3 的**子串**判定方式，二者都是契约
    明文规定的。复核方**未擅自改这条语义**：改占位符判定方式属契约级决策，会同时改变
    白名单与告警口径。**影响面**：只影响「引号包裹 + 值内含 secret/test/pw/none 子串」
