@@ -1,6 +1,6 @@
 ---
 name: CodeArts 派单执行全流程规范（新鲜度 → RUN-RESET → RUN → 结果文件 → CLI ACK）
-description: 派单流程硬性规范——payload 先校验新鲜度（≤5 分钟）、系统级 RUN 只许单条 cli run、ACK/receipt 禁手写须用 cli ack 生成、结果文件须含 PROTOCOL §7.3 四段+可解析状态行+测试结论小节、终态收口 completed
+description: 派单流程硬性规范——payload 先校验新鲜度（≤5 分钟）、系统级 RUN 只许单条 cli run、ACK/receipt 禁手写须用 cli ack 生成、结果文件须含 PROTOCOL §7.4 四段+可解析状态行+测试结论小节、终态收口 completed
 type: feedback
 from: Agent
 ---
@@ -21,7 +21,7 @@ from: Agent
 
 写结果文件（`collaboration/results/RESULT-*.md`）时按「**四段标题 → 每条验收命令的真实输出 → 测试结论小节 → 状态行**」的顺序一次写全，写完立刻复验：
 
-1. **契约校验**（`python3 -m ai_collab.cli tasks validate-contract`）：正文需含 PROTOCOL §7.3 四段标题 `## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`；仅标题齐备**仍可能不合格**——需在「验证结果」段内补出每条验收命令的真实输出与测试结论小节（校验按章节结构统计 checked 项）。
+1. **契约校验**（`python3 -m ai_collab.cli tasks validate-contract`）：正文需含 PROTOCOL §7.4 四段标题 `## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`；仅标题齐备**仍可能不合格**——需在「验证结果」段内补出每条验收命令的真实输出与测试结论小节（校验按章节结构统计 checked 项）。
 2. **一致性审计**：会**解析结果文件中的状态行**，并据此核对任务终态；工单状态必须收口到 `completed` 且结果文件在位，否则审计不通过。状态行格式与既有同日期 RESULT 文件保持一致（可先读一份对齐）。
 
 **Why:**
