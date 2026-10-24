@@ -1,34 +1,33 @@
-# 项目体检报告 - 2026-10-24T10:17:24
+# 项目体检报告 - 2026-10-24T15:26:28
 
-> 自动生成于 `2026-10-24T10:17:57.815284` by `scripts/project_healthcheck.py`
+> 自动生成于 `2026-10-24T15:27:07.598571` by `scripts/project_healthcheck.py`
 
 
 ## 测试
 
-- ✅ **测试结果**: 2654 passed, 0 failed, 1 skipped
+- ✅ **测试结果**: 2692 passed, 0 failed, 1 skipped
 - **覆盖率**: 88% (miss 1796 行)
 ```
-2654 passed, 1 skipped in 30.78s
+2692 passed, 1 skipped in 36.83s
 ```
 
 ## Git 状态
 
 - **最近 commit** (10):
-  - `5c33107 chore(models): 探测会话用完即删，不再污染 CodeArts Doer 会话列表`
-  - `17d6290 fix(dispatch): 模型池显式写 provider，钉模型不再依赖 kernel 注册表空窗`
-  - `b890f89 chore(monitoring): 刷新监控摘要（投递状态/一致性审计/适配器报告）`
-  - `75f7ef0 chore(memory): 同步 CodeArts 侧新增/更新的记忆条目（4 条反馈 + 2 条更新）`
-  - `b8d7963 chore(config): bridgeCommand 补上 {model_fallback} 占位符（复核方在复审通过后落地）`
-- **未跟踪文件**: 1 个
-- **已修改未提交**: 2 个
-  - `?? collaboration/results/RESULT-HEALTHCHECK-2026-10-24.md`
-- ⚠️ **领先 origin/main 70 个 commit** (未推送)
+  - `414f091 feat(openspec): 落地 OpenSpec 规范驱动工作流并补齐变更工件`
+  - `04bca05 fix(memory): 修订已被证伪的 CLI 退出码条目（缺陷已于 a938cd8 修复）`
+  - `5b35d59 docs(result): 补齐 Phase 4 结果文件的验收命令（任务收口门禁要求原样出现）`
+  - `79c5c37 chore(monitoring): 刷新结果一致性摘要（Phase 4 收口）`
+  - `e6fb352 test(guard): 并发工作区守护 Phase 4 项目边界（OpenSpec Phase 4）`
+- **未跟踪文件**: 0 个
+- **已修改未提交**: 0 个
+- ⚠️ **领先 origin/main 90 个 commit** (未推送)
 
 ## 代码规模
 
-- **生产代码**: 100 文件 / 42333 行
-- **测试代码**: 132 文件 / 51358 行
-- **测试/代码比**: 1.21 (✅ 健康)
+- **生产代码**: 100 文件 / 42515 行
+- **测试代码**: 137 文件 / 52315 行
+- **测试/代码比**: 1.23 (✅ 健康)
 
 ## 覆盖率分解（<80% 模块）
 
@@ -45,7 +44,7 @@
 
 ## 静态检查
 
-- **ruff** (`ruff check .`): 14 个问题 (🔴)
+- **ruff** (`ruff check .`): 0 个问题 (✅)
 - **mypy** (`mypy ai_collab`): 0 个错误 (✅)
 
 ## 依赖安全
@@ -59,9 +58,9 @@
 
 ## 总评
 
-### 🏥 总分: 65/100 (C)
+### 🏥 总分: 85/100 (A)
 
-**健康状态**: 需关注 — 存在多个待改进项
+**健康状态**: 良好 — 关键指标达标，可持续维护
 
 ---
 
