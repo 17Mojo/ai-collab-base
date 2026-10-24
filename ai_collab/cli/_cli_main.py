@@ -33,6 +33,7 @@ from ..ack_watchdog import run_ack_watchdog
 # 直接从当前包的子模块导入
 from ..activation_handler import ActivationHandler, ActivationMode, AIType, VSCodeIntegration
 from ..codex_integration import CodexIntegration
+from ..concurrent_guard import run_concurrent_guard
 
 # 导入日报和监控功能
 from ..daily_report import (
@@ -355,6 +356,142 @@ def _run_spawn_agent_guard_gate(
         print("\n门禁阻断：请先修正 actor / parent task / 写集或保护路径问题，再使用 spawn_agent。")
         return False
     return True
+
+
+def _run_concurrent_guard_gate(
+    *,
+    workspace: str,
+    config: dict,
+    expected_branch: str | None = None,
+    baseline_commit: str | None = None,
+    watch_paths: list[str] | None = None,
+    session_started_at: str | None = None,
+    force_workspace: bool = False,
+) -> bool:
+    """执行并发工作区守护门禁，并输出结论。
+
+    分层遵循设计文档 4.5：drift(G1) / stale(G2) 是 git 真证 → 硬门禁；
+    foreign(G3) 是 mtime 启发式 → 软警告，**不阻断**。
+    因此阻断只可能来自 `violations`，`warnings` 仅打印。
+    """
+    raw_guard = config.get("concurrentGuard") if isinstance(config, dict) else None
+    guard_config = dict(raw_guard) if isinstance(raw_guard, dict) else {}
+
+    # CLI 参数优先于配置；两者都没有时跳过对应判定（不臆造默认值）
+    cfg_expected = guard_config.get("expectedBranch")
+    resolved_expected = expected_branch
+    if resolved_expected is None and cfg_expected:
+        resolved_expected = str(cfg_expected)
+
+    cfg_baseline = guard_config.get("baselineCommit")
+    resolved_baseline = baseline_commit
+    if resolved_baseline is None and cfg_baseline:
+        resolved_baseline = str(cfg_baseline)
+
+    cfg_watch = guard_config.get("watchPaths")
+    if watch_paths:
+        resolved_watch = [str(item) for item in watch_paths]
+    elif isinstance(cfg_watch, list):
+        resolved_watch = [str(item) for item in cfg_watch]
+    else:
+        resolved_watch = []
+
+    cfg_session = guard_config.get("sessionStartedAt")
+    resolved_session = session_started_at
+    if resolved_session is None and cfg_session:
+        resolved_session = str(cfg_session)
+
+    require_baseline = bool(guard_config.get("requireBaselineCommit", False))
+
+    report = run_concurrent_guard(
+        workspace=Path(workspace),
+        expected_branch=resolved_expected,
+        baseline_commit=resolved_baseline,
+        watch_paths=resolved_watch,
+        session_started_at=resolved_session,
+        guard_config=guard_config,
+        force=force_workspace,
+    )
+
+    signals = report.get("signals") or {}
+    git_context = report.get("git_context") or {}
+    branch_signal = signals.get("branch_drift") or {}
+    baseline_signal = signals.get("baseline_stale") or {}
+    foreign_signal = signals.get("foreign_changes") or {}
+    allowed = bool(report.get("allowed", False))
+
+    print("\n[并发门禁]")
+    print(f"  allowed: {allowed}")
+    print(f"  risk_level: {report.get('risk_level', 'unknown')}")
+    drift_mark = "  <- drift" if branch_signal.get("drifted") else ""
+    print(
+        f"  branch: {git_context.get('branch') or 'unknown'} "
+        f"(expected: {branch_signal.get('expected') or 'none'}){drift_mark}"
+    )
+    if resolved_baseline:
+        changed = baseline_signal.get("changed_watch_paths") or []
+        changed_count = sum(
+            1 for item in changed if (item.get("commits_since") or 0) > 0
+        )
+        stale_mark = "  <- stale" if baseline_signal.get("stale") else ""
+        print(
+            f"  baseline: {resolved_baseline} -> "
+            f"{baseline_signal.get('head_commit') or 'unknown'} "
+            f"({changed_count} watched path(s) changed){stale_mark}"
+        )
+    else:
+        print("  baseline: none (skipped)")
+    foreign_count = int(foreign_signal.get("foreign_count", 0) or 0)
+    print(f"  foreign: {foreign_count} files (severity: {foreign_signal.get('severity', 'none')})")
+    print(f"  report: {report.get('report_file', '')}")
+    print(f"  history: {report.get('history_file', '')}")
+
+    warnings = list(report.get("warnings") or [])
+    if require_baseline and not resolved_baseline:
+        # 配置要求基线但未提供：按 4.5 分层只作软警告，不阻断
+        warnings.append("config requires a baseline commit but none was provided (check skipped)")
+    for item in warnings[:5]:
+        print(f"  warning: {item}")
+
+    violations = list(report.get("violations") or [])
+    for item in violations[:10]:
+        print(f"  violation: {item}")
+
+    if not allowed:
+        print(
+            "\n门禁阻断：请先消除分支漂移或基线过期，"
+            "或在确认风险后使用 --force-workspace 显式覆盖。"
+        )
+        return False
+    return True
+
+
+def cmd_concurrent_guard(args):
+    """并发工作区守护门禁诊断命令。"""
+    action = getattr(args, "concurrent_action", None)
+    if action != "guard":
+        print("请指定并发门禁动作，例如：concurrent guard --workspace .")
+        return 0
+
+    _set_workspace_env(args.workspace)
+    workspace = os.path.abspath(args.workspace or os.getcwd())
+    config = dict(VSCodeIntegration.get_project_config())
+
+    print("=" * 60)
+    print("AI 协作系统 - 并发工作区门禁")
+    print("=" * 60)
+    print(f"\n工作区: {workspace}")
+
+    allowed = _run_concurrent_guard_gate(
+        workspace=workspace,
+        config=config,
+        expected_branch=getattr(args, "expected_branch", None),
+        baseline_commit=getattr(args, "baseline_commit", None),
+        watch_paths=list(getattr(args, "watch_path", []) or []),
+        session_started_at=getattr(args, "session_started_at", None),
+        force_workspace=bool(getattr(args, "force_workspace", False)),
+    )
+    return 0 if allowed else 2
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -5331,6 +5468,34 @@ def main():
     spawn_guard_parser.add_argument("--report", help="覆盖 spawnAgentGuard.report")
     spawn_guard_parser.add_argument("--history", help="覆盖 spawnAgentGuard.history")
 
+    # concurrent 命令（并发工作区守护，设计文档 4.2）
+    concurrent_parser = subparsers.add_parser("concurrent", help="并发工作区守护")
+    concurrent_sub = concurrent_parser.add_subparsers(dest="concurrent_action", help="并发门禁动作")
+    concurrent_guard_parser = concurrent_sub.add_parser("guard", help="并发工作区守护门禁诊断")
+    # `--workspace` 是全局选项（`cli --workspace X concurrent guard`），但设计文档 4.2
+    # 与工单验收命令写的是子命令之后的形式（`cli concurrent guard --workspace X`）。
+    # 用 SUPPRESS 让子级只在显式传入时写回，避免把全局值覆盖成 None。
+    concurrent_guard_parser.add_argument(
+        "--workspace",
+        default=argparse.SUPPRESS,
+        help="工作区路径（也可放在子命令之前）",
+    )
+    concurrent_guard_parser.add_argument(
+        "--expected-branch", help="期望分支（未传时取配置 concurrentGuard.expectedBranch）"
+    )
+    concurrent_guard_parser.add_argument(
+        "--baseline-commit", help="基线 commit（未传时取配置 concurrentGuard.baselineCommit）"
+    )
+    concurrent_guard_parser.add_argument(
+        "--watch-path", action="append", default=[], help="监听路径，可重复指定"
+    )
+    concurrent_guard_parser.add_argument(
+        "--session-started-at", help="会话开始时间（ISO），用于归属判定"
+    )
+    concurrent_guard_parser.add_argument(
+        "--force-workspace", action="store_true", help="模拟强制覆盖门禁"
+    )
+
     # hygiene 命令
     hygiene_parser = subparsers.add_parser("hygiene", help="工作区/暂存区自动治理（可一次执行或轮询）")
     hygiene_parser.add_argument("--dry-run", action="store_true", help="仅预览治理结果，不执行暂存")
@@ -5584,6 +5749,8 @@ def main():
         return cmd_workspace_guard(args)
     elif args.command == "spawn-agent-guard":
         return cmd_spawn_agent_guard(args)
+    elif args.command == "concurrent":
+        return cmd_concurrent_guard(args)
     elif args.command == "hygiene":
         return cmd_hygiene(args)
     elif args.command == "stage-source":

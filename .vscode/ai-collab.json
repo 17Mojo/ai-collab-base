@@ -49,5 +49,17 @@
       "summary": "collaboration/monitoring/CODEARTS_ADAPTER_SUMMARY_latest.md",
       "eventDir": "collaboration/monitoring/codearts_pull_events"
     }
+  },
+  "concurrentGuard": {
+    "enabled": true,
+    "expectedBranch": null,
+    "requireBaselineCommit": false,
+    "baselineCommit": null,
+    "watchPaths": [],
+    "sessionStartedAt": null,
+    "foreignChangeSeverity": "warning",
+    "aheadWarnThreshold": 20,
+    "report": "logs/workspace_forensics/concurrent_guard_latest.json",
+    "history": "logs/workspace_forensics/concurrent_guard_history.jsonl"
   }
 }
