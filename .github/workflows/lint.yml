@@ -34,5 +34,10 @@ jobs:
           python-version: "3.10"
 
       - name: Scan for secrets and PII
+        # 阻断级门禁：扫描器退出码非 0 即失败。
+        # 2026-10-24 起解除 `|| true` —— 此前扫描器 251 条命中全是误报
+        # （node_modules 压缩产物 + 源码标识符），门禁形同虚设；
+        # 扫描器改造后本仓实测 0 命中、退出码 0，门禁才真正生效。
+        # 误报豁免走 config/secrets-scan-allowlist.txt（按 <文件>:<行号> 精确豁免）。
         run: |
-          python scripts/scan_secrets_pii.py --workspace . || true
+          python scripts/scan_secrets_pii.py --workspace .
