@@ -39,6 +39,30 @@ bridge = _load_bridge()
 
 
 # ---------------------------------------------------------------------------
+# 测试隔离：kernel 定位必须落在 tmp 里，不能依赖开发机
+# ---------------------------------------------------------------------------
+#
+# bridge 的 KERNEL_CONFIG_ROOT / CREDENTIAL_FILE / CRON_STORE_PATH 都是
+# Path.home() 下的全局常量。main() 在进入 dry-run 分支**之前**就会先
+# `_discover_kernel()`，所以只要没有真机 kernel，这些用例会以
+# 「找不到 server_config.properties」失败——开发机装了 kernel 就绿、
+# CI runner 上没有就红，是一种最难查的假绿。
+#
+# 这里用 autouse fixture 把 kernel 根目录钉到 tmp 内的假 kernel
+# （pid 用当前进程 pid，保证 `_pid_alive` 判定为存活），
+# 整个文件从此与「本机是否装了 CodeArts Doer」无关。
+# 需要别的 kernel 布局的用例自行 monkeypatch 覆盖即可。
+
+
+@pytest.fixture(autouse=True)
+def _isolated_kernel_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    config = tmp_path / "kernel-root" / "Vscode_test" / "server_config.properties"
+    config.parent.mkdir(parents=True, exist_ok=True)
+    config.write_text(f"pid={os.getpid()}\nport=14934\n", encoding="utf-8")
+    monkeypatch.setattr(bridge, "KERNEL_CONFIG_ROOT", tmp_path / "kernel-root")
+
+
+# ---------------------------------------------------------------------------
 # 正文抽取
 # ---------------------------------------------------------------------------
 
@@ -913,19 +937,19 @@ def test_setup_credentials_writes_credential_file_without_echoing_password(
     monkeypatch.setattr(
         bridge,
         "resolve_credentials",
-        lambda **_: ("codearts", "s3cret-password-value"),
+        lambda **_: ("codearts", "dummy-s3cret-password-value"),
     )
 
     code = bridge.main(["--workspace", str(tmp_path), "--setup-credentials"])
 
     assert code == 0
     written = credential_file.read_text(encoding="utf-8")
-    assert "OPENCODE_SERVER_PASSWORD=s3cret-password-value" in written
+    assert "OPENCODE_SERVER_PASSWORD=dummy-s3cret-password-value" in written
     assert "OPENCODE_SERVER_USERNAME=codearts" in written
     assert oct(credential_file.stat().st_mode)[-3:] == "600"
 
     stdout = capsys.readouterr().out
-    assert "s3cret-password-value" not in stdout
+    assert "dummy-s3cret-password-value" not in stdout
     assert "密码未回显" in stdout
 
 
@@ -1338,6 +1362,11 @@ def test_remove_from_cron_store_is_idempotent(tmp_path: Path, monkeypatch):
 def test_purge_residue_cli_flag_runs_purge(tmp_path: Path, monkeypatch, capsys):
     kernel = _PurgeKernel([{"id": "296fc444", "status": "active", "isRunning": True}])
     monkeypatch.setattr(bridge, "KernelClient", lambda **_: kernel)
+    # 凭据解析必须打桩：本用例只关心清理流程，不该依赖本机
+    # ~/.codeartsdoer/kernel-bridge.env 里的真实凭据（CI runner 上没有）。
+    monkeypatch.setattr(
+        bridge, "resolve_credentials", lambda **_: ("codearts", "pw")
+    )
 
     def _boom(*_args, **_kwargs):
         raise AssertionError("清理模式不应触发投递")
