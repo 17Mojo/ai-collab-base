@@ -98,6 +98,16 @@
       transform: scale(0.98);
     }
 
+    .btn-secondary {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      color: #eee;
+    }
+
+    .btn-secondary:hover {
+      background: #0f3460;
+    }
+
     .panel {
       margin-top: 12px;
       padding: 12px;
@@ -204,6 +214,8 @@
     </ul>
 
     <button class="btn" id="refreshBtn" data-testid="refresh-btn">刷新 Pack 列表</button>
+
+    <button class="btn btn-secondary" id="openPackEditorBtn" data-testid="open-pack-editor">📥 导入 / 管理 Pack</button>
 
     <!-- Studio 产物生成面板 -->
     <section id="studio-panel" class="panel" data-testid="studio-panel" aria-labelledby="studio-panel-title">

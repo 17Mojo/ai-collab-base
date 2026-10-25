@@ -6,6 +6,26 @@
 const packList = document.getElementById('packList');
 const refreshBtn = document.getElementById('refreshBtn');
 const statusEl = document.getElementById('status');
+const openEditorBtn = document.getElementById('openPackEditorBtn');
+
+/**
+ * 取用户当前所在的标签页 id
+ *
+ * 用途：告诉后台「AI 步骤要发到哪个页面去」。
+ * 不用它的话，后台只能广播 ⇒ 用户开几个 AI 页面就发几次。
+ *
+ * @returns {Promise<number|null>}
+ */
+async function getActiveTabId() {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tabs?.[0]?.id ?? null;
+  } catch (error) {
+    // 拿不到就退回去（后台会广播），不因为这个让整个执行失败
+    console.warn('Get active tab failed:', error);
+    return null;
+  }
+}
 
 /**
  * 更新状态显示
@@ -34,12 +54,20 @@ async function loadPacks() {
         </li>
       `;
     } else {
-      packList.innerHTML = packs.map(pack => `
-        <li class="pack-item" data-id="${pack.id}">
-          <div class="pack-name">${pack.name}</div>
-          <div class="pack-desc">${pack.description || '无描述'}</div>
+      // Pack 的 id 藏在 metadata.pack_id 里（存储层、编辑器、执行器都用它）。
+      // 此前这里写的是 pack.id —— 那个字段根本不存在 ⇒ data-id="undefined"
+      // ⇒ 点击后执行的是 id 为 "undefined" 的 Pack。
+      packList.innerHTML = packs.map(pack => {
+        const id = pack.metadata?.pack_id || pack.pack_id || pack.id || "";
+        const name = pack.metadata?.pack_name || pack.name || id;
+        const desc = pack.metadata?.description || pack.description || "无描述";
+        return `
+        <li class="pack-item" data-id="${id}">
+          <div class="pack-name">${name}</div>
+          <div class="pack-desc">${desc}</div>
         </li>
-      `).join('');
+      `;
+      }).join('');
     }
 
     updateStatus('就绪');
@@ -57,9 +85,11 @@ async function executePack(packId) {
   updateStatus('执行中...');
 
   try {
+    const tabId = await getActiveTabId();
     const response = await chrome.runtime.sendMessage({
       type: 'EXECUTE_PACK',
-      packId
+      packId,
+      tabId
     });
 
     if (response.success) {
@@ -75,6 +105,23 @@ async function executePack(packId) {
 
 // 事件监听
 refreshBtn.addEventListener('click', loadPacks);
+
+// 打开 Pack 编辑器（导入 Pack 的入口）
+//
+// 此前 popup 里**没有任何**导入入口：列表为空时只显示「请先导入 Pack」，
+// 但用户既没有输入框、也没有可点的按钮能去导入 ⇒ 卡在第一步。
+// 导入界面在 Pack 编辑器页里，路径是 public/pack-editor.html
+// （构建时 public/ 会原样复制到 dist/public/，两种布局都打得开）。
+openEditorBtn?.addEventListener('click', async () => {
+  try {
+    await chrome.tabs.create({
+      url: chrome.runtime.getURL('public/pack-editor.html')
+    });
+  } catch (error) {
+    updateStatus('打开编辑器失败');
+    console.error('Open pack editor error:', error);
+  }
+});
 
 packList.addEventListener('click', (e) => {
   const item = e.target.closest('.pack-item');

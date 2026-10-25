@@ -126,6 +126,20 @@ function setupEventListeners() {
             sendResponse({ success: false, error: error.message }),
           );
         return true;
+
+      // Pack 执行链路的最后一环：后台 pack-executor 的 AI 步骤发的是
+      // SEND_TO_AI。此前**没有任何分支处理它** ⇒ chrome.runtime.sendMessage
+      // 拿不到响应 ⇒ 那个 AI 步骤拿到一个空值，却仍然被当成「成功」，
+      // 流程照往下走，最后产物是空的——用户看到的是「点了没反应」。
+      //
+      // 这条分支是 Pack 能不能真正跑通的关键，不是可选的增强。
+      case "SEND_TO_AI":
+        handleSendToAI(message.prompt, message.config?.timeout)
+          .then((result) => sendResponse({ success: true, result }))
+          .catch((error) =>
+            sendResponse({ success: false, error: error.message }),
+          );
+        return true;
     }
   });
 }
@@ -191,6 +205,33 @@ async function handleClickSend() {
       }),
     );
   }
+}
+
+/**
+ * 执行一次「向 AI 发消息并等回复」
+ *
+ * 后台 pack-executor 的 AI 步骤发的是 SEND_TO_AI（见 pack-executor.js 的
+ * _executeAIStep）。这条链路此前是**断的**：内容脚本没有对应分支，
+ * sendMessage 拿不到响应，AI 步骤拿到 undefined 还被当成成功，
+ * 流程继续往下走 ⇒ Pack 「执行成功」但产物是空的。
+ *
+ * 这里把已有的一等公民能力串起来：注入文本 → 点发送 → 等回复。
+ * 三件事各自都已经在生产里被真机验证过（见 docs/REAL_MACHINE_REGRESSION.md），
+ * 缺的只是把它们接成一次调用。
+ *
+ * @param {string} prompt - 要发给 AI 的提示词
+ * @param {number} [timeout=60000] - 等回复的超时（毫秒）
+ * @returns {Promise<{messageCount: number, content: string, duration: number}>}
+ */
+async function handleSendToAI(prompt, timeout = 60000) {
+  if (!currentConfig) throw new Error("No adapter available");
+  if (!prompt || !String(prompt).trim()) {
+    throw new Error("SEND_TO_AI requires a non-empty prompt");
+  }
+
+  await handleInjectText(prompt);
+  await handleClickSend();
+  return await handleWaitForResponse(timeout);
 }
 
 /**

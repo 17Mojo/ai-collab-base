@@ -51,6 +51,31 @@ function initialize() {
     `[Prompt Pack] Service Worker initialized — ${Object.keys(adapters).length} platform adapters registered`,
   );
   packExecutor = new PackExecutor();
+  // Pack 的事实源是 storage，执行器得自己同步过去。
+  // 失败不致命：storage 读不到时执行器就是空的，报 "Pack not found"，
+  // 比静默用一个错的 Pack 强。
+  syncPacksToExecutor().catch((error) =>
+    console.warn("[Prompt Pack] 同步 Pack 失败：", error.message),
+  );
+}
+
+/**
+ * 把 storage 里的 Pack 同步进执行器
+ *
+ * 此前执行器从来没有拿到过 Pack：loadPack() 定义了却没人调用，
+ * 而 getPack() 读的是执行器自己那张表 ⇒ 恒为 null ⇒
+ * 每次点「执行」都是 "Pack not found: <id>"。
+ *
+ * 事实源是 chrome.storage.local["packs"]（CREATE/UPDATE/DELETE/IMPORT
+ * 都写它），所以同步的方向只能是 storage → 执行器。
+ *
+ * @returns {Promise<string[]>} 装进去的 pack_id
+ */
+async function syncPacksToExecutor() {
+  if (!packExecutor) return [];
+  const result = await chrome.storage.local.get("packs");
+  const packs = result.packs || [];
+  return packExecutor.replacePacks(packs);
 }
 
 /**
@@ -85,12 +110,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case "EXECUTE_PACK":
       if (packExecutor) {
-        packExecutor
-          .execute(message.packId, message.input)
-          .then((result) => sendResponse({ success: true, result }))
-          .catch((error) =>
-            sendResponse({ success: false, error: error.message }),
-          );
+        (async () => {
+          // 先同步一次：Pack 可能在执行器初始化之后才被创建/导入，
+          // 不同步就是 "Pack not found"。
+          await syncPacksToExecutor();
+          try {
+            const result = await packExecutor.execute(
+              message.packId,
+              message.input,
+              // 目标标签页：popup 告诉后台「用户当前在哪个页面」，
+              // AI 步骤据此精确投递，而不是给每个打开的 AI 页面都发一遍。
+              { tabId: message.tabId ?? null },
+            );
+            sendResponse({ success: true, result });
+          } catch (error) {
+            sendResponse({ success: false, error: error.message });
+          }
+        })();
         return true; // 保持消息通道开放
       }
       break;
@@ -215,7 +251,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       (async () => {
         try {
           const parsed = JSON.parse(message.jsonData);
-          const incoming = parsed.packs || [];
+          // 两种形状都收：
+          //   - { "packs": [ ... ] }  批量导出格式
+          //   - { "metadata": {...} }  单个 Pack 文件（packs/examples/ 下的
+          //     每个文件都是这个形状）——此前只认前者，于是目录里那 16 个
+          //     文件**一个都导不进来**（得到「没有找到任何 Pack」）。
+          const incoming = Array.isArray(parsed?.packs)
+            ? parsed.packs
+            : parsed?.metadata || parsed?.pack_id
+              ? [parsed]
+              : [];
+          if (incoming.length === 0) {
+            sendResponse({
+              imported: [],
+              errors: [{ error: "没有找到任何 Pack（既没有 packs 数组，也不是单个 Pack）" }],
+            });
+            return;
+          }
           const result = await chrome.storage.local.get("packs");
           const existing = result.packs || [];
           const imported = [];
@@ -223,6 +275,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           for (const pack of incoming) {
             const packId = pack.metadata?.pack_id || pack.pack_id;
+            if (!packId) {
+              errors.push({ packId: "(无 id)", error: "缺少 metadata.pack_id" });
+              continue;
+            }
             const exists = existing.some(
               (p) => (p.metadata?.pack_id || p.pack_id) === packId,
             );
@@ -278,6 +334,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       console.log(`[Prompt Pack] Platform detected: ${adapter.platformId}`);
     }
   }
+});
+
+// 监听 Pack 存储变化：Pack 编辑器、导入、删除都会写 storage.local["packs"]
+// ⇒ 执行器要跟着更新，否则执行时拿到的是旧表。
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !changes.packs) return;
+  syncPacksToExecutor().catch((error) =>
+    console.warn("[Prompt Pack] 同步 Pack 失败：", error.message),
+  );
 });
 
 // 初始化
