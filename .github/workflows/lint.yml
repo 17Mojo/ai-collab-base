@@ -41,3 +41,18 @@ jobs:
         # 误报豁免走 config/secrets-scan-allowlist.txt（按 <文件>:<行号> 精确豁免）。
         run: |
           python scripts/scan_secrets_pii.py --workspace .
+
+  dependency-hygiene:
+    # 阻断级门禁：node_modules 不得进版本库，但锁文件必须在。
+    # 两者是同一条不变量的一体两面——只做前者，会把「依赖版本不确定」
+    # 这个真问题用「仓库小了」这个假象掩盖过去。
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Check node_modules is untracked (and lockfiles are present)
+        run: |
+          python scripts/check_node_modules_untracked.py
