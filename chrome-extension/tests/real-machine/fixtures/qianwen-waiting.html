@@ -1,0 +1,90 @@
+<!--
+  千问「等待首个 token」DOM 契约（**从站点自己的产物推导**）
+
+  用户按下发送、模型还没吐出第一个字的那一小段时间。站点渲染代码
+  （@ali/qianwen-web/4.11.5 async/6605.js）里，这个状态是 `iR`
+  （displayName = "ReceivingCard"）：
+
+      jsx(tq, { className: "answer-receiving-card",
+                mimeType: "custom/receiving",
+                children: jsx("div", { className: "dot-container", ... }) })
+
+  而 `tq` 渲染 `className: \`answer-common-card ${t}\`` ⇒ 同一个元素上
+  同时有 answer-common-card 与 answer-receiving-card 两个类。
+
+  这份 fixture 要守住的性质：
+
+    - **「接收中」卡片不是一条消息**。它带 answer-common-card 类，
+      如果拿卡片当消息，用户一按下发送计数就 +1 —— 回复还没开始，
+      waitForResponse 就可能提前返回。所以消息计数必须仍是 1（只有上一轮
+      的完整回答）。
+    - 「接收中」卡片是**生成中**的信号 ⇒ isTyping() 必须为 true。
+-->
+<div class="chat-room-outer-wrap">
+  <div class="chat-container-wrapper">
+    <div class="message-list-container scroll-container message-list-scroll-container h-full mini-chat-scroller">
+      <div class="message-list-content-container">
+
+        <div data-chat-list-key="chat-1">
+          <div class="chat-round" data-chat="chat-1" data-chat-pos="0">
+            <div class="chat-question-wrap">
+              <div class="chat-question-card-wrap" data-chat-question-wrap="q-1">
+                <div class="message-card-wrap question" data-mt="text/plain">
+                  <div class="question-text-card">北京今天天气怎么样？</div>
+                </div>
+              </div>
+            </div>
+            <div class="chat-answers-card-wrap" data-chat-answers-wrap="a-1">
+              <div class="answer-common-card undefined" data-mt="custom/markdown">
+                <div class="answer-text md-text-card">
+                  <div class="qk-markdown qk-markdown-react qk-markdown-code-light">
+                    <p><span class="qk-md-text">北京今天晴，气温 18 到 27 摄氏度。</span></p>
+                    <p><span class="qk-md-text">出门建议带一件薄外套。</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-chat-list-key="chat-2">
+          <div class="chat-round" data-chat="chat-2" data-chat-pos="1">
+            <div class="chat-question-wrap">
+              <div class="chat-question-card-wrap" data-chat-question-wrap="q-2">
+                <div class="message-card-wrap question" data-mt="text/plain">
+                  <div class="question-text-card">那明天呢？</div>
+                </div>
+              </div>
+            </div>
+            <!-- 等待首个 token：点点点卡片，还没有正文 -->
+            <div class="chat-answers-card-wrap" data-chat-answers-wrap="a-2">
+              <div class="answer-common-card answer-receiving-card" data-mt="custom/receiving">
+                <div class="dot-container"><span class="dot"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="homeInputContainer-anIFXS inputContainer-Bv9w0f">
+  <div class="relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left"
+       data-placeholder="向千问提问"
+       data-not-record-snapshot="true"
+       data-slate-editor="true"
+       data-slate-node="value"
+       contenteditable="true"
+       data-probe-role="chat-input"
+       class="relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left">
+    <p data-slate-node="element"><span data-slate-node="text"></span></p>
+  </div>
+  <button type="button"
+          aria-label="停止回答"
+          data-probe-role="stop-button"
+          class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border-0 p-0">
+    <span aria-hidden="true"><span class="bg-black-button size-2.5 rounded-[2px]"></span></span>
+  </button>
+</div>

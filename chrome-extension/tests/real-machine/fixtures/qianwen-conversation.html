@@ -1,0 +1,117 @@
+<!--
+  千问会话 DOM 契约 —— **从站点自己的产物推导**，不是采集到的快照
+
+  ## 为什么不是快照
+
+  空闲落地页上没有会话 ⇒ 没有消息气泡 ⇒ 落地页快照（fixtures/real/qianwen.html）
+  证不了任何一条消息选择器。而要采到真会话，需要已登录的浏览器 profile，
+  那是 L2 真机会话（需要人工在已登录环境里跑一次）的事。
+
+  所以这份 fixture 的依据是**千问自己的代码**（2026-10-25 只读抓取，
+  站点版本 @ali/qianwen-web/4.11.5）：
+
+    1. web/css/async/session-message-runtime.css —— 用后代选择器写死了层级；
+    2. web/js/async/6605.js —— React 渲染代码给出确切的 class 字符串与
+       data 属性（`data-chat-answers-wrap`、`data-chat-question-wrap`、
+       `className:"answer-text md-text-card"`、`className:"answer-receiving-card"`）；
+    3. 站点自己的文本选择功能声明了它认哪些卡片：
+       supportedSelectors:[".answer-common-card",".chat-question-card-wrap",
+                           '[data-card_name="deep_think"]']。
+
+  关键结构（照 6605.js 的渲染代码逐字还原）：
+
+      div.answer-common-card undefined        ← tq 渲染 `answer-common-card ${className}`，
+                                                 普通答案没传 className，模板串把
+                                                 undefined 也拼进去了（站点自己的小 bug）
+        div.answer-text md-text-card           ← tL（MarkdownText）渲染的正文卡
+          div.qk-markdown.qk-markdown-react    ← markdown 容器
+            p > span.qk-md-text                ← 一段一个 span
+
+  ## 本 fixture 想守住的性质
+
+    - 消息容器**带 "message" 字样**（message-list-container /
+      message-list-content-container）—— 旧的宽松选择器 '[class*="message"]'
+      会命中它们，把消息数撑大；新的选择器必须只认答案卡。
+    - 提问卡用**另外一套类名**（chat-question-card-wrap / question-text-card），
+      绝不能被当成 AI 回答。
+    - 答案正文分**两段**—— 只取 '.qk-md-text' 只能拿到第一段，
+      必须取 '.qk-markdown' 容器。
+    - 发送按钮的 aria-label **故意用英文**（"Send message"）：证明适配器认的是
+      不随语言变的 data 属性，而不是本地化文案。真实站点中文界面下它是
+      「发送消息」（i18n key = qianwenWeb.input.sendMessage）。
+-->
+<div class="chat-room-outer-wrap">
+  <div class="chat-container-wrapper">
+    <div class="message-list-container scroll-container message-list-scroll-container h-full mini-chat-scroller">
+      <div class="message-list-content-container">
+
+        <div data-chat-list-key="chat-1">
+          <div class="chat-round" data-chat="chat-1" data-chat-pos="0">
+            <div class="chat-question-wrap">
+              <div class="chat-question-card-wrap" data-chat-question-wrap="q-1">
+                <div class="message-card-wrap question" data-mt="text/plain">
+                  <div class="question-text-card">北京今天天气怎么样？</div>
+                </div>
+              </div>
+            </div>
+            <div class="chat-answers-card-wrap" data-chat-answers-wrap="a-1">
+              <div class="answer-common-card undefined" data-mt="custom/markdown">
+                <div class="answer-text md-text-card">
+                  <div class="qk-markdown qk-markdown-react qk-markdown-code-light">
+                    <p><span class="qk-md-text">北京今天晴，气温 18 到 27 摄氏度。</span></p>
+                    <p><span class="qk-md-text">出门建议带一件薄外套。</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-chat-list-key="chat-2">
+          <div class="chat-round" data-chat="chat-2" data-chat-pos="1">
+            <div class="chat-question-wrap">
+              <div class="chat-question-card-wrap" data-chat-question-wrap="q-2">
+                <div class="message-card-wrap question" data-mt="text/plain">
+                  <div class="question-text-card">那明天呢？</div>
+                </div>
+              </div>
+            </div>
+            <div class="chat-answers-card-wrap" data-chat-answers-wrap="a-2">
+              <div class="answer-common-card undefined" data-mt="custom/markdown">
+                <div class="answer-text md-text-card">
+                  <div class="qk-markdown qk-markdown-react qk-markdown-code-light">
+                    <p><span class="qk-md-text">明天多云，气温 16 到 25 摄氏度。</span></p>
+                    <p><span class="qk-md-text">有短时阵雨，建议带伞。</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="homeInputContainer-anIFXS inputContainer-Bv9w0f">
+  <div class="relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left"
+       data-placeholder="向千问提问"
+       data-not-record-snapshot="true"
+       data-slate-editor="true"
+       data-slate-node="value"
+       contenteditable="true"
+       data-probe-role="chat-input"
+       class="relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left">
+    <p data-slate-node="element"><span data-slate-node="text"></span></p>
+  </div>
+  <button type="button"
+          aria-label="Send message"
+          data-session-switch-target="send-query"
+          data-probe-role="send-button"
+          class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border-0 p-0">
+    <span data-role="icon" data-render-as="svg" data-icon-type="qwpcicon-sendChat">
+      <svg viewBox="0 0 1024 1024" width="1em" height="1em"><use xlink:href="#qwpcicon-sendChat"></use></svg>
+    </span>
+  </button>
+</div>
