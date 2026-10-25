@@ -303,6 +303,9 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 | — | 平台名单散落 4 处（矩阵 / 探针 / content-script / multi-platform-executor） | 收敛到 `tests/platforms.mjs` 单一事实源，并用 `tests/platform-registry.test.mjs` 双向对账 |
 | — | 模拟层矩阵 110/114 全绿，却漏掉 4 个真机缺陷 | 新增两条**可机检的不变量**（「无会话即无消息」/「空闲即不忙」），并把「发现漂移的能力」本身纳入矩阵 |
 | — | 千问的 mock fixture 是**照着旧选择器写的假 DOM**，矩阵因此「因为错的原因而绿」 | 按千问真实结构重写，并把发送按钮的 aria-label 故意改成英文——这样删掉稳定属性那条选择器后矩阵**也会红**，矩阵本身就守住了「不依赖本地化文案」 |
+| 6a | **Pack 执行链路本身三段全断**（准备外部用户试用材料时逐段查出来的）：<br>① popup 用不存在的 `pack.id` ⇒ 渲染出 `data-id="undefined"`；<br>② 执行器从来没拿到过 Pack（`loadPack()` 定义了却没人调用，而 storage 才是事实源）⇒ 每次执行都是 "Pack not found"；<br>③ 后台发 `SEND_TO_AI`，内容脚本**没有分支处理它** ⇒ AI 步骤拿到 `undefined` 却仍被当成「成功」⇒ Pack「执行成功」但产物是空的 | 三处都修了，并加了 `tests/extension-wiring.test.mjs`（10 条静态+行为测试）与 5 条变异。**注意：这不等于「Pack 在真机上跑通了」**——只等于「链路接上了」，见 §6.2 的 #5 | — |
+| 6b | **AI 步骤发到哪儿**没定义：后台用 `chrome.runtime.sendMessage` 广播 ⇒ 扩展里**每个**内容脚本都收到 ⇒ 用户开 3 个 AI 页面时提示词在 3 个页面里各发一次 | 改为「已知目标标签页 ⇒ `chrome.tabs.sendMessage` 精确投递；不知道才广播并标明是广播」，popup 负责把当前标签页 id 告诉后台（3 段各一条测试 + 3 条变异） | — |
+| 6c | **外部用户根本走不到「导入 Pack」那一步**：popup 里没有导入入口（只有一个「请先导入 Pack」的提示），而设置页里打开 Pack 编辑器的 URL（`getURL('public/pack-editor.html')`）在**构建产物里 404**（产物里只有扁平的 `pack-editor.html`）⇒ 点了就是「文件不存在」 | popup 加「📥 导入 / 管理 Pack」按钮；静态资源复制逻辑收敛到 `static-assets.cjs` 一份，产物里**两种布局都保留**（`pack-editor.html` 与 `public/pack-editor.html`），并加测试逐个核对代码里 `getURL` 指到的页面在产物里真的存在 | — |
 
 > **#2 关掉的到底是什么、没关掉的是什么**（别把「关了」当成「验证过了」）：
 > 关掉的是「选择器引用了千问上不存在的类名」这个**确定性缺陷**——现在每一条选择器
@@ -321,8 +324,11 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 | 8 | **千问的「生成中」信号**（「停止回答」按钮 / 「接收中」点点点卡片）同样只是**从站点产物推导**，未在真机跑过 | 同 #3：`isTyping()` 若恒为 false ⇒ 拿到半截回复；若恒为 true ⇒ 永远等不到 | 同 #3 |
 | 4 | ChatGPT / Claude.ai / DeepSeek 三家未采到真实快照 | 这三家的 DOM 契约仍无 L1 结论 | ChatGPT / Claude 撞 bot check（HTTP 403），DeepSeek 撞登录墙——都不是代码问题 |
 | 5 | L2（真实发送后等回复）**尚未跑过任何一次** | 缺口「回复等待链路」仍未验证 | 需要人 + 已登录 profile；观测器已交付（见附录 A） |
-| 6 | 后台↔内容脚本的**消息协议**有洞：`pack-executor.js` 发 `SEND_TO_AI` 无人处理；`multi-platform-executor.js` 发 `GET_LATEST_RESPONSE` 无人处理，且它读 `pageState.isTyping`，而 `getPageState()` 根本不返回该字段 | 这是**产品级**缺陷（Pack 执行走不通），不是 DOM 契约问题 | 本工单范围外——不同性质的问题，已单独立项待决 |
+| 6 | 后台↔内容脚本的**消息协议**还剩一个洞：`multi-platform-executor.js` 发 `GET_LATEST_RESPONSE` 无人处理，且它读 `pageState.isTyping`，而 `getPageState()` 根本不返回该字段 | 该模块**没有任何模块 import 它** ⇒ 是死代码，不在运行路径上（生产链路用的 `SEND_TO_AI` 已修，见 §6.1 的 6a） | 死代码要么删、要么接线，都属于「运行时收敛」这件事，不在本工单范围 |
 | 7 | 真实快照是**冻结基线**，守不住「站点改版」 | 快照失效=一条待办信号，不是 CI 失败 | 这是刻意的分层：改版由 L1 探针（打真站）负责；快照只守「我们对真机 DOM 的理解被记录下来了，而且自洽」 |
+| 9 | **Python 校验器与 JS 运行时对「步骤类型」的说法不一致**：`ai_collab/pack/schema_v2.py` 的 `StepType` 是 `local/analysis/generation/validation/fusion/tracking`，而 JS 执行器只认 `local` 和 `ai` | 一份按 Python 口径写的 Pack（`type: "generation"`）在 JS 侧会直接抛 `Unknown step type`；反过来 `type: "ai"` 的 Pack 过不了 Python 校验 | 两套口径要统一（要么 Python 侧加 `ai`，要么 JS 侧映射），这属于**契约变更**，不在本工单范围 |
+| 10 | `packs/examples/` 下的 17 个示例 Pack **没有一个**能通过 Python 校验器 | 「照着示例写一个 Pack」这条路对使用者是断的——示例本身不合规 | 同 #9，且示例 Pack 本身要重写（本次只新增了一个走 JS 运行时的自检 Pack `external-user-smoke.json`，它同样过不了 Python 校验器） |
+| 11 | `src/background/pack-storage-manager.js` 依赖一个**并不存在**的后端 API（本地 FastAPI 服务尚未实现） | 走那个模块的 Pack 管理路径直接不可用；当前实际可用的是「storage 既是事实源、也是唯一事实源」这条路径 | 后端未实现，属于路线 A/B 之外的工作 |
 
 > 表格里写「未验证」的项目**都不许**在别处被当成「已通过」引用。
 > 特别注意 #1 与 #1b：真实快照已入库 ≠ 消息气泡选择器已验证；
@@ -339,6 +345,9 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 - 本手册的 L1/L2 是**前半段**（真机 3 平台回归）的执行规程；
 - **后半段（第一个外部用户）不在这份手册的范围内**——它需要**外部人**，
   不是内部再跑一遍自动化；
+  （材料已备好：`docs/EXTERNAL_USER_ONBOARDING.md` 是一页说明书，
+  `collaboration/results/external-user/` 是记录格式与模板；
+  **缺的只是「人」**——没人跑过之前，这一栏仍然是空的。）
 - 因此即使 §5 的 `verify` 返回 0（记录一致且跑完），路线门禁**仍然是开启的**。
 
 ---
@@ -359,6 +368,8 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 | `tests/real-machine/mutation-check.mjs` | **变异检查**：改坏被守护的代码，对应测试必须变红 | 是（在临时副本上跑） |
 | `tests/run-tests.mjs` | 单测入口（Node 18+ 通用；`node --test` 的三种写法在 Node 20/23 上各有一坑） | 是 |
 | `tests/ci-wiring.test.mjs` | 守护「CI 确实在跑扩展测试」——**不许** `|| echo` 吞掉失败 | 是（只读） |
+| `tests/extension-wiring.test.mjs` | **扩展内部接线**：popup ↔ 后台 ↔ 内容脚本（消息类型双向对账 + 真的跑一次 SEND_TO_AI + Pack 找得到 + 标签页定向 + 产物里页面真的存在） | 是（jsdom + 临时目录） |
+| `static-assets.cjs` | 静态资源复制（**唯一一份**实现，产物里保留扁平与 `public/` 嵌套两种布局） | 是（复制文件） |
 
 ### A.1 为什么要做变异检查
 
