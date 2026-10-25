@@ -83,23 +83,12 @@ if (existsSync(manifestSrc)) {
   copyFileSync(resolve(rootDir, "manifest.json"), resolve(distDir, "manifest.json"));
 }
 
-// HTML 和 JS
-const staticFiles = [
-  "popup.html", "settings.html", "pack-editor.html", "style-editor.html",
-  "popup.js", "settings.js", "pack-editor.js", "style-editor.js",
-];
-for (const file of staticFiles) {
-  const src = resolve(publicDir, file);
-  if (existsSync(src)) copyFileSync(src, resolve(distDir, file));
-}
-
-// 图标
-const iconsDir = resolve(distDir, "icons");
-mkdirSync(iconsDir, { recursive: true });
-for (const size of ["16", "48", "128"]) {
-  const src = resolve(publicDir, "icons", `icon${size}.png`);
-  if (existsSync(src)) copyFileSync(src, resolve(iconsDir, `icon${size}.png`));
-}
+// HTML / JS / 图标：复制逻辑只有 static-assets.cjs 这一份
+// （此前 build.js 和 vite.config.js 各写各的文件清单，两边对不上，
+//   于是代码里 getURL('public/pack-editor.html') 在产物里 404）
+const { copyStaticAssets } = require("./static-assets.cjs");
+const copied = copyStaticAssets({ rootDir, destDir: distDir });
+console.log(`  ✅ Static assets copied (${copied.files.length} files, ${copied.icons.length} icons)`);
 
 // 清理临时目录
 rmSync(tmpDir, { recursive: true });

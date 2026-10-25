@@ -5,6 +5,7 @@
 
 import json
 import os
+import re
 import sys
 
 import pytest
@@ -173,7 +174,11 @@ class TestChromeExtensionFiles:
         ):
             assert msg_type in content, f"缺少消息类型处理: {msg_type}"
         assert "packExecutor" in content, "缺少 packExecutor 引用"
-        assert ".execute(message.packId" in content, "缺少 packExecutor.execute 调用"
+        # 只认「调用了 execute、且第一个参数是 message.packId」——
+        # 源码里的换行/缩进随时会变（参数从 2 个增加到 3 个时就会变），
+        # 按字面量匹配源码格式，注定会被一次无害的格式化弄红。
+        flat = re.sub(r"\s+", "", content)
+        assert "execute(message.packId" in flat, "缺少 packExecutor.execute 调用"
         assert "new PackExecutor" in content, "缺少 PackExecutor 构造"
 
     def test_pack_storage_manager_exists(self):

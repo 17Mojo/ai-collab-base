@@ -62,73 +62,73 @@ const MUTATIONS = [
   {
     name: "把「计数增长」从 > 改成 >=",
     why: "生产口径是严格大于；改成 >= 会把「一条都没多」误判为已回复",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "usable[i].messageCount > initial && usable[i].isTyping === false",
     replace: "usable[i].messageCount >= initial && usable[i].isTyping === false",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "生成中解除但计数没涨",
   },
   {
     name: "把「不在生成中」这个条件去掉",
     why: "去掉后等待会在生成中途提前返回——这正是 isTyping 选错时的真实故障模式",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "if (usable[i].messageCount > initial && usable[i].isTyping === false) {",
     replace: "if (usable[i].messageCount > initial) {",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "计数涨了但 isTyping 恒为 true",
   },
   {
     name: "基准不再取生产启动那一刻的计数",
     why: "退回用第一个采样做基准，中间落进一条消息就会被误判为「没增长」",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "typeof baselineCount === \"number\"",
     replace: "false",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "基准取生产启动那一刻的计数",
   },
   {
     name: "生产取到的正文非空判定恒为真",
     why: "恒为真会让「等待成功但正文是空」这种缺陷被判为通过",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "productionContentNonEmpty: Boolean(prodResult && (prodResult.content || \"\").trim().length > 0),",
     replace: "productionContentNonEmpty: true,",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "等待成功但正文是空的",
   },
   {
     name: "证据文件不再脱敏",
     why: "真实会话正文会进 git 仓库，不脱敏等于把个人信息公开",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "lastContent: typeof s.lastContent === \"string\" ? sanitizeText(s.lastContent) : \"\",",
     replace: "lastContent: typeof s.lastContent === \"string\" ? s.lastContent : \"\",",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "证据文件里正文被脱敏",
   },
   {
     name: "证据文件谎称脚本发过消息",
     why: "sendsMessages 是给审阅者看的机器可读声明，写错等于伪造证据",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "sendsMessages: false,",
     replace: "sendsMessages: true,",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "证据文件里正文被脱敏",
   },
   {
     name: "一致位恒为真",
     why: "一致性是发现「生产结果与时间线对不上」的唯一信号",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "consistent: settled === (resolveAtIndex !== null),",
     replace: "consistent: true,",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "生产结果与时间线重放不一致时",
   },
   {
     name: "--i-will-send 闸门失效",
     why: "没有这个闸门，误跑一次就会在真站上发出一条真实消息",
-    target: "l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "} else if (raw === \"--i-will-send\") {\n      args.iWillSend = true;",
     replace: "} else if (raw === \"--i-will-send\") {\n      args.iWillSend = false;",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "--i-will-send 会打开发送闸门",
   },
 
@@ -136,19 +136,19 @@ const MUTATIONS = [
   {
     name: "「命中元素必须无文本」这条硬伤判定阈值收紧到永不触发",
     why: "去掉后 Yiyan 的 _chat-container_ 这类界面外壳会被当成消息，计数被撑起来",
-    target: "message-model.mjs",
+    target: "real-machine/message-model.mjs",
     find: ".filter((x) => (x.textLength ?? 0) > 0)",
     replace: ".filter((x) => (x.textLength ?? 0) > 9999)",
-    testFile: "message-model.test.mjs",
+    testFile: "real-machine/message-model.test.mjs",
     expectTest: "命中界面外壳（Yiyan 的 _chat-container_）",
   },
   {
     name: "去掉「空闲即不忙」这条硬伤判定",
     why: "去掉后 isTyping 恒为 true 的平台会被判为合格，而每次发送都必然超时",
-    target: "message-model.mjs",
+    target: "real-machine/message-model.mjs",
     find: "if (typing === true) {",
     replace: "if (false) {",
-    testFile: "message-model.test.mjs",
+    testFile: "real-machine/message-model.test.mjs",
     expectTest: "空闲页上 isTyping 为 true",
   },
 
@@ -156,19 +156,19 @@ const MUTATIONS = [
   {
     name: "class 属性重新开始做长随机串脱敏",
     why: "CSS Module 的哈希类名是结构不是令牌，误脱敏会毁掉选择器的命中依据",
-    target: "sanitize.mjs",
+    target: "real-machine/sanitize.mjs",
     find: "if (STRUCTURAL_ATTRS.has(String(name).toLowerCase())) {",
     replace: "if (false) {",
-    testFile: "sanitize.test.mjs",
+    testFile: "real-machine/sanitize.test.mjs",
     expectTest: "class 属性不做长随机串脱敏",
   },
   {
     name: "邮箱规则失效",
     why: "真实 DOM 快照要进 git 仓库，邮箱漏出去就是个人信息泄露",
-    target: "sanitize.mjs",
+    target: "real-machine/sanitize.mjs",
     find: "/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g",
     replace: "/(?!x)x/g",
-    testFile: "sanitize.test.mjs",
+    testFile: "real-machine/sanitize.test.mjs",
     expectTest: "邮箱被替换",
   },
 
@@ -186,7 +186,7 @@ const MUTATIONS = [
     target: "src/platforms/qianwen-adapter.js",
     find: "    'div.answer-text.md-text-card',",
     replace: "    '[class*=\"message\"]',",
-    testFile: "qianwen-contract.test.mjs",
+    testFile: "real-machine/qianwen-contract.test.mjs",
     expectTest: "消息数只算答案卡",
   },
   {
@@ -195,7 +195,7 @@ const MUTATIONS = [
     target: "src/platforms/qianwen-adapter.js",
     find: "    '.qk-markdown',",
     replace: "    '.qk-md-text',",
-    testFile: "qianwen-contract.test.mjs",
+    testFile: "real-machine/qianwen-contract.test.mjs",
     expectTest: "答案正文取整个 markdown 容器",
   },
   {
@@ -204,7 +204,7 @@ const MUTATIONS = [
     target: "src/platforms/qianwen-adapter.js",
     find: "    'button[data-session-switch-target=\"send-query\"]',\n",
     replace: "",
-    testFile: "qianwen-contract.test.mjs",
+    testFile: "real-machine/qianwen-contract.test.mjs",
     expectTest: "发送按钮靠稳定属性命中",
   },
   {
@@ -213,7 +213,7 @@ const MUTATIONS = [
     target: "src/platforms/qianwen-adapter.js",
     find: "    'button[aria-label*=\"停止回答\"]',",
     replace: "    'button[aria-label*=\"发送消息\"]',",
-    testFile: "qianwen-contract.test.mjs",
+    testFile: "real-machine/qianwen-contract.test.mjs",
     expectTest: "识别停止回答按钮",
   },
   {
@@ -222,7 +222,7 @@ const MUTATIONS = [
     target: "src/platforms/qianwen-adapter.js",
     find: "    'div.answer-receiving-card',",
     replace: "    'div.answer-receiving-card-typo',",
-    testFile: "qianwen-contract.test.mjs",
+    testFile: "real-machine/qianwen-contract.test.mjs",
     expectTest: "只有接收中卡片",
   },
   {
@@ -231,8 +231,119 @@ const MUTATIONS = [
     target: "src/platforms/qianwen-adapter.js",
     find: "      const self = element.matches?.(sel) ? element : null;",
     replace: "      const self = null;",
-    testFile: "qianwen-contract.test.mjs",
+    testFile: "real-machine/qianwen-contract.test.mjs",
     expectTest: "markdown 容器与答案卡是同一个元素时也能取到完整正文",
+  },
+
+  // ── 后台 ↔ 内容脚本 的消息协议 ──────────────────────────────
+  //
+  // 2026-10-25 查 Pack 执行链路时发现的那条断线：后台发 SEND_TO_AI，
+  // 内容脚本没有分支处理 ⇒ 消息发出去没人接 ⇒ AI 步骤拿到空值却被
+  // 当成成功 ⇒ Pack「执行成功」但产物是空的。
+  //
+  // 这条变异把分支删掉，用同一条测试证明「真删了就会红」——
+  // 否则这条修复只是一次「看着对」的接线，没有证据。
+  {
+    name: "把内容脚本的 SEND_TO_AI 分支删掉",
+    why: "后台的 AI 步骤靠它才能拿到 AI 的回复；删了 Pack 执行链路就断",
+    target: "src/content/content-script.js",
+    find:
+      '      case "SEND_TO_AI":\n' +
+      "        handleSendToAI(message.prompt, message.config?.timeout)\n" +
+      "          .then((result) => sendResponse({ success: true, result }))\n" +
+      "          .catch((error) =>\n" +
+      "            sendResponse({ success: false, error: error.message }),\n" +
+      "          );\n" +
+      "        return true;\n",
+    replace: "",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "Pack 的 AI 步骤发的那条消息",
+  },
+  {
+    name: "把内容脚本的 SEND_TO_AI 改成不注入文本",
+    why: "不注入就等于什么都没发出去，AI 会答非所问",
+    target: "src/content/content-script.js",
+    find: "  await handleInjectText(prompt);\n",
+    replace: "",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "提示词进了输入框",
+  },
+  {
+    name: "执行器不再从 storage 同步 Pack",
+    why: "Pack 的事实源是 storage 不同步就是 'Pack not found'——用户点执行只会看到这一句",
+    target: "src/background/service-worker.js",
+    find: "  return packExecutor.replacePacks(packs);",
+    replace: "  return packExecutor.replacePacks([]);",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "storage 里的 Pack 要能被执行器找到并执行",
+  },
+  {
+    name: "popup 又用回不存在的 pack.id",
+    why: "Pack 的 id 在 metadata.pack_id 里；用 pack.id 会渲染出 data-id=\"undefined\"",
+    target: "public/popup.js",
+    find:
+      '        const id = pack.metadata?.pack_id || pack.pack_id || pack.id || "";',
+    replace: '        const id = pack.id || "";',
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "popup 渲染出来的 data-id",
+  },
+  {
+    name: "public 下的脚本里写坏一个语法",
+    why: "vite 对 public/ 是原样复制，语法错不会被构建发现——会一路发到用户手里",
+    target: "public/popup.js",
+    find: "const packList = document.getElementById('packList');",
+    replace: "const packList = document.getElementById('packList');)",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "public/ 下的脚本必须语法正确",
+  },
+  {
+    name: "AI 步骤退回广播（不再定向到标签页）",
+    why:
+      "广播会让用户开着几个 AI 页面就收到几次提示词——" +
+      "第一次用的人看到的是「这扩展在乱发消息」",
+    target: "src/background/pack-executor.js",
+    find: "    if (targetTabId !== null && targetTabId !== undefined) {",
+    replace: "    if (false) {",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "AI 步骤要发到指定标签页",
+  },
+  {
+    name: "后台不再把目标标签页传给执行器",
+    why: "目标标签页一路传到执行器才有意义，中间断一截就退回广播",
+    target: "src/background/service-worker.js",
+    find: "              { tabId: message.tabId ?? null },",
+    replace: "              {},",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "后台要把目标标签页一路传到 AI 步骤",
+  },
+  {
+    name: "popup 不再把当前标签页告诉后台",
+    why: "popup 拿不到 tabId，后台就只能广播",
+    target: "public/popup.js",
+    find: "      type: 'EXECUTE_PACK',\n      packId,\n      tabId\n",
+    replace: "      type: 'EXECUTE_PACK',\n      packId,\n      tabId: null\n",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "popup 要把用户当前所在的标签页告诉后台",
+  },
+  {
+    name: "popup 不再打开 Pack 编辑器",
+    why: "popup 是外部用户看到的第一屏；没有导入入口就卡在第一步",
+    target: "public/popup.js",
+    find: "      url: chrome.runtime.getURL('public/pack-editor.html')",
+    replace: "      url: 'about:blank'",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "popup 必须有「导入 Pack」的入口",
+  },
+  {
+    name: "构建不再复制 public/ 嵌套那份",
+    why:
+      "代码里 getURL('public/pack-editor.html') 指的是嵌套布局；" +
+      "不复制的话那个 URL 在装好的扩展里 404，「导入 Pack」直接断掉",
+    target: "static-assets.cjs",
+    find: "    copyFileSync(src, resolve(nestedDir, file));\n",
+    replace: "",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "在构建产物里必须真的存在",
   },
 ];
 
@@ -288,15 +399,34 @@ function main() {
     recursive: true,
     filter: (src) => !src.includes(`${"node_modules"}`),
   });
+  // public/ 也要进来：popup 的接线测试要读 public/popup.html 与 popup.js，
+  // 而且「public 下的脚本必须语法正确」那条门禁守的正是这个目录。
+  cpSync(join(EXT_ROOT, "public"), join(TMP_ROOT, "public"), {
+    recursive: true,
+    filter: (src) => !src.includes(`${"node_modules"}`),
+  });
+  // static-assets.cjs 也要进来：接线测试用它把静态资源复制到临时目录，
+  // 核对「代码里 getURL 指到的页面在产物里真的存在」。
+  // 少了它，那条测试在副本里会整个加载失败 ⇒ 变异会被**假杀**
+  // （「文件加载失败」也会被记成测试失败）——比没有门禁更糟。
+  const STATIC_ASSETS = "static-assets.cjs";
+  if (existsSync(join(EXT_ROOT, STATIC_ASSETS))) {
+    cpSync(join(EXT_ROOT, STATIC_ASSETS), join(TMP_ROOT, STATIC_ASSETS));
+  }
   const COPY_ROOT = join(TMP_ROOT, "tests");
 
   const survivors = [];
   try {
     for (const m of MUTATIONS) {
-      // target 以 "src/" 开头 ⇒ 打生产代码；否则打 tests/real-machine/ 下的文件
-      const targetAbs = m.target.startsWith("src/")
-        ? join(TMP_ROOT, m.target)
-        : join(COPY_ROOT, "real-machine", m.target);
+      // target 以 "src/" 或 "public/" 开头 ⇒ 打生产代码（相对扩展根）；
+      // target 指向扩展根下的单个文件（如 static-assets.cjs）⇒ 也是生产代码；
+      // 否则打 tests/ 下的文件（相对 tests/ 根）
+      const targetAbs =
+        m.target.startsWith("src/") ||
+        m.target.startsWith("public/") ||
+        m.target === "static-assets.cjs"
+          ? join(TMP_ROOT, m.target)
+          : join(COPY_ROOT, m.target);
       if (!existsSync(targetAbs)) {
         console.error(`✗ ${m.name}：目标文件不存在 ${m.target}`);
         survivors.push(m);
@@ -313,7 +443,7 @@ function main() {
       renameSync(targetAbs, backup);
       try {
         writeFileSync(targetAbs, original.replace(m.find, m.replace), "utf-8");
-        const { failed } = runTests(join(COPY_ROOT, "real-machine", m.testFile));
+        const { failed } = runTests(join(COPY_ROOT, m.testFile));
         const killed = failed.some((name) => name.includes(m.expectTest));
         if (killed) {
           console.log(`✓ ${m.name}\n    被 ${m.expectTest} 杀死`);

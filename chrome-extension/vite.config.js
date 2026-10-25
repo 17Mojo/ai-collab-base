@@ -17,6 +17,7 @@ import { defineConfig } from "vite";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { copyFileSync, mkdirSync, existsSync, readdirSync, rmSync } from "fs";
+import staticAssets from "./static-assets.cjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,36 +29,25 @@ const distDir = resolve(rootDir, "dist");
 
 /**
  * 复制静态资源到 dist 目录
+ *
+ * 实现只有一份：在 static-assets.cjs 里（build.js 也用它）。
+ * 此前 build.js 和本文件各写各的文件清单，两边对不上，
+ * 于是代码里 getURL('public/pack-editor.html') 在产物里 404。
+ *
+ * @param {string} [dest=distDir] - 目标目录
  */
-function copyStaticAssets() {
+function copyStaticAssets(dest = distDir) {
   // 1. 复制 manifest.json
   const manifestSrc = resolve(rootDir, "manifest.dist.json");
-  const manifestDst = resolve(distDir, "manifest.json");
+  const manifestDst = resolve(dest, "manifest.json");
   if (existsSync(manifestSrc)) {
     copyFileSync(manifestSrc, manifestDst);
   } else {
     copyFileSync(resolve(rootDir, "manifest.json"), manifestDst);
   }
 
-  // 2. 复制 public 目录下的 HTML 和 JS
-  const files = [
-    "popup.html", "settings.html", "pack-editor.html", "style-editor.html",
-    "popup.js", "settings.js", "pack-editor.js", "style-editor.js",
-  ];
-  for (const file of files) {
-    const src = resolve(publicDir, file);
-    const dst = resolve(distDir, file);
-    if (existsSync(src)) copyFileSync(src, dst);
-  }
-
-  // 3. 复制图标
-  const iconsDir = resolve(distDir, "icons");
-  if (!existsSync(iconsDir)) mkdirSync(iconsDir, { recursive: true });
-  for (const size of ["16", "48", "128"]) {
-    const src = resolve(publicDir, "icons", `icon${size}.png`);
-    const dst = resolve(iconsDir, `icon${size}.png`);
-    if (existsSync(src)) copyFileSync(src, dst);
-  }
+  // 2. public/ 下的 HTML / JS / 图标（扁平 + public/ 嵌套两种布局）
+  staticAssets.copyStaticAssets({ rootDir, destDir: dest });
 
   console.log("[vite] Static assets copied to dist/");
 }

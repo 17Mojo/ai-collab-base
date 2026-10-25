@@ -251,6 +251,39 @@ class PackExecutor {
   }
 
   /**
+   * 用一批 Pack **整体替换**执行器里的 Pack
+   *
+   * 为什么要有这个口子：Pack 的事实源是 chrome.storage.local["packs"]
+   * （service-worker 的 CREATE/UPDATE/DELETE/IMPORT 都写它），
+   * 而此前执行器只提供了逐个添加的 loadPack()，**没有任何地方调用它**
+   * ⇒ getPack() 恒为 null ⇒ 每次执行都报 "Pack not found: <id>"。
+   *
+   * 逐个添加的写法在「存储是事实源」这个模型下本来就不该用：
+   * 删掉的 Pack 会留在执行器里，删了也还在。
+   *
+   * @param {Array<Object>} packs
+   * @returns {string[]} 实际装进去的 pack_id
+   */
+  replacePacks(packs) {
+    this.packs.clear();
+    const loaded = [];
+    for (const pack of packs || []) {
+      try {
+        this.loadPack(pack);
+        loaded.push(pack.metadata.pack_id);
+      } catch (error) {
+        // 单个 Pack 不合法不该让整批都进不来——但要留下痕迹
+        console.warn(
+          "[PackExecutor] 跳过不合法的 Pack：",
+          error.message,
+          pack?.metadata?.pack_id || "(无 id)",
+        );
+      }
+    }
+    return loaded;
+  }
+
+  /**
    * 获取 Pack
    * @param {string} packId
    * @returns {Object|null}
@@ -263,9 +296,11 @@ class PackExecutor {
    * 执行 Pack
    * @param {string} packId - Pack ID
    * @param {Object} input - 输入数据
+   * @param {Object} [options] - 执行选项
+   * @param {number|null} [options.tabId] - 目标标签页 id
    * @returns {Promise<Object>}
    */
-  async execute(packId, input = {}) {
+  async execute(packId, input = {}, options = {}) {
     const pack = this.getPack(packId);
     if (!pack) {
       throw new Error(`Pack not found: ${packId}`);
@@ -278,6 +313,8 @@ class PackExecutor {
       packId,
       input,
       runtime_overrides: validatedOverrides, // 存储验证后的合法 overrides
+      // 目标标签页：AI 步骤要发到**哪一个**页面上去
+      targetTabId: options.tabId ?? null,
       startTime: Date.now(),
       status: ExecutionStatus.RUNNING,
       steps: [],
@@ -556,6 +593,7 @@ class PackExecutor {
    * 执行 AI 步骤
    * @param {Object} step
    * @param {Object} execution
+   * @param {number|null} execution.targetTabId - 目标标签页（null = 广播）
    * @returns {Promise<any>}
    */
   async _executeAIStep(step, execution) {
@@ -567,13 +605,46 @@ class PackExecutor {
     const prompt = this._buildPrompt(step, execution);
 
     // 发送消息到 content script
+    //
+    // 发到**哪一个**页面上去，这件事以前是含糊的：
+    // 用 `chrome.runtime.sendMessage` 发 ⇒ 扩展里**每一个**内容脚本都会收到
+    // ⇒ 用户开着 3 个 AI 页面时，提示词会在 3 个页面里各发一次
+    // （聊天记录凭空多出三条，对第一次用的人来说是「这扩展在乱发消息」）。
+    //
+    // 所以：**已知目标标签页时一律用 `chrome.tabs.sendMessage` 精确投递**；
+    // 不知道目标标签页时才退回广播，并在结果里标明是广播。
+    const targetTabId = execution.targetTabId;
+    if (targetTabId !== null && targetTabId !== undefined) {
+      try {
+        // 注意：消息体是**内联**写的字面量，不是提前存进变量。
+        // 静态护栏（tests/extension-wiring.test.mjs）要能从调用点
+        // 直接看出发的是哪种消息——存进变量它就看不出来了。
+        return await chrome.tabs.sendMessage(targetTabId, {
+          type: "SEND_TO_AI",
+          prompt,
+          config,
+        });
+      } catch (error) {
+        // 最常见的原因：那个标签页不是受支持的 AI 站点，
+        // 或者页面在扩展装好之前就打开着（内容脚本没注入）。
+        throw new Error(
+          `无法把提示词发到标签页 ${targetTabId}：${error.message}。` +
+            "请确认该页面是受支持的 AI 站点（千问/文心/元宝/Kimi/…），" +
+            "并在扩展装好之后刷新一次页面。",
+        );
+      }
+    }
+
+    // 没有目标标签页：广播。**每个**内容脚本都会收到并各自执行。
     const response = await chrome.runtime.sendMessage({
       type: "SEND_TO_AI",
       prompt,
       config,
     });
-
-    return response;
+    return {
+      ...(response || {}),
+      broadcast: true,
+    };
   }
 
   /**
