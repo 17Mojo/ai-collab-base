@@ -1,0 +1,26 @@
+{
+  "platform": "qianwen",
+  "url": "https://www.qianwen.com/",
+  "fetched": 36,
+  "failed": 0,
+  "localNames": [
+    {
+      "local": "desktop-native",
+      "full": "desktop-native-empty"
+    },
+    {
+      "local": "qwen_web",
+      "full": "qwen_web_international"
+    }
+  ],
+  "perAsset": [
+    {
+      "url": "https://g.alicdn.com/code/npm/@ali/qianwen-web/4.11.5/web/js/pre.js",
+      "localNames": 2
+    },
+    {
+      "url": "https://g.alicdn.com/code/npm/@ali/qianwen-web/4.11.5/web/js/pre.js",
+      "localNames": 2
+    }
+  ]
+}

@@ -1,0 +1,715 @@
+[
+  {
+    "error": null,
+    "totalElements": 661,
+    "bubbleCandidates": [
+      {
+        "tag": "div",
+        "id": "ice-container",
+        "className": "",
+        "textLength": 443,
+        "text": "日常\n工作\n新对话\n云空间\n千问创作\n定时任务\n新定时任务\n暂无对话\n关于千问\nQwen3.7-千问\nAPI 服务\n下载电脑端\n登录\n你好，我是千问\n\n﻿\n\n向千问提问\n\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要",
+        "childCount": 1,
+        "siblingCount": 18,
+        "depth": 1,
+        "looksLikeBubble": true,
+        "parentClass": "",
+        "outerHTML": "<div id=\"ice-container\" data-react-root-mounted=\"true\" data-first-screen-ready=\"true\"><div class=\"flex\"><div class=\"relative flex size-full flex-nowrap overflow-hidden bg-primary\" data-content=\"content\"><aside class=\"bg-pc-sidebar h-full z-40 min-w-0 overflow-hidden relative transition-[width] duration-300 w-[16rem]\" id=\"new-nav-tab-wrapper\" style=\"contain: layout style paint;\"><div class=\"w-[16rem] absolute inset-y-0 right-0\" style=\"\"><div class=\"flex h-full min-w-64 shrink-0 flex-col overflow-hidden whitespace-nowrap bg-pc-sidebar\"><div class=\"flex h-[60px] shrink-0 items-center justify-betw"
+      },
+      {
+        "tag": "aside",
+        "id": "new-nav-tab-wrapper",
+        "className": "bg-pc-sidebar h-full z-40 min-w-0 overflow-hidden relative transition-[width] duration-300 w-[16rem]",
+        "textLength": 39,
+        "text": "日常\n工作\n新对话\n云空间\n千问创作\n定时任务\n新定时任务\n暂无对话\n关于千问",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 4,
+        "looksLikeBubble": true,
+        "parentClass": "relative flex size-full flex-nowrap overflow-hidden bg-primary",
+        "outerHTML": "<aside class=\"bg-pc-sidebar h-full z-40 min-w-0 overflow-hidden relative transition-[width] duration-300 w-[16rem]\" id=\"new-nav-tab-wrapper\" style=\"contain: layout style paint;\"><div class=\"w-[16rem] absolute inset-y-0 right-0\" style=\"\"><div class=\"flex h-full min-w-64 shrink-0 flex-col overflow-hidden whitespace-nowrap bg-pc-sidebar\"><div class=\"flex h-[60px] shrink-0 items-center justify-between pl-6 pr-3\"><button type=\"button\" class=\"flex items-center\"><img src=\"data:image/svg+xml,%3Csvg%20width%3D%2238%22%20height%3D%2220%22%20viewBox%3D%220%200%2033.7324%2017.9131%22%20preserveAspectRatio"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "relative flex min-h-0 flex-1 flex-col",
+        "textLength": 39,
+        "text": "日常\n工作\n新对话\n云空间\n千问创作\n定时任务\n新定时任务\n暂无对话\n关于千问",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 7,
+        "looksLikeBubble": true,
+        "parentClass": "flex h-full min-w-64 shrink-0 flex-col overflow-hidden whitespace-nowrap bg-pc-sidebar",
+        "outerHTML": "<div class=\"relative flex min-h-0 flex-1 flex-col\"><div class=\"flex min-h-0 flex-1 flex-col\"><div class=\"surfaceSwitchReveal-_L0G1n\"><div class=\"pb-2 pt-1\"><div class=\"mx-3 grid grid-cols-2 rounded-8 bg-tag p-0.5\" role=\"tablist\" aria-label=\"对话模式\"><button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"h-7 rounded-6 text-14 transition-colors bg-primary font-600 text-primary shadow-sm\"><span class=\"tabLabel-Q10Kau\">日常</span></button><button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"h-7 rounded-6 text-14 transition-colors text-secondary hover:text-primary\"><span class=\"tabLabel-Q"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "surfaceSwitchReveal-_L0G1n",
+        "textLength": 5,
+        "text": "日常\n工作",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 9,
+        "looksLikeBubble": true,
+        "parentClass": "flex min-h-0 flex-1 flex-col",
+        "outerHTML": "<div class=\"surfaceSwitchReveal-_L0G1n\"><div class=\"pb-2 pt-1\"><div class=\"mx-3 grid grid-cols-2 rounded-8 bg-tag p-0.5\" role=\"tablist\" aria-label=\"对话模式\"><button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"h-7 rounded-6 text-14 transition-colors bg-primary font-600 text-primary shadow-sm\"><span class=\"tabLabel-Q10Kau\">日常</span></button><button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"h-7 rounded-6 text-14 transition-colors text-secondary hover:text-primary\"><span class=\"tabLabel-Q10Kau\">工作<span aria-hidden=\"true\" class=\"tabDot-JiVVzO\" data-not-record-snapshot=\"true\" data-"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "className": "h-7 rounded-6 text-14 transition-colors bg-primary font-600 text-primary shadow-sm",
+        "textLength": 2,
+        "text": "日常",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 12,
+        "looksLikeBubble": true,
+        "parentClass": "mx-3 grid grid-cols-2 rounded-8 bg-tag p-0.5",
+        "outerHTML": "<button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"h-7 rounded-6 text-14 transition-colors bg-primary font-600 text-primary shadow-sm\"><span class=\"tabLabel-Q10Kau\">日常</span></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "className": "h-7 rounded-6 text-14 transition-colors text-secondary hover:text-primary",
+        "textLength": 2,
+        "text": "工作",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 12,
+        "looksLikeBubble": true,
+        "parentClass": "mx-3 grid grid-cols-2 rounded-8 bg-tag p-0.5",
+        "outerHTML": "<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"h-7 rounded-6 text-14 transition-colors text-secondary hover:text-primary\"><span class=\"tabLabel-Q10Kau\">工作<span aria-hidden=\"true\" class=\"tabDot-JiVVzO\" data-not-record-snapshot=\"true\" data-remove-from-snapshot=\"true\"></span></span></button>"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "relative grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden",
+        "textLength": 28,
+        "text": "新对话\n云空间\n千问创作\n定时任务\n新定时任务\n暂无对话",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 9,
+        "looksLikeBubble": true,
+        "parentClass": "flex min-h-0 flex-1 flex-col",
+        "outerHTML": "<div class=\"relative grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden\"><div aria-hidden=\"false\" class=\"col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col \"><div class=\"newChatReveal-OikAdB newChatRevealFlat-hnO8At\"><div class=\"flex shrink-0 select-none flex-col overflow-hidden mb-0.5\"><div class=\"h-9 px-3\"><div class=\"flex h-full gap-0.5\"><div data-session-switch-target=\"new-chat\" class=\"flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer\"><span data"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "newChatReveal-OikAdB newChatRevealFlat-hnO8At",
+        "textLength": 3,
+        "text": "新对话",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 11,
+        "looksLikeBubble": true,
+        "parentClass": "col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col ",
+        "outerHTML": "<div class=\"newChatReveal-OikAdB newChatRevealFlat-hnO8At\"><div class=\"flex shrink-0 select-none flex-col overflow-hidden mb-0.5\"><div class=\"h-9 px-3\"><div class=\"flex h-full gap-0.5\"><div data-session-switch-target=\"new-chat\" class=\"flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-add\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer",
+        "textLength": 3,
+        "text": "新对话",
+        "childCount": 2,
+        "siblingCount": 2,
+        "depth": 15,
+        "looksLikeBubble": true,
+        "parentClass": "flex h-full gap-0.5",
+        "outerHTML": "<div data-session-switch-target=\"new-chat\" class=\"flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-add\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href=\"#qwpcicon-add\"></use></svg></span><span class=\"truncate font-400\">新对话</"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "desktop-no-drag relative flex grow select-none flex-col overflow-y-auto",
+        "textLength": 24,
+        "text": "云空间\n千问创作\n定时任务\n新定时任务\n暂无对话",
+        "childCount": 2,
+        "siblingCount": 2,
+        "depth": 11,
+        "looksLikeBubble": true,
+        "parentClass": "col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col ",
+        "outerHTML": "<div class=\"desktop-no-drag relative flex grow select-none flex-col overflow-y-auto\"><div role=\"list\" class=\"sider-scrollbar\" style=\"position: relative; max-height: 100%; flex-grow: 1; overflow: hidden auto; width: 100%; scrollbar-gutter: stable;\"><div class=\"overflow-hidden\" data-react-window-index=\"0\" style=\"position: absolute; left: 0px; transform: translateY(0px); height: 174px; width: 100%;\"><div class=\"flex shrink-0 flex-col pb-4 pl-3 pr-1.5\"><div class=\"flex flex-col gap-0.5\"><div data-session-nav-active=\"false\" data-session-switch-target=\"my-space\" class=\"group flex h-9 cursor-pointer "
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "sider-scrollbar",
+        "textLength": 24,
+        "text": "云空间\n千问创作\n定时任务\n新定时任务\n暂无对话",
+        "childCount": 3,
+        "siblingCount": 2,
+        "depth": 12,
+        "looksLikeBubble": true,
+        "parentClass": "desktop-no-drag relative flex grow select-none flex-col overflow-y-auto",
+        "outerHTML": "<div role=\"list\" class=\"sider-scrollbar\" style=\"position: relative; max-height: 100%; flex-grow: 1; overflow: hidden auto; width: 100%; scrollbar-gutter: stable;\"><div class=\"overflow-hidden\" data-react-window-index=\"0\" style=\"position: absolute; left: 0px; transform: translateY(0px); height: 174px; width: 100%;\"><div class=\"flex shrink-0 flex-col pb-4 pl-3 pr-1.5\"><div class=\"flex flex-col gap-0.5\"><div data-session-nav-active=\"false\" data-session-switch-target=\"my-space\" class=\"group flex h-9 cursor-pointer items-center rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hov"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "overflow-hidden",
+        "textLength": 19,
+        "text": "云空间\n千问创作\n定时任务\n新定时任务",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 13,
+        "looksLikeBubble": true,
+        "parentClass": "sider-scrollbar",
+        "outerHTML": "<div class=\"overflow-hidden\" data-react-window-index=\"0\" style=\"position: absolute; left: 0px; transform: translateY(0px); height: 174px; width: 100%;\"><div class=\"flex shrink-0 flex-col pb-4 pl-3 pr-1.5\"><div class=\"flex flex-col gap-0.5\"><div data-session-nav-active=\"false\" data-session-switch-target=\"my-space\" class=\"group flex h-9 cursor-pointer items-center rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option gap-2\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-genre\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-conten"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "flex flex-col gap-0.5",
+        "textLength": 8,
+        "text": "云空间\n千问创作",
+        "childCount": 3,
+        "siblingCount": 2,
+        "depth": 15,
+        "looksLikeBubble": true,
+        "parentClass": "flex shrink-0 flex-col pb-4 pl-3 pr-1.5",
+        "outerHTML": "<div class=\"flex flex-col gap-0.5\"><div data-session-nav-active=\"false\" data-session-switch-target=\"my-space\" class=\"group flex h-9 cursor-pointer items-center rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option gap-2\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-genre\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href=\"#qwpcicon-genre\""
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "group flex h-9 cursor-pointer items-center rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option gap-2",
+        "textLength": 3,
+        "text": "云空间",
+        "childCount": 2,
+        "siblingCount": 3,
+        "depth": 16,
+        "looksLikeBubble": true,
+        "parentClass": "flex flex-col gap-0.5",
+        "outerHTML": "<div data-session-nav-active=\"false\" data-session-switch-target=\"my-space\" class=\"group flex h-9 cursor-pointer items-center rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option gap-2\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-genre\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href=\"#qwpcicon-genre\"></use></svg></span><span class=\"sh"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "group flex h-9 cursor-pointer items-center rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option gap-2",
+        "textLength": 4,
+        "text": "千问创作",
+        "childCount": 3,
+        "siblingCount": 3,
+        "depth": 16,
+        "looksLikeBubble": true,
+        "parentClass": "flex flex-col gap-0.5",
+        "outerHTML": "<div data-not-record-snapshot=\"\" data-session-nav-active=\"false\" class=\"group flex h-9 cursor-pointer items-center rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option gap-2\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-aiVideo\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href=\"#qwpcicon-aiVideo\"></use></svg></span><span class=\"shrink-0"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "mt-4",
+        "textLength": 10,
+        "text": "定时任务\n新定时任务",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 15,
+        "looksLikeBubble": true,
+        "parentClass": "flex shrink-0 flex-col pb-4 pl-3 pr-1.5",
+        "outerHTML": "<div class=\"mt-4\"><div class=\"tongyiDI-view-container  \"><div data-snapshot-sidebar-slot=\"true\" style=\"display: contents;\"><section aria-label=\"定时任务\"><div class=\"flex h-6 items-center justify-between px-3\"><span class=\"flex h-6 items-center text-12 text-caption\">定时任务</span></div><div id=\":r2p:\" class=\"mt-1\"><button type=\"button\" aria-label=\"新定时任务\" class=\"mb-2px flex h-9 w-full items-center rounded-8 border-0 px-3 py-1.5 text-left text-primary transition-colors hover:bg-option\"><span class=\"flex h-6 min-w-0 flex-1 items-center gap-2 text-primary\"><span data-role=\"icon\" data-render-as=\"svg\" data"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "flex h-6 items-center justify-between px-3",
+        "textLength": 4,
+        "text": "定时任务",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 19,
+        "looksLikeBubble": true,
+        "parentClass": "",
+        "outerHTML": "<div class=\"flex h-6 items-center justify-between px-3\"><span class=\"flex h-6 items-center text-12 text-caption\">定时任务</span></div>"
+      },
+      {
+        "tag": "div",
+        "id": ":r2p:",
+        "className": "mt-1",
+        "textLength": 5,
+        "text": "新定时任务",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 19,
+        "looksLikeBubble": true,
+        "parentClass": "",
+        "outerHTML": "<div id=\":r2p:\" class=\"mt-1\"><button type=\"button\" aria-label=\"新定时任务\" class=\"mb-2px flex h-9 w-full items-center rounded-8 border-0 px-3 py-1.5 text-left text-primary transition-colors hover:bg-option\"><span class=\"flex h-6 min-w-0 flex-1 items-center gap-2 text-primary\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-add\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "",
+        "textLength": 4,
+        "text": "暂无对话",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 13,
+        "looksLikeBubble": true,
+        "parentClass": "sider-scrollbar",
+        "outerHTML": "<div data-react-window-index=\"1\" style=\"position: absolute; left: 0px; transform: translateY(174px); height: 24px; width: 100%;\"><div class=\"flex shrink-0 justify-between items-center pl-3 pr-3 bg-pc-sidebar h-6 mobile:!pr-[1.125rem]\"><div class=\"text-assistant-text !text-caption ml-3 text-xs leading-6\">暂无对话</div></div></div>"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "tongyiDI-view-container  ",
+        "textLength": 4,
+        "text": "关于千问",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 9,
+        "looksLikeBubble": true,
+        "parentClass": "flex min-h-0 flex-1 flex-col",
+        "outerHTML": "<div class=\"tongyiDI-view-container  \"><div class=\"desktop-no-drag relative flex w-full shrink-0 items-center pb-6\"><div class=\"min-w-0 flex-1\"><div class=\"tongyiDI-view-container  \"></div></div><div class=\"w-full px-3\"><div class=\"flex h-8 w-full items-center justify-between gap-2\"><button type=\"button\" class=\"flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-8 pl-3 pr-2 text-14 text-primary transition-colors hover:bg-option\" data-state=\"closed\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-info\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: c"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "w-full px-3",
+        "textLength": 4,
+        "text": "关于千问",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 11,
+        "looksLikeBubble": true,
+        "parentClass": "desktop-no-drag relative flex w-full shrink-0 items-center pb-6",
+        "outerHTML": "<div class=\"w-full px-3\"><div class=\"flex h-8 w-full items-center justify-between gap-2\"><button type=\"button\" class=\"flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-8 pl-3 pr-2 text-14 text-primary transition-colors hover:bg-option\" data-state=\"closed\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-info\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href=\"#qwpcicon-"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "className": "flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-8 pl-3 pr-2 text-14 text-primary transition-colors hover:bg-option",
+        "textLength": 4,
+        "text": "关于千问",
+        "childCount": 2,
+        "siblingCount": 2,
+        "depth": 13,
+        "looksLikeBubble": true,
+        "parentClass": "flex h-8 w-full items-center justify-between gap-2",
+        "outerHTML": "<button type=\"button\" class=\"flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-8 pl-3 pr-2 text-14 text-primary transition-colors hover:bg-option\" data-state=\"closed\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-info\" class=\"size-4 shrink-0\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href=\"#qwpcicon-info\"></use></svg></span><span class=\"min-w-0 flex-1 truncate text-left leading-6\">关于千问</"
+      },
+      {
+        "tag": "div",
+        "id": "qianwen-main-area",
+        "className": "relative flex flex-1 flex-col overflow-hidden",
+        "textLength": 403,
+        "text": "Qwen3.7-千问\nAPI 服务\n下载电脑端\n登录\n你好，我是千问\n\n﻿\n\n向千问提问\n\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多\n千问GO来了！\n你的个人专属助理，限量免费体",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 4,
+        "looksLikeBubble": true,
+        "parentClass": "relative flex size-full flex-nowrap overflow-hidden bg-primary",
+        "outerHTML": "<div class=\"relative flex flex-1 flex-col overflow-hidden\" id=\"qianwen-main-area\" style=\"--qianwen-main-area-content-max-width: 938px;\"><div class=\"bg-pc-sidebar p-1.5 [&amp;:not(.snapshot-sidebar-collapsed_*)]:!pl-0\" data-group=\"true\" data-testid=\":rl:\" id=\":rl:\" style=\"height: 100%; width: 100%; overflow: hidden; transition: padding 300ms cubic-bezier(0.65, 0, 0.35, 1); display: flex; flex-flow: row; touch-action: pan-y;\"><div data-panel=\"true\" data-testid=\"qianwen-layout-left-panel\" id=\"qianwen-layout-left-panel\" style=\"min-height: 0px; max-height: 100%; height: auto; min-width: 0px; max-wi"
+      },
+      {
+        "tag": "div",
+        "id": "qianwen-layout-left-panel",
+        "className": "",
+        "textLength": 403,
+        "text": "Qwen3.7-千问\nAPI 服务\n下载电脑端\n登录\n你好，我是千问\n\n﻿\n\n向千问提问\n\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多\n千问GO来了！\n你的个人专属助理，限量免费体",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 6,
+        "looksLikeBubble": true,
+        "parentClass": "bg-pc-sidebar p-1.5 [&:not(.snapshot-sidebar-collapsed_*)]:!pl-0",
+        "outerHTML": "<div data-panel=\"true\" data-testid=\"qianwen-layout-left-panel\" id=\"qianwen-layout-left-panel\" style=\"min-height: 0px; max-height: 100%; height: auto; min-width: 0px; max-width: 100%; width: auto; border: 0px; padding: 0px; margin: 0px; display: flex; flex: 100 1 0px; overflow: visible;\"><div class=\" \" style=\"max-height: 100%; max-width: 100%; flex-grow: 1; overflow: auto; touch-action: pan-y;\"><div class=\"relative size-full overflow-hidden rounded-10 bg-primary \" id=\"qianwen-left-panel\"><div class=\"flex h-full flex-1 flex-col\"><div class=\"flex h-12 items-center\"><div class=\"z-40 flex pl-3 item"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "flex h-12 items-center",
+        "textLength": 26,
+        "text": "Qwen3.7-千问\nAPI 服务\n下载电脑端\n登录",
+        "childCount": 2,
+        "siblingCount": 2,
+        "depth": 10,
+        "looksLikeBubble": true,
+        "parentClass": "flex h-full flex-1 flex-col",
+        "outerHTML": "<div class=\"flex h-12 items-center\"><div class=\"z-40 flex pl-3 items-center min-w-[3rem] gap-2 overflow-x-hidden overflow-y-auto transition-all duration-300 shrink-0 desktop-no-drag invisible h-12 w-0 opacity-0 !min-w-0 !p-0\"><button class=\"relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&amp;_span[data-role=&quot;icon&quot;]]:h-full [&amp;_svg]:h-full [&amp;_svg]:shrink-0 leading-none text-primary hover:bg-option py-2.5 text-16 [&amp;&gt;span&gt;svg]:size-"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "flex flex-1 h-12 relative items-center justify-between min-w-0 select-none",
+        "textLength": 26,
+        "text": "Qwen3.7-千问\nAPI 服务\n下载电脑端\n登录",
+        "childCount": 3,
+        "siblingCount": 2,
+        "depth": 11,
+        "looksLikeBubble": true,
+        "parentClass": "flex h-12 items-center",
+        "outerHTML": "<div class=\"flex flex-1 h-12 relative items-center justify-between min-w-0 select-none\"><div class=\"desktop-no-drag min-w-0 shrink overflow-hidden\"><div class=\"desktop-no-drag group z-[5] flex max-w-full items-center text-center text-14 h-12 rounded-8 pl-2 pr-5\"><div class=\"flex px-1.5 gap-1.5 rounded-lg hover:bg-tag items-center cursor-pointer whitespace-nowrap overflow-hidden h-8 leading-7 max-w-full min-w-0 overflow-hidden shrink flex-basis-0 select-none\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"radix-:rr:\" data-state=\"closed\"><div class=\"text-primary text-1"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "desktop-no-drag min-w-0 shrink overflow-hidden",
+        "textLength": 10,
+        "text": "Qwen3.7-千问",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 12,
+        "looksLikeBubble": true,
+        "parentClass": "flex flex-1 h-12 relative items-center justify-between min-w-0 select-none",
+        "outerHTML": "<div class=\"desktop-no-drag min-w-0 shrink overflow-hidden\"><div class=\"desktop-no-drag group z-[5] flex max-w-full items-center text-center text-14 h-12 rounded-8 pl-2 pr-5\"><div class=\"flex px-1.5 gap-1.5 rounded-lg hover:bg-tag items-center cursor-pointer whitespace-nowrap overflow-hidden h-8 leading-7 max-w-full min-w-0 overflow-hidden shrink flex-basis-0 select-none\" type=\"button\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"radix-:rr:\" data-state=\"closed\"><div class=\"text-primary text-16 flex-1 overflow-hidden text-ellipsis whitespace-nowrap max-w-full min-w-0 shrink\" styl"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "flex items-center gap-2 mr-2 desktop-no-drag shrink-0",
+        "textLength": 15,
+        "text": "API 服务\n下载电脑端\n登录",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 12,
+        "looksLikeBubble": true,
+        "parentClass": "flex flex-1 h-12 relative items-center justify-between min-w-0 select-none",
+        "outerHTML": "<div class=\"flex items-center gap-2 mr-2 desktop-no-drag shrink-0\"><div data-not-record-snapshot=\"true\" class=\"h-32px flex items-center gap-2\"><button class=\"relative inline-flex items-center justify-center whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&amp;_span[data-role=&quot;icon&quot;]]:h-full [&amp;_svg]:h-full [&amp;_svg]:shrink-0 leading-none bg-transparent text-primary hover:bg-option h-8 py-1.5 text-14 [&amp;&gt;span&gt;svg]:size-4 [&amp;&gt;span[data-role=&quot;icon&quot;]]:size-4 rounded-lg cursor"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "className": "relative inline-flex items-center justify-center whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none bg-transparent text-primary hover:bg-option h-8 py-1.5 text-14 [&>span>svg]:size-4 [&>span[data-role=\"icon\"]]:size-4 rounded-lg cursor-pointer gap-1.5 px-2 [&_svg]:!size-4",
+        "textLength": 6,
+        "text": "API 服务",
+        "childCount": 2,
+        "siblingCount": 3,
+        "depth": 14,
+        "looksLikeBubble": true,
+        "parentClass": "h-32px flex items-center gap-2",
+        "outerHTML": "<button class=\"relative inline-flex items-center justify-center whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&amp;_span[data-role=&quot;icon&quot;]]:h-full [&amp;_svg]:h-full [&amp;_svg]:shrink-0 leading-none bg-transparent text-primary hover:bg-option h-8 py-1.5 text-14 [&amp;&gt;span&gt;svg]:size-4 [&amp;&gt;span[data-role=&quot;icon&quot;]]:size-4 rounded-lg cursor-pointer gap-1.5 px-2 [&amp;_svg]:!size-4\" type=\"button\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-API\" class=\"size-"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "className": "relative inline-flex items-center justify-center whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none border border-solid border-line-border bg-capsule text-primary hover:bg-gray-button-hover h-8 py-1.5 text-14 [&>span>svg]:size-4 [&>span[data-role=\"icon\"]]:size-4 rounded-lg cursor-pointer gap-1.5 px-2 [&_svg]:!size-4 [&_svg]:-translate-y-px",
+        "textLength": 5,
+        "text": "下载电脑端",
+        "childCount": 2,
+        "siblingCount": 3,
+        "depth": 14,
+        "looksLikeBubble": true,
+        "parentClass": "h-32px flex items-center gap-2",
+        "outerHTML": "<button class=\"relative inline-flex items-center justify-center whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&amp;_span[data-role=&quot;icon&quot;]]:h-full [&amp;_svg]:h-full [&amp;_svg]:shrink-0 leading-none border border-solid border-line-border bg-capsule text-primary hover:bg-gray-button-hover h-8 py-1.5 text-14 [&amp;&gt;span&gt;svg]:size-4 [&amp;&gt;span[data-role=&quot;icon&quot;]]:size-4 rounded-lg cursor-pointer gap-1.5 px-2 [&amp;_svg]:!size-4 [&amp;_svg]:-translate-y-px\" type=\"button\"><span data-r"
+      },
+      {
+        "tag": "span",
+        "id": "",
+        "className": "inline-flex",
+        "textLength": 2,
+        "text": "登录",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 14,
+        "looksLikeBubble": true,
+        "parentClass": "h-32px flex items-center gap-2",
+        "outerHTML": "<span class=\"inline-flex\"><button class=\"relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&amp;_span[data-role=&quot;icon&quot;]]:h-full [&amp;_svg]:h-full [&amp;_svg]:shrink-0 leading-none bg-black-button text-[--ty-line-circle] hover:opacity-85 active:opacity-75 h-8 px-3 py-1.5 text-14 [&amp;&gt;span&gt;svg]:size-4 [&amp;&gt;span[data-role=&quot;icon&quot;]]:size-4 rounded-lg cursor-pointer\" type=\"button\">登录</button></span>"
+      },
+      {
+        "tag": "div",
+        "id": "chat-layout-scroller",
+        "className": "h-full overflow-x-auto",
+        "textLength": 376,
+        "text": "你好，我是千问\n\n﻿\n\n向千问提问\n\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多\n千问GO来了！\n你的个人专属助理，限量免费体验，立即申请\n加入waiting list\n全国大学生",
+        "childCount": 1,
+        "siblingCount": 2,
+        "depth": 10,
+        "looksLikeBubble": true,
+        "parentClass": "flex h-full flex-1 flex-col",
+        "outerHTML": "<div class=\"h-full overflow-x-auto\" id=\"chat-layout-scroller\"><div class=\"flex-1 h-full overflow-x-auto bg-primary pageContentWrap-lzWRJ0\" id=\"qw-chat-content\"><div class=\"relative flex h-full min-w-full flex-1 flex-col items-center overflow-hidden\"><span class=\"absolute\" id=\"main-chat-banner-portal-element\"></span><div class=\"mainContent-FPQMqL \"><div data-session-switch-state=\"ready\" data-session-switch-surface=\"welcome\" class=\"wrapper-Yv2YGq sessionWrapperHidden-Ewb6J4\" style=\"--float-btn-bottom-offset: 46px;\"><div class=\"chatRoom-rNZG_v\"></div></div><div class=\"guideComp-VxcmFI select-none"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "mainContent-FPQMqL ",
+        "textLength": 376,
+        "text": "你好，我是千问\n\n﻿\n\n向千问提问\n\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多\n千问GO来了！\n你的个人专属助理，限量免费体验，立即申请\n加入waiting list\n全国大学生",
+        "childCount": 4,
+        "siblingCount": 2,
+        "depth": 13,
+        "looksLikeBubble": true,
+        "parentClass": "relative flex h-full min-w-full flex-1 flex-col items-center overflow-hidden",
+        "outerHTML": "<div class=\"mainContent-FPQMqL \"><div data-session-switch-state=\"ready\" data-session-switch-surface=\"welcome\" class=\"wrapper-Yv2YGq sessionWrapperHidden-Ewb6J4\" style=\"--float-btn-bottom-offset: 46px;\"><div class=\"chatRoom-rNZG_v\"></div></div><div class=\"guideComp-VxcmFI select-none\"><div class=\"guideContainer-bkmNgT\" data-snapshot-welcome=\"true\" style=\"--tab-wrapper-top: 112px;\"><div class=\"collapseSection-jyq8PK\"><div class=\"collapseSectionInner-IxE4jZ\"><div class=\"topWrapper-QhBKzh topWrapperReserved-j1AYKP\" style=\"margin-bottom: var(--chat-welcome-top-wrapper-normal-gap);\"><div class=\"flex"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "guideComp-VxcmFI select-none",
+        "textLength": 110,
+        "text": "你好，我是千问\n\n﻿\n\n向千问提问\n\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多",
+        "childCount": 1,
+        "siblingCount": 4,
+        "depth": 14,
+        "looksLikeBubble": true,
+        "parentClass": "mainContent-FPQMqL ",
+        "outerHTML": "<div class=\"guideComp-VxcmFI select-none\"><div class=\"guideContainer-bkmNgT\" data-snapshot-welcome=\"true\" style=\"--tab-wrapper-top: 112px;\"><div class=\"collapseSection-jyq8PK\"><div class=\"collapseSectionInner-IxE4jZ\"><div class=\"topWrapper-QhBKzh topWrapperReserved-j1AYKP\" style=\"margin-bottom: var(--chat-welcome-top-wrapper-normal-gap);\"><div class=\"flex min-h-[48px] w-full items-center justify-start [&amp;_img]:!h-[48px] [&amp;_img]:!w-[48px] [&amp;_[role='status']]:!font-500 [&amp;_[role='status']]:!text-primary [&amp;_[role='status']]:!justify-center\"><div role=\"status\" aria-live=\"polite\" "
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "collapseSection-jyq8PK",
+        "textLength": 7,
+        "text": "你好，我是千问",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 16,
+        "looksLikeBubble": true,
+        "parentClass": "guideContainer-bkmNgT",
+        "outerHTML": "<div class=\"collapseSection-jyq8PK\"><div class=\"collapseSectionInner-IxE4jZ\"><div class=\"topWrapper-QhBKzh topWrapperReserved-j1AYKP\" style=\"margin-bottom: var(--chat-welcome-top-wrapper-normal-gap);\"><div class=\"flex min-h-[48px] w-full items-center justify-start [&amp;_img]:!h-[48px] [&amp;_img]:!w-[48px] [&amp;_[role='status']]:!font-500 [&amp;_[role='status']]:!text-primary [&amp;_[role='status']]:!justify-center\"><div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" aria-label=\"你好，我是千问\" class=\"flex w-full items-center justify-start gap-6px text-[28px] font-500 leading-[38px] text-prima"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "tongyiDI-view-container text-area-slot-container",
+        "textLength": 98,
+        "text": "向千问提问\n\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 16,
+        "looksLikeBubble": true,
+        "parentClass": "guideContainer-bkmNgT",
+        "outerHTML": "<div class=\"tongyiDI-view-container text-area-slot-container\" style=\"margin-top: 0px; flex-direction: column; align-items: center; top: 0px; box-sizing: border-box;\"><div data-text-area-width-container=\"true\" class=\"inputMotionCarrier-NfpQnD\" style=\"display: block; width: calc(100% - var(--chat-input-visible-shell-side-gutter-welcome, 40px)); max-width: 760px; --chat-input-visible-shell-max-width: 760px; --chat-input-visible-shell-width: calc(100% - var(--chat-input-visible-shell-side-gutter-welcome, 40px)); opacity: 1;\"><div class=\"inputOutWrap-Y2h5KW\"><div class=\"relative w-full\" data-qw-cha"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "relative z-[2] shrink-0",
+        "textLength": 91,
+        "text": "快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 23,
+        "looksLikeBubble": true,
+        "parentClass": "relative z-[1] flex w-full flex-col",
+        "outerHTML": "<div data-chat-input-bottom-bar=\"true\" class=\"relative z-[2] shrink-0\"><div class=\"relative flex w-full items-end justify-between gap-2 overflow-hidden\"><div class=\"shrink-0\"><button type=\"button\" class=\"inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-colors outline-none text-primary hover:bg-option disabled:cursor-not-allowed disabled:text-disabled disabled:hover:bg-transparent\" aria-label=\"添加附件\" id=\"radix-:rs:\" aria-haspopup=\"menu\" aria-expanded=\"false\" data-state=\"closed\"><span class=\"flex size-4 items-center justify-center text-current transition-transform d"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "min-w-0 flex-1",
+        "textLength": 91,
+        "text": "快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多\n快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n代码\n翻译\nAI写作\n录音纪要\n研究\n千问高考\n音视频速读\n更多",
+        "childCount": 1,
+        "siblingCount": 3,
+        "depth": 25,
+        "looksLikeBubble": true,
+        "parentClass": "relative flex w-full items-end justify-between gap-2 overflow-hidden",
+        "outerHTML": "<div class=\"min-w-0 flex-1\"><div class=\"flex min-w-0 items-center gap-2 overflow-hidden\"><div data-overflow-layout-ready=\"true\" class=\"relative select-none min-w-0 flex-1\" data-not-record-snapshot=\"true\" data-remove-from-snapshot=\"true\"><div data-overflow-inline-row=\"true\" class=\"flex min-w-0 items-center overflow-hidden\" style=\"visibility: visible;\"><div data-overflow-placement=\"inline\" class=\"min-w-0 shrink-0\"><div data-capsule-state=\"stable\" data-capsule-motion-axis=\"fade-only\" class=\"min-w-0 transition-opacity duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]\" style=\"op"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "flex min-w-0 items-center overflow-hidden",
+        "textLength": 30,
+        "text": "快速\n工作助理\n云端\nAI生视频\nPPT创作\nAI生图\n更多",
+        "childCount": 6,
+        "siblingCount": 2,
+        "depth": 28,
+        "looksLikeBubble": true,
+        "parentClass": "relative select-none min-w-0 flex-1",
+        "outerHTML": "<div data-overflow-inline-row=\"true\" class=\"flex min-w-0 items-center overflow-hidden\" style=\"visibility: visible;\"><div data-overflow-placement=\"inline\" class=\"min-w-0 shrink-0\"><div data-capsule-state=\"stable\" data-capsule-motion-axis=\"fade-only\" class=\"min-w-0 transition-opacity duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]\" style=\"opacity: 1;\"><div data-capsule-layout=\"follow-parent\" data-role=\"visible-capsule\" class=\"min-w-0 shrink-0\"><button type=\"button\" class=\"inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-full border-0 bg-transparent px-2 py-1 tex"
+      },
+      {
+        "tag": "div",
+        "id": "",
+        "className": "min-w-0 shrink-0",
+        "textLength": 2,
+        "text": "快速",
+        "childCount": 1,
+        "siblingCount": 6,
+        "depth": 29,
+        "looksLikeBubble": true,
+        "parentClass": "flex min-w-0 items-center overflow-hidden",
+        "outerHTML": "<div data-overflow-placement=\"inline\" class=\"min-w-0 shrink-0\"><div data-capsule-state=\"stable\" data-capsule-motion-axis=\"fade-only\" class=\"min-w-0 transition-opacity duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]\" style=\"opacity: 1;\"><div data-capsule-layout=\"follow-parent\" data-role=\"visible-capsule\" class=\"min-w-0 shrink-0\"><button type=\"button\" class=\"inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-full border-0 bg-transparent px-2 py-1 text-14 text-primary transition-[background-color,color] outline-none focus-visible:outline-none hover:bg-tag disabled:"
+      }
+    ],
+    "bubbleCandidateCount": 90,
+    "subtree": {
+      "error": null,
+      "rootClass": "chatRoom-rNZG_v",
+      "rootTextLength": 0,
+      "tree": [
+        {
+          "tag": "div",
+          "className": "chatRoom-rNZG_v",
+          "id": "",
+          "depth": 0,
+          "textLength": 0,
+          "childCount": 0,
+          "children": []
+        }
+      ]
+    },
+    "repeatedChildren": [
+      {
+        "key": "div.flex",
+        "count": 7,
+        "parentClass": "relative z-[1] flex min-w-0 flex-1 select-none items-center gap-8px",
+        "sample": "<div class=\"flex h-[60px] shrink-0 items-center justify-between pl-6 pr-3\"><button type=\"button\" class=\"flex items-center\"><img src=\"data:image/svg+xml,%3Csvg%20width%3D%2238%22%20height%3D%2220%22%20viewBox%3D%220%200%2033.7324%2017.9131%22%20preserveAspectRatio%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M20.4551%204.70018C20.6475%204.70029%2020.8037%204."
+      },
+      {
+        "key": "div.relative",
+        "count": 6,
+        "parentClass": "group relative flex w-[38.75rem] min-w-0 max-w-full shrink items-center justify-between h-[72px] gap-[25px] py-0 pl-0 pr-20px rounded-12 border border-line-parting bg-pc-sidebar",
+        "sample": "<div class=\"z-40 flex pl-3 items-center min-w-[3rem] gap-2 overflow-x-hidden overflow-y-auto transition-all duration-300 shrink-0 desktop-no-drag invisible h-12 w-0 opacity-0 !min-w-0 !p-0\"><button class=\"relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&amp;_sp"
+      },
+      {
+        "key": "span.",
+        "count": 2,
+        "parentClass": "ml-2 inline-flex flex-wrap items-center gap-1",
+        "sample": "<span data-slate-leaf=\"true\"><span data-slate-zero-width=\"n\" data-slate-length=\"0\">﻿<br></span><span data-slate-placeholder=\"true\" contenteditable=\"false\" class=\"pointer-events-none absolute inset-x-0 top-0 select-none truncate text-inherit opacity-35\" style=\"position: absolute; top: 0px; pointer-events: none; width: 100%; max-width: 100%; display: block; opacity: 0.333; user-select: none; text-de"
+      },
+      {
+        "key": "div.min-w-0",
+        "count": 2,
+        "parentClass": "pointer-events-none absolute left-0 top-0 -z-10 flex opacity-0",
+        "sample": "<div data-overflow-inline-row=\"true\" class=\"flex min-w-0 items-center overflow-hidden\" style=\"visibility: visible;\"><div data-overflow-placement=\"inline\" class=\"min-w-0 shrink-0\"><div data-capsule-state=\"stable\" data-capsule-motion-axis=\"fade-only\" class=\"min-w-0 transition-opacity duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]\" style=\"opacity: 1;\"><div data-capsule-layout=\""
+      },
+      {
+        "key": "div.h-7",
+        "count": 1,
+        "parentClass": "mx-3 grid grid-cols-2 rounded-8 bg-tag p-0.5",
+        "sample": "<div class=\"mx-3 grid grid-cols-2 rounded-8 bg-tag p-0.5\" role=\"tablist\" aria-label=\"对话模式\"><button type=\"button\" role=\"tab\" aria-selected=\"true\" class=\"h-7 rounded-6 text-14 transition-colors bg-primary font-600 text-primary shadow-sm\"><span class=\"tabLabel-Q10Kau\">日常</span></button><button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"h-7 rounded-6 text-14 transition-colors text-secondary"
+      },
+      {
+        "key": "div.sider-scrollbar",
+        "count": 1,
+        "parentClass": "desktop-no-drag relative flex grow select-none flex-col overflow-y-auto",
+        "sample": "<div class=\"desktop-no-drag relative flex grow select-none flex-col overflow-y-auto\"><div role=\"list\" class=\"sider-scrollbar\" style=\"position: relative; max-height: 100%; flex-grow: 1; overflow: hidden auto; width: 100%; scrollbar-gutter: stable;\"><div class=\"overflow-hidden\" data-react-window-index=\"0\" style=\"position: absolute; left: 0px; transform: translateY(0px); height: 174px; width: 100%;\">"
+      },
+      {
+        "key": "div.overflow-hidden",
+        "count": 1,
+        "parentClass": "sider-scrollbar",
+        "sample": "<div role=\"list\" class=\"sider-scrollbar\" style=\"position: relative; max-height: 100%; flex-grow: 1; overflow: hidden auto; width: 100%; scrollbar-gutter: stable;\"><div class=\"overflow-hidden\" data-react-window-index=\"0\" style=\"position: absolute; left: 0px; transform: translateY(0px); height: 174px; width: 100%;\"><div class=\"flex shrink-0 flex-col pb-4 pl-3 pr-1.5\"><div class=\"flex flex-col gap-0."
+      },
+      {
+        "key": "div.",
+        "count": 1,
+        "parentClass": "z-40 flex h-full flex-1 flex-col",
+        "sample": "<div class=\"z-40 flex h-full flex-1 flex-col\"><div class=\" h-14 w-full\"></div><div class=\"w-full flex-1\"></div></div>"
+      },
+      {
+        "key": "div.size-1.5",
+        "count": 1,
+        "parentClass": "flex shrink-0 flex-col items-center justify-center gap-1.5 text-primary",
+        "sample": "<div class=\"flex shrink-0 flex-col items-center justify-center gap-1.5 text-primary\"><button type=\"button\" aria-label=\"切换到第 1 个\" class=\"size-1.5 cursor-pointer rounded-full bg-current p-0 transition-opacity\" style=\"opacity: 0.06;\"></button><button type=\"button\" aria-label=\"切换到第 2 个\" class=\"size-1.5 cursor-pointer rounded-full bg-current p-0 transition-opacity\" style=\"opacity: 0.06;\"></button><butt"
+      }
+    ],
+    "looseChecks": {
+      "[class*=\"message\"]": {
+        "count": 0,
+        "samples": []
+      },
+      "[class*=\"chat\"]": {
+        "count": 1,
+        "samples": [
+          {
+            "tag": "div",
+            "className": "chatRoom-rNZG_v",
+            "textLength": 0,
+            "childCount": 0
+          }
+        ]
+      },
+      "[class*=\"content\"]": {
+        "count": 1,
+        "samples": [
+          {
+            "tag": "div",
+            "className": "bg-gray-button-hover relative flex-0 h-full min-w-0 overflow-hidden before:content-[''] before:w-full before:h-full before:absolute before:top-0 backdrop-blur-[20px] before:-z-[1] before:pointer-events-none transition-[width] duration-300 w-0",
+            "textLength": 0,
+            "childCount": 1
+          }
+        ]
+      },
+      "[class*=\"item\"]": {
+        "count": 121,
+        "samples": [
+          {
+            "tag": "div",
+            "className": "flex h-[60px] shrink-0 items-center justify-between pl-6 pr-3",
+            "textLength": 0,
+            "childCount": 2
+          },
+          {
+            "tag": "button",
+            "className": "flex items-center",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "div",
+            "className": "flex items-center",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none text-primary hover:bg-option py-1.5 text-14 [&>span>svg]:size-4 [&>span[data-role=\"icon\"]]:size-4 rounded-lg cursor-pointer h-6 px-1 !size-9 !p-2 [&_svg]:!size-4",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "div",
+            "className": "flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer",
+            "textLength": 3,
+            "childCount": 2
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none py-1.5 text-14 [&>span>svg]:size-4 [&>span[data-role=\"icon\"]]:size-4 rounded-lg cursor-pointer px-8px size-9 shrink-0 text-primary transition-colors !duration-300 bg-transparent hover:bg-option",
+            "textLength": 0,
+            "childCount": 1
+          }
+        ]
+      },
+      "[class*=\"role\"]": {
+        "count": 36,
+        "samples": [
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none text-primary hover:bg-option py-1.5 text-14 [&>span>svg]:size-4 [&>span[data-role=\"icon\"]]:size-4 rounded-lg cursor-pointer h-6 px-1 !size-9 !p-2 [&_svg]:!size-4",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none py-1.5 text-14 [&>span>svg]:size-4 [&>span[data-role=\"icon\"]]:size-4 rounded-lg cursor-pointer px-8px size-9 shrink-0 text-primary transition-colors !duration-300 bg-transparent hover:bg-option",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none text-primary hover:bg-option py-2.5 text-16 [&>span>svg]:size-5 [&>span[data-role=\"icon\"]]:size-5 cursor-pointer h-8 px-1.5 rounded-8 [&_svg]:!size-4",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none text-primary hover:bg-option py-2.5 text-16 [&>span>svg]:size-5 [&>span[data-role=\"icon\"]]:size-5 rounded-lg cursor-pointer h-8 px-1.5 [&_svg]:!size-4",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center gap-1 whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none text-primary hover:bg-option py-2.5 text-16 [&>span>svg]:size-5 [&>span[data-role=\"icon\"]]:size-5 rounded-lg cursor-pointer h-8 px-1.5 [&_svg]:!size-4",
+            "textLength": 0,
+            "childCount": 1
+          },
+          {
+            "tag": "button",
+            "className": "relative inline-flex items-center justify-center whitespace-nowrap align-middle font-normal transition-[opacity,shadow,transform] duration-200 focus-visible:outline-none ring-none [&_span[data-role=\"icon\"]]:h-full [&_svg]:h-full [&_svg]:shrink-0 leading-none bg-transparent text-primary hover:bg-option h-8 py-1.5 text-14 [&>span>svg]:size-4 [&>span[data-role=\"icon\"]]:size-4 rounded-lg cursor-pointer gap-1.5 px-2 [&_svg]:!size-4",
+            "textLength": 6,
+            "childCount": 2
+          }
+        ]
+      }
+    },
+    "platform": "qianwen",
+    "platformName": "Qianwen (千问)",
+    "url": "https://www.qianwen.com/",
+    "locale": "zh-CN"
+  }
+]
