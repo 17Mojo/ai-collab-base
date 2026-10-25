@@ -82,6 +82,18 @@ All checks passed!
 [OK] no secrets found
 ```
 
+### 8.（附加）PR #5 的 CI
+
+```
+Bandit / Coverage Gate / mypy / chrome-extension-tests / fail-on-low-score
+health / lint / pack-validation / performance-tests / pip-audit
+python-tests (3.10/3.11/3.12) / secrets-scan
+→ 14 个 job 全部 pass
+```
+
+CI 里跑的 `chrome-extension-tests` 是**在干净的 CI 机器上**重跑扩展测试
+（不是复用本机产物），所以 110 条 + 29 条变异是在 CI 环境下也成立的。
+
 ---
 
 ## 验证结果
