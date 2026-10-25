@@ -182,6 +182,51 @@ DOM 契约通过——所以它必须记成 `unverified`，不能记成 `pass`�
 > L2 的 `pass` 必须附**可机检的证据文件**（截图或日志的实际路径），
 > `scripts/real_machine_regression.py` 会检查文件**真实存在**。
 
+### 4.4 用观测器做 L2（**推荐**：截图证明不了「正文取回来了」）
+
+§4.2 的肉眼流程有一个**证明不了的东西**：界面上有字，不等于 adapter
+真的取到了那段字。而「取回来的正文非空」恰恰是 Pack 能不能用的关键。
+
+`tests/real-machine/l2-send-observer.mjs` 就是补这一段的：
+
+- **人**在浏览器里输入并**手动点发送**；
+- **脚本**全程只读 DOM，**不注入文本、不点发送**
+  （「探针永不发送」是本仓红线，L1 探针必须无副作用）；
+- 脚本**并行跑生产代码里的 `waitForResponse`**，把结果与采样时间线一起写成
+  可机检的 JSON。
+
+```bash
+cd chrome-extension
+# 单平台；--profile-dir 指向已登录的浏览器 profile（必须是持久 profile）
+node tests/real-machine/l2-send-observer.mjs --i-will-send \
+     --platform=gemini --profile-dir=/tmp/rm-profile
+
+# 全部 10 个平台 × 中文
+node tests/real-machine/l2-send-observer.mjs --i-will-send --profile-dir=/tmp/rm-profile
+```
+
+> `--i-will-send` 是硬闸门：没有它工具拒绝启动。
+> 误跑一次就是在真站上发出一条真实消息、并在一个真实对话里。
+
+产出的 JSON 里 `verdict` 直接回答「生产的等待逻辑在这条真实时间线上会不会成功」：
+
+| 字段 | 含义 | 读法 |
+|---|---|---|
+| `countGrew` | 消息计数涨了 | false ⇒ 取消息列表的选择器有问题 |
+| `typingCleared` | 生成中状态解除过 | 恒 true ⇒ 打字指示器选错，必然超时 |
+| `contentNonEmpty` | 页面上取到的正文非空 | false ⇒ 看到了字但没取到 |
+| `productionContentNonEmpty` | **生产代码自己**取到的正文非空 | false ⇒ 等待过了但回复是空的 |
+| `wouldResolve` | 按生产口径重放时间线会不会成功 | false ⇒ 这条链路今天走不通 |
+| `consistent` | 生产实际结果与重放是否一致 | false ⇒ 生产实现里有别的因素，值得单独看 |
+
+登记方式与 §5.1 相同（`--evidence-file` 指向这个 JSON）。
+
+**残留风险（必须记着）**：见 §6.2 的 #3——Kimi/ChatGLM 的真实「生成中」指示器
+仍未验证。若收窄后的选择器都不命中，`isTyping()` 恒为 false，
+`waitForResponse` 可能**中途提前返回**（拿到半截回复）。
+观测器的 `wouldResolve` 只回答「会不会成功」，**答不了「会不会太早成功」**——
+后者要靠人看时间线里 `contentNonEmpty` 是在第几个样本才变 true 的。
+
 ---
 
 ## 5. 记录与对账（`scripts/real_machine_regression.py`）
@@ -245,19 +290,32 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 
 ---
 
-## 6. 已知缺口（截至 2026-10-25，全部如实记录，未修复）
+## 6. 已知缺口（截至 2026-10-25 晚，全部如实记录，未修复）
+
+### 6.1 本轮已关闭的缺口
+
+| 原 # | 缺口 | 怎么关的 |
+|---|---|---|
+| 4 | 只有 Gemini 的 fixture 是真实 DOM 快照 | **7/10 平台已采到真实快照**（ChatGLM / Gemini / Kimi / LongCat / 千问 / 文心一言 / 元宝），脱敏后入库并有守护测试 |
+| 6 | 探针只覆盖 3 个平台 | 探针扩到 **10 个平台**，并跑出可达性体检表（pass 7 / unverified 3 / fail 0） |
+| 7 | 只有 3 家在真机上验证过 | 7 家有真实快照 + 10 家都有 L1 结论（含 3 家的「未验证」结论本身） |
+| — | 平台名单散落 4 处（矩阵 / 探针 / content-script / multi-platform-executor） | 收敛到 `tests/platforms.mjs` 单一事实源，并用 `tests/platform-registry.test.mjs` 双向对账 |
+| — | 模拟层矩阵 110/114 全绿，却漏掉 4 个真机缺陷 | 新增两条**可机检的不变量**（「无会话即无消息」/「空闲即不忙」），并把「发现漂移的能力」本身纳入矩阵 |
+
+### 6.2 仍然开着的缺口
 
 | # | 缺口 | 影响 | 为什么现在不能修 |
 |---|---|---|---|
-| 1 | Gemini 的 `messageList` / `messageContent` 选择器**未在真机验证** | Gemini 的「等回复 + 取内容」链路仍是未验证状态 | 未登录的零状态会话页上没有消息气泡可测 |
-| 2 | Gemini 真实**停止生成按钮**的 `aria-label` 未验证 | `isTyping()` 的停止按钮分支在 Gemini 上未验证 | 需要登录后真实发起一次生成才能看到 |
-| 3 | 千问（qianwen）的 `messageList` 用了 `[class*="message"]` 这类**宽松选择器**，会连内容包装层一起命中 | 可能多计消息数、影响响应等待 | 改选择器需要真机 DOM 证据，现在没有；矩阵只把它标成「偏松」而没有断言其正确 |
-| 4 | **只有 Gemini 的 fixture 是真实 DOM 快照**，其余 9 个平台仍是手写 mock | 其余 9 家一旦改版，矩阵同样可能假绿 | 需要逐个平台采集真实 DOM 快照（未做） |
-| 5 | ChatGPT / Claude.ai 在**无登录态**下 L1 未验证（实测命中 bot check / HTTP 403） | 这两家的 DOM 契约目前无 L1 结论 | 需要已登录 profile（`--profile-dir=`）才能跑通 |
-| 6 | 探针只覆盖 **3 个**平台（ChatGPT / Claude.ai / Gemini），矩阵覆盖 10 个 | 其余 7 家的真机回归还没做 | 探针按平台扩即可，不用改探针代码 |
-| 7 | 10 个平台的 adapter 里，**只有 3 家**在真机上验证过 | 「矩阵 110/114 全绿」不等于「10 家都能用」 | 同上 |
+| 1 | 7 家已采样的平台，其**消息气泡选择器**仍未在真机上验证 | 落地页上没有会话，只能证明「不误命中界面外壳」，**证不了「能命中真气泡」**——选择器写错和选择器正确在落地页上表现一模一样 | 需要已登录 profile + 一次真实发送（L2） |
+| 2 | 千问（qianwen）的 messageList 三条选择器在落地页上**命中 0 个** | 同 #1，连「是否误命中」都验证不了 | 同 #1 |
+| 3 | Kimi / ChatGLM 的**真实「生成中」指示器**未验证 | 收窄后的选择器若都不命中，`isTyping()` 恒为 false ⇒ `waitForResponse` 可能**中途提前返回**（拿到半截回复） | 需要登录后真实发起一次生成 |
+| 4 | ChatGPT / Claude.ai / DeepSeek 三家未采到真实快照 | 这三家的 DOM 契约仍无 L1 结论 | ChatGPT / Claude 撞 bot check（HTTP 403），DeepSeek 撞登录墙——都不是代码问题 |
+| 5 | L2（真实发送后等回复）**尚未跑过任何一次** | 缺口「回复等待链路」仍未验证 | 需要人 + 已登录 profile；观测器已交付（见附录 A） |
+| 6 | 后台↔内容脚本的**消息协议**有洞：`pack-executor.js` 发 `SEND_TO_AI` 无人处理；`multi-platform-executor.js` 发 `GET_LATEST_RESPONSE` 无人处理，且它读 `pageState.isTyping`，而 `getPageState()` 根本不返回该字段 | 这是**产品级**缺陷（Pack 执行走不通），不是 DOM 契约问题 | 本工单范围外——不同性质的问题，已单独立项待决 |
+| 7 | 真实快照是**冻结基线**，守不住「站点改版」 | 快照失效=一条待办信号，不是 CI 失败 | 这是刻意的分层：改版由 L1 探针（打真站）负责；快照只守「我们对真机 DOM 的理解被记录下来了，而且自洽」 |
 
 > 表格里写「未验证」的项目**都不许**在别处被当成「已通过」引用。
+> 特别注意 #1：真实快照已入库 ≠ 消息气泡选择器已验证。
 
 ---
 
@@ -270,3 +328,47 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 - **后半段（第一个外部用户）不在这份手册的范围内**——它需要**外部人**，
   不是内部再跑一遍自动化；
 - 因此即使 §5 的 `verify` 返回 0（记录一致且跑完），路线门禁**仍然是开启的**。
+
+---
+
+## 附录 A：本仓新增的真机回归工具
+
+| 工具 | 干什么 | 是不是无副作用 |
+|---|---|---|
+| `tests/platforms.mjs` | 10 平台的**单一事实源**（矩阵 / 探针 / 观测器 / 快照都从这里取） | 是（纯数据） |
+| `tests/platform-registry.test.mjs` | 登记表 ↔ 生产 adapter ↔ content-script ↔ manifest ↔ fixture 的**双向**对账 | 是（只读） |
+| `tests/real-machine/snapshot-capture.mjs` | 采真实 DOM 快照 + 判定两条不变量 + 脱敏 | 是（只读） |
+| `tests/real-machine/sanitize.mjs` | 快照脱敏（邮箱 / 手机号 / 令牌 / 事件属性 / script） | 是（纯函数） |
+| `tests/real-machine/message-model.mjs` | 「无会话即无消息」/「空闲即不忙」两条不变量的判定 | 是（纯函数） |
+| `tests/real-machine/l2-send-observer.mjs` | L2 观测器：**人发消息，脚本只读**，并并行跑生产 `waitForResponse` | 是（**不注入、不点发送**） |
+| `tests/real-machine/l2-model.mjs` | 观测器的判定口径（纯函数，可单测） | 是（纯函数） |
+| `tests/real-machine/mutation-check.mjs` | **变异检查**：改坏被守护的代码，对应测试必须变红 | 是（在临时副本上跑） |
+| `tests/run-tests.mjs` | 单测入口（Node 18+ 通用；`node --test` 的三种写法在 Node 20/23 上各有一坑） | 是 |
+| `tests/ci-wiring.test.mjs` | 守护「CI 确实在跑扩展测试」——**不许** `|| echo` 吞掉失败 | 是（只读） |
+
+### A.1 为什么要做变异检查
+
+一套全绿的测试**什么都不能证明**，除非你能证明：
+「把被守护的那处代码改坏，对应的测试会变红」。
+
+本仓的教训很具体：110/114 全绿的模拟层矩阵，掩盖了 4 个真机上才暴露的生产缺陷
+（文心一言/元宝的消息数被界面外壳撑大、Kimi/ChatGLM 的 `isTyping()` 恒为 true
+⇒ 每次发送必然 60 秒超时）。绿不是因为对，是因为没测到。
+
+`mutation-check.mjs` 把「守护关系」本身变成可执行的：每条变异对应一个**具体缺陷**，
+要求**指定的那条测试**因此报错。变异在临时副本上进行，工作区一个字节都不动。
+
+```bash
+cd chrome-extension && node tests/real-machine/mutation-check.mjs
+```
+
+### A.2 单测怎么跑
+
+```bash
+cd chrome-extension && node tests/run-tests.mjs
+```
+
+不要用 `node --test`（自动发现）——它会扫进 `tests/playwright/node_modules`
+里的第三方测试，本机实测直接卡死。也不要写 `node --test tests/xxx/`
+（Node 23 报 `MODULE_NOT_FOUND`）或 `node --test "tests/**/*.test.mjs"`
+（要 Node 21+，CI 钉的是 20）。`run-tests.mjs` 三种坑都绕开了。

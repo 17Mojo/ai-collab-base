@@ -144,6 +144,24 @@ jobs:
           cd chrome-extension
           node tests/adapter-matrix/adapter-test-runner.js
 
+      - name: Run extension unit tests (node:test)
+        # 单测走自建入口 tests/run-tests.mjs，不用 `node --test` 自动发现：
+        # 自动发现会扫进 tests/playwright/node_modules 里的第三方测试，本机实测直接卡死；
+        # 目录形式在 Node 23 上报 MODULE_NOT_FOUND；glob 形式要 Node 21+ 而 CI 钉的是 20。
+        # 入口自己枚举文件、显式传路径，Node 18+ 都能跑，本地与 CI 用同一条命令。
+        run: |
+          cd chrome-extension
+          node tests/run-tests.mjs
+
+      - name: Mutation check (prove the tests actually guard the defects)
+        # 一套全绿的测试**什么都不能证明**，除非能证明「改坏被守护的那处代码，
+        # 对应测试会变红」。这个步骤把「守护关系」本身变成可执行的断言：
+        # 每条变异对应一个具体缺陷，要求**指定的那条测试**因此报错。
+        # 变异在临时副本上进行，不动工作区。
+        run: |
+          cd chrome-extension
+          node tests/real-machine/mutation-check.mjs
+
       - name: Build extension bundle
         # 矩阵绿不代表能构建：把 vite 构建也纳入门禁，防止 adapter 改动把产物打坏。
         run: |

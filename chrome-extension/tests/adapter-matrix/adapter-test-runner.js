@@ -26,31 +26,32 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   loadFixture,
+  loadRealFixture,
   listProductionAdapterModules,
   getRoleElements,
+  getProbeRoleElements,
   isWithin,
   runTest,
   formatResults,
   PLATFORMS_DIR,
+  REAL_FIXTURES_DIR,
 } from "./adapter-test-utils.js";
+import { PLATFORMS } from "../platforms.mjs";
+import { existsSync, readFileSync } from "node:fs";
 
 // ============================================================================
-// 平台清单（只登记「平台 ↔ 域名 ↔ fixture ↔ 生产模块」的对应关系；
-// 选择器一律从生产模块读取，这里不重复维护）
+// 平台清单：**从唯一事实源导入**，不再在本文件手抄一份。
+//
+// 2026-10-25 之前这里是一份手抄的 PLATFORMS 数组，与真机探针那份、
+// content-script 的 PLATFORM_CONFIGS、multi-platform-executor 的 platformUrls
+// 一共四份。抄本之间会漂移：真机探针那份只写了 3 家，于是 7 家平台
+// **从未进入过真机回归**，而矩阵长期全绿。
+//
+// 现在矩阵与真机探针共用 tests/platforms.mjs；生产层的两处不改，
+// 由 tests/platform-registry.test.mjs 做跨文件一致性守护。
 // ============================================================================
 
-const PLATFORMS = [
-  { id: "chatgpt", name: "ChatGPT", hostnames: ["chat.openai.com", "chatgpt.com"], fixture: "chatgpt", module: "chatgpt-adapter.js" },
-  { id: "claude", name: "Claude.ai", hostnames: ["claude.ai"], fixture: "claude", module: "claude-adapter.js" },
-  { id: "gemini", name: "Gemini", hostnames: ["gemini.google.com"], fixture: "gemini", module: "gemini-adapter.js" },
-  { id: "deepseek", name: "DeepSeek", hostnames: ["chat.deepseek.com"], fixture: "deepseek", module: "deepseek-adapter.js" },
-  { id: "kimi", name: "Kimi AI", hostnames: ["kimi.com", "kimi.moonshot.cn"], fixture: "kimi", module: "kimi-adapter.js" },
-  { id: "longcat", name: "LongCat AI", hostnames: ["longcat.chat"], fixture: "longcat", module: "longcat-adapter.js" },
-  { id: "qianwen", name: "Qianwen (千问)", hostnames: ["qianwen.com", "tongyi.aliyun.com"], fixture: "qianwen", module: "qianwen-adapter.js" },
-  { id: "yiyan", name: "Yiyan (文心一言)", hostnames: ["yiyan.baidu.com", "wenxin.baidu.com"], fixture: "yiyan", module: "yiyan-adapter.js" },
-  { id: "yuanbao", name: "Yuanbao (腾讯元宝)", hostnames: ["yuanbao.tencent.com"], fixture: "yuanbao", module: "yuanbao-adapter.js" },
-  { id: "chatglm", name: "ChatGLM (智谱清言)", hostnames: ["chatglm.cn"], fixture: "chatglm", module: "chatglm-adapter.js" },
-];
+
 
 const TEST_TEXT = "Hello from adapter test!";
 
@@ -187,15 +188,29 @@ function buildCases(spec, mod) {
         // 历史实现只取 messageList[0] / messageList[1]，其余选择器形同虚设。
         // 这里移除前两组选择器命中的元素（模拟站点改版），断言 adapter 仍能
         // 靠第 3 个及以后的选择器找到消息。
-        // 只有 2 个选择器的平台没有这条路径，如实标记为跳过。
+        //
+        // 跳过的判据必须精确到「**有没有只被第 3 个及以后的选择器命中**的元素」：
+        // 如果深层选择器的目标元素**同时**也被前两组命中，那它在这个 fixture 上
+        // 就是冗余的（前两组已经覆盖了它），移除前两组必然把它一起带走——
+        // 这时跳过是如实记账，而不是掩盖缺陷。
+        //
+        // 2026-10-25 实例：元宝的 messageList 修掉宽松的 '[class*="chat"]' 之后，
+        // 第 3 个选择器是 '.message-item'，而它天然也匹配 '[class*="message"]'
+        // ⇒ 冗余 ⇒ 本条如实跳过。
         const { doc, adapter } = setup();
         const selectors = adapter.selectors.messageList;
         if (selectors.length < 3) return "SKIP";
-        for (const sel of selectors.slice(0, 2)) {
+        const earlier = selectors.slice(0, 2);
+        const deeper = selectors.slice(2);
+        const hasExclusiveTarget = deeper.some((sel) =>
+          Array.from(doc.querySelectorAll(sel)).some(
+            (el) => !earlier.some((e) => el.matches(e)),
+          ),
+        );
+        if (!hasExclusiveTarget) return "SKIP";
+        for (const sel of earlier) {
           for (const el of Array.from(doc.querySelectorAll(sel))) el.remove();
         }
-        const deeper = selectors.slice(2);
-        if (!deeper.some((sel) => doc.querySelector(sel) !== null)) return "SKIP";
         const found = Array.from(adapter.getMessageList() || []);
         if (found.length === 0) {
           throw new Error(
@@ -365,6 +380,134 @@ function testMatrixCoverage() {
 }
 
 /**
+ * 真实快照对账（B-2 产出物 vs 生产 adapter）
+ *
+ * 这一层回答的问题是：**生产 adapter 在真机上采下来的那份 DOM 上，
+ * 还能不能找到当初采到的东西？**
+ *
+ * 它与模拟层矩阵的分工：
+ *   - 模拟层：手写 fixture，验证选择器逻辑（选择器改了就报红）；
+ *   - 真实层：真机快照，验证**当时的选择器结论**（快照里标注了什么，
+ *     现在还能不能命中什么）。
+ *
+ * **没采到的平台必须如实跳过**，不能算通过。跳过原因从 sidecar 元数据读出来
+ * （登录墙 / 人机校验 / 没采到），一并打印，避免「跳过」变成「没人管」。
+ *
+ * @param {string|null} filterPlatform
+ * @returns {Promise<{totalPass: number, totalFail: number, totalTests: number, totalSkipped: number}>}
+ */
+async function runRealFixtureChecks(filterPlatform) {
+  console.log("╔══════════════════════════════════════════════════════════════╗");
+  console.log("║        真实 DOM 快照对账（真机采集物 vs 生产 adapter）      ║");
+  console.log("╚══════════════════════════════════════════════════════════════╝");
+  console.log("  快照目录: tests/real-machine/fixtures/real");
+  console.log("  采集器:   node tests/real-machine/snapshot-capture.mjs");
+  console.log("");
+
+  const platformIds = filterPlatform ? [filterPlatform] : PLATFORMS.map((p) => p.id);
+  let totalPass = 0;
+  let totalFail = 0;
+  let totalSkipped = 0;
+  let totalTests = 0;
+
+  for (const id of platformIds) {
+    const spec = PLATFORMS.find((p) => p.id === id);
+    const mod = await importAdapter(spec);
+    const AdapterClass = mod.default;
+    const hostname = spec.hostnames[0];
+    const loaded = loadRealFixture(spec.fixture, hostname);
+
+    if (!loaded) {
+      const reason = readRealFixtureReason(spec.fixture);
+      const res = formatResults(spec.name, [
+        { name: "真实快照存在且判定为 captured", pass: true, skipped: true, error: null },
+      ]);
+      totalSkipped += res.skipped;
+      totalTests += res.total;
+      console.log(`  [SKIP] ${spec.name} — ${reason}`);
+      continue;
+    }
+
+    const { dom, meta } = loaded;
+    const doc = dom.window.document;
+    const adapter = new AdapterClass();
+
+    const cases = [
+      {
+        name: "getChatInput() 命中真实快照标注的输入框",
+        fn: () => {
+          const expected = getProbeRoleElements(doc, "chat-input");
+          if (expected.length === 0) throw new Error("真实快照没有标注 chat-input");
+          const el = adapter.getChatInput();
+          if (!el) throw new Error("getChatInput() 返回 null");
+          if (!expected.some((e) => e === el)) {
+            throw new Error(
+              `getChatInput() 返回 ${describe(el)}，不是真实快照标注的 ${expected.map(describe).join(" / ")}`,
+            );
+          }
+        },
+      },
+      {
+        name: "getSendButton() 命中真实快照标注的发送按钮",
+        fn: () => {
+          const expected = getProbeRoleElements(doc, "send-button");
+          if (expected.length === 0) return "SKIP";
+          const el = adapter.getSendButton();
+          if (!el) throw new Error("getSendButton() 返回 null");
+          if (!expected.some((e) => e === el)) {
+            throw new Error(
+              `getSendButton() 返回 ${describe(el)}，不是真实快照标注的 ${expected.map(describe).join(" / ")}`,
+            );
+          }
+        },
+      },
+      {
+        name: "空闲落地页上 isTyping() 为 false（空闲即不忙）",
+        fn: () => {
+          if (meta.isTyping !== false) {
+            throw new Error(
+              `快照记录的 isTyping()=${meta.isTyping}——空闲页上不该判定为「正在生成」` +
+                `（${meta.messageCountModel?.reason || ""}）`,
+            );
+          }
+        },
+      },
+    ];
+
+    const results = [];
+    for (const c of cases) {
+      // 用 runTestAsync：它才认 "SKIP" 返回值（同步的 runTest 会把 SKIP 当成通过，
+      // 那等于把「没验」记成「验过了」）。
+      results.push(await runTestAsync(c.name, c.fn));
+    }
+    const res = formatResults(spec.name, results);
+    totalPass += res.pass;
+    totalFail += res.fail;
+    totalSkipped += res.skipped;
+    totalTests += res.total;
+  }
+
+  console.log(
+    `\n  Total: ${totalPass}/${totalTests} passed, ${totalFail} failed, ${totalSkipped} skipped`,
+  );
+  console.log("");
+
+  return { totalPass, totalFail, totalTests, totalSkipped };
+}
+
+/**
+ * 读某个平台的真实快照 sidecar，给出「为什么没采到」的原因。
+ * @param {string} fixtureId
+ * @returns {string}
+ */
+function readRealFixtureReason(fixtureId) {
+  const metaPath = path.join(REAL_FIXTURES_DIR, `${fixtureId}.json`);
+  if (!existsSync(metaPath)) return "没有采集记录（从未跑过 snapshot-capture.mjs）";
+  const meta = JSON.parse(readFileSync(metaPath, "utf-8"));
+  return meta.reason || `outcome=${meta.outcome}`;
+}
+
+/**
  * 跑整个矩阵。
  * @param {string|null} filterPlatform
  * @returns {Promise<{totalPass: number, totalFail: number, totalTests: number}>}
@@ -436,16 +579,21 @@ async function runTestMatrix(filterPlatform) {
 async function main() {
   const args = process.argv.slice(2);
   let filterPlatform = null;
+  let realOnly = false;
 
   for (const arg of args) {
     if (arg.startsWith("--platform=")) {
       filterPlatform = arg.split("=")[1];
+    }
+    if (arg === "--real") {
+      realOnly = true;
     }
     if (arg === "--help" || arg === "-h") {
       console.log("Usage: node tests/adapter-matrix/adapter-test-runner.js [options]");
       console.log("");
       console.log("Options:");
       console.log("  --platform=<id>   只测某个平台");
+      console.log("  --real            跑真实 DOM 快照对账（而非手写 fixture 矩阵）");
       console.log("  --list            列出全部平台");
       console.log("  --help, -h        显示本帮助");
       console.log("");
@@ -472,6 +620,11 @@ async function main() {
     console.error(`Error: Unknown platform "${filterPlatform}"`);
     console.error(`Available: ${PLATFORMS.map((p) => p.id).join(", ")}`);
     process.exit(1);
+  }
+
+  if (realOnly) {
+    const { totalFail } = await runRealFixtureChecks(filterPlatform);
+    process.exit(totalFail > 0 ? 1 : 0);
   }
 
   const { totalFail } = await runTestMatrix(filterPlatform);

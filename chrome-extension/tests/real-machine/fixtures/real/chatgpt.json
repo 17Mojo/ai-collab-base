@@ -1,0 +1,53 @@
+{
+  "capturedAt": "2026-10-25T01:10:29.499Z",
+  "platform": "chatgpt",
+  "name": "ChatGPT",
+  "url": "https://chatgpt.com/",
+  "locale": "zh-CN",
+  "httpStatus": 403,
+  "composerAppeared": false,
+  "outcome": "unverified",
+  "reason": "生产 adapter 在真机上没找到输入框——可能是 DOM 漂移，也可能是未登录",
+  "composerFound": false,
+  "sendButtonFound": false,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": "[data-testid=\"conversation-turn\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".text-base",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".markdown",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[data-message-author-role]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": "[data-testid=\"typing-indicator\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": null,
+  "sanitized": true
+}

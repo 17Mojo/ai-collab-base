@@ -14,7 +14,7 @@
  * 其余判定全部由生产 adapter 代码本身给出。
  */
 
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
@@ -23,6 +23,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const FIXTURES_DIR = path.join(__dirname, "fixtures");
 export const PLATFORMS_DIR = path.resolve(__dirname, "..", "..", "src", "platforms");
+
+/**
+ * 真实 DOM 快照目录（B-2 采集器产出）。
+ *
+ * 与 `fixtures/mock-dom-*.html`（手写假 DOM）的区别：
+ *   - mock 是**手写**的，天然「让选择器能命中」；
+ *   - real 是**从真机上采下来**的，标注由生产 adapter 的实际命中结果给出。
+ */
+export const REAL_FIXTURES_DIR = path.resolve(__dirname, "..", "real-machine", "fixtures", "real");
 
 /**
  * 列出生产 adapter 源文件（用于「矩阵必须覆盖全部平台」的守护）。
@@ -54,12 +63,56 @@ export function loadFixture(fixtureId, hostname) {
 }
 
 /**
+ * 载入**真实 DOM 快照**（B-2 采集器产出）到 jsdom。
+ *
+ * 与 `loadFixture` 的区别：
+ *   - 快照文件可能**不存在**（该平台没采到）——此时返回 null，由调用方
+ *     **如实跳过**，不能当成通过；
+ *   - 快照存在但 outcome 不是 captured（登录墙 / 人机校验）——同样跳过，
+ *     原因从 sidecar 元数据里读出来一并报出来。
+ *
+ * @param {string} fixtureId - 平台标识（如 'gemini'）
+ * @param {string} hostname - 模拟的站点域名
+ * @returns {{dom: JSDOM, meta: object}|null}
+ */
+export function loadRealFixture(fixtureId, hostname) {
+  const htmlPath = path.join(REAL_FIXTURES_DIR, `${fixtureId}.html`);
+  const metaPath = path.join(REAL_FIXTURES_DIR, `${fixtureId}.json`);
+  if (!existsSync(htmlPath) || !existsSync(metaPath)) return null;
+
+  const meta = JSON.parse(readFileSync(metaPath, "utf-8"));
+  if (meta.outcome !== "captured") return null;
+
+  const html = readFileSync(htmlPath, "utf-8");
+  const dom = new JSDOM(html, {
+    url: `https://${hostname}/`,
+    pretendToBeVisual: true,
+  });
+  installGlobals(dom.window);
+  return { dom, meta };
+}
+
+/**
+ * 读取**真实快照**里的探针标注。
+ *
+ * 用的是 `data-probe-role` 而不是 `data-role`：
+ * 真实站点自己也会用 data-role（实测千问有 data-role="icon"），
+ * 共用命名空间会把站点自己的元素误读成「消息气泡」。
+ *
+ * @param {Document} document
+ * @param {string} role
+ * @returns {Element[]}
+ */
+export function getProbeRoleElements(document, role) {
+  return Array.from(document.querySelectorAll(`[data-probe-role="${role}"]`));
+}
+
+/**
  * 把 jsdom 的 window / document 接到 globalThis。
  * 生产代码用的是裸 `document` / `window`，不是 import 进来的对象。
  *
  * @param {Window} window
- */
-export function installGlobals(window) {
+ */export function installGlobals(window) {
   globalThis.window = window;
   globalThis.document = window.document;
   globalThis.location = window.location;

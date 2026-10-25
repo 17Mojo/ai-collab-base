@@ -1,0 +1,123 @@
+{
+  "capturedAt": "2026-10-25T01:11:05.473Z",
+  "platform": "gemini",
+  "name": "Gemini",
+  "url": "https://gemini.google.com/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
+  "sendButtonFound": false,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": "model-response",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".chat-turn",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"conversation-turn\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".model-response-text",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "message-content",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".markdown",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": ".loading-content-spinner-container",
+      "matched": true,
+      "count": 1,
+      "samples": [
+        {
+          "tag": "div",
+          "className": "loading-content-spinner-container ng-star-inserted",
+          "text": "",
+          "textLength": 0,
+          "childCount": 1,
+          "rect": {
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "left": 0
+          }
+        }
+      ]
+    },
+    {
+      "selector": "mat-progress-bar",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"loading\"]",
+      "matched": true,
+      "count": 2,
+      "samples": [
+        {
+          "tag": "body",
+          "className": "ssr-nav-open enable-lm-loading-animation lr26 enable-lm-fast-follows chrome-context-v39 hide-ogb-signed-out-mweb light-theme lm-component-theme enable-lm-mobile-tokens enable-lm-spacing-tokens sidenav-mavatar-migration-enabled theme-host variable-context viewer-signed-out zero-state-theme",
+          "text": "Gemini\n发起新对话\n图片\n登录即可保存活动记录\n登录\n认识 Gemini：你的私人 AI 助理\n\n\n\n\nFlash-Lite\n\n须遵守《Google 条款》\n在新窗口中打开\n和《Google 隐私权政策》\n在新窗口中打开\n。Gemin",
+          "textLength": 176,
+          "childCount": 19,
+          "rect": {
+            "width": 1440,
+            "height": 900,
+            "top": 0,
+            "left": 0
+          }
+        },
+        {
+          "tag": "div",
+          "className": "loading-content-spinner-container ng-star-inserted",
+          "text": "",
+          "textLength": 0,
+          "childCount": 1,
+          "rect": {
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "left": 0
+          }
+        }
+      ]
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": {
+    "ok": true,
+    "count": 0,
+    "reason": "落地页消息数为 0、isTyping() 为 false，符合「无会话即无消息 / 空闲即不忙」的不变量",
+    "falsePositiveSelectors": []
+  },
+  "sanitized": true
+}

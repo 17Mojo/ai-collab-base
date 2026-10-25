@@ -1,0 +1,96 @@
+{
+  "capturedAt": "2026-10-25T01:11:47.668Z",
+  "platform": "qianwen",
+  "name": "Qianwen (千问)",
+  "url": "https://www.qianwen.com/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
+  "sendButtonFound": true,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": "[class*=\"message\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"chat-item\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".response-content",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".prose",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"message-content\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "div[class*=\"content\"]",
+      "matched": true,
+      "count": 1,
+      "samples": [
+        {
+          "tag": "div",
+          "className": "bg-gray-button-hover relative flex-0 h-full min-w-0 overflow-hidden before:content-[''] before:w-full before:h-full before:absolute before:top-0 backdrop-blur-[20px] before:-z-[1] before:pointer-events-none transition-[width] duration-300 w-0",
+          "text": "",
+          "textLength": 0,
+          "childCount": 1,
+          "rect": {
+            "width": 0,
+            "height": 900,
+            "top": 0,
+            "left": 0
+          }
+        }
+      ]
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": "[class*=\"loading\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"generating\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".typing-indicator",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": {
+    "ok": true,
+    "count": 0,
+    "reason": "落地页消息数为 0、isTyping() 为 false，符合「无会话即无消息 / 空闲即不忙」的不变量",
+    "falsePositiveSelectors": []
+  },
+  "sanitized": true
+}

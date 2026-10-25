@@ -1,0 +1,137 @@
+{
+  "capturedAt": "2026-10-25T01:11:33.036Z",
+  "platform": "kimi",
+  "name": "Kimi AI",
+  "url": "https://www.kimi.com/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
+  "sendButtonFound": false,
+  "messageCount": 2,
+  "messageListSelectors": [
+    {
+      "selector": ".chat-message",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"message\"]",
+      "matched": true,
+      "count": 2,
+      "samples": [
+        {
+          "tag": "div",
+          "className": "message-list-container top",
+          "text": "",
+          "textLength": 0,
+          "childCount": 1,
+          "rect": {
+            "width": 1440,
+            "height": 0,
+            "top": 12,
+            "left": 0
+          }
+        },
+        {
+          "tag": "div",
+          "className": "message-list",
+          "text": "",
+          "textLength": 0,
+          "childCount": 0,
+          "rect": {
+            "width": 1440,
+            "height": 0,
+            "top": 12,
+            "left": 0
+          }
+        }
+      ]
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".prose",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".chat-content",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"content\"]",
+      "matched": true,
+      "count": 27,
+      "samples": [
+        {
+          "tag": "span",
+          "className": "new-chat-btn__content",
+          "text": "新建会话\n⌘\nK",
+          "textLength": 8,
+          "childCount": 2,
+          "rect": {
+            "width": 222,
+            "height": 40,
+            "top": 63,
+            "left": 9
+          }
+        },
+        {
+          "tag": "span",
+          "className": "next-sidebar-nav-item__content",
+          "text": "我的 Kimi",
+          "textLength": 7,
+          "childCount": 2,
+          "rect": {
+            "width": 224,
+            "height": 36,
+            "top": 112,
+            "left": 8
+          }
+        },
+        {
+          "tag": "span",
+          "className": "next-sidebar-nav-item__content",
+          "text": "插件",
+          "textLength": 2,
+          "childCount": 2,
+          "rect": {
+            "width": 224,
+            "height": 36,
+            "top": 149,
+            "left": 8
+          }
+        }
+      ]
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": ".loading",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".generating",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": {
+    "ok": true,
+    "count": 2,
+    "reason": "落地页上 messageList 命中 2 个**空容器**（整棵子树没有文字）——它们不是消息气泡，但也不影响「发送前后计数增长」的判定；真实气泡类名仍需已登录会话确认",
+    "falsePositiveSelectors": []
+  },
+  "sanitized": true
+}

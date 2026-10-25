@@ -1,0 +1,116 @@
+{
+  "capturedAt": "2026-10-25T01:11:36.586Z",
+  "platform": "longcat",
+  "name": "LongCat AI",
+  "url": "https://longcat.chat/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
+  "sendButtonFound": false,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": ".message",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"response\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"chat-item\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".prose",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".response-content",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"content\"]",
+      "matched": true,
+      "count": 9,
+      "samples": [
+        {
+          "tag": "div",
+          "className": "app-menus-content",
+          "text": "开启新对话\n下载手机应用\n请先登录\n简体中文\n加入我们\nAPI 开放平台\n, Beyond Scale\n\n\n\n\n深度思考\n联网搜索\n图片生成\n视频生成\n深度研究\n\n内容由AI生成，请仔细甄别\n\n|\n京ICP备2024094994号-3",
+          "textLength": 117,
+          "childCount": 2,
+          "rect": {
+            "width": 1440,
+            "height": 900,
+            "top": 0,
+            "left": 0
+          }
+        },
+        {
+          "tag": "div",
+          "className": "slider-menus-content",
+          "text": "开启新对话\n下载手机应用\n请先登录\n简体中文",
+          "textLength": 22,
+          "childCount": 4,
+          "rect": {
+            "width": 260,
+            "height": 900,
+            "top": 0,
+            "left": 0
+          }
+        },
+        {
+          "tag": "div",
+          "className": "new-content",
+          "text": "开启新对话",
+          "textLength": 5,
+          "childCount": 2,
+          "rect": {
+            "width": 120,
+            "height": 46,
+            "top": 88,
+            "left": 20
+          }
+        }
+      ]
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": "[class*=\"loading\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"generating\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": {
+    "ok": true,
+    "count": 0,
+    "reason": "落地页消息数为 0、isTyping() 为 false，符合「无会话即无消息 / 空闲即不忙」的不变量",
+    "falsePositiveSelectors": []
+  },
+  "sanitized": true
+}

@@ -1,0 +1,122 @@
+{
+  "capturedAt": "2026-10-25T01:12:02.565Z",
+  "platform": "yuanbao",
+  "name": "Yuanbao (腾讯元宝)",
+  "url": "https://yuanbao.tencent.com/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
+  "sendButtonFound": false,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": "[class*=\"message\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"response\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".message-item",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".prose",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"answer\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"content\"]",
+      "matched": true,
+      "count": 24,
+      "samples": [
+        {
+          "tag": "div",
+          "className": "yb-nav__content-wrapper",
+          "text": "元宝\n\n新建对话\n\nAI 创作\n\n分组\n创建分组\n前往下载中心\n\n未登录",
+          "textLength": 36,
+          "childCount": 5,
+          "rect": {
+            "width": 254,
+            "height": 900,
+            "top": 0,
+            "left": 0
+          }
+        },
+        {
+          "tag": "div",
+          "className": "yb-nav__content",
+          "text": "新建对话\n\nAI 创作\n\n分组\n创建分组",
+          "textLength": 20,
+          "childCount": 6,
+          "rect": {
+            "width": 248,
+            "height": 684,
+            "top": 102,
+            "left": 6
+          }
+        },
+        {
+          "tag": "div",
+          "className": "yb-projects-section__item-content",
+          "text": "创建分组",
+          "textLength": 4,
+          "childCount": 1,
+          "rect": {
+            "width": 196,
+            "height": 20,
+            "top": 218,
+            "left": 42
+          }
+        }
+      ]
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": "[class*=\"loading\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"generating\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".spinner",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": {
+    "ok": true,
+    "count": 0,
+    "reason": "落地页消息数为 0、isTyping() 为 false，符合「无会话即无消息 / 空闲即不忙」的不变量",
+    "falsePositiveSelectors": []
+  },
+  "sanitized": true
+}

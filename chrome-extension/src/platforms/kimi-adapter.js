@@ -16,7 +16,24 @@ const SELECTORS = {
   ],
   messageList: [".chat-message", '[class*="message"]'],
   messageContent: [".prose", ".chat-content", '[class*="content"]'],
-  typingIndicator: [".loading", '[class*="loading"]', ".generating"],
+  // 2026-10-25 真机实测**删除**了 '[class*="loading"]'。
+  //
+  // 实测（空闲落地页，无会话）：`[class*="loading"]` 命中 9 个元素，
+  // 全部是**侧边栏的历史记录骨架屏**，且**几何尺寸非零**（224×224）——
+  // 所以既躲得过 display/visibility/opacity 判定，也躲得过尺寸判定：
+  //
+  //   div.next-sidebar__history-loading
+  //   div.next-sidebar__history-loading-header
+  //   span.next-sidebar__history-loading-title
+  //
+  // 后果：isTyping() 在空闲页恒为 true ⇒ waitForResponse 的
+  // `!this.isTyping()` 条件**永远不成立** ⇒ 每次发送都必然 60 秒超时。
+  //
+  // 保留 '.loading' 与 '.generating'（都是具体类名）承担「正在生成」的判定。
+  // **残留风险**：真正的生成指示器是否命中这两个类名，尚未在已登录会话里
+  // 验证——若都不命中，isTyping() 会一直为 false，等待可能**提前**返回
+  // （回复还在流式输出中）。该项已登记为 L2 真机会话必验项。
+  typingIndicator: [".loading", ".generating"],
 };
 
 /**
