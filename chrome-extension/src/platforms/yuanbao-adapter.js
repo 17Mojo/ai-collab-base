@@ -22,7 +22,19 @@ const SELECTORS = {
   ],
   messageList: [
     '[class*="message"]',
-    '[class*="chat"]',
+    // 2026-10-25 真机实测**删除**了 '[class*="chat"]'。
+    //
+    // 实测（真机落地页，无会话）：`[class*="chat"]` 命中 8 个元素，
+    // 逐个看下来**全是「新建对话」按钮那一片**，没有一条是消息气泡：
+    //   div.yb-new-chat-entry / div.yb-new-chat-entry__item / svg
+    //
+    // 为什么这会坏：findElements 是「按优先级取**第一个有命中**的选择器」，
+    // 而 '[class*="message"]' 在落地页一个都不命中 ⇒ 直接落到 '[class*="chat"]'
+    // ⇒ 真机上消息数恒为 8。waitForResponseGeneric 拿这个数做「发送前后比较」，
+    // 于是要么把「新建对话」按钮当成 AI 回复返回（静默错数据），要么等不到变化而超时。
+    //
+    // 真实气泡的类名必须在**已登录会话**里确认（未登录时看不到消息气泡）。
+    // 在那之前宁可返回 0（失败会响亮地超时），也不要返回一个错数字。
     '[class*="response"]',
     ".message-item",
   ],

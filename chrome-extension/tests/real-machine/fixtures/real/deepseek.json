@@ -1,0 +1,135 @@
+{
+  "capturedAt": "2026-10-25T01:11:28.104Z",
+  "platform": "deepseek",
+  "name": "DeepSeek",
+  "url": "https://chat.deepseek.com/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": false,
+  "outcome": "unverified",
+  "reason": "落在登录墙（信号：a[href*=\"auth\"]）——需要已登录的 profile 才能采到",
+  "composerFound": false,
+  "sendButtonFound": false,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": "[data-testid=\"conversation-turn\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".chat-message",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"message\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".ds-chat-message",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".ds-assistant-message-main-content",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".markdown",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".prose",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"message-content\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"content\"]",
+      "matched": true,
+      "count": 7,
+      "samples": [
+        {
+          "tag": "div",
+          "className": "ds-form-item__content",
+          "text": "+86",
+          "textLength": 3,
+          "childCount": 1,
+          "rect": {
+            "width": 336,
+            "height": 48,
+            "top": 306,
+            "left": 416
+          }
+        },
+        {
+          "tag": "div",
+          "className": "ds-form-item__content",
+          "text": "发送验证码",
+          "textLength": 5,
+          "childCount": 1,
+          "rect": {
+            "width": 336,
+            "height": 48,
+            "top": 376,
+            "left": 416
+          }
+        },
+        {
+          "tag": "span",
+          "className": "ds-button__content",
+          "text": "发送验证码",
+          "textLength": 5,
+          "childCount": 0,
+          "rect": {
+            "width": 70,
+            "height": 22,
+            "top": 389,
+            "left": 661
+          }
+        }
+      ]
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": "[class*=\"loading\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"generating\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".typing-indicator",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": null,
+  "sanitized": true
+}

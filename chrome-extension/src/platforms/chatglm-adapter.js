@@ -16,11 +16,18 @@ const SELECTORS = {
   ],
   messageList: [".chat-message", '[class*="message"]', '[class*="response"]'],
   messageContent: [".chat-content", ".message-text", '[class*="content"]'],
-  typingIndicator: [
-    '[class*="loading"]',
-    '[class*="generating"]',
-    ".typing-indicator",
-  ],
+  // 2026-10-25 真机实测**删除**了 '[class*="loading"]'。
+  //
+  // 实测（空闲落地页，无会话）：`[class*="loading"]` 命中 2 个元素，
+  // 是**会话列表的「正在加载...」占位条**，且**可见**（239×32，文字「正在加载...」）——
+  // 于是 isTyping() 在空闲页恒为 true ⇒ waitForResponse 的
+  // `!this.isTyping()` 条件**永远不成立** ⇒ 每次发送都必然 60 秒超时。
+  //
+  // 保留 '[class*="generating"]' 与 '.typing-indicator'（都是具体指向）承担判定。
+  // **残留风险**：真正的生成指示器是否命中这两个选择器，尚未在已登录会话里
+  // 验证——若都不命中，isTyping() 会一直为 false，等待可能**提前**返回。
+  // 该项已登记为 L2 真机会话必验项。
+  typingIndicator: ['[class*="generating"]', ".typing-indicator"],
 };
 
 /**

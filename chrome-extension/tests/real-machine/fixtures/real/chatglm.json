@@ -1,0 +1,116 @@
+{
+  "capturedAt": "2026-10-25T01:12:07.123Z",
+  "platform": "chatglm",
+  "name": "ChatGLM (智谱清言)",
+  "url": "https://chatglm.cn/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
+  "sendButtonFound": false,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": ".chat-message",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"message\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"response\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".chat-content",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".message-text",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"content\"]",
+      "matched": true,
+      "count": 19,
+      "samples": [
+        {
+          "tag": "div",
+          "className": "history-operate-content",
+          "text": "全选已选 0 条取消 删除 ",
+          "textLength": 13,
+          "childCount": 2,
+          "rect": {
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "left": 0
+          }
+        },
+        {
+          "tag": "p",
+          "className": "text-content",
+          "text": "",
+          "textLength": 0,
+          "childCount": 0,
+          "rect": {
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "left": 0
+          }
+        },
+        {
+          "tag": "div",
+          "className": "glms-operation-content",
+          "text": "分享链接下载名片",
+          "textLength": 8,
+          "childCount": 2,
+          "rect": {
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "left": 0
+          }
+        }
+      ]
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": "[class*=\"generating\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".typing-indicator",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": {
+    "ok": true,
+    "count": 0,
+    "reason": "落地页消息数为 0、isTyping() 为 false，符合「无会话即无消息 / 空闲即不忙」的不变量",
+    "falsePositiveSelectors": []
+  },
+  "sanitized": true
+}

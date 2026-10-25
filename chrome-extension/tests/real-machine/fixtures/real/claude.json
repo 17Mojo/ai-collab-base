@@ -1,0 +1,53 @@
+{
+  "capturedAt": "2026-10-25T01:11:00.017Z",
+  "platform": "claude",
+  "name": "Claude.ai",
+  "url": "https://claude.ai/",
+  "locale": "zh-CN",
+  "httpStatus": 403,
+  "composerAppeared": false,
+  "outcome": "unverified",
+  "reason": "命中人机校验/机器人拦截页（信号：text:安全验证）——不是 adapter 的结论",
+  "composerFound": false,
+  "sendButtonFound": false,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": "[data-testid=\"conversation-turn\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": ".conversation-turn",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": ".prose",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[data-testid=\"message-content\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "typingIndicatorSelectors": [
+    {
+      "selector": "[data-testid=\"typing-indicator\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "isTyping": false,
+  "messageCountModel": null,
+  "sanitized": true
+}

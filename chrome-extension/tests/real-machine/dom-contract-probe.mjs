@@ -41,36 +41,27 @@ import { build } from "esbuild";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { PLATFORMS as REGISTERED_PLATFORMS } from "../platforms.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXT_ROOT = resolve(HERE, "../..");
 
 /**
- * 本轮回归覆盖的平台。选这三个的理由：用户覆盖面最大、公开可见的前端改版
- * 频率最高（因而最值得真机盯），且三家的 adapter 都已存在并有 fixture。
- * 其余 7 家（kimi / deepseek / yuanbao / qianwen / yiyan / longcat / chatglm）
- * 用同一套探针按需扩平台即可，不需要改探针代码。
+ * 平台清单从**唯一事实源**导入（tests/platforms.mjs），不再在本文件里手抄一份。
+ *
+ * 2026-10-25 之前，本文件只登记了 3 家（chatgpt / claude / gemini），
+ * 其余 7 家（deepseek / kimi / longcat / qianwen / yiyan / yuanbao / chatglm）
+ * **从未进入过真机回归**——因为「清单只写了 3 家」，而模拟层矩阵
+ * 覆盖 10 家却全是手写 mock，于是出现「矩阵 110/114 全绿，
+ * 但只有 3 家在真机上验证过」的落差。
+ * 平台清单现在只有一份，模拟层与真机层不可能再各说各话。
  */
-const PLATFORMS = [
-  {
-    id: "chatgpt",
-    name: "ChatGPT",
-    adapter: "src/platforms/chatgpt-adapter.js",
-    url: "https://chatgpt.com/",
-  },
-  {
-    id: "claude",
-    name: "Claude.ai",
-    adapter: "src/platforms/claude-adapter.js",
-    url: "https://claude.ai/",
-  },
-  {
-    id: "gemini",
-    name: "Gemini",
-    adapter: "src/platforms/gemini-adapter.js",
-    url: "https://gemini.google.com/",
-  },
-];
+const PLATFORMS = REGISTERED_PLATFORMS.map((p) => ({
+  id: p.id,
+  name: p.name,
+  adapter: `src/platforms/${p.module}`,
+  url: p.url,
+}));
 
 /** 登录墙的常见特征——用于把「没找到输入框」拆成两类。 */
 const LOGIN_WALL_SELECTORS = [
@@ -456,18 +447,26 @@ async function probePlatform(context, platform, args) {
     });
     record.httpStatus = response ? response.status() : null;
 
-    // SPA 前端挂 composer 需要时间：轮询等待输入框出现，而不是死等固定秒数
+    // SPA 前端挂 composer 需要时间：轮询等待**生产 adapter 自己的
+    // getChatInput()** 找到输入框，而不是死等固定秒数。
+    //
+    // 为什么不用硬编码选择器等：此前这段写的是 ChatGPT/Claude/Gemini 三家的
+    // 专用选择器（#prompt-textarea 等）。探针扩到 10 家之后，那段对另外 7 家
+    // **永远等不到**——会把「等不到」误当成「adapter 找不到输入框」，
+    // 报出一个假的 DOM 漂移。用生产 adapter 自己的方法等，才是对账同一份代码。
     const composerWait = await page
       .waitForFunction(
-        () => {
-          const el =
-            document.querySelector("#prompt-textarea") ||
-            document.querySelector("textarea[placeholder*='Message']") ||
-            document.querySelector("div[contenteditable='true']") ||
-            document.querySelector("rich-textarea div[contenteditable='true']") ||
-            document.querySelector(".ql-editor");
-          return !!el;
+        (adapterId) => {
+          const registry = window.__PROBE_ADAPTERS__ || {};
+          const mod = registry[adapterId];
+          if (!mod || !mod.default) return false;
+          try {
+            return !!new mod.default().getChatInput();
+          } catch {
+            return false;
+          }
         },
+        platform.id,
         { timeout: args.composerWait }
       )
       .then(() => true)
