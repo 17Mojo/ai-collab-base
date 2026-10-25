@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <!--
   fixture 契约：用 data-role 标注「这个元素在真实站点里扮演什么角色」，
@@ -7,54 +7,119 @@
     data-role="chat-input"  输入框（应为 1 个）
     data-role="send-button" 发送按钮（应为 1 个）
     data-role="message"     消息（可多个）
+
   改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+
+  ── 2026-10-25 重写（B-3 千问选择器定案）─────────────────────────────
+  旧版这份 fixture 是**手写假 DOM**，用的是 chat-message-item / message-content /
+  prose / chat-item / response-content 这些类名——它们在千问自己的 56 个资源
+  （15.45 MB，含懒加载 async chunk）里**一次都没出现过**（全量普查结果，见
+  tests/real-machine/evidence/qianwen-asset-census.json）。
+  也就是说：旧 fixture 之所以能让矩阵全绿，是因为它照着**旧选择器**写的，
+  不是因为选择器对。生产选择器漂成什么样，矩阵都是绿的——这正是本仓
+  110/114 全绿却藏着 4 个真机缺陷的老毛病。
+
+  新版按千问**自己的产物**里的真实结构重写（依据与推导过程见
+  tests/real-machine/fixtures/qianwen-conversation.html 的注释）：
+    - 输入框是 Slate 编辑器（data-slate-editor="true"）；
+    - 发送按钮认的是稳定属性 data-session-switch-target="send-query"；
+    - 消息是答案卡：外层 div.answer-common-card（站点自己的文本选择功能
+      声明的 supportedSelectors 第一个），内层 div.answer-text.md-text-card
+      是**正文卡**——适配器把这一层当消息计数单元（等待首个 token 期间站点
+      另挂一张 answer-receiving-card 点点点卡，它带 answer-common-card 类，
+      若拿外层卡片计数，用户一按发送计数就 +1，waitForResponse 会提前返回）；
+    - 提问卡（chat-question-card-wrap / question-text-card）与消息容器
+      （message-list-container / message-list-content-container）**不标 message**：
+      它们是本 fixture 故意留下的噪音，用来守住「消息计数不许把外壳算进去」。
+
+  ── 一处刻意的「不真实」：发送按钮的 aria-label 用**英文** ──────────
+  真实站点中文界面下它是「发送消息」（i18n key = qianwenWeb.input.sendMessage）。
+  本 fixture 故意写英文（"Send message"），是因为生产选择器里仍有三条
+  i18n 回退（'button[aria-label*="发送"]' 等）。若快照也用中文，
+  删掉稳定属性那条选择器后矩阵**照样全绿**——绿灯的理由是错的，
+  而这正是本 fixture 被重写的原因。所以这里让快照只在稳定属性那条路上
+  走得通：矩阵因此也能守住「不依赖本地化文案」。
 -->
 <head>
   <meta charset="UTF-8">
   <title>Qianwen (千问)</title>
 </head>
 <body>
-  <!-- Chat Input: contenteditable div -->
-  <div contenteditable="true" data-role="chat-input">
-    <p>帮我写一首诗</p>
+  <!-- Chat Input: Slate 编辑器 -->
+  <div contenteditable="true"
+       data-slate-editor="true"
+       data-slate-node="value"
+       data-placeholder="向千问提问"
+       data-role="chat-input"
+       class="relative min-h-[24px] w-full whitespace-pre-wrap break-words text-left">
+    <p data-slate-node="element"><span data-slate-node="text"></span></p>
   </div>
 
   <!-- Fallback textarea -->
   <textarea style="display:none;"></textarea>
 
-  <!-- Send Button -->
-  <button aria-label="发送消息" title="发送" class="send-btn" data-role="send-button">
+  <!-- Send Button: 稳定属性，不随界面语言变（aria-label 故意用英文） -->
+  <button type="button"
+          aria-label="Send message"
+          data-session-switch-target="send-query"
+          class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border-0 p-0"
+          data-role="send-button">
     <svg><!-- send icon --></svg>
   </button>
 
-  <!-- Typing Indicator -->
-  <div class="loading" style="display:none;">
-    <span>思考中...</span>
-  </div>
-  <div class="generating" style="display:none;"></div>
+  <!-- 消息区：容器带 "message" 字样，但**不是消息**（旧宽松选择器会命中它们） -->
+  <div class="message-list-container scroll-container h-full">
+    <div class="message-list-content-container">
 
-  <!-- Message List -->
-  <div class="chat-message-item" data-role="message">
-    <div class="message-content">
-      <div class="prose"><p>你好，千问</p></div>
+      <div data-chat-list-key="chat-1">
+        <div class="chat-round" data-chat="chat-1" data-chat-pos="0">
+          <!-- 提问卡：不是 AI 的回答，不标 message -->
+          <div class="chat-question-wrap">
+            <div class="chat-question-card-wrap" data-chat-question-wrap="q-1">
+              <div class="message-card-wrap question" data-mt="text/plain">
+                <div class="question-text-card">帮我写一首诗</div>
+              </div>
+            </div>
+          </div>
+          <!-- 回答卡：这才是消息（外层卡片是站点自己声明的答案卡） -->
+          <div class="chat-answers-card-wrap" data-chat-answers-wrap="a-1">
+            <div class="answer-common-card undefined"
+                 data-mt="custom/markdown"
+                 data-role="message">
+              <div class="answer-text md-text-card">
+                <div class="qk-markdown qk-markdown-react qk-markdown-code-light">
+                  <p><span class="qk-md-text">你好，千问</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div data-chat-list-key="chat-2">
+        <div class="chat-round" data-chat="chat-2" data-chat-pos="1">
+          <div class="chat-question-wrap">
+            <div class="chat-question-card-wrap" data-chat-question-wrap="q-2">
+              <div class="message-card-wrap question" data-mt="text/plain">
+                <div class="question-text-card">再写一首</div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-answers-card-wrap" data-chat-answers-wrap="a-2">
+            <div class="answer-common-card undefined"
+                 data-mt="custom/markdown"
+                 data-role="message">
+              <div class="answer-text md-text-card">
+                <div class="qk-markdown qk-markdown-react qk-markdown-code-light">
+                  <p><span class="qk-md-text">你好！我是通义千问，有什么可以帮你的？</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
-  </div>
-
-  <div class="chat-message-item" data-role="message">
-    <div class="message-content">
-      <div class="prose"><p>你好！我是通义千问，有什么可以帮你的？</p></div>
-    </div>
-  </div>
-
-  <div class="chat-item" data-role="message">
-    <div class="message-content">
-      <div class="prose"><p>帮我写一首诗</p></div>
-    </div>
-  </div>
-
-  <!-- Fallback response content -->
-  <div class="response-content" style="display:none;">
-    <div class="content"><p>fallback</p></div>
   </div>
 </body>
 </html>

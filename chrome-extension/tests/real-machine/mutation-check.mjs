@@ -171,6 +171,69 @@ const MUTATIONS = [
     testFile: "sanitize.test.mjs",
     expectTest: "邮箱被替换",
   },
+
+  // ── 千问 adapter 的选择器（2026-10-25 真机实测 B-3）────────────
+  //
+  // 下面 6 条全部打在**生产源码**上（target 以 "src/" 开头）：
+  // 原选择器在千问自己的 56 个资源 / 15.45 MB 里一次都没出现过（普查见
+  // tests/real-machine/evidence/qianwen-asset-census.json），
+  // 而千问的会话 DOM 采不到（需要已登录 profile），所以只能靠
+  // 「从站点产物推导的契约 fixture」来守——那套 fixture 一旦没人守，
+  // 生产选择器就会重新漂回那些命中 0 个的类名，而且**不会有人发现**。
+  {
+    name: "把千问的消息选择器退回宽松的 [class*=\"message\"]",
+    why: "宽松选择器会命中 message-list-container 这类界面外壳，消息数被撑大（yiyan/yuanbao 的同款病）",
+    target: "src/platforms/qianwen-adapter.js",
+    find: "    'div.answer-text.md-text-card',",
+    replace: "    '[class*=\"message\"]',",
+    testFile: "qianwen-contract.test.mjs",
+    expectTest: "消息数只算答案卡",
+  },
+  {
+    name: "把千问的正文选择器退回只取第一段",
+    why: "只取 .qk-md-text 只能拿到 markdown 的第一段，多段落答案被截断",
+    target: "src/platforms/qianwen-adapter.js",
+    find: "    '.qk-markdown',",
+    replace: "    '.qk-md-text',",
+    testFile: "qianwen-contract.test.mjs",
+    expectTest: "答案正文取整个 markdown 容器",
+  },
+  {
+    name: "把千问的发送按钮选择器退回依赖本地化文案",
+    why: "aria-label 随界面语言变（站点词典 sendMessage = 发送消息 / 傳送訊息），英文界面下必然落空",
+    target: "src/platforms/qianwen-adapter.js",
+    find: "    'button[data-session-switch-target=\"send-query\"]',\n",
+    replace: "",
+    testFile: "qianwen-contract.test.mjs",
+    expectTest: "发送按钮靠稳定属性命中",
+  },
+  {
+    name: "把千问的「停止回答」选择器改坏",
+    why: "生成中的信号是输入区那个「停止回答」按钮；认不出来就会在回复没写完时提前返回",
+    target: "src/platforms/qianwen-adapter.js",
+    find: "    'button[aria-label*=\"停止回答\"]',",
+    replace: "    'button[aria-label*=\"发送消息\"]',",
+    testFile: "qianwen-contract.test.mjs",
+    expectTest: "识别停止回答按钮",
+  },
+  {
+    name: "把千问的「接收中卡片」选择器改坏",
+    why: "等待首个 token 期间是接收中点点点卡片，它必须能被认成生成中",
+    target: "src/platforms/qianwen-adapter.js",
+    find: "    'div.answer-receiving-card',",
+    replace: "    'div.answer-receiving-card-typo',",
+    testFile: "qianwen-contract.test.mjs",
+    expectTest: "只有接收中卡片",
+  },
+  {
+    name: "把千问正文的「先看元素自身」这一步去掉",
+    why: "markdown 容器与答案卡是同一个元素时，只查后代会漏掉它，退到 .qk-md-text 就只拿到第一段",
+    target: "src/platforms/qianwen-adapter.js",
+    find: "      const self = element.matches?.(sel) ? element : null;",
+    replace: "      const self = null;",
+    testFile: "qianwen-contract.test.mjs",
+    expectTest: "markdown 容器与答案卡是同一个元素时也能取到完整正文",
+  },
 ];
 
 /**
@@ -213,12 +276,27 @@ function main() {
     recursive: true,
     filter: (src) => !src.includes(`${"node_modules"}`),
   });
+  // 生产代码也要进来：2026-10-25 起，变异可以直接打**生产 adapter 源码**。
+  //
+  // 之前这个脚本只能改 tests/ 下的文件，于是「生产选择器漂移了」这类缺陷
+  // 根本没地方验证——守护的只有工具层，不是被守护的那处代码本身。
+  //
+  // 测试文件通过相对路径 '../../src/platforms/xxx-adapter.js' 引生产代码，
+  // 副本放在 chrome-extension/.mutation-tmp/ 下面（不是 /tmp），
+  // 于是这个相对路径在副本里正好指向被改坏的副本，jsdom 也仍能向上找到。
+  cpSync(join(EXT_ROOT, "src"), join(TMP_ROOT, "src"), {
+    recursive: true,
+    filter: (src) => !src.includes(`${"node_modules"}`),
+  });
   const COPY_ROOT = join(TMP_ROOT, "tests");
 
   const survivors = [];
   try {
     for (const m of MUTATIONS) {
-      const targetAbs = join(COPY_ROOT, "real-machine", m.target);
+      // target 以 "src/" 开头 ⇒ 打生产代码；否则打 tests/real-machine/ 下的文件
+      const targetAbs = m.target.startsWith("src/")
+        ? join(TMP_ROOT, m.target)
+        : join(COPY_ROOT, "real-machine", m.target);
       if (!existsSync(targetAbs)) {
         console.error(`✗ ${m.name}：目标文件不存在 ${m.target}`);
         survivors.push(m);
