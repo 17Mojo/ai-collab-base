@@ -25,12 +25,12 @@ Pack 执行链路三段全断、AI 步骤广播到所有页面、popup 没有导
 ### 1. `cd chrome-extension && node tests/run-tests.mjs`
 
 ```
-ℹ tests 109
-ℹ pass 109
+ℹ tests 110
+ℹ pass 110
 ℹ fail 0
 ```
 
-（本轮从 102 条增加到 109 条：新增 7 条扩展接线测试。）
+（本轮从 102 条增加到 110 条：新增 8 条扩展接线测试。）
 
 ### 2. `cd chrome-extension && node tests/adapter-matrix/adapter-test-runner.js`
 
@@ -43,11 +43,12 @@ Pack 执行链路三段全断、AI 步骤广播到所有页面、popup 没有导
 ### 3. `cd chrome-extension && node tests/real-machine/mutation-check.mjs`
 
 ```
-全部 28 条变异都被杀死。
+全部 29 条变异都被杀死。
 ```
 
-（本轮从 23 条增加到 28 条，新增 5 条：AI 步骤退回广播、后台不再传标签页、
-popup 不再传标签页、popup 不再打开编辑器、构建不再复制嵌套布局。）
+（本轮从 23 条增加到 29 条，新增 6 条：AI 步骤退回广播、后台不再传标签页、
+popup 不再传标签页、popup 不再打开编辑器、构建不再复制嵌套布局、
+把交付给外部用户的冒烟 Pack 的提示词改掉。）
 
 ### 4. `cd chrome-extension && npm run build`
 
@@ -109,10 +110,10 @@ All checks passed!
 
 ### 测试结论
 
-- **接线测试**（`tests/extension-wiring.test.mjs`，本轮新增）：15 条，覆盖
+- **接线测试**（`tests/extension-wiring.test.mjs`，本轮新增）：18 条，覆盖
   消息类型双向对账、真的跑一次 `SEND_TO_AI`（jsdom 里跑**生产**内容脚本）、
-  Pack 找得到、popup 渲染的 id、popup 传标签页、标签页定向、产物里页面真的存在。
-- **变异检查**：28 条全部被杀死，每条都要求**指定的那条**测试因此报错。
+  Pack 找得到、popup 渲染的 id、popup 传标签页、标签页定向、产物里页面真的存在、**交付给外部用户的那份冒烟 Pack 真的能跑起来**。
+- **变异检查**：29 条全部被杀死，每条都要求**指定的那条**测试因此报错。
   其中 5 条是本轮新增的断点守护。
 - **矩阵**：108/114（6 个既有 skip），生产 adapter 选择器没有回退。
 - **未验证的部分**：以上全部是**模拟层**结论。真实发送链路（真机上点一下→真的发出去→把回复取回来）

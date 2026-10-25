@@ -779,6 +779,7 @@ let executorImportCounter = 0;
  * 在假 chrome 里跑**生产执行器**。
  *
  * @param {Object} [options] - 假 chrome 的行为开关
+ * @param {Object} [options.pack] - 要装进执行器的 Pack（默认 AI_PACK）
  * @returns {Promise<{executor: Object, calls: Object}>}
  */
 async function loadExecutor(options = {}) {
@@ -806,7 +807,7 @@ async function loadExecutor(options = {}) {
     `../src/background/pack-executor.js?bust=${executorImportCounter}`
   );
   const executor = new mod.default();
-  executor.loadPack(AI_PACK);
+  executor.loadPack(options.pack || AI_PACK);
   return { executor, calls };
 }
 
@@ -856,5 +857,40 @@ test("标签页发不过去时要说清楚原因（别让用户看到一串英�
     message,
     /AI 站点|刷新/,
     `错误要告诉用户下一步做什么：${message}`,
+  );
+});
+
+test("交付给外部用户的那个冒烟 Pack，执行器必须真的能跑起来", async () => {
+  // 外部用户拿到的是 `packs/examples/external-user-smoke.json` 这个文件。
+  // 如果它跟运行时对不上（步骤类型不对、id 字段不对、提示词模板取不到），
+  // 说明书就成了一份**假说明书**——所以用**生产执行器**跑它。
+  //
+  // 路径从**测试文件自己**往上数（HERE/../..），不从 EXT_ROOT 数：
+  // 变异检查会把 tests/ 复制到临时副本里，按 EXT_ROOT 定位会读到**工作区**
+  // 的原文件（副本里的改动对它无效），那条变异就永远杀不死。
+  const packPath = resolve(
+    HERE,
+    "..",
+    "..",
+    "packs",
+    "examples",
+    "external-user-smoke.json",
+  );
+  const pack = JSON.parse(readFileSync(packPath, "utf-8"));
+
+  const { executor, calls } = await loadExecutor({ pack });
+
+  const result = await executor.execute(pack.metadata.pack_id, {}, { tabId: 42 });
+
+  assert.equal(
+    result.status,
+    "completed",
+    `这个 Pack 必须跑得通：${JSON.stringify(result.errors)}`,
+  );
+  assert.equal(calls.tabs.length, 1, "必须精确投递到一个标签页");
+  assert.match(
+    calls.tabs[0].msg.prompt,
+    /你好，Prompt Pack 冒烟自检通过/,
+    `发出去的提示词必须包含那句让 AI 复述的话，实际：${calls.tabs[0].msg.prompt}`,
   );
 });

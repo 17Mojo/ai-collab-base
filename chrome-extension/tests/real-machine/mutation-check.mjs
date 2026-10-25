@@ -345,6 +345,17 @@ const MUTATIONS = [
     testFile: "extension-wiring.test.mjs",
     expectTest: "在构建产物里必须真的存在",
   },
+  {
+    name: "把交付给外部用户的冒烟 Pack 的提示词改掉",
+    why:
+      "外部用户拿到的就是这份 Pack；提示词一旦对不上，AI 复述的" +
+      "就不是指南里写的那句，「冒烟自检通过」的判据整个失效",
+    target: "packs/examples/external-user-smoke.json",
+    find: "请只回复这一句话，不要添加任何其他内容：你好，Prompt Pack 冒烟自检通过。",
+    replace: "随便说点什么",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "交付给外部用户的那个冒烟 Pack",
+  },
 ];
 
 /**
@@ -413,17 +424,24 @@ function main() {
   if (existsSync(join(EXT_ROOT, STATIC_ASSETS))) {
     cpSync(join(EXT_ROOT, STATIC_ASSETS), join(TMP_ROOT, STATIC_ASSETS));
   }
+  // packs/ 也要进来：接线测试要跑**交付给外部用户的那个**冒烟 Pack。
+  // 少了它，测试在副本里会读到工作区的原文件 ⇒ 对它的变异永远杀不死。
+  const packsSrc = resolve(EXT_ROOT, "..", "packs");
+  if (existsSync(packsSrc)) {
+    cpSync(packsSrc, join(TMP_ROOT, "packs"), { recursive: true });
+  }
   const COPY_ROOT = join(TMP_ROOT, "tests");
 
   const survivors = [];
   try {
     for (const m of MUTATIONS) {
       // target 以 "src/" 或 "public/" 开头 ⇒ 打生产代码（相对扩展根）；
-      // target 指向扩展根下的单个文件（如 static-assets.cjs）⇒ 也是生产代码；
+      // target 指向扩展根下的单个文件（如 static-assets.cjs）或 "packs/" ⇒ 也是生产代码；
       // 否则打 tests/ 下的文件（相对 tests/ 根）
       const targetAbs =
         m.target.startsWith("src/") ||
         m.target.startsWith("public/") ||
+        m.target.startsWith("packs/") ||
         m.target === "static-assets.cjs"
           ? join(TMP_ROOT, m.target)
           : join(COPY_ROOT, m.target);
