@@ -3,7 +3,7 @@
 - **状态**: completed
 - **任务**: `TASK-P1-GLOBAL-STATE-GROWTH-001`（全局状态文件无上限增长 + 死条目从不回收）
 - **执行**: Claude Code（AGENT_EXEC）　**复核**: CodeArts（AGENT_TEST）
-- **分支**: `fix/global-state-reclaim`（基线 `main` @ `71c9eac`）
+- **分支**: `fix/global-state-reclaim`（基线 `main` @ `71c9eac`）　**PR**: [#6](https://github.com/17Mojo/ai-collab-base/pull/6)
 - **日期**: 2026-10-26
 - **工单**: [`collaboration/tasks/TASK-P1-GLOBAL-STATE-GROWTH-001.md`](../tasks/TASK-P1-GLOBAL-STATE-GROWTH-001.md)
 
