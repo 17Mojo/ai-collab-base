@@ -1,7 +1,7 @@
 ---
 task_id: TASK-P1-GLOBAL-STATE-GROWTH-001
 change_id: bugfix/no-spec
-status: pending
+status: completed
 priority: P1
 assignee: claude_code
 assignee_role: AGENT_EXEC
@@ -16,7 +16,7 @@ acceptance_commands:
   - "python3 -m pytest tests/ -q"
   - "python3 -m ruff check ."
   - "python3 -m ai_collab.cli tasks validate-contract --scope all --strict"
-result_file: collaboration/results/RESULT-P1-GLOBAL-STATE-GROWTH-2026-10-24.md
+result_file: collaboration/results/RESULT-P1-GLOBAL-STATE-GROWTH-2026-10-26.md
 ---
 
 # TASK-P1-GLOBAL-STATE-GROWTH-001：全局状态文件无上限增长 + 死条目从不回收
@@ -93,15 +93,19 @@ result_file: collaboration/results/RESULT-P1-GLOBAL-STATE-GROWTH-2026-10-24.md
 
 ## 五、验收标准
 
-- [ ] 给出回收策略的**选型理由**（为什么选 A 不选 B、备选方案是什么），不只给实现
-- [ ] 补守护用例：连续写入 N 个**已消失**的临时 workspace 后，全局文件的条目数 /
+- [x] 给出回收策略的**选型理由**（为什么选 A 不选 B、备选方案是什么），不只给实现
+- [x] 补守护用例：连续写入 N 个**已消失**的临时 workspace 后，全局文件的条目数 /
       体积**不随之无上限增长**
-- [ ] 守护用例必须**反向可验证**（把回收逻辑改坏 → 用例变红）
-- [ ] 真实工作区条目**不被误删**（有专门用例钉住）
-- [ ] `tests/unit/test_state_manager.py`、`tests/unit/test_state_manager_extra.py`、
+- [x] 守护用例必须**反向可验证**（把回收逻辑改坏 → 用例变红）
+- [x] 真实工作区条目**不被误删**（有专门用例钉住）
+- [x] `tests/unit/test_state_manager.py`、`tests/unit/test_state_manager_extra.py`、
       `tests/unit/test_state_manager_v2_coverage.py`、`tests/perf/` 全部保持绿
-- [ ] 结果报告按 PROTOCOL §7.4 四段（执行命令 / 验证结果 / 测试结论 / 风险 / 回滚）
-- [ ] 收口时 `tasks update --status completed` 能通过门禁
+- [x] 结果报告按 PROTOCOL §7.4 四段（执行命令 / 验证结果 / 测试结论 / 风险 / 回滚）
+- [x] 收口时 `tasks update --status completed` 能通过门禁
+
+> 交付结果见
+> [`RESULT-P1-GLOBAL-STATE-GROWTH-2026-10-26.md`](../results/RESULT-P1-GLOBAL-STATE-GROWTH-2026-10-26.md)
+> （第四节 6 个设计问题的逐条回答在「验证结果」小节里）。
 
 ## 六、验收命令
 

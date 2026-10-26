@@ -21,6 +21,54 @@ from typing import Any, TypeVar, cast
 T = TypeVar("T")
 
 
+# ---------------------------------------------------------------------------
+# 全局状态文件的回收与容量策略
+#
+# 全局文件 `~/.vscode/ai-collab/collaboration_state.json` 是**镜像**，不是事实源：
+# 每个工作区自己的 `logs/collaboration_state.json` 才是事实源，全局文件只承担
+# 「跨工作区索引」职责。因此删掉一个条目**不会**丢用户可见的状态——该工作区
+# 下次同步时会被重新写回。
+#
+# 缺陷（2026-10-24 实测，2026-10-26 修复）：文件按 workspace_path 逐条累加、
+# **从不回收**——开发机上已累积 1589 条，其中 1587 条是 pytest 临时目录路径
+# （测试自身泄漏的产物），只有 2 条真实工作区，体积 5.4MB。后果是每次状态更新
+# 都要把整份 5.4MB 重新序列化一遍（单次 update 0.098~0.103s，贴着 0.1s 阈值）。
+#
+# 策略（选型理由见 collaboration/results/RESULT-P1-GLOBAL-STATE-GROWTH-2026-10-26.md）：
+#   ① 死条目回收（两级判据）：
+#      - 路径已消失且在系统临时目录下 ⇒ 立即回收（实测泄漏全是这一类）
+#      - 路径已消失但不在临时目录下 ⇒ 超过宽限期（默认 7 天）才回收
+#        （保护「盘临时未挂载 / 目录刚被移动」的真实工作区）
+#   ② 容量兜底：条目数 / 体积超上限时，按 last_sync 淘汰最旧的。
+#   ③ 保守原则：判不出来的一律当作「活着」；当前正在写的条目永不被淘汰。
+# ---------------------------------------------------------------------------
+
+
+def _env_positive_int(name: str, default: int) -> int:
+    """读环境变量里的正整数；缺失或非法时回落到默认值。"""
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+# 条目数上限：超过后按 last_sync 淘汰最旧的（当前正在写的条目永不被淘汰）。
+GLOBAL_STATE_MAX_ENTRIES = _env_positive_int("AI_COLLAB_GLOBAL_STATE_MAX_ENTRIES", 200)
+# 体积上限（字节）：超过后同样按 last_sync 淘汰最旧的。
+GLOBAL_STATE_MAX_BYTES = _env_positive_int(
+    "AI_COLLAB_GLOBAL_STATE_MAX_BYTES", 4 * 1024 * 1024
+)
+# 死条目宽限期（天）：路径已消失但**不在**临时目录下的条目，宽限期内不回收。
+# 专门保护「磁盘临时未挂载 / 目录刚被移动」的真实工作区。
+GLOBAL_STATE_DEAD_GRACE_DAYS = _env_positive_int(
+    "AI_COLLAB_GLOBAL_STATE_DEAD_GRACE_DAYS", 7
+)
+
+
 class TaskStatus(str, Enum):
     """任务状态枚举"""
 
@@ -835,8 +883,172 @@ class StateManager:
         except Exception as e:
             print(f"警告: 状态备份失败: {e}")
 
+    # 全局状态里「判不出是否为路径」的 key（如 workspace_path 为空时的 "unknown"）。
+    # 这类 key 一律当作活着处理——宁可多留一条，也绝不误删。
+    _GLOBAL_UNJUDGEABLE_KEYS = frozenset({"", "unknown"})
+
+    @staticmethod
+    def _resolve_global_key(key: str) -> str | None:
+        """把全局状态里的 key 解析成可判断的绝对路径；解析不了就返回 None。"""
+        try:
+            return os.path.abspath(os.path.expanduser(key))
+        except (OSError, ValueError):
+            return None
+
+    @staticmethod
+    def _global_path_exists(path: str) -> bool:
+        """路径是否还在。stat 不到但也没报「不存在」（权限等）时按**还在**处理。"""
+        try:
+            os.stat(path)
+        except FileNotFoundError:
+            return False
+        except OSError:
+            return True
+        return True
+
+    @staticmethod
+    def _is_under_temp_dir(path: str) -> bool:
+        """路径是否位于系统临时目录之下。
+
+        临时目录里的东西按定义是**短命的**（pytest 的临时工作区就在这儿），
+        消失即可回收——这是 2026-10-24 实测到的 1587 条泄漏的全部形态。
+        用 realpath 比较：macOS 上 `/var/folders/...` 与 `/private/var/folders/...`
+        是同一个目录，pytest 写进全局文件的是后者。
+        """
+        try:
+            temp_root = os.path.realpath(tempfile.gettempdir())
+            real_path = os.path.realpath(path)
+        except OSError:
+            return False
+        return real_path == temp_root or real_path.startswith(temp_root + os.sep)
+
+    def _global_entry_is_stale(self, value: Any) -> bool:
+        """条目的 last_sync 是否已超过宽限期（宽限期从 last_sync 起算）。"""
+        if not isinstance(value, dict):
+            return False
+        last_sync = self._to_epoch(value.get("last_sync"))
+        if last_sync <= 0:
+            return False
+        return (time.time() - last_sync) / 86400.0 >= GLOBAL_STATE_DEAD_GRACE_DAYS
+
+    def _global_entry_is_reclaimable(self, key: str, value: Any) -> bool:
+        """判断某条全局状态记录是否**可以**被回收（两级判据）。
+
+        ① 路径已不存在，且位于系统临时目录下 ⇒ **立即**回收。
+        ② 路径已不存在，但不在临时目录下 ⇒ 需超过宽限期（默认 7 天）才回收。
+           这一层专门保护「磁盘临时未挂载 / 目录刚被移动」的真实工作区——
+           宁可让它多留几天，也不误删用户看得见的工作区。
+        ③ 路径还在 ⇒ 不回收。
+        ④ 判不出来（不是路径形状、stat 不到、last_sync 缺失）⇒ 不回收。
+        """
+        if not key or key in self._GLOBAL_UNJUDGEABLE_KEYS:
+            return False
+        resolved = self._resolve_global_key(key)
+        if resolved is None:
+            return False
+        if self._global_path_exists(resolved):
+            return False
+        if self._is_under_temp_dir(resolved):
+            return True
+        return self._global_entry_is_stale(value)
+
+    def _reclaim_dead_global_entries(
+        self, global_state: dict[str, Any], current_key: str
+    ) -> list[str]:
+        """回收可以回收的全局状态条目，返回被回收的 key 列表。
+
+        当前正在写的条目（current_key）永不被回收——哪怕它自己的路径不存在，
+        也要留着：它是这次写入的主体，不是历史垃圾。
+        """
+        reclaimed: list[str] = []
+        for key in list(global_state.keys()):
+            if key == current_key:
+                continue
+            if self._global_entry_is_reclaimable(key, global_state.get(key)):
+                del global_state[key]
+                reclaimed.append(key)
+        return reclaimed
+
+    def _global_eviction_order(
+        self, global_state: dict[str, Any], current_key: str
+    ) -> list[tuple[str, Any]]:
+        """给出容量淘汰的候选顺序：按 last_sync 从旧到新。
+
+        last_sync 解析不出来的条目按「最旧」处理（_to_epoch 返回 -1.0）。
+        当前正在写的条目排在最后，且永不被淘汰。
+        """
+        def sort_key(item: tuple[str, Any]) -> tuple[float, float]:
+            key, value = item
+            if key == current_key:
+                return (float("inf"), 0.0)
+            last_sync = value.get("last_sync") if isinstance(value, dict) else None
+            return (self._to_epoch(last_sync), 0.0)
+
+        return sorted(global_state.items(), key=sort_key)
+
+    def _evict_global_entries_over_count_cap(
+        self, global_state: dict[str, Any], current_key: str
+    ) -> list[str]:
+        """条目数兜底：超过上限就按 last_sync 淘汰最旧的。"""
+        evicted: list[str] = []
+        overflow = len(global_state) - GLOBAL_STATE_MAX_ENTRIES
+        if overflow <= 0:
+            return evicted
+        for key, _ in self._global_eviction_order(global_state, current_key):
+            if len(evicted) >= overflow:
+                break
+            if key == current_key:
+                continue
+            del global_state[key]
+            evicted.append(key)
+        return evicted
+
+    def _enforce_global_byte_cap(
+        self,
+        global_state_file: str,
+        global_state: dict[str, Any],
+        current_key: str,
+    ) -> list[str]:
+        """体积兜底：写回后若仍超上限，按 last_sync 淘汰最旧的并重写。
+
+        用写后 `os.path.getsize`（O(1)）判断——正常路径零额外序列化开销；
+        只有真超标才付出「按条目计字节」的代价。字节数按写回时**完全相同**的
+        序列化方式算（`json.dumps(..., indent=2)`），所以上限是精确的。
+        """
+        try:
+            size = os.path.getsize(global_state_file)
+        except OSError:
+            return []
+        if size <= GLOBAL_STATE_MAX_BYTES:
+            return []
+
+        evicted: list[str] = []
+        sizes = {
+            key: len(json.dumps(value, ensure_ascii=False, indent=2).encode("utf-8"))
+            for key, value in global_state.items()
+        }
+        # 整体体积 = 各条目体积之和 + 结构开销（缩进/分隔符）；`total` 取实际写回
+        # 的字节数，淘汰时按各条目自己的体积扣减——上限因此是精确的。
+        total = size
+        for key, _ in self._global_eviction_order(global_state, current_key):
+            if total <= GLOBAL_STATE_MAX_BYTES:
+                break
+            if key == current_key:
+                continue
+            total -= sizes.get(key, 0)
+            del global_state[key]
+            evicted.append(key)
+        if evicted:
+            self._atomic_write_json(global_state_file, global_state)
+        return evicted
+
     def _sync_to_global(self):
-        """同步状态到全局配置"""
+        """同步状态到全局配置（跨工作区索引）。
+
+        全局文件是**镜像**：每个工作区自己的状态文件才是事实源。这里只保留
+        「路径还存在的」工作区条目，并执行容量兜底，避免死条目（测试临时目录等）
+        无限累积——那是 2026-10-24 实测到的真实缺陷（1589 条里 1587 条是垃圾）。
+        """
         global_state_file = VSCodeStateManager.get_global_state_file()
         with self._file_lock(global_state_file):
             # 读取现有全局状态
@@ -858,8 +1070,22 @@ class StateManager:
                 "conflicts": self.state["conflicts"],
             }
 
-            # 保存全局状态
+            # ① 回收死条目（路径已不存在的工作区）
+            reclaimed = self._reclaim_dead_global_entries(global_state, workspace_key)
+            # ② 条目数兜底
+            evicted = self._evict_global_entries_over_count_cap(global_state, workspace_key)
+            # ③ 保存全局状态
             self._atomic_write_json(global_state_file, global_state)
+            # ④ 体积兜底（写后量，正常路径零开销）
+            evicted += self._enforce_global_byte_cap(
+                global_state_file, global_state, workspace_key
+            )
+
+            if reclaimed or evicted:
+                VSCodeIntegration.update_vscode_output(
+                    f"全局状态回收：死条目 {len(reclaimed)} 条，容量淘汰 {len(evicted)} 条",
+                    "AI Collab State",
+                )
 
     def register_task(
         self,
