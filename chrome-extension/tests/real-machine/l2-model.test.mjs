@@ -13,7 +13,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { parseArgs, buildVerdict, buildEvidence, SAMPLE_INTERVAL } from "./l2-model.mjs";
+import {
+  parseArgs,
+  buildVerdict,
+  buildEvidence,
+  resolveLocales,
+  detectLoginCookie,
+  classifyObservedLanguage,
+  isLocaleMismatch,
+  SAMPLE_INTERVAL,
+} from "./l2-model.mjs";
 
 /**
  * 造一条采样时间线。
@@ -200,4 +209,144 @@ test("证据文件里没有样本时也能组装", () => {
   const ev = buildEvidence({ platform: "x", samples: [], waitResult: null });
   assert.equal(ev.sampleCount, 0);
   assert.equal(ev.verdict.wouldResolve, false);
+});
+
+/* ---------------------------------------------------------------------------
+ * 登录态判定与「实际界面语言」
+ *
+ * 这两块是 2026-10-26 真机回归里连栽两次的地方，必须离线钉住：
+ *   - 登录判定：宽泛正则 → 匿名访客的 JSESSIONID 就被当成「已登录」
+ *   - 语言判定：站点认不认 Accept-Language 是站点自己的事，靠参数推断会自欺
+ * ------------------------------------------------------------------------- */
+
+test("登录判定只认白名单里的应用 cookie", () => {
+  const cookies = [
+    { name: "login_aliyunid", value: "abc123456789" },
+    { name: "b-user-id", value: "whatever-long-value" },
+  ];
+  const hit = detectLoginCookie(cookies, ["login_aliyunid"]);
+  assert.ok(hit, "白名单里的登录 cookie 必须被认出来");
+  assert.equal(hit.name, "login_aliyunid");
+});
+
+test("登录判定：匿名会话 cookie（JSESSIONID）永远不算登录", () => {
+  // 这就是 2026-10-26 栽的那次：千问匿名访问就有 JSESSIONID。
+  const cookies = [{ name: "JSESSIONID", value: "0123456789ABCDEF" }];
+  assert.equal(detectLoginCookie(cookies, ["JSESSIONID", "session", "login_aliyunid"]), null);
+  assert.equal(detectLoginCookie(cookies, ["session"]), null);
+});
+
+test("登录判定：白名单外的 cookie 一律不算", () => {
+  const cookies = [{ name: "some_other_site_cookie", value: "0123456789" }];
+  assert.equal(detectLoginCookie(cookies, ["login_aliyunid"]), null);
+});
+
+test("登录判定：空值 / null / 太短的值不算登录", () => {
+  const cookies = [
+    { name: "login_aliyunid", value: "" },
+    { name: "login_aliyunid", value: "null" },
+    { name: "login_aliyunid", value: "abc" },
+  ];
+  assert.equal(detectLoginCookie(cookies, ["login_aliyunid"]), null);
+});
+
+test("登录判定：白名单为空时一律不判定（不猜）", () => {
+  const cookies = [{ name: "login_aliyunid", value: "abc123456789" }];
+  assert.equal(detectLoginCookie(cookies, []), null);
+  assert.equal(detectLoginCookie(cookies, undefined), null);
+});
+
+test("实际界面语言：按界面文案判（发送按钮 aria）", () => {
+  assert.equal(classifyObservedLanguage({ sendButtonAria: "发送消息" }), "zh");
+  assert.equal(classifyObservedLanguage({ sendButtonAria: "Send message" }), "en");
+});
+
+test("实际界面语言：没有文案时退回 document.lang", () => {
+  assert.equal(classifyObservedLanguage({ documentLang: "zh-CN" }), "zh");
+  assert.equal(classifyObservedLanguage({ documentLang: "en" }), "en");
+  assert.equal(classifyObservedLanguage({}), "unknown");
+});
+
+test("locale 不一致能被识别（要求 en-US、实际是中文界面）", () => {
+  assert.equal(isLocaleMismatch("en-US", { sendButtonAria: "发送消息" }), true);
+  assert.equal(isLocaleMismatch("zh-CN", { sendButtonAria: "发送消息" }), false);
+  assert.equal(isLocaleMismatch("en-US", { sendButtonAria: "Send message" }), false);
+});
+
+test("观察不出语言时不算不一致（不能凭猜报红）", () => {
+  assert.equal(isLocaleMismatch("en-US", { documentLang: null }), null);
+  assert.equal(isLocaleMismatch("en-US", {}), null);
+});
+
+test("--locales / --wait-for-login / --login-cookie 都被解析", () => {
+  const args = parseArgs([
+    "--i-will-send",
+    "--locales=zh-CN,en-US",
+    "--wait-for-login",
+    "--login-cookie=login_aliyunid,login_aliyunid_pk",
+    "--login-flag=/tmp/rm-profile/.login-done",
+  ]);
+  assert.deepEqual(args.locales, ["zh-CN", "en-US"]);
+  assert.equal(args.waitForLogin, true);
+  assert.deepEqual(args.loginCookieNames, ["login_aliyunid", "login_aliyunid_pk"]);
+  assert.equal(args.loginFlag, "/tmp/rm-profile/.login-done");
+});
+
+test("默认只有一个 locale（--locale），多语言时才用 --locales", () => {
+  assert.deepEqual(resolveLocales(parseArgs([])), ["zh-CN"]);
+  assert.deepEqual(resolveLocales(parseArgs(["--locale=en-US"])), ["en-US"]);
+  assert.deepEqual(resolveLocales(parseArgs(["--locale=en-US", "--locales=zh-CN,en-US"])), [
+    "zh-CN",
+    "en-US",
+  ]);
+});
+
+test("证据文件里记下实际观察到的语言与不一致判定", () => {
+  const ev = buildEvidence({
+    platform: "qianwen",
+    platformName: "Qianwen (千问)",
+    url: "https://www.qianwen.com/",
+    locale: "en-US",
+    prompt: "问",
+    startedAt: "2026-10-26T00:00:00.000Z",
+    samples: timeline([[0, false, ""]]),
+    waitResult: { settled: false },
+    baselineCount: 0,
+    observed: { documentLang: "zh-CN", sendButtonAria: "发送消息", sendButtonText: "发送" },
+  });
+  assert.equal(ev.verdict.observedLanguage, "zh");
+  assert.equal(ev.verdict.localeMismatch, true, "要求英文却拿到中文界面，必须被记出来");
+  assert.equal(ev.observed.sendButtonAria, "发送消息");
+});
+
+test("登录判定按域名收窄：A 站的登录 cookie 不算 B 站已登录", () => {
+  const cookies = [
+    { name: "login_aliyunid", value: "abc123456789", domain: ".qianwen.com" },
+    { name: "__Secure-3PSID", value: "xyz9876543210", domain: ".google.com" },
+  ];
+  // 白名单是全局的（两个平台各一个登录 cookie），靠**域名**分清是谁的：
+  // 千问只认 .qianwen.com 下那个，Google 那个不算数。
+  assert.equal(
+    detectLoginCookie(cookies, ["login_aliyunid", "__Secure-3PSID"], ["qianwen.com"]).name,
+    "login_aliyunid",
+  );
+  // Gemini 反过来：父域 .google.com 之于 gemini.google.com 算命中，
+  // 而千问的 cookie 在 Gemini 这一轮里不算数。
+  assert.equal(
+    detectLoginCookie(cookies, ["login_aliyunid", "__Secure-3PSID"], ["gemini.google.com"]).name,
+    "__Secure-3PSID",
+  );
+});
+
+test("--platform-locales 被解析成「平台:语言」清单", () => {
+  const args = parseArgs(["--platform-locales=qianwen:zh-CN,gemini:en-US"]);
+  assert.deepEqual(args.platformLocales, [
+    { platform: "qianwen", locale: "zh-CN" },
+    { platform: "gemini", locale: "en-US" },
+  ]);
+});
+
+test("--platform-locales 缺语言时退回 zh-CN", () => {
+  const args = parseArgs(["--platform-locales=qianwen"]);
+  assert.deepEqual(args.platformLocales, [{ platform: "qianwen", locale: "zh-CN" }]);
 });
