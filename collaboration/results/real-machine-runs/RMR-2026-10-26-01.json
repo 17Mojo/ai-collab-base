@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-10-26-01",
+  "created_at": "2026-10-26T19:13:32+08:00",
+  "updated_at": "2026-10-26T19:13:44+08:00",
+  "operator": "claude_code",
+  "purpose": "真机回归第 1 轮：B-1 十平台可达性体检（L1 只读）+ 千问/Gemini 的 L2 真实发送",
+  "platforms": [
+    "chatgpt",
+    "claude",
+    "gemini",
+    "deepseek",
+    "kimi",
+    "longcat",
+    "qianwen",
+    "yiyan",
+    "yuanbao",
+    "chatglm"
+  ],
+  "locales": [
+    "zh-CN",
+    "en-US"
+  ],
+  "records": [
+    {
+      "layer": "L1",
+      "platform": "chatgpt",
+      "status": "unverified",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check：命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）——需要已登录的浏览器 profile 才能得出 DOM 契约结论",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "claude",
+      "status": "unverified",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check：命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）——需要已登录的浏览器 profile 才能得出 DOM 契约结论",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "gemini",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "deepseek",
+      "status": "unverified",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=login_wall：到达站点但落在登录墙：DOM 契约**未**被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "到达站点但落在登录墙：DOM 契约**未**被验证（不是 adapter 的结论）——需要已登录的浏览器 profile 才能得出 DOM 契约结论",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "kimi",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "longcat",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "yiyan",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<textarea>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "yuanbao",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "chatglm",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<textarea>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-zh-CN.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "chatgpt",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check：命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）——需要已登录的浏览器 profile 才能得出 DOM 契约结论",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "claude",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check：命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）——需要已登录的浏览器 profile 才能得出 DOM 契约结论",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "gemini",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "deepseek",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:43+08:00",
+      "evidence": [
+        "探针判定 outcome=login_wall：到达站点但落在登录墙：DOM 契约**未**被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "到达站点但落在登录墙：DOM 契约**未**被验证（不是 adapter 的结论）——需要已登录的浏览器 profile 才能得出 DOM 契约结论",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "kimi",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:44+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "longcat",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:44+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:44+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "yiyan",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:44+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<textarea>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "yuanbao",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:44+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<div>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "chatglm",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-10-26T19:13:44+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框（<textarea>）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-26-en-US.json"
+      ],
+      "reason": "",
+      "notes": ""
+    }
+  ]
+}
