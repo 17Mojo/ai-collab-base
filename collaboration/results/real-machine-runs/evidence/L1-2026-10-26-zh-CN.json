@@ -1,0 +1,1232 @@
+{
+  "generatedAt": "2026-10-26T10:56:14.002Z",
+  "layer": "L1-real-machine-dom-contract",
+  "method": "生产 adapter 经 esbuild 打包注入真实页面，调用真实方法",
+  "readOnly": true,
+  "sendsMessages": false,
+  "sendButtonProbed": true,
+  "browserChannel": "chrome",
+  "locale": "zh-CN",
+  "platforms": [
+    {
+      "platform": "chatgpt",
+      "name": "ChatGPT",
+      "url": "https://chatgpt.com/",
+      "outcome": "bot_check",
+      "detail": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）",
+      "probe": {
+        "detected": true,
+        "hasInput": false,
+        "inputTag": null,
+        "inputContentEditable": null,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "#prompt-textarea",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "textarea[placeholder*=\"Message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[data-testid=\"send-button\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Send prompt\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "[data-testid=\"conversation-turn\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".text-base",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[data-testid=\"typing-indicator\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "stopButton": [
+            {
+              "selector": "button[aria-label=\"Stop generating\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".markdown",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[data-message-author-role]",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "请稍候…",
+        "bodySnippet": ""
+      },
+      "durationMs": 21493,
+      "httpStatus": 403,
+      "composerAppeared": false,
+      "botCheckSignal": "http-status-403"
+    },
+    {
+      "platform": "claude",
+      "name": "Claude.ai",
+      "url": "https://claude.ai/",
+      "outcome": "bot_check",
+      "detail": "命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约**未**被验证（不是 adapter 的结论）",
+      "probe": {
+        "detected": true,
+        "hasInput": false,
+        "inputTag": null,
+        "inputContentEditable": null,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "div.ProseMirror[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[aria-label=\"Send\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[data-testid=\"send-button\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "[data-testid=\"conversation-turn\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".conversation-turn",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[data-testid=\"typing-indicator\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "stopButton": [
+            {
+              "selector": "button[aria-label=\"Stop generating\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".prose",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[data-testid=\"message-content\"]",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "请稍候…",
+        "bodySnippet": "claude.ai 正在进行安全验证 本网站使用安全服务防护恶意自动程序。在验证您不是自动程序期间，将显示此页面。 Ray ID: a508ebe8b9c9d18a 由 Cloudflare 提供的性能和安全服务 隐私"
+      },
+      "durationMs": 20429,
+      "httpStatus": 403,
+      "composerAppeared": false,
+      "botCheckSignal": "http-status-403"
+    },
+    {
+      "platform": "gemini",
+      "name": "Gemini",
+      "url": "https://gemini.google.com/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<div>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "div",
+        "inputContentEditable": "true",
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div[contenteditable=\"true\"][aria-label*=\"prompt\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "div[contenteditable=\"true\"][aria-label*=\"Gemini\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"].ql-editor",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "[role=\"textbox\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "textarea[placeholder*=\"prompt\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "gem-icon-button.send-button button",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".send-button button",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Send message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Send prompt\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "send-button",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"Send\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "model-response",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".chat-turn",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"conversation-turn\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": ".loading-content-spinner-container",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "mat-progress-bar",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"loading\"]",
+              "matched": true,
+              "tag": "body"
+            }
+          ],
+          "stopButton": [
+            {
+              "selector": "button[aria-label=\"停止生成\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"停止\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Stop\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"Stop\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".model-response-text",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "message-content",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".markdown",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "Google Gemini",
+        "bodySnippet": "Gemini 发起新对话 图片 登录即可保存活动记录 关于 Gemini 获取 Gemini 应用 企业版 价格 登录 认识 Gemini：你的私人 AI 助理 须遵守《Google 条款》 在新窗口中打开 和《Google 隐私权政策》 在新窗口中打开 。Gemini 是一款 AI 工具，其回答未必正确无误。 登录"
+      },
+      "durationMs": 7998,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": true,
+        "hasSendButton": true,
+        "sendButtonTag": "button",
+        "sendButtonAria": "发送",
+        "matchedSelectors": [
+          "gem-icon-button.send-button button",
+          ".send-button button",
+          "button[aria-label=\"发送\"]"
+        ],
+        "sendButtonDomPresent": true,
+        "sendButtonDomSelectors": [
+          ".send-button",
+          "gem-icon-button.send-button",
+          "[class*='send-button']"
+        ]
+      },
+      "sendButtonVerdict": "ok"
+    },
+    {
+      "platform": "deepseek",
+      "name": "DeepSeek",
+      "url": "https://chat.deepseek.com/",
+      "outcome": "login_wall",
+      "detail": "到达站点但落在登录墙：DOM 契约**未**被验证（不是 adapter 的结论）",
+      "probe": {
+        "detected": true,
+        "hasInput": false,
+        "inputTag": null,
+        "inputContentEditable": null,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "textarea",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "#chat-input",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "textarea[placeholder*=\"message\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[data-testid=\"send-button\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"Send\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[class*=\"send\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "[data-testid=\"conversation-turn\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".chat-message",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".ds-chat-message",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".ds-assistant-message-main-content",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".markdown",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".prose",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"message-content\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"content\"]",
+              "matched": true,
+              "tag": "div"
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[class*=\"loading\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"generating\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".typing-indicator",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "stopButton": [
+            {
+              "selector": "button[aria-label=\"Stop generating\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label=\"Stop\"]",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": true,
+        "botCheckDom": false,
+        "pageTitle": "DeepSeek - 探索未至之境",
+        "bodySnippet": "+86 发送验证码 注册登录即代表已阅读并同意我们的 用户协议 与 隐私政策，未注册的手机号将自动注册 登录 密码登录 使用 Apple 账号登录 微信扫码登录 浙ICP备2023025841号 · 联系我们"
+      },
+      "durationMs": 20778,
+      "httpStatus": 200,
+      "composerAppeared": false,
+      "botCheckSignal": null
+    },
+    {
+      "platform": "kimi",
+      "name": "Kimi AI",
+      "url": "https://www.kimi.com/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<div>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "div",
+        "inputContentEditable": "false",
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div.chat-input-editor",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "textarea",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[type=\"submit\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[class*=\"send\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": ".chat-message",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"message\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".prose",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".chat-content",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"content\"]",
+              "matched": true,
+              "tag": "span"
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": ".loading",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".generating",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "Kimi AI 官网：K3.1 Pro 上线，编程与智能体任务全面升级",
+        "bodySnippet": "新建会话 ⌘ K 我的 Kimi 插件 定时任务 灵感库 3D Make PPT 深度研究 文档 更多 项目 尽管问，或做个 Agent 任务... 选择项目 插件 探索灵感"
+      },
+      "durationMs": 808,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": false,
+        "reason": "no-input-element"
+      }
+    },
+    {
+      "platform": "longcat",
+      "name": "LongCat AI",
+      "url": "https://longcat.chat/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<div>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "div",
+        "inputContentEditable": "true",
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div[role=\"textbox\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": true,
+              "tag": "div"
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[type=\"submit\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "img[cursor=\"pointer\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": ".message",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"response\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"chat-item\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".prose",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".response-content",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"content\"]",
+              "matched": true,
+              "tag": "div"
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[class*=\"loading\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"generating\"]",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "LongCat AI",
+        "bodySnippet": "开启新对话 下载手机应用 请先登录 简体中文 加入我们 API 开放平台 , Beyond Scale 深度思考 联网搜索 图片生成 视频生成 深度研究 内容由AI生成，请仔细甄别 | 京ICP备2024094994号-3"
+      },
+      "durationMs": 2841,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": true,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "sendButtonAria": null,
+        "matchedSelectors": [],
+        "sendButtonDomPresent": false,
+        "sendButtonDomSelectors": []
+      },
+      "sendButtonVerdict": "site_shape_changed"
+    },
+    {
+      "platform": "qianwen",
+      "name": "Qianwen (千问)",
+      "url": "https://www.qianwen.com/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<div>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "div",
+        "inputContentEditable": "true",
+        "hasSendButton": true,
+        "sendButtonTag": "button",
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div[data-slate-editor=\"true\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "textarea",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[data-session-switch-target=\"send-query\"]",
+              "matched": true,
+              "tag": "button"
+            },
+            {
+              "selector": "button[aria-label*=\"发送\"]",
+              "matched": true,
+              "tag": "button"
+            },
+            {
+              "selector": "button[title*=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[class*=\"send\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "div.answer-text.md-text-card",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "div.answer-common-card:not(.answer-receiving-card)",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".qk-markdown",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".qk-md-text",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"markdown-content\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "div.answer-receiving-card",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"停止回答\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"stop\" i]",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "千问-阿里 AI 助手",
+        "bodySnippet": "日常 工作 新对话 云空间 你好，我是千问 向千问提问 快速 PPT创作 AI生视频 AI生图 代码 翻译 更多 快速 PPT创作 AI生视频 AI生图 代码 翻译 AI写作 高考 实时记录 音视频速读 更多 继续使用即表示您同意 用户协议 和 隐私政策 千问 - 阿里旗下全能AI助手"
+      },
+      "durationMs": 3458,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": true,
+        "hasSendButton": true,
+        "sendButtonTag": "button",
+        "sendButtonAria": "发送消息",
+        "matchedSelectors": [
+          "button[data-session-switch-target=\"send-query\"]",
+          "button[aria-label*=\"发送\"]"
+        ],
+        "sendButtonDomPresent": false,
+        "sendButtonDomSelectors": []
+      },
+      "sendButtonVerdict": "ok"
+    },
+    {
+      "platform": "yiyan",
+      "name": "Yiyan (文心一言)",
+      "url": "https://yiyan.baidu.com/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<textarea>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "textarea",
+        "inputContentEditable": null,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "textarea.ci-textarea",
+              "matched": true,
+              "tag": "textarea"
+            },
+            {
+              "selector": "textarea",
+              "matched": true,
+              "tag": "textarea"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[role=\"textbox\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "input[type=\"text\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[type=\"submit\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[class*=\"send\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[data-send]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "[class*=\"message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"response\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".chat-item",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".prose",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"answer\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"content\"]",
+              "matched": true,
+              "tag": "div"
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[class*=\"loading\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "[class*=\"generating\"]",
+              "matched": true,
+              "tag": "span"
+            },
+            {
+              "selector": ".spinner",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "百度文心助手 - 办公学习一站解决",
+        "bodySnippet": "新对话 新工作任务 定时任务 技能广场 知识库 收藏夹 对话历史 登录同步历史对话 请登录 百度首页 更多 登录 对话 内容由AI生成，仅供参考 京ICP证030173号 《用户协议》"
+      },
+      "durationMs": 3218,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": true,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "sendButtonAria": null,
+        "matchedSelectors": [],
+        "sendButtonDomPresent": false,
+        "sendButtonDomSelectors": []
+      },
+      "sendButtonVerdict": "site_shape_changed"
+    },
+    {
+      "platform": "yuanbao",
+      "name": "Yuanbao (腾讯元宝)",
+      "url": "https://yuanbao.tencent.com/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<div>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "div",
+        "inputContentEditable": "true",
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div.ql-editor",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": true,
+              "tag": "div"
+            },
+            {
+              "selector": "textarea",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[role=\"textbox\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[type=\"submit\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[class*=\"send\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[data-send]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": "[class*=\"message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"response\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".message-item",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".prose",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"answer\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"content\"]",
+              "matched": true,
+              "tag": "div"
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[class*=\"loading\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"generating\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".spinner",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "元宝-腾讯旗下全能AI助手",
+        "bodySnippet": "元宝 新建对话 前往下载中心 未登录 Hi, 我是元宝 聊天、写作、搜索都在行，助你灵感无限 快速回答 登录 安装电脑版 内容由AI生成，仅供参考"
+      },
+      "durationMs": 31228,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": false,
+        "reason": "elementHandle.click: Timeout 30000ms exceeded."
+      }
+    },
+    {
+      "platform": "chatglm",
+      "name": "ChatGLM (智谱清言)",
+      "url": "https://chatglm.cn/",
+      "outcome": "pass",
+      "detail": "生产 adapter 在真机 DOM 上找到输入框（<textarea>）",
+      "probe": {
+        "detected": true,
+        "hasInput": true,
+        "inputTag": "textarea",
+        "inputContentEditable": null,
+        "hasSendButton": false,
+        "sendButtonTag": null,
+        "messageCount": 0,
+        "hits": {
+          "chatInput": [
+            {
+              "selector": "div[contenteditable=\"true\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "textarea",
+              "matched": true,
+              "tag": "textarea"
+            },
+            {
+              "selector": "[role=\"textbox\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "sendButton": [
+            {
+              "selector": "button[type=\"submit\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[aria-label*=\"发送\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "button[class*=\"send\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageList": [
+            {
+              "selector": ".chat-message",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"message\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"response\"]",
+              "matched": false,
+              "tag": null
+            }
+          ],
+          "messageContent": [
+            {
+              "selector": ".chat-content",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".message-text",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": "[class*=\"content\"]",
+              "matched": true,
+              "tag": "div"
+            }
+          ],
+          "typingIndicator": [
+            {
+              "selector": "[class*=\"generating\"]",
+              "matched": false,
+              "tag": null
+            },
+            {
+              "selector": ".typing-indicator",
+              "matched": false,
+              "tag": null
+            }
+          ]
+        },
+        "loginWall": false,
+        "botCheckDom": false,
+        "pageTitle": "智谱清言",
+        "bodySnippet": "新对话 AgentMore 云知识库 探索智能体 正在加载... 登录 登录送积分好礼 ChatGLM 和我聊聊天吧 任务 研究报告 PPT制作 数据分析 更多 内容由AI生成，请仔细甄别 2026 ChatGLM5 京公网安备11010802041394号 京ICP备20011824号-18 用户协议 | 隐私政策 | 开源模型 5.3-Flash模型上线 假期用多少100%返还，10.8-10.31 登录即可到账 你的双节积分账单已生成：9.25–10.7 假期消耗的积分"
+      },
+      "durationMs": 31796,
+      "httpStatus": 200,
+      "composerAppeared": true,
+      "botCheckSignal": null,
+      "sendButtonProbe": {
+        "available": false,
+        "reason": "elementHandle.click: Timeout 30000ms exceeded."
+      }
+    }
+  ],
+  "passed": 7,
+  "unverified": 3,
+  "failed": 0,
+  "verdict": "partially-unverified"
+}
