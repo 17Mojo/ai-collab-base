@@ -6,6 +6,7 @@ Dest:   <repo>/memory/ (mirror, consumed by Claude Code via CLAUDE.md @import)
 """
 import argparse
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,12 +31,49 @@ def repo_root():
     return Path(__file__).resolve().parent.parent
 
 
+def main_repo_path(repo):
+    """取**主仓库**的路径（worktree 场景下与 worktree 路径不同）。
+
+    ## 为什么需要这个
+
+    `git worktree` 会在 `.git/worktrees/<name>/` 下建一个工作区，
+    它的**工作目录路径**与主仓库不同（例如主仓库在
+    `/Users/x/ai-collab-base`，worktree 在 `/tmp/pr5-rebase`）。
+
+    记忆目录是**按仓库**分的（`~/.codeartsdoer/memory/<仓库路径 slug>/`），
+    所以在 worktree 里也得指向**主仓库**那一份——
+    否则 worktree 里跑 `--check` 会因为「源目录不存在」而永远报警，
+    `pre-commit` 钩子也会一直喊「镜像过期」。
+
+    取法：`git rev-parse --git-common-dir` 指向主仓库的 `.git`，
+    去掉末尾的 `.git` 即主仓库路径。取不到就退回传入的路径。
+    """
+    try:
+        common = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        out = (common.stdout or "").strip()
+        if common.returncode == 0 and out:
+            common_path = Path(out)
+            if not common_path.is_absolute():
+                common_path = (repo / common_path).resolve()
+            if common_path.name == ".git":
+                return common_path.parent
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return repo
+
+
 def derive_slug(repo):
     return str(repo.resolve()).replace("/", "-")
 
 
 def default_source(repo):
-    return Path.home() / ".codeartsdoer" / "memory" / derive_slug(repo)
+    return Path.home() / ".codeartsdoer" / "memory" / derive_slug(main_repo_path(repo))
 
 
 def parse_frontmatter(text):
