@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-10-26T22:40:00+08:00",
+  "layer": "L2-injection-only",
+  "method": "生产链路复验：service worker → chrome.tabs.sendMessage(INJECT_TEXT) → 内容脚本（生产 dist 产物）→ injectTextSmart → slate-editor.js → beforeinput → 千问的 Slate 模型。跑的是用户真正会跑的那条路，不是页面里手写的探针。",
+  "readOnly": false,
+  "sendsMessages": false,
+  "sendButtonProbed": false,
+  "browserChannel": "chromium",
+  "locale": "zh-CN",
+  "loginState": "未登录（登录墙没有出现，因为没有点发送）",
+  "scopeNote": "本证据只覆盖 L2 的**注入环节**（提示词有没有真的进到站点的编辑器模型里）。L2 的另外两个环节——人工点发送、等回复——本轮**没有跑**（需要人拿已登录账号操作），所以本平台的 L2 结论是 not-run，不是 pass。",
+  "platforms": [
+    {
+      "platform": "qianwen",
+      "name": "千问",
+      "url": "https://www.qianwen.com/",
+      "outcome": "not-run",
+      "detail": "L2 未跑（缺人工发送环节）；注入环节已通过生产链路验证通过",
+      "injectionCheck": {
+        "verdict": "pass",
+        "whatWasVerified": "生产注入路径让提示词进到千问 Slate 编辑器的**模型**里（不是只进 DOM）",
+        "scenarioEmpty": {
+          "injectReceipt": { "success": true },
+          "zeroWidthLeafGone": true,
+          "modelText": "新提示词WDD1",
+          "modelTextEqualsPrompt": true,
+          "sendButtonDisabled": false
+        },
+        "scenarioReplace": {
+          "injectReceipt": { "success": true },
+          "modelText": "新提示词WDD1",
+          "modelTextEqualsPrompt": true,
+          "appendedInsteadOfReplaced": false,
+          "sendButtonDisabled": false
+        },
+        "pageStateBeforeInject": {
+          "url": "https://www.qianwen.com/",
+          "platformId": "qianwen.com",
+          "hasInput": true,
+          "messageCount": 0
+        }
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "run_id": "RMR-2026-10-26-01",
   "created_at": "2026-10-26T19:13:32+08:00",
-  "updated_at": "2026-10-26T19:13:44+08:00",
+  "updated_at": "2026-10-26T22:22:43+08:00",
   "operator": "claude_code",
   "purpose": "真机回归第 1 轮：B-1 十平台可达性体检（L1 只读）+ 千问/Gemini 的 L2 真实发送",
   "platforms": [
@@ -321,6 +321,120 @@
       ],
       "reason": "",
       "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "chatgpt",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 撞 bot check（HTTP 403），连 DOM 契约都没验成",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "claude",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 撞 bot check（HTTP 403）",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "gemini",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 在落地页通过（输入框命中），但发送要消耗账号额度且必须由人点",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "deepseek",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 落在登录墙",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "kimi",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 在落地页通过，真实发送未跑",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "longcat",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 在落地页通过，真实发送未跑",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "yiyan",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 在落地页通过，真实发送未跑",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "yuanbao",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 在落地页通过，真实发送未跑",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "chatglm",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "L2 需要已登录的真实账号 + 人工点发送 + 等回复，本轮**没有跑**（人不在机器前 / 账号未登录）；本轮 L1 在落地页通过，真实发送未跑",
+      "notes": "L2 未跑：没有人工发送环节"
+    },
+    {
+      "layer": "L2",
+      "platform": "qianwen",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-10-26T22:22:43+08:00",
+      "evidence": [
+        "注入经生产链路（service worker → INJECT_TEXT → 内容脚本 → slate-editor.js → beforeinput）落到千问的 Slate 模型：叶子文本==提示词、零宽叶子消失、发送按钮 disabled=false；重复注入是替换不是追加"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-injection-qianwen-2026-10-26.json"
+      ],
+      "reason": "完整 L2（登录 → 人工点发送 → 等回复）需要人拿已登录账号操作，本轮未跑；**注入环节**已在真机上用生产链路验证通过",
+      "notes": "L2 的注入环节通过；发送与等回复环节未跑 ⇒ 本条结论是 not-run，不是 pass"
     }
   ]
 }
