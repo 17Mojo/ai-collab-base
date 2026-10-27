@@ -228,6 +228,10 @@ TOTAL: pass=8 fail=0
 - **本轮改动没有触碰任何运行时代码**——扩展侧不重跑扩展测试是合理的，
   但**跑了**以防万一：`node tests/run-tests.mjs` 与适配器矩阵在本轮之前
   （PR #5）已全绿，本轮未改动 `chrome-extension/` 下任何文件。
+- **PR #7 的 CI（14/14 全绿）**：Bandit / pip-audit / mypy / lint /
+  pack-validation / performance-tests / secrets-scan / fail-on-low-score /
+  health / chrome-extension-tests / Coverage Gate ≥85% /
+  python-tests 3.10 / 3.11 / 3.12 全过。
 - **未验证的部分**：手册**本身**没被真人使用过——这是它要解决的那件事，
   只有 W-D2 那一场能验。
 
