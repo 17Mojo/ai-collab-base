@@ -1,6 +1,10 @@
 ---
 task_id: TASK-P1-DISPATCH-MODEL-FALLBACK-001
-change_id: feature/no-spec
+# 2026-10-27 修正：原值 `feature/no-spec` 不在 `TASK_CONTRACT_SPECIAL_CHANGE_IDS`
+# 白名单内（`/` 也不符合 OpenSpec change id 的命名规则），会被契约校验判 invalid。
+# 结果文件 §0「门禁修正留痕」已记录当时用 CLI 改成了 `bugfix/no-spec`，
+# 但**工单文件本身**没跟着改——校验脚本按文件读，于是把非法值又推回了状态库。
+change_id: bugfix/no-spec
 status: planning
 priority: P1
 assignee: codearts_agent

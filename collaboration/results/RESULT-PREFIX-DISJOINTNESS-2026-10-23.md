@@ -187,21 +187,35 @@ provider 侧的前缀约定是"取 provider 名字里的一个字母"
 
 ```bash
 # 验收命令（与工单 acceptance_commands 逐字一致，回执桥接会做子串校验）
-python3 -m pytest tests/unit/test_ack_prefix_consistency.py -q
+python3 -m pytest tests/unit/test_ack_prefix_consistency.py tests/unit/test_role_prefix.py tests/unit/test_dispatch_trigger.py -q
 python3 -m pytest tests/ -q
+python3 -m ruff check ai_collab/ scripts/
 
 # 补充验证
+python3 -m pytest tests/unit/test_ack_prefix_consistency.py -q
 python3 -m pytest tests/unit/test_role_prefix.py tests/unit/test_dispatch_trigger.py -q
 python3 -m pytest tests/unit --cov=ai_collab --cov-report=term -q
-python3 -m ruff check ai_collab/ scripts/
 python3 -m mypy ai_collab/
 ```
+
+> **2026-10-27 补齐（结果工件门禁）**：本文件原先只写了**拆开**的
+> `python3 -m pytest tests/unit/test_ack_prefix_consistency.py -q`，
+> 而工单 `acceptance_commands[0]` 是**合并**写法
+> （三个文件一次跑完）。回执桥接做的是**整串子串比对**，
+> 拆开写不算命中 ⇒ 收口 `completed` 时被结果工件门禁挡住。
+> 现把工单那条命令**逐字**补在验收块首位。
+>
+> 同时修正一处**实测数字**：原表里写「前缀相关用例（3 个文件）**54 passed**」，
+> 实际是 **45 passed**。2026-10-27 逐 commit 复验（`git worktree` 检出
+> `e88e1c8` / `5b9160e` / `2f72286` / `4af0efd` / `61afa3f` 逐个跑
+> 同一条命令）⇒ 分别是 38 / 45 / 45 / 45 / 45，**54 在任何一个 commit
+> 上都没出现过**。原数字无出处，按实测值更正。
 
 ## 测试结论
 
 | 项 | 结果 |
 |---|---|
-| 前缀相关用例（3 个文件） | **54 passed**（二次排查后新增 9 条：4 条副本一致性 + 3 条角色派生 + 死代码清理后的回归） |
+| 前缀相关用例（3 个文件） | **45 passed**（二次排查后新增 9 条：4 条副本一致性 + 3 条角色派生 + 死代码清理后的回归；原写 54，实测无出处，2026-10-27 逐 commit 复验后更正） |
 | 全量测试 | **2488 passed, 1 skipped**（`tests/unit` 口径；覆盖率 **88%** ≥ 门禁 85%） |
 | ruff（`ai_collab/` `scripts/`） | 无新增问题 —— 与 HEAD 逐行 diff **完全一致**（10 条告警全在未触碰的 `sync_agent_memory.py` / `codearts_bridge_deliver.py`） |
 | mypy（`ai_collab/`） | **Success: no issues found in 100 source files** |

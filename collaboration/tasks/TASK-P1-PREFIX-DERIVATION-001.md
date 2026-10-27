@@ -6,6 +6,13 @@ priority: P1
 assignee: claude_code
 assignee_role: AGENT_ARCH
 reviewer: user
+# 2026-10-27 补齐：本工单原文件没有 `primary_skill` / `support_skills`，
+# 契约校验判 missing/invalid。取值按本仓同族工单的既有写法
+# （AGENT_ARCH 席位 + 一条与实现相称的支撑技能）。
+primary_skill: backend-architect
+support_skills:
+  - testing
+  - documentation
 status_updated_at: 2026-10-23T11:20:00+08:00
 created_at: 2026-10-23T10:30:00+08:00
 acceptance_commands:
