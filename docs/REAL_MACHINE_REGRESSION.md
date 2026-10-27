@@ -306,6 +306,12 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 | 6a | **Pack 执行链路本身三段全断**（准备外部用户试用材料时逐段查出来的）：<br>① popup 用不存在的 `pack.id` ⇒ 渲染出 `data-id="undefined"`；<br>② 执行器从来没拿到过 Pack（`loadPack()` 定义了却没人调用，而 storage 才是事实源）⇒ 每次执行都是 "Pack not found"；<br>③ 后台发 `SEND_TO_AI`，内容脚本**没有分支处理它** ⇒ AI 步骤拿到 `undefined` 却仍被当成「成功」⇒ Pack「执行成功」但产物是空的 | 三处都修了，并加了 `tests/extension-wiring.test.mjs`（10 条静态+行为测试）与 5 条变异。**注意：这不等于「Pack 在真机上跑通了」**——只等于「链路接上了」，见 §6.2 的 #5 | — |
 | 6b | **AI 步骤发到哪儿**没定义：后台用 `chrome.runtime.sendMessage` 广播 ⇒ 扩展里**每个**内容脚本都收到 ⇒ 用户开 3 个 AI 页面时提示词在 3 个页面里各发一次 | 改为「已知目标标签页 ⇒ `chrome.tabs.sendMessage` 精确投递；不知道才广播并标明是广播」，popup 负责把当前标签页 id 告诉后台（3 段各一条测试 + 3 条变异） | — |
 | 6c | **外部用户根本走不到「导入 Pack」那一步**：popup 里没有导入入口（只有一个「请先导入 Pack」的提示），而设置页里打开 Pack 编辑器的 URL（`getURL('public/pack-editor.html')`）在**构建产物里 404**（产物里只有扁平的 `pack-editor.html`）⇒ 点了就是「文件不存在」 | popup 加「📥 导入 / 管理 Pack」按钮；静态资源复制逻辑收敛到 `static-assets.cjs` 一份，产物里**两种布局都保留**（`pack-editor.html` 与 `public/pack-editor.html`），并加测试逐个核对代码里 `getURL` 指到的页面在产物里真的存在 | — |
+| 6d | **manifest 的 host 模式漏了 `www.` 变体**：写的是 `https://qianwen.com/*`，而真站是 `https://www.qianwen.com/`。Chrome 的 host 匹配里 `qianwen.com` **只等于它自己**（`*.` 才是通配）⇒ 内容脚本**根本没注入** ⇒ 那个页面上扩展等于没装 | manifest 补齐 `www.` 变体，且 `host_permissions` 与 `content_scripts.matches` **收敛成同一份清单**（不许各写一份）；`tests/external-user-path.test.mjs` 按 Chrome 的 host 匹配规则逐个平台核对，并加一条「构建产物的 manifest 必须由 `manifest.json` 生成」 | — |
+| 6e | **后台在 service worker 里调了页面侧的 `adapter.detect()`**：`detect()` 读 `window.location.hostname`，而 MV3 的 SW 里 `typeof window === "undefined"` ⇒ `ReferenceError` 抛在 `chrome.runtime.onMessage` 处理器里 ⇒ **整个处理器挂掉 ⇒ 永远不 `sendResponse`** ⇒ `currentConfig` 恒为 null ⇒ **改之前，扩展在任何站点上都拿不到适配器** | 后台改成**从发消息过来的那个标签页的 URL** 认平台（`hostOf()` + 主机名判定），不再调页面侧代码；`detect()` 仍保留给页面侧用。守护覆盖**全部 10 个平台**（别只测一个），外加一条「不是 AI 站点的 URL 不该被认成任何平台」（防把「什么都认」测成通过） | — |
+| 6f | **导入界面比后台更严**：前端只认 `{packs:[...]}`，后台两种形状都收 ⇒ 照指南导入 `packs/examples/external-user-smoke.json`（单个 Pack）时，前端直接报「文件格式错误」⇒ 连「合并 / 覆盖」都出不来 | 前端只做**语法**检查，「什么算 Pack」**只有后台一个判定方**（两个判定方 = 迟早漂移）。守护两条：单个 Pack 文件不该被挡在门外；**真的不是 JSON 仍然要报错**（防把闸门拆成没有闸门） | — |
+| 6g | **导入成功后成功标志被冲掉**：先报「导入成功: N 个 Pack」，**再**刷新列表——刷新把状态栏改写成「已加载 N 个 Pack」⇒ 指南承诺的成功标志**一闪就没了** | 改成**先刷新列表、再报导入成功**；守护断言状态栏最终停在指南承诺的那句话上 | — |
+| 6h | **失败被跨层吞掉**：内容脚本如实回 `{success:false, error}`，执行器却原样返回并无条件置 `stepResult.success = true`，后台再一律回 `success:true` ⇒ popup 显示「执行成功」而产物是空的 | 执行器在 try/catch **外**校验 AI 步骤回执（失败就抛，且错误信息不被「消息没送到」再包一层）；后台看 `result.status === "failed"` 时回 `{success:false, error}`。守护两条：内容脚本报失败 ⇒ 整个 Pack 必须失败；**内容脚本成功时 Pack 必须成功**（防这条永远失败） | — |
+| 6i | **注入只改了 DOM，没进站点的编辑器模型**：千问用 Slate，内容存在框架自己的模型里，`execCommand` 只动 DOM ⇒ 站点读到「用户没输入」⇒ **发送按钮保持 disabled** ⇒ 点它等于没点 ⇒ 提示词永远留在输入框里 ⇒ 必然超时。**更隐蔽的一层**：`injectTextSmart` 把 `role="textbox"` 排在 `isContentEditable` **前面**，而千问的编辑区正好带 `role="textbox"` ⇒ 千问走的是纯 execCommand 那条路 ⇒ **把修复写在 `injectIntoContentEditable` 里对千问是死代码** | 新增 `src/platforms/slate-editor.js`（**模型感知**的注入：清空 → 插入 → **校验模型文本**，收不到就抛错而不是假成功）；`injectTextSmart` 改 async 并把 Slate 分支**排到 `role="textbox"` 前面**。替换语义靠「DOM 全选 → 等选区同步进模型 → `beforeinput(deleteContentBackward)` → 插入」，等待用 `setTimeout(0)`（**不用 `requestAnimationFrame`**：它在后台标签页里不触发，会把 Pack 流程卡死） | — |
 
 > **#2 关掉的到底是什么、没关掉的是什么**（别把「关了」当成「验证过了」）：
 > 关掉的是「选择器引用了千问上不存在的类名」这个**确定性缺陷**——现在每一条选择器
@@ -313,6 +319,17 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 > **没**关掉的是「它在真机上确实命中」——那仍然是缺口 #1 / #8，需要 L2。
 > 普查工具：`node tests/real-machine/qianwen-asset-census.mjs`
 > （只读抓站点自己的 JS/CSS，**不注入、不点击、不发送**）。
+
+> **6d～6i 是从哪儿查出来的**：它们不是 L1/L2 探针查到的，而是
+> **2026-10-26 的「外部用户排演」**（W-D1：照着《第一次试用指南》以第一次用的
+> 人的身份走一遍，每一步记下卡住的地方）查出来的。
+> 这个来源本身就说明一件事：**L1 探针只覆盖「能不能找到输入框」，
+> 找不到「外部用户会卡在哪一步」**——那 5 个断点里，
+> 有 4 个（6d/6e/6f/6g）在扩展的模拟层与真机探针里**全都是绿的**。
+> 结果文件：`collaboration/results/RESULT-EXTERNAL-USER-REHEARSAL-2026-10-26.md`。
+>
+> **6i（编辑器模型）已经过了真机复验**，但复验的是**注入环节**，
+> 不是「点发送 → 等回复」⇒ 缺口 #5（L2）并没有因为 6i 而缩小。
 
 ### 6.2 仍然开着的缺口
 
@@ -323,17 +340,23 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 | 3 | Kimi / ChatGLM 的**真实「生成中」指示器**未验证 | 收窄后的选择器若都不命中，`isTyping()` 恒为 false ⇒ `waitForResponse` 可能**中途提前返回**（拿到半截回复） | 需要登录后真实发起一次生成 |
 | 8 | **千问的「生成中」信号**（「停止回答」按钮 / 「接收中」点点点卡片）同样只是**从站点产物推导**，未在真机跑过 | 同 #3：`isTyping()` 若恒为 false ⇒ 拿到半截回复；若恒为 true ⇒ 永远等不到 | 同 #3 |
 | 4 | ChatGPT / Claude.ai / DeepSeek 三家未采到真实快照 | 这三家的 DOM 契约仍无 L1 结论 | ChatGPT / Claude 撞 bot check（HTTP 403），DeepSeek 撞登录墙——都不是代码问题 |
-| 5 | L2（真实发送后等回复）**尚未跑过任何一次** | 缺口「回复等待链路」仍未验证 | 需要人 + 已登录 profile；观测器已交付（见附录 A） |
+| 5 | L2（真实发送后等回复）**尚未跑过任何一次** | 缺口「回复等待链路」仍未验证 | 需要人 + 已登录 profile；观测器已交付（见附录 A）。<br>**2026-10-26 更新**：10 个平台的 L2 已逐个登记为 `not-run` 并写明原因（而不是留空），`verify` 因此能区分「没跑」与「跑了但没过」。**第 1 轮**（千问 zh-CN + Gemini en-US）仍需**人在机器前**登录并点发送 |
 | 6 | 后台↔内容脚本的**消息协议**还剩一个洞：`multi-platform-executor.js` 发 `GET_LATEST_RESPONSE` 无人处理，且它读 `pageState.isTyping`，而 `getPageState()` 根本不返回该字段 | 该模块**没有任何模块 import 它** ⇒ 是死代码，不在运行路径上（生产链路用的 `SEND_TO_AI` 已修，见 §6.1 的 6a） | 死代码要么删、要么接线，都属于「运行时收敛」这件事，不在本工单范围 |
 | 7 | 真实快照是**冻结基线**，守不住「站点改版」 | 快照失效=一条待办信号，不是 CI 失败 | 这是刻意的分层：改版由 L1 探针（打真站）负责；快照只守「我们对真机 DOM 的理解被记录下来了，而且自洽」 |
 | 9 | **Python 校验器与 JS 运行时对「步骤类型」的说法不一致**：`ai_collab/pack/schema_v2.py` 的 `StepType` 是 `local/analysis/generation/validation/fusion/tracking`，而 JS 执行器只认 `local` 和 `ai` | 一份按 Python 口径写的 Pack（`type: "generation"`）在 JS 侧会直接抛 `Unknown step type`；反过来 `type: "ai"` 的 Pack 过不了 Python 校验 | 两套口径要统一（要么 Python 侧加 `ai`，要么 JS 侧映射），这属于**契约变更**，不在本工单范围 |
 | 10 | `packs/examples/` 下的 17 个示例 Pack **没有一个**能通过 Python 校验器 | 「照着示例写一个 Pack」这条路对使用者是断的——示例本身不合规 | 同 #9，且示例 Pack 本身要重写（本次只新增了一个走 JS 运行时的自检 Pack `external-user-smoke.json`，它同样过不了 Python 校验器） |
 | 11 | `src/background/pack-storage-manager.js` 依赖一个**并不存在**的后端 API（本地 FastAPI 服务尚未实现） | 走那个模块的 Pack 管理路径直接不可用；当前实际可用的是「storage 既是事实源、也是唯一事实源」这条路径 | 后端未实现，属于路线 A/B 之外的工作 |
+| 12 | **「提示词进到编辑器**模型**」只对 Slate（千问）验证过**：Claude.ai 是 ProseMirror、元宝是 Quill，各自的模型机制不同 ⇒ 「只改 DOM 不改模型」这个坑**在别的框架上同样可能存在，但没验过** | 若某个平台也是「文字进了框、发送按钮却一直是灰的」，那和 6i 是同一类问题，但本轮的修复**不覆盖它** | 每个框架要单独做一次模型级复验（探针已备好，见附录 A 的 `injection-path-probe.mjs`；非 Slate 平台它目前只能给 **DOM 级**证据，`modelLevelVerifiable:false`）——需要人拿已登录 profile 逐个平台跑 |
+| 13 | **真人外部用户（W-D2）尚未开始**：2026-10-26 做的只是「排演」——排演者能读源码，所以它只能证明「材料与代码自不自洽」，**证明不了「真人会用」** | 路线 A/B 决策门禁的最后一环仍然空着 | 需要**一个真人外部用户**（不是本团队的人）按《第一次试用指南》走一遍 |
 
 > 表格里写「未验证」的项目**都不许**在别处被当成「已通过」引用。
 > 特别注意 #1 与 #1b：真实快照已入库 ≠ 消息气泡选择器已验证；
 > 资产普查证明了「选择器有出处」，**证明不了**「真机上命中」。
 > #3 与 #8 同理：结构推导 ≠ 行为验证。
+> **#12 同理**：千问（Slate）的提示词进过模型 ⇒ 别的框架**没**进过；
+> 而「扩展装上了、输入框找得到」**证明不了**「提示词进了站点自己的模型」——
+> 2026-10-26 真机实测里，这两件事在千问上恰恰是**分开**的：
+> 改前 DOM 里有字，模型里没有，发送按钮一直是灰的。
 
 ---
 
@@ -369,6 +392,10 @@ L1 探针的证据 JSON 放在同目录的 `evidence/` 子目录下。
 | `tests/run-tests.mjs` | 单测入口（Node 18+ 通用；`node --test` 的三种写法在 Node 20/23 上各有一坑） | 是 |
 | `tests/ci-wiring.test.mjs` | 守护「CI 确实在跑扩展测试」——**不许** `|| echo` 吞掉失败 | 是（只读） |
 | `tests/extension-wiring.test.mjs` | **扩展内部接线**：popup ↔ 后台 ↔ 内容脚本（消息类型双向对账 + 真的跑一次 SEND_TO_AI + Pack 找得到 + 标签页定向 + 产物里页面真的存在） | 是（jsdom + 临时目录） |
+| `tests/external-user-path.test.mjs` | **外部用户走的那条路**：manifest 的 host 覆盖 / 后台能认出平台 / 失败不被吞 / 导入闸门只有后台一个判定方 | 是（jsdom + 临时目录） |
+| `tests/editor-injection.test.mjs` | **编辑器模型**守护：注入后模型收到文本、发送按钮解禁（不靠 `execCommand`）、替换而非追加、收不到就抛错 | 是（jsdom + 站点仿真） |
+| `tests/helpers/slate-site.mjs` | 按真机实测结构仿真的**站点行为**（模型与 DOM 分离、发送按钮读模型、占位符是叶子的子节点）——矩阵 / 接线测试 / 注入守护共用**同一份** | 是（仿真） |
+| `tests/real-machine/injection-path-probe.mjs` | **注入链路探针**：走**生产链路**（SW → 内容脚本 → 注入）验「提示词进了站点编辑器**模型**」 | 否——**会往真实站点的输入框写字**（不发送）；必须显式 `--i-will-inject`；不登录；不进 CI 硬门禁 |
 | `static-assets.cjs` | 静态资源复制（**唯一一份**实现，产物里保留扁平与 `public/` 嵌套两种布局） | 是（复制文件） |
 
 ### A.1 为什么要做变异检查
