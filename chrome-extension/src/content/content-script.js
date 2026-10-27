@@ -177,7 +177,7 @@ async function handleInjectText(text) {
   const input = findElement(currentConfig.chatInput);
   if (!input) throw new Error("Chat input not found");
 
-  injectTextSmart(input, text);
+  await injectTextSmart(input, text);
   await new Promise((resolve) => setTimeout(resolve, 150));
 }
 
@@ -215,9 +215,15 @@ async function handleClickSend() {
  * sendMessage 拿不到响应，AI 步骤拿到 undefined 还被当成成功，
  * 流程继续往下走 ⇒ Pack 「执行成功」但产物是空的。
  *
- * 这里把已有的一等公民能力串起来：注入文本 → 点发送 → 等回复。
- * 三件事各自都已经在生产里被真机验证过（见 docs/REAL_MACHINE_REGRESSION.md），
- * 缺的只是把它们接成一次调用。
+ * 这里把三件事串起来：注入文本 → 点发送 → 等回复。
+ *
+ * **三件事的验证状态不一样，不要一概而论**（见 docs/REAL_MACHINE_REGRESSION.md）：
+ *   - 等回复：真机验证过；
+ *   - 注入文本：**此前没有**被真机验证过。2026-10-26 W-D1 彩排实测发现，
+ *     千问（Slate 编辑器）上注入只改了 DOM、**没进框架的模型** ⇒
+ *     发送按钮保持 disabled ⇒ 点击等于没点 ⇒ 必然超时。
+ *     现在由 slate-editor.js 的模型感知注入修掉，注入失败会**抛错**
+ *     而不是留一个假成功。
  *
  * @param {string} prompt - 要发给 AI 的提示词
  * @param {number} [timeout=60000] - 等回复的超时（毫秒）

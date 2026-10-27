@@ -18,6 +18,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
+import { installSlateSiteIfNeeded } from "../helpers/slate-site.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -59,7 +60,27 @@ export function loadFixture(fixtureId, hostname) {
     pretendToBeVisual: true,
   });
   installGlobals(dom.window);
+  installSiteBehavior(dom.window);
   return dom;
+}
+
+/**
+ * 给 fixture 里的站点补上「行为」。
+ *
+ * 静态 fixture 只有结构没有行为，而 Slate 编辑器的关键语义是行为
+ * （模型只认 beforeinput、选区靠 selectionchange 同步）。
+ * 少了这一步，矩阵里的注入用例会看到一个**永远不收文本**的假站点，
+ * 测的就不是生产代码的真实行为了。详见 tests/helpers/slate-site.mjs。
+ *
+ * @param {Window} window
+ */
+function installSiteBehavior(window) {
+  const editor = window.document.querySelector("[data-slate-editor]");
+  if (!editor) return;
+  const sendButton = window.document.querySelector(
+    "[data-probe-role='send-button'], [data-role='send-button']",
+  );
+  installSlateSiteIfNeeded(window, editor, { sendButton });
 }
 
 /**
@@ -89,6 +110,7 @@ export function loadRealFixture(fixtureId, hostname) {
     pretendToBeVisual: true,
   });
   installGlobals(dom.window);
+  installSiteBehavior(dom.window);
   return { dom, meta };
 }
 
