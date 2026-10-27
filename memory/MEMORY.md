@@ -10,7 +10,7 @@
 - [体检工具链加固工单背景（密钥扫描器误报、check_git 假绿）](project_healthcheck_tooling_debt.md) — 2026-10-24 派单 TASK-P1-HEALTHCHECK-TOOL-HARDEN-001 的背景问题——密钥扫描器误报 237 条需降到 0、check_git() 缺 origin/main 存在性判断造成体检假绿、check_health_rules() 对长期经验条数统计不准
 - [project-intervention-delivery-states](project_intervention_delivery_states.md) — 干预队列的投递状态语义——入队必须用 delivery_mode="manual"（pending_operator_delivery），用 "bridge" 会被在途过滤器静默跳过，投递根本不会发生且不报错
 - [OpenSpec CLI 1.11.0 的 legacy 边界与本仓现行接线形态](project_openspec_cli_wiring.md) — 2026-10-24 实测——openspec 1.11.0 把 openspec/AGENTS.md 当 legacy 并在 init --force 时删除，根 CLAUDE.md 的 OPENSPEC:START/END managed block 也是 legacy（1.11.0 主动删除它）；本仓现行形态是 openspec/config.yaml + .claude/skills/openspec-* + .codeartsdoer/skills/openspec-*
-- [产品路线 A/B 决策门禁（真机 3 平台回归 + 第一个外部用户）](project_route_decision.md) — AI Collaboration System 路线拍板（路线 A Prompt Pack 面向创作者 vs 路线 B Agent 协作控制面产品化）唯一缺失的真证是「真机 3 平台回归 + 第一个外部用户」，截至 2026-10-22 实验未启动
+- [产品路线 A/B 决策门禁（真机 3 平台回归 + 第一个外部用户）](project_route_decision.md) — AI Collaboration System 路线拍板（路线 A Prompt Pack 面向创作者 vs 路线 B Agent 协作控制面产品化）唯一缺失的真证是「真机 3 平台回归 + 第一个外部用户」；截至 2026-10-27 材料侧已全部备齐（排演 W-D1 + 会话手册 + L2 观测器），缺的只是「人」与「一次真机发送」
 - [任务契约 change_id 白名单与非法值的修正方式](project_task_change_id_whitelist.md) — ai_collab 任务契约校验器对 change_id 只认 bugfix/no-spec、legacy/task-contract-migration 或 openspec 真实变更；工单写 feature/no-spec 会被 tasks update 拒收（invalid=[change_id]），需用 --change-id 修正并留痕
 
 ## Feedback
