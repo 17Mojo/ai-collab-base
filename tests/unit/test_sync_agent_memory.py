@@ -7,8 +7,10 @@ sys.path.insert(0, str(ROOT))
 from scripts.sync_agent_memory import (  # noqa: E402
     build_desired,
     build_index,
+    default_source,
     diff_desired,
     main,
+    main_repo_path,
     parse_frontmatter,
     resolve_type,
 )
@@ -128,3 +130,51 @@ def test_missing_source_returns_nonzero(tmp_path, monkeypatch):
         ["sync_agent_memory.py", "--source", str(tmp_path / "nope"), "--dest", str(tmp_path / "dst"), "--quiet"],
     )
     assert main() == 1
+
+
+def test_main_repo_path_resolves_worktree_to_main_repo(tmp_path, monkeypatch):
+    """worktree 里的记忆源必须指向**主仓库**那一份，否则 --check 永远报警。
+
+    2026-10-27 实测：`git worktree` 的工作目录路径与主仓库不同
+    （主仓库 /Users/x/ai-collab-base，worktree /tmp/pr5-rebase），
+    而记忆目录是按**仓库**分的 ⇒ 取错路径时源目录根本不存在，
+    `pre-commit` 钩子只会一直喊「镜像过期」。
+    """
+    main_repo = tmp_path / "main-repo"
+    worktree = tmp_path / "wt"
+    (main_repo / ".git").mkdir(parents=True)
+    worktree.mkdir(parents=True)
+
+    class _Result:
+        returncode = 0
+        stdout = str(main_repo / ".git") + "\n"
+
+    monkeypatch.setattr(
+        "scripts.sync_agent_memory.subprocess.run",
+        lambda cmd, **kwargs: _Result(),
+    )
+    assert main_repo_path(worktree) == main_repo
+
+
+def test_main_repo_path_falls_back_when_git_fails(tmp_path, monkeypatch):
+    """取不到 git common dir 时退回传入的路径（不许抛异常）。"""
+
+    class _Result:
+        returncode = 128
+        stdout = ""
+
+    monkeypatch.setattr(
+        "scripts.sync_agent_memory.subprocess.run",
+        lambda cmd, **kwargs: _Result(),
+    )
+    assert main_repo_path(tmp_path) == tmp_path
+
+
+def test_default_source_uses_main_repo_slug(tmp_path, monkeypatch):
+    """default_source 必须按**主仓库**路径算 slug，不是 worktree 路径。"""
+    import scripts.sync_agent_memory as mod
+
+    main_repo = tmp_path / "main-repo"
+    worktree = tmp_path / "wt"
+    monkeypatch.setattr(mod, "main_repo_path", lambda repo: main_repo)
+    assert default_source(worktree).name == str(main_repo.resolve()).replace("/", "-")
