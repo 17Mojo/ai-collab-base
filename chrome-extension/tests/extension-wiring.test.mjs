@@ -64,6 +64,9 @@ import { dirname, join, resolve } from "node:path";
 import { JSDOM } from "jsdom";
 import vm from "node:vm";
 
+import { loadServiceWorker } from "./helpers/service-worker-harness.mjs";
+import { installSlateSiteIfNeeded } from "./helpers/slate-site.mjs";
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXT_ROOT = resolve(HERE, "..");
 const SRC = join(EXT_ROOT, "src");
@@ -285,11 +288,21 @@ async function loadContentScript(fixtureName, adapterId) {
   globalThis.Event = dom.window.Event;
   globalThis.KeyboardEvent = dom.window.KeyboardEvent;
   globalThis.MouseEvent = dom.window.MouseEvent;
+  globalThis.InputEvent = dom.window.InputEvent;
   const input = dom.window.document.querySelector("[data-probe-role='chat-input']");
   if (input) {
     Object.defineProperty(input, "isContentEditable", {
       value: true,
       configurable: true,
+    });
+    // 快照是**静态**的：只有结构，没有行为。而千问的输入框是 Slate 编辑器，
+    // 内容存在框架自己的模型里、只认 beforeinput（真机实测 2026-10-26）。
+    // 不补上这个行为，生产代码的注入会正确地**报错**（模型没收到），
+    // 而那正是我们要的诚实失败——快照自己得像真站点一样。
+    installSlateSiteIfNeeded(dom.window, input, {
+      sendButton: dom.window.document.querySelector(
+        "[data-probe-role='send-button']",
+      ),
     });
   }
 
@@ -417,72 +430,6 @@ const LOCAL_PACK = {
   },
 };
 
-/**
- * 起一个假的 chrome 环境，把**生产 service-worker** 跑起来。
- *
- * @param {Object[]} packs - 放进 chrome.storage.local["packs"] 的 Pack
- * @returns {Promise<{listener: Function, send: Function}>}
- */
-async function loadServiceWorker(packs) {
-  const store = { packs };
-  const listeners = [];
-  const tabMessages = [];
-
-  globalThis.chrome = {
-    runtime: {
-      sendMessage: async () => undefined,
-      onInstalled: { addListener: () => {} },
-      onMessage: {
-        addListener: (fn) => listeners.push(fn),
-      },
-    },
-    storage: {
-      local: {
-        get: async (key) => (key === "packs" ? { packs: store.packs } : {}),
-        set: async (obj) => {
-          Object.assign(store, obj);
-        },
-      },
-      onChanged: { addListener: () => {} },
-    },
-    tabs: {
-      onUpdated: { addListener: () => {} },
-      sendMessage: async (tabId, msg) => {
-        tabMessages.push({ tabId, msg });
-        return { success: true, result: { content: "回声" } };
-      },
-    },
-  };
-
-  swImportCounter += 1;
-  await import(`../src/background/service-worker.js?bust=${swImportCounter}`);
-  await new Promise((r) => setTimeout(r, 0));
-
-  const listener = listeners[0];
-  assert.ok(listener, "service-worker 必须注册 onMessage 监听器");
-
-  /**
-   * 给后台发一条消息并等它回话。
-   * @param {Object} message
-   * @returns {Promise<any>}
-   */
-  const send = (message) =>
-    new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`${message.type} 没有响应`)),
-        5000,
-      );
-      const keepAlive = listener(message, {}, (r) => {
-        clearTimeout(timer);
-        resolve(r);
-      });
-      assert.equal(keepAlive, true, `${message.type} 的监听器必须返回 true`);
-    });
-
-  return { listener, send, store, tabMessages };
-}
-
-let swImportCounter = 0;
 
 test("storage 里的 Pack 要能被执行器找到并执行（不许是 Pack not found）", async () => {
   const { send } = await loadServiceWorker([LOCAL_PACK]);

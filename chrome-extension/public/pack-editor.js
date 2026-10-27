@@ -413,14 +413,25 @@ function handleFileUpload(event) {
   reader.onload = (e) => {
     try {
       const content = e.target.result;
-      // 验证 JSON
+      // 只验语法：是不是 JSON。
+      //
+      // 「什么算 Pack」**只有后台一个判定方**（IMPORT_PACKS 处理器），
+      // 它两种形状都收：`{packs:[...]}` 与单个 Pack（`{metadata:{...}}`）。
+      //
+      // 2026-10-26 排演实测：前端此前**比后台更严**——只认 `{packs:[...]}`，
+      // 于是外部用户照着指南导入 packs/examples/external-user-smoke.json
+      // （单个 Pack）时，前端直接报「文件格式错误: 无效的 Pack 导入格式」，
+      // 连「合并 / 覆盖」都出不来 ⇒ 指南的第 4 步走不通。
+      //
+      // 前端多一道闸 = 两个判定方 = 迟早漂移。前端只做语法检查，
+      // 语义（这文件里有没有 Pack）交给后台判定。
       const data = JSON.parse(content);
-      if (!data.packs || !Array.isArray(data.packs)) {
+      if (!data || typeof data !== 'object') {
         throw new Error('无效的 Pack 导入格式');
       }
       importFileData = content;
       importOptions.classList.add('visible');
-      updateStatus(`已选择文件: ${file.name}, 包含 ${data.packs.length} 个 Pack`);
+      updateStatus(`已选择文件: ${file.name}`);
     } catch (error) {
       updateStatus('文件格式错误: ' + error.message, 'error');
       importFileData = null;
@@ -450,11 +461,18 @@ async function confirmImport() {
     });
 
     if (response.imported && response.imported.length > 0) {
-      updateStatus(`导入成功: ${response.imported.length} 个 Pack`, 'success');
       importOptions.classList.remove('visible');
       importFileData = null;
       importFile.value = '';
+      // 先刷新列表，**再**报导入成功。
+      //
+      // 2026-10-26 排演实测：此前是先报「导入成功: N 个 Pack」、
+      // 然后 loadPacks() 把状态栏改写成「已加载 N 个 Pack」⇒
+      // 指南承诺的成功标志「导入成功: 1 个 Pack」**一闪就没了**，
+      // 外部用户停下来看状态栏时看到的是「已加载 1 个 Pack」——
+      // 这句话既没说导入成功，也没说导入的是哪个。
       await loadPacks();
+      updateStatus(`导入成功: ${response.imported.length} 个 Pack`, 'success');
     } else {
       updateStatus('导入失败: ' + (response.errors?.[0]?.error || '无 Pack 导入'), 'error');
     }

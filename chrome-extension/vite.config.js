@@ -37,14 +37,8 @@ const distDir = resolve(rootDir, "dist");
  * @param {string} [dest=distDir] - 目标目录
  */
 function copyStaticAssets(dest = distDir) {
-  // 1. 复制 manifest.json
-  const manifestSrc = resolve(rootDir, "manifest.dist.json");
-  const manifestDst = resolve(dest, "manifest.json");
-  if (existsSync(manifestSrc)) {
-    copyFileSync(manifestSrc, manifestDst);
-  } else {
-    copyFileSync(resolve(rootDir, "manifest.json"), manifestDst);
-  }
+  // 1. manifest.json：由源 manifest 生成（不再手写第二份 manifest.dist.json）
+  staticAssets.writeDistManifest({ rootDir, destDir: dest });
 
   // 2. public/ 下的 HTML / JS / 图标（扁平 + public/ 嵌套两种布局）
   staticAssets.copyStaticAssets({ rootDir, destDir: dest });

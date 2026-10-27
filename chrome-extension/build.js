@@ -75,18 +75,15 @@ if (existsSync(swDir)) {
 // 复制静态资源
 console.log("\n[5/5] Copying static assets...");
 
-// manifest.json
-const manifestSrc = resolve(rootDir, "manifest.dist.json");
-if (existsSync(manifestSrc)) {
-  copyFileSync(manifestSrc, resolve(distDir, "manifest.json"));
-} else {
-  copyFileSync(resolve(rootDir, "manifest.json"), resolve(distDir, "manifest.json"));
-}
+// manifest.json：由源 manifest **生成**（不再手写第二份 manifest.dist.json）
+// 详见 static-assets.cjs 的 buildDistManifest 注释——此前改 manifest.json
+// 根本不生效（复制的是另一份手写清单），两份清单还各自漂移。
+const { copyStaticAssets, writeDistManifest } = require("./static-assets.cjs");
+writeDistManifest({ rootDir, destDir: distDir });
 
 // HTML / JS / 图标：复制逻辑只有 static-assets.cjs 这一份
 // （此前 build.js 和 vite.config.js 各写各的文件清单，两边对不上，
 //   于是代码里 getURL('public/pack-editor.html') 在产物里 404）
-const { copyStaticAssets } = require("./static-assets.cjs");
 const copied = copyStaticAssets({ rootDir, destDir: distDir });
 console.log(`  ✅ Static assets copied (${copied.files.length} files, ${copied.icons.length} icons)`);
 

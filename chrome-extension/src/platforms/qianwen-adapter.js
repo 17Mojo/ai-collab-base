@@ -173,7 +173,7 @@ class QianwenAdapter extends PlatformAdapter {
     const input = this.getChatInput();
     if (!input) throw new Error("Qianwen: Chat input not found");
 
-    injectTextSmart(input, text);
+    await injectTextSmart(input, text);
     // 千问需要额外触发 React 事件
     await delay(100);
   }

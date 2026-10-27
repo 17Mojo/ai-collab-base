@@ -3,6 +3,62 @@
  * 平台适配器的共享工具函数，消除重复代码
  */
 
+import {
+  isSlateEditor,
+  injectIntoSlateEditor,
+  slateModelIsEmpty,
+} from './slate-editor.js';
+
+/**
+ * 判断「编辑器自己的模型」有没有收到注入的文本。
+ *
+ * ## 为什么不能只看 DOM
+ *
+ * 现代富文本编辑器（Slate / ProseMirror / Quill …）把内容存在**框架的模型**里，
+ * DOM 只是模型的投影。用 execCommand 直接改 DOM 时：
+ *
+ *   - DOM 里有文字 ✔
+ *   - 框架的模型**仍是空的** ✘
+ *
+ * 于是站点读到「用户没输入」⇒ **发送按钮保持 disabled** ⇒ 点它等于没点。
+ * 2026-10-26 真机实测（千问）：execCommand 注入后发送按钮 `disabled` 依旧是
+ * `true`；换成 `beforeinput` 事件后立刻变成 `false`。
+ *
+ * ## 判据
+ *
+ * Slate 用一片 `data-slate-zero-width` 的零宽叶子表示「这个段落是空的」。
+ * 模型里真的有文本时，那片叶子就不存在了。
+ * **这是结构证据**，不依赖事件返回值（框架处理了会 preventDefault，
+ * 但没处理的编辑器也会照样冒泡 ⇒ 用返回值判断必然出错）。
+ *
+ * 对**不是** Slate 的编辑器（普通 contenteditable），没有「模型」这层，
+ * 就看 DOM 里有没有文字。
+ *
+ * 注意：派发**合成**的 `beforeinput` 事件本身**不会**触发浏览器的默认插入
+ * （默认插入是真实键入/粘贴才有的），所以普通 contenteditable 靠这条事件
+ * 是插不进字的——它会走下面的 execCommand 兜底（那条路径对普通
+ * contenteditable 是有效的）。
+ *
+ * @param {HTMLElement} input - contenteditable 输入框
+ * @param {string} text - 期望注入的文本
+ * @returns {boolean} true = 文本已经被编辑器接受
+ */
+export function editorModelAcceptedText(input, text) {
+  if (!input) return true;
+
+  // 是不是 Slate：编辑区根节点带 data-slate-editor，
+  // 或者里面挂着 data-slate-node。
+  if (isSlateEditor(input)) {
+    // Slate：用零宽叶子做结构证据。
+    // 模型里真的有文本 ⇒ 那片零宽叶子消失；
+    // 零宽叶子还在 ⇒ 文字只在 DOM 里，模型没收。
+    return !slateModelIsEmpty(input);
+  }
+
+  // 不是 Slate：没有「模型」这层，看 DOM。
+  return text ? input.textContent.includes(text) : false;
+}
+
 /**
  * 判断元素是否是页面根节点（html/body）。
  *
@@ -200,11 +256,52 @@ export function injectIntoContentEditable(input, text) {
     if (injectIntoLexical(input, text)) return;
   }
 
-  document.execCommand('selectAll', false, null);
-  document.execCommand('delete', false, null);
-  document.execCommand('insertText', false, text);
+  // ── 现代富文本编辑器（Slate / ProseMirror / Quill …）─────────────────
+  //
+  // 这些编辑器的**内容存在框架自己的模型里**，不在 DOM 里。
+  // 用 execCommand 塞 DOM ⇒ 框架**收不到** ⇒ 模型仍是空的 ⇒
+  // 站点据此判定「用户没输入」⇒ **发送按钮保持 disabled**
+  // ⇒ 点它等于没点 ⇒ 永远等不到回复。
+  //
+  // 2026-10-26 真机实测（千问，Slate）：
+  //   - execCommand 之后：文字在 DOM 里，但 `data-slate-zero-width` 那片
+  //     零宽叶子还在、发送按钮 `disabled === true`（注入前后一样）；
+  //   - 换成 `beforeinput`（inputType=insertText，带 data）之后：
+  //     零宽叶子消失、发送按钮 `disabled === false`。
+  //
+  // `beforeinput` 是这些编辑器**真正监听**的事件：
+  // 它们在编辑器元素上原生监听它，拿到 `event.data` 自己写进模型。
+  // 用 `InputEvent`（而不是普通 `Event`）是因为框架要读
+  // `inputType` 和 `data` 两个属性。
+  //
+  // 注意：**不能**用 `preventDefault` 去「确认成功」——
+  // 框架处理了就会 preventDefault（探针里实测 dispatched===false、
+  // defaultPrevented===true），但没处理的编辑器也会照样冒泡。
+  // 判据用「零宽叶子还在不在」这种**结构证据**，不靠事件返回值。
+  try {
+    const beforeInput = new InputEvent('beforeinput', {
+      inputType: 'insertText',
+      data: text,
+      bubbles: true,
+      cancelable: true,
+    });
+    input.dispatchEvent(beforeInput);
+  } catch {
+    // 老浏览器没有 InputEvent 构造器：走下面的兜底。
+  }
 
-  // 如果 execCommand 未生效（React 等框架可能拦截），使用 innerHTML 回退
+  // ── 兜底一：execCommand（普通 contenteditable / 老编辑器）────────────
+  //
+  // **判断标准是「编辑器模型有没有收到」**，不是「DOM 里有没有字」——
+  // 后者会把上面那种假成功也判成成功。
+  // 对 Slate 来说，模型收到之后 `data-slate-zero-width` 那片零宽叶子会消失。
+  if (!editorModelAcceptedText(input, text)) {
+    document.execCommand('selectAll', false, null);
+    document.execCommand('delete', false, null);
+    document.execCommand('insertText', false, text);
+  }
+
+  // ── 兜底二：innerHTML（React 等框架可能拦截）────────────────────────
   if (!input.textContent.includes(text)) {
     const paragraph = input.querySelector('p');
     if (paragraph) {
@@ -260,16 +357,36 @@ export function injectIntoInput(input, text) {
 
 /**
  * 智能注入文本到输入框（自动识别元素类型）
+ *
+ * ## 顺序很重要
+ *
+ * Slate 的判定**必须排在 `role="textbox"` 前面**。
+ * 2026-10-26 真机实测（千问）：它的编辑区是
+ * `div[data-slate-editor="true"][role="textbox"][contenteditable="true"]`
+ * —— `role="textbox"` 的判断排在前面时，Slate 会走进 `injectIntoTextbox`
+ * （纯 execCommand 路径）⇒ **模型收不到文本** ⇒ 发送按钮永远 disabled。
+ * 也就是说：把修复写在 `injectIntoContentEditable` 里，对千问是**死代码**。
+ *
+ * ## 为什么要 async
+ *
+ * Slate 的「清空旧内容」需要等框架把 DOM 选区同步进自己的模型，
+ * 那一步是**异步**的（见 slate-editor.js 的说明）。
+ *
  * @param {HTMLElement} input - 输入框元素
  * @param {string} text - 要注入的文本
+ * @returns {Promise<void>}
  */
-export function injectTextSmart(input, text) {
+export async function injectTextSmart(input, text) {
   input.focus();
 
   if (input.tagName === 'TEXTAREA') {
     injectIntoTextarea(input, text);
   } else if (input.tagName === 'INPUT') {
     injectIntoInput(input, text);
+  } else if (isSlateEditor(input)) {
+    // Slate：内容在框架自己的模型里，必须走模型感知的注入路径。
+    // 失败时**抛错**——不能留一个「看起来注入了、站点其实没收到」的假成功。
+    await injectIntoSlateEditor(input, text);
   } else if (input.getAttribute('role') === 'textbox') {
     injectIntoTextbox(input, text);
   } else if (input.isContentEditable) {

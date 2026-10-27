@@ -80,7 +80,7 @@ class YuanbaoAdapter extends PlatformAdapter {
     const input = this.getChatInput();
     if (!input) throw new Error("Yuanbao: Chat input not found");
 
-    injectTextSmart(input, text);
+    await injectTextSmart(input, text);
     await delay(100);
   }
 

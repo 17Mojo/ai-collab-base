@@ -25,6 +25,42 @@ const ExecutionStatus = {
 };
 
 /**
+ * 检查内容脚本对 SEND_TO_AI 的回话，失败就抛。
+ *
+ * ## 为什么必须有这一步
+ *
+ * 内容脚本是**如实**报告失败的：`sendResponse({success:false, error})`
+ * （见 content-script.js 的 SEND_TO_AI 分支）。但执行器此前把回话
+ * **原样返回**，`_executeStep` 紧接着无条件 `stepResult.success = true`
+ * ⇒ 内容脚本说的失败被吞掉 ⇒ popup 显示「执行成功」。
+ *
+ * 2026-10-26 排演实测（第二十二步）：修好前三处断点后，排演在
+ * **匿名会话**下拿到了 popup 的「状态: 执行成功」，但页面上
+ * **提示词还留在输入框里**（压根没发出去），且页面上有「登录」。
+ * 那正是这条缺陷在真实世界的样子——
+ * 「成功」两个字是假的，外部用户会以为链路通了。
+ *
+ * 守护：tests/external-user-path.test.mjs 的
+ * 「内容脚本报告失败时，整个 Pack 必须失败」。
+ *
+ * @param {any} response - 内容脚本的回话
+ * @param {number|null} targetTabId - 目标标签页（null = 广播）
+ * @throws {Error} 内容脚本报告失败时抛出
+ */
+function assertAIStepSucceeded(response, targetTabId) {
+  if (!response || response.success !== false) return;
+
+  const where =
+    targetTabId === null || targetTabId === undefined
+      ? "页面"
+      : `标签页 ${targetTabId}`;
+  throw new Error(
+    `${where}没能完成这次发送：${response.error || "未知原因"}。` +
+      "如果那个网站要求先登录，请先在页面上登录再重试。",
+  );
+}
+
+/**
  * 正则匹配器
  */
 class RegexMatcher {
@@ -615,11 +651,12 @@ class PackExecutor {
     // 不知道目标标签页时才退回广播，并在结果里标明是广播。
     const targetTabId = execution.targetTabId;
     if (targetTabId !== null && targetTabId !== undefined) {
+      let response;
       try {
         // 注意：消息体是**内联**写的字面量，不是提前存进变量。
         // 静态护栏（tests/extension-wiring.test.mjs）要能从调用点
         // 直接看出发的是哪种消息——存进变量它就看不出来了。
-        return await chrome.tabs.sendMessage(targetTabId, {
+        response = await chrome.tabs.sendMessage(targetTabId, {
           type: "SEND_TO_AI",
           prompt,
           config,
@@ -633,6 +670,12 @@ class PackExecutor {
             "并在扩展装好之后刷新一次页面。",
         );
       }
+      // 消息**送达**了，但内容脚本可能报告自己没干成活
+      // （例如页面上是登录墙，提示词压根没发出去）。
+      // 这一步在 try/catch **外面**——否则它的错误信息会被
+      // 上面的「无法把提示词发到标签页」再包一层，读起来像消息没送到。
+      assertAIStepSucceeded(response, targetTabId);
+      return response;
     }
 
     // 没有目标标签页：广播。**每个**内容脚本都会收到并各自执行。
@@ -641,6 +684,7 @@ class PackExecutor {
       prompt,
       config,
     });
+    assertAIStepSucceeded(response, null);
     return {
       ...(response || {}),
       broadcast: true,

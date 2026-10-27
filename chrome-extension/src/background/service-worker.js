@@ -79,13 +79,51 @@ async function syncPacksToExecutor() {
 }
 
 /**
+ * 从 URL 里取主机名（取不到就返回空串）。
+ * @param {string} url
+ * @returns {string}
+ */
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+/**
  * 获取当前平台的适配器（遍历所有注册的平台，返回第一个匹配的）
+ *
+ * ## 为什么**不能**在这里调 `adapter.detect()`
+ *
+ * `detect()` 是**页面侧**函数——它读 `window.location.hostname`。
+ * 而这个函数跑在 **service worker** 里：MV3 的 SW 没有 `window`
+ * （2026-10-26 实测：`typeof window === "undefined"`），
+ * 于是 `adapter.detect()` 抛 `ReferenceError: window is not defined`。
+ *
+ * 那个异常发生在 `chrome.runtime.onMessage` 的处理器里 ⇒
+ * **整个处理器挂掉 ⇒ 永远不调用 sendResponse** ⇒
+ * 内容脚本初始化时问的那句 GET_ADAPTER 收不到回答 ⇒
+ * 它只能打印「No adapter available for this page」⇒
+ * `currentConfig` 恒为 null ⇒ 之后每一次 SEND_TO_AI 都抛
+ * 「No adapter available for this page」。
+ *
+ * 也就是说：**改之前，扩展在任何一个站点上都拿不到适配器**——
+ * 整条 Pack 链路是死的，而且不报任何错（只是"没适配器"）。
+ *
+ * 所以这里改成**只按 URL 判定**：注册表的 key 本来就是
+ * 「URL 中匹配的域名片段」，主机的子串判定与各 adapter 自己
+ * `detect()` 里的写法一致（例如 `www.qianwen.com` 命中 `qianwen.com`）。
+ * `detect()` 仍然保留——它是**页面侧**该用的函数（见 content-script）。
+ *
  * @param {string} url - 当前页面 URL
  * @returns {{ adapter: PlatformAdapter, platformId: string }|null}
  */
 function getAdapter(url) {
+  const host = hostOf(url);
+  if (!host) return null;
   for (const [platform, adapter] of Object.entries(adapters)) {
-    if (url.includes(platform) && adapter?.detect?.()) {
+    if (host.includes(platform)) {
       return { adapter, platformId: adapter.platformId };
     }
   }
@@ -122,7 +160,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               // AI 步骤据此精确投递，而不是给每个打开的 AI 页面都发一遍。
               { tabId: message.tabId ?? null },
             );
-            sendResponse({ success: true, result });
+            // 执行器把失败**收进结果里**（status: "failed" + errors[]），
+            // 不抛异常 ⇒ 这里必须看 status，不能一律回 success: true。
+            //
+            // 2026-10-26 排演实测：此前一律回 success:true，
+            // 于是 popup 显示「执行成功」——而那次执行**压根没成功**
+            // （匿名会话被登录墙挡住，提示词还留在输入框里）。
+            // 「成功」两个字是假的，外部用户会以为链路通了。
+            //
+            // 守护：tests/external-user-path.test.mjs 的
+            // 「内容脚本报告失败时，整个 Pack 必须失败」。
+            if (result?.status === "failed") {
+              sendResponse({
+                success: false,
+                error:
+                  result.errors?.[0]?.message || "Pack 执行失败",
+                result,
+              });
+            } else {
+              sendResponse({ success: true, result });
+            }
           } catch (error) {
             sendResponse({ success: false, error: error.message });
           }
