@@ -16,6 +16,7 @@
 ## Feedback
 - [ACK/receipt 必须由 CLI 生成且先 RUN-RESET 再 RUN](feedback_ack_cli_generated.md) — 派单流程硬性规范——ACK/receipt 禁止手写，须用 python3 -m ai_collab.cli ack ... 生成并原样回复；RUN 静默无 ACK 时先 A.RUN-RESET 再 A.RUN
 - [回答形态规范（目标反推清单 / 就绪度按线判定 / 两者的适用边界）](feedback_answer_shape.md) — 用户已给明确目标时应反推应做项清单而非并列可选项；问就绪度时按工作线逐项判定再给二选一授权；两者适用场景不同，不可混用
+- [Chrome host 匹配里裸域只等于自己——www 变体必须单列](feedback_chrome_host_pattern.md) — manifest 的 host 模式写 https://qianwen.com/* 时，Chrome 只匹配该域本身、不匹配 www.qianwen.com（只有 *. 才通配）⇒ 内容脚本根本不注入；host_permissions 与 content_scripts.matches 须收敛成同一份清单
 - [CodeArts 派单执行的工具约束（禁 write/edit、禁派生代理、写文件用 bash heredoc）](feedback_codearts_session_tooling.md) — 真机实测 CodeArts 会话中 write/edit 工具与派生 subagent 会卡死并中止会话；派单任务写文件一律用 bash heredoc
 - [CodeArts 会话工具约束（禁 write/edit、禁派生子代理；并行 bash 改单条逐个执行）](feedback_codearts_tooling_constraints.md) — 真机实测 CodeArts 会话中 write/edit 与派生 subagent 会卡死并中止会话，写文件一律用 bash heredoc；并行批次中单条命令失败可致整批 abort，校验多路径改用单条逐个执行
 - [投递结果判定口径——等回执超时≠投递失败](feedback_delivery_outcome_semantics.md) — 派单投递中「等回执超时」不得直接判失败；必须先向 kernel 核实消息是否被接受，否则误报 failed 会触发重投并在对方新开会话，造成双会话并发改同一工作区
@@ -23,6 +24,8 @@
 - [派单 payload 必须先校验新鲜度，系统级 RUN 只允许单条 cli run](feedback_dispatch_payload_freshness.md) — 收到派单 payload 后先比对 logs/task_dispatch_report.json 的 generated_at（≤5 分钟），过期用 cli trigger 一键重生成；系统级 RUN 只许 python3 -m ai_collab.cli run，禁止拆成 dispatch/receipt/benefit 串联
 - [方案选型前先做可行性实测，不凭直觉论证](feedback_empirical_test_before_solution_choice.md) — 用户要求「先做链接可行性实测，再定软链还是生成方案」；涉及技术选型时先跑实测拿到退出码/行为级真证，再给判定与方案
 - [严格输出格式约束须逐字照办](feedback_exact_output_format.md) — 用户给出字数/格式/字符集约束（如只回一个词）时，输出必须仅含被要求内容，不加解释、前后缀或 Markdown 包裹
+- [失败不许跨层吞掉——「执行成功」比「报错」更危险](feedback_failure_must_not_be_swallowed.md) — 内容脚本如实回 {success:false}，执行器却无条件置 success=true，后台再一律回 success:true ⇒ popup 显示「执行成功」而产物是空的；修法是各层都看真实状态，且执行器的校验要放在 try/catch 外面
+- [静态 fixture 只有结构没有行为——仿真站点得仿行为](feedback_fixture_needs_behavior.md) — 手写 mock 与真机快照都只还原 DOM 结构，不含「框架模型」这类行为⇒「DOM 里有字」冒充「模型收到了」；修法是把站点行为抽成一份共享仿真（模型/选区/按钮启用条件），让矩阵、接线测试、注入守护共用同一份
 - [按用户既定目标反推应做项，而非并列可选项](feedback_goal_driven_backlog.md) — 用户已给出明确目标时，应从目标逐条反推应落地项并给出「目标↔项↔依据↔优先级」映射；禁止退回到并列的「你可以选 1/2/3」式可选项
 - [交付报告禁列流程仪式（仪式税），门禁改分层触发](feedback_no_ceremony_tax.md) — RESULT/closeout 不得列举 Skill 触发与门禁遵循情况；closeout 只写 5 行；门禁按提交/周/里程碑分层触发
 - [对外可见动作需要当前会话内的明确授权](feedback_outward_actions_need_in_session_approval.md) — 2026-10-24 实测——gh pr create 被 auto-mode 分类器以「Unrequested Commit in a Connected App」拦下，理由是授权只出现在被压缩的会话摘要里而非当前轮次；解决办法是先用 AskUserQuestion 拿到用户当场的明确授权再重试
@@ -30,6 +33,9 @@
 - [动手实现前给「按线就绪度判定」，不给全局二元答案](feedback_readiness_gate_before_coding.md) — 用户会追问「是否已具备动手条件/是否还需更多实测」；期望按工作线分别判定就绪度，并逐项列出还差什么、类型、阻塞面，最后给二选一授权而非直接开干
 - [RESULT 结果文件的契约校验与终态一致性要求](feedback_result_file_contract.md) — 结果文件除 PROTOCOL §7.4 四段标题外还需可解析的状态行与测试结论小节，否则 tasks validate-contract 与一致性审计判不合格；任务终态须收口为 completed
 - [结果文件/文档引用扫描触发串会自命中（密钥扫描器视角）](feedback_result_file_self_scan_hit.md) — collaboration/results 下的结果文件本身在密钥/PII 扫描范围内，文档中原样内联扫描触发串或正则片段会被自家扫描器自命中；须改为间接描述 + 白名单自豁免，写完立即自扫确认为 0
+- [富文本编辑器的内容在框架模型里——DOM 有字不等于站点收到了](feedback_rich_text_editor_model.md) — Slate/ProseMirror/Quill 把内容存在自己的模型中，execCommand 只动 DOM ⇒ 站点读到「用户没输入」⇒ 发送按钮保持 disabled ⇒ 点它等于没点；修法是派发真的 beforeinput，判据靠零宽叶子等**结构**信号，另注意 role="textbox" 分支顺序与后台标签页不用 rAF
+- [service worker 里没有 window——页面侧函数不能直接调](feedback_service_worker_no_window.md) — MV3 的 service worker 里 typeof window === "undefined"，后台调页面侧的 adapter.detect() 会抛 ReferenceError 并挂掉整个 onMessage 处理器⇒永远不 sendResponse⇒扩展在任何站点上都拿不到适配器且不报错
+- [前端不该是第二个判定方——「什么算 Pack」只能有一处说了算](feedback_single_validation_authority.md) — 导入界面比后台更严（前端只认 {packs:[...]}、后台两种形状都收）⇒ 照指南导入单个 Pack 文件直接报「文件格式错误」；前端多一道闸 = 两个判定方 = 迟早漂移
 - [测试门禁分层原则（硬门禁对齐真证，软警告用于理想规范）](feedback_test_gate_design.md) — 设计测试门禁时，硬门禁只放基线项，"应当有"特性降级为软警告；测试不应造假以通过门禁
 - [工具校验器报错不等于文件有错——用权威解析器复核后再动手](feedback_validator_false_positive.md) — 编辑器/内置校验器对 YAML 等结构化文件报错可能系工具自身故障；先用权威解析器（如 Python yaml.safe_load）复核，勿因误报改动本已正确的文件
 - [同步类改动须同时验「静态接线」与「行为级加载」，并做漂移注入闭环](feedback_verification_static_vs_behavioral.md) — 配置/记忆同步类交付的验证形态：静态 grep 接线 ≠ 行为级生效；漂移须同时验证「能检测」与「能修复」；验证脚本要可复用
