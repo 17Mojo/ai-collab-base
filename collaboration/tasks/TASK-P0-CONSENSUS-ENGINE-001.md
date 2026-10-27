@@ -1,5 +1,10 @@
 ---
 task_id: TASK-P0-CONSENSUS-ENGINE-001
+# 2026-10-27 补齐：本工单原值 `migrate-parallel-architecture-to-hermes` 指向
+# 已删除的外部变更提案，2026-10-23 噪声清理时把 `change_id` 字段整个移除了。
+# 但契约校验要求 `change_id` 必填且须在白名单内——本仓的本地标识是
+# `bugfix/no-spec`（见下方收口说明），故补上。
+change_id: bugfix/no-spec
 status: completed
 priority: P0
 assignee: codearts_agent

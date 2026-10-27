@@ -50,9 +50,29 @@ def parse_frontmatter(path: Path) -> dict:
 
 
 def collect_task_files(tasks_dir: Path, only: list[str] | None) -> list[Path]:
+    """挑出要校验的工单文件。
+
+    ## 为什么不用 `TASK_*.md`
+
+    本仓工单文件名的约定是 **`TASK-P1-<名字>-001.md`（连字符）**，
+    而 `TASK_*.md`（下划线）**一个都匹配不到**——
+    2026-10-27 实测：不带参数跑本脚本时它打印「没找到工单文件」就退出了，
+    看上去像「没有工单」，实际是**通配符写错了**。
+    那个错误很隐蔽：脚本此前只在显式传 `--task-id` 时被用过，
+    而显式路径走的是另一条分支，绕开了这个 bug。
+
+    所以这里按**实际约定**匹配，并且两种写法都收
+    （万一以后有人真的用下划线命名，也不至于漏检）。
+    """
     if only:
         return [tasks_dir / f"{task_id}.md" for task_id in only]
-    return sorted(p for p in tasks_dir.glob("TASK_*.md") if p.is_file())
+    found = {
+        p
+        for pattern in ("TASK-*.md", "TASK_*.md")
+        for p in tasks_dir.glob(pattern)
+        if p.is_file()
+    }
+    return sorted(found)
 
 
 def main() -> int:
@@ -72,6 +92,7 @@ def main() -> int:
         return 1
 
     state = StateManager(workspace_path=str(REPO_ROOT))
+    close_failures: list[str] = []
 
     for path in files:
         if not path.exists():
@@ -111,9 +132,18 @@ def main() -> int:
             )
         # 收口到 completed：**这一步会触发结果文件门禁**
         # （章节齐备、无负向信号、验收命令逐字出现在结果文件里）。
-        state.update_task_status(
-            task_id=task_id, status=TaskStatus.COMPLETED, actor="claude_code"
-        )
+        #
+        # 门禁失败**不许中断整轮**：一个工单不合规不能掩盖其余工单的问题。
+        # 2026-10-27 实测：脚本原先在第一个不合规工单上直接抛异常退出，
+        # 后面 20 来个工单一条都没验到——「只报第一个错」等于「只看了第一个」。
+        try:
+            state.update_task_status(
+                task_id=task_id, status=TaskStatus.COMPLETED, actor="claude_code"
+            )
+        except ValueError as exc:
+            close_failures.append(f"{task_id}: {exc}")
+            print(f"[门禁未过] {task_id}：{exc}")
+            continue
         print(f"已登记并收口：{task_id}")
 
     print()
@@ -144,8 +174,17 @@ def main() -> int:
     for item in audit.get("issues", [])[:10]:
         print("  issue:", item)
 
-    bad = bool(report.get("issues")) or int(audit.get("issue_count", 0)) > 0
+    bad = (
+        bool(report.get("issues"))
+        or int(audit.get("issue_count", 0)) > 0
+        or bool(close_failures)
+    )
     print()
+    if close_failures:
+        print(f"收口失败 {len(close_failures)} 个工单（结果文件门禁没过）：")
+        for item in close_failures:
+            print("  -", item)
+        print()
     print("结论：", "有问题" if bad else "全部通过")
     return 1 if bad else 0
 
