@@ -1,10 +1,11 @@
 {
   "source": "/Users/raymondna/.codeartsdoer/memory/-Users-raymondna-Documents-AI-collab-ai-collab-base",
-  "generated_at": "2026-10-24T12:45:59.337751+00:00",
+  "generated_at": "2026-10-27T00:29:39.398939+00:00",
   "files": [
     "MEMORY.md",
     "feedback_ack_cli_generated.md",
     "feedback_answer_shape.md",
+    "feedback_chrome_host_pattern.md",
     "feedback_ci_isolation_trap.md",
     "feedback_codearts_session_tooling.md",
     "feedback_codearts_tooling_constraints.md",
@@ -13,6 +14,8 @@
     "feedback_dispatch_payload_freshness.md",
     "feedback_empirical_test_before_solution_choice.md",
     "feedback_exact_output_format.md",
+    "feedback_failure_must_not_be_swallowed.md",
+    "feedback_fixture_needs_behavior.md",
     "feedback_goal_driven_backlog.md",
     "feedback_no_ceremony_tax.md",
     "feedback_outward_actions_need_in_session_approval.md",
@@ -20,6 +23,9 @@
     "feedback_readiness_gate_before_coding.md",
     "feedback_result_file_contract.md",
     "feedback_result_file_self_scan_hit.md",
+    "feedback_rich_text_editor_model.md",
+    "feedback_service_worker_no_window.md",
+    "feedback_single_validation_authority.md",
     "feedback_test_gate_design.md",
     "feedback_validator_false_positive.md",
     "feedback_verification_static_vs_behavioral.md",
@@ -37,5 +43,5 @@
     "reference_local_llm_endpoint.md",
     "user.md"
   ],
-  "count": 34
+  "count": 40
 }
