@@ -20,6 +20,11 @@
 路线 A / 路线 B 的决策门禁缺的正是最后一环（见 `docs/REAL_MACHINE_REGRESSION.md` §7），
 所以这一栏的记录**不能由我们自己代写**。
 
+> **怎么把这一场跑起来**：见
+> [`docs/EXTERNAL_USER_SESSION_RUNBOOK.md`](../../../docs/EXTERNAL_USER_SESSION_RUNBOOK.md)
+> ——那是**主持人**用的操作指南（准备什么、交付什么、现场看什么、最后写什么）。
+> 本目录只负责**记录本身**的格式。
+
 ---
 
 ## 2. 记录格式
