@@ -102,7 +102,7 @@ open http://127.0.0.1:8000/docs
 1. Chrome 浏览器访问 `chrome://extensions/`
 2. 开启 **开发者模式**
 3. 点击 **加载已解压的扩展程序**
-4. 选择 `chrome-extension/` 目录
+4. 先在 `chrome-extension/` 目录执行 `npm install && npm run build`，再选择 `chrome-extension/dist/` 目录
 
 ### 📁 项目结构
 
