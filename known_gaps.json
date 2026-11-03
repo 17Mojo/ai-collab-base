@@ -25,11 +25,11 @@
         "chrome-extension/public/popup.js:122-126",
         "chrome-extension/src/background/service-worker.js:307-310"
       ],
-      "detail": "selectPack 用模板串拼 innerHTML，把 pack.workflow.steps[].input_fields 的字段名直接插进 HTML；而 IMPORT_PACKS 只做 JSON.parse，不做 schema 校验，字段名完全由 Pack 作者控制。",
+      "detail": "selectPack 用模板串拼 innerHTML，把 pack.workflow.steps[].input_fields 的字段名直接插进 HTML；IMPORT_PACKS 校验了 metadata.pack_id 存在性，但对其余字段不做 schema 校验，字段名完全由 Pack 作者控制。",
       "impact": "MV3 默认 CSP（script-src 'self'）封掉了内联事件处理器，因此不是可执行 XSS；但可以注入任意标记来篡改弹窗外观，诱导用户往伪造的输入框里填东西。",
       "fix": "改用 document.createElement + textContent，字段名只当文本节点；或对字段名做 ^[a-z_][a-z0-9_]*$ 白名单。",
       "found_at": "2026-11-03",
-      "evidence": "popup.js:122 `packInputFields.innerHTML = fields.map(f => ...${f}...)`；service-worker.js:310 仅 `JSON.parse(message.jsonData)`"
+      "evidence": "popup.js:122 `packInputFields.innerHTML = fields.map(f => ...${f}...)`；service-worker.js:330-337 校验 metadata.pack_id 存在但其余仅 JSON.parse"
     },
     {
       "id": "N3",
@@ -93,6 +93,21 @@
       "fix": "若这个 UX 确实要，就给它一个真消费者（popup 提示「已广播到 N 个页面」）；若不要，把相关断言删掉而不是留一个空保证。",
       "found_at": "2026-11-03",
       "evidence": "修复前 git grep broadcast -- chrome-extension/src 只有产生侧；extension-wiring.test.mjs 断言已改为 output === \"回声\""
+    },
+    {
+      "id": "N9",
+      "priority": "P1",
+      "status": "open",
+      "title": "test_studio_integration 4 条常红：/api/notebooklm/generate 返回 404",
+      "reader": "任何看 CI 结果的人——4 条常红会把真红埋掉，让人养成「红是正常」的习惯",
+      "where": [
+        "tests/integration/test_studio_integration.py:166,180,192,206,220"
+      ],
+      "detail": "测试对 /api/notebooklm/generate 发请求，但进程内根本没有这个路由 ⇒ 404。4 个用例长期失败，与本次改动无关，但每次 CI 都要人工绕过去判断。",
+      "impact": "CI 的红/绿信号被污染：真缺陷出现时容易被当成「又是那 4 条」忽略。",
+      "fix": "要么实现该路由并让测试通过，要么把测试标 skip 并写明原因，要么删掉死测试。不能让它继续常红。",
+      "found_at": "2026-11-03",
+      "evidence": "pytest tests/integration/test_studio_integration.py 4 failed，全为 404；该文件 0 处引用 pack 路径"
     },
     {
       "id": "N1",
