@@ -181,3 +181,38 @@ class TestPackCount:
             except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 errors.append(f"{pack_file.name}: {e}")
         assert len(errors) == 0, f"Invalid JSON packs: {errors}"
+
+
+class TestTemplateV2Migration:
+    """ai_collab_intro 从 v1 骨架迁 v2 后的形状守门
+
+    迁移前它缺 pack_id/designer/updated_at、step 缺 id、type 是大写
+    LOCAL/ANALYSIS/GENERATION/VALIDATION、顶层缺 domain 等 6 个必需段落，
+    PromptPackV2.from_dict 直接 KeyError。挪目录不能替代迁移——不迁的话
+    只是把坏文件换了个位置。
+    """
+
+    def test_ai_collab_intro_is_v2_parseable(self):
+        from ai_collab.pack.schema_v2 import PromptPackV2
+
+        data = json.loads((TEMPLATE_DIR / "ai_collab_intro.json").read_text(encoding="utf-8"))
+        pack = PromptPackV2.from_dict(data)
+
+        assert pack.metadata.pack_id == "ai-collab-intro"
+        assert len(pack.workflow.steps) == 4
+        # 步骤 id 唯一且非空
+        ids = [s.id for s in pack.workflow.steps]
+        assert all(ids) and len(ids) == len(set(ids))
+        # 类型必须是 v2 枚举（小写），不再是 v1 的 LOCAL/GENERATION
+        assert [s.type.value for s in pack.workflow.steps] == [
+            "local",
+            "analysis",
+            "generation",
+            "validation",
+        ]
+
+    def test_ai_collab_intro_passes_validator(self):
+        from ai_collab.pack.schema_validator import validate_pack
+
+        result = validate_pack(str(TEMPLATE_DIR / "ai_collab_intro.json"))
+        assert result.is_valid, [i.message for i in result.issues if i.severity.value == "error"]

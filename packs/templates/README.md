@@ -32,6 +32,24 @@
 | `xiaohongshu_food_explore.json` | 6 | 小红书探店 |
 | `zhihu_answer_optimization.json` | 6 | 知乎回答优化 |
 
+## `ai_collab_intro.json`：已迁 v2，但仍不可运行
+
+这个包是唯一一个从 v1 骨架迁到 v2 的模板，迁完能过
+`validate_pack`、也能被 `PromptPackV2.from_dict` 解析。迁移补的东西：
+
+- `metadata`：补 `pack_id`、`designer`、`updated_at`，`type` 由 `content_generation`
+  改为 v2 枚举 `creative`
+- `workflow.steps`：每步补 `id`，`type` 由大写 `LOCAL/ANALYSIS/GENERATION/VALIDATION`
+  改为小写枚举，`inputs` 改为 v2 的 `input_fields`
+- 顶层补齐 `domain` / `example_library` / `generation_params` / `optimization` /
+  `performance_tracking` / `collaboration`
+
+**但它仍然跑不出文案**：生成步骤只有 `template` 草稿，没有 `prompt_template`。
+`config.draft_intent` 里存着「这句提示词该怎么写」的草稿，补成 `prompt_template`
+之后才谈得上可运行，那时应该移进 `packs/examples/`。
+
+守门测试：`tests/integration/test_pack_validation.py::TestTemplateV2Migration`。
+
 ## 谁在依赖这些文件
 
 `packs/templates/` 不是死目录，以下位置直接读它：
