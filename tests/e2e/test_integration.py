@@ -13,23 +13,29 @@ import pytest
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
+# 本文件测的是 schema 反序列化，不要求 Pack 可运行。
+# 2026-11-03 目录拆分后，xiaohongshu_beauty_review.json（无 prompt_template）
+# 从 packs/examples/ 移入 packs/templates/。
+SAMPLE_PACK = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "packs",
+    "templates",
+    "xiaohongshu_beauty_review.json",
+)
+
 
 class TestPackWorkflow:
     """Pack 工作流端到端测试"""
 
     def test_load_pack_from_file(self):
         """测试从文件加载 Pack"""
-        pack_path = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "packs",
-            "examples",
-            "xiaohongshu_beauty_review.json",
-        )
+        pack_path = SAMPLE_PACK
 
-        if not os.path.exists(pack_path):
-            pytest.skip("示例 Pack 文件不存在")
+        # 以前这里是 pytest.skip——文件被挪走就静默变绿，什么都没测。
+        # 仓库自带的 fixture 缺失属于真回归，必须红。
+        assert os.path.exists(pack_path), f"缺少示例 Pack: {pack_path}"
 
         with open(pack_path, encoding="utf-8") as f:
             pack_data = json.load(f)
@@ -42,17 +48,11 @@ class TestPackWorkflow:
         """测试 Pack Schema 验证"""
         from ai_collab.pack.schema_v2 import PromptPackV2
 
-        pack_path = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "packs",
-            "examples",
-            "xiaohongshu_beauty_review.json",
-        )
+        pack_path = SAMPLE_PACK
 
-        if not os.path.exists(pack_path):
-            pytest.skip("示例 Pack 文件不存在")
+        # 以前这里是 pytest.skip——文件被挪走就静默变绿，什么都没测。
+        # 仓库自带的 fixture 缺失属于真回归，必须红。
+        assert os.path.exists(pack_path), f"缺少示例 Pack: {pack_path}"
 
         with open(pack_path, encoding="utf-8") as f:
             pack_data = json.load(f)
@@ -67,17 +67,11 @@ class TestPackWorkflow:
         """测试工作流步骤完整性"""
         from ai_collab.pack.schema_v2 import PromptPackV2
 
-        pack_path = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "packs",
-            "examples",
-            "xiaohongshu_beauty_review.json",
-        )
+        pack_path = SAMPLE_PACK
 
-        if not os.path.exists(pack_path):
-            pytest.skip("示例 Pack 文件不存在")
+        # 以前这里是 pytest.skip——文件被挪走就静默变绿，什么都没测。
+        # 仓库自带的 fixture 缺失属于真回归，必须红。
+        assert os.path.exists(pack_path), f"缺少示例 Pack: {pack_path}"
 
         with open(pack_path, encoding="utf-8") as f:
             pack_data = json.load(f)

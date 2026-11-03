@@ -102,7 +102,9 @@ A Pack is JSON defining:
 
 ### Example
 
-See packs/examples/email-auto-reply.json.
+See packs/examples/xiaohongshu_knowledge_creator.json (runnable, passes validation).
+Structural skeletons without `prompt_template` live in packs/templates/ — copying those
+produces empty results, they are reference material only.
 
 ### Creating Custom Packs
 

@@ -10,6 +10,12 @@ from pathlib import Path
 import pytest
 
 PACK_DIR = Path(__file__).resolve().parents[2] / "packs" / "examples"
+# 2026-11-03 起目录按「能不能跑」拆分：
+#   packs/examples/  只放通过 validate_pack 的可运行包
+#   packs/templates/ 放没有 prompt_template 的结构参考（原 15 个历史示例包）
+# 下面几个结构类断言的对象（demo-pack / ai_collab_intro / error-handling-workflow）
+# 都是结构参考，读 TEMPLATE_DIR，不要因为文件搬走就静默 skip。
+TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "packs" / "templates"
 
 
 def _load_all_packs():
@@ -87,9 +93,8 @@ class TestBackwardCompatibility:
 
     def test_demo_pack_no_branches(self):
         """demo-pack 无 branches 字段，顺序执行"""
-        demo_path = PACK_DIR / "demo-pack.json"
-        if not demo_path.exists():
-            pytest.skip("demo-pack.json not found")
+        demo_path = TEMPLATE_DIR / "demo-pack.json"
+        assert demo_path.exists(), f"缺少结构参考包: {demo_path}"
         with open(demo_path, encoding="utf-8") as f:
             data = json.load(f)
         for step in data.get("workflow", {}).get("steps", []):
@@ -97,9 +102,8 @@ class TestBackwardCompatibility:
 
     def test_ai_collab_intro_no_branches(self):
         """ai_collab_intro 无 branches 字段"""
-        intro_path = PACK_DIR / "ai_collab_intro.json"
-        if not intro_path.exists():
-            pytest.skip("ai_collab_intro.json not found")
+        intro_path = TEMPLATE_DIR / "ai_collab_intro.json"
+        assert intro_path.exists(), f"缺少结构参考包: {intro_path}"
         with open(intro_path, encoding="utf-8") as f:
             data = json.load(f)
         for step in data.get("workflow", {}).get("steps", []):
@@ -111,9 +115,8 @@ class TestBranchPackStructure:
 
     def test_error_handling_workflow_branches(self):
         """error-handling-workflow 分支目标步骤存在"""
-        branch_path = PACK_DIR / "error-handling-workflow.json"
-        if not branch_path.exists():
-            pytest.skip("error-handling-workflow.json not found")
+        branch_path = TEMPLATE_DIR / "error-handling-workflow.json"
+        assert branch_path.exists(), f"缺少结构参考包: {branch_path}"
         with open(branch_path, encoding="utf-8") as f:
             data = json.load(f)
 
@@ -129,9 +132,8 @@ class TestBranchPackStructure:
 
     def test_branch_condition_type_valid(self):
         """分支 condition_type 有效"""
-        branch_path = PACK_DIR / "error-handling-workflow.json"
-        if not branch_path.exists():
-            pytest.skip("error-handling-workflow.json not found")
+        branch_path = TEMPLATE_DIR / "error-handling-workflow.json"
+        assert branch_path.exists(), f"缺少结构参考包: {branch_path}"
         with open(branch_path, encoding="utf-8") as f:
             data = json.load(f)
 
@@ -145,12 +147,29 @@ class TestBranchPackStructure:
 
 
 class TestPackCount:
-    """验证 Pack 数量"""
+    """目录口径守门：examples 只收能跑的，templates 收结构参考"""
 
-    def test_at_least_15_packs(self):
-        """至少 15 个 Pack 示例"""
-        pack_files = list(PACK_DIR.glob("*.json"))
-        assert len(pack_files) >= 15, f"Only {len(pack_files)} packs found"
+    def test_examples_all_valid(self):
+        """packs/examples/ 下每个包都必须通过 validate_pack
+
+        这是「examples」这个名字的唯一保证。以前这里断言的是「至少 15 个包」，
+        但 15 个里 13 个跑不起来——数量够了、质量是假的。数量换成正确性。
+        """
+        from ai_collab.pack.schema_validator import validate_pack
+
+        pack_files = sorted(PACK_DIR.glob("*.json"))
+        assert pack_files, "packs/examples/ 为空，示例目录不该是空的"
+
+        invalid = [p.name for p in pack_files if not validate_pack(str(p)).is_valid]
+        assert not invalid, (
+            f"packs/examples/ 下这些包未通过 validate_pack: {invalid}。"
+            "不可运行的包应放 packs/templates/。"
+        )
+
+    def test_templates_has_structural_corpus(self):
+        """packs/templates/ 保留结构参考语料（原 15 个历史示例包）"""
+        template_files = list(TEMPLATE_DIR.glob("*.json"))
+        assert len(template_files) >= 15, f"Only {len(template_files)} templates found"
 
     def test_all_packs_valid_json(self):
         """所有 Pack 都是有效 JSON"""

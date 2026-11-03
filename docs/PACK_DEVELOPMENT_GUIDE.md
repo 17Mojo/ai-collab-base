@@ -103,8 +103,15 @@ Add conditional logic to workflow:
 ### Step 1: Copy Template
 
 ```bash
-cp packs/examples/email-auto-reply.json packs/custom/my-pack.json
+# 结构参考（骨架，需自己补 prompt_template）
+cp packs/templates/email-auto-reply.json packs/custom/my-pack.json
+
+# 或者从能跑的示例起步，改起来更快
+cp packs/examples/xiaohongshu_knowledge_creator.json packs/custom/my-pack.json
 ```
+
+> 目录约定（2026-11-03 起）：`packs/examples/` 只放通过 `validate_pack` 的可运行包；
+> 没有 `prompt_template` 的结构骨架在 `packs/templates/`，照抄会得到空结果。
 
 ### Step 2: Edit Metadata
 

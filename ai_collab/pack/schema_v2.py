@@ -1,7 +1,8 @@
 # Prompt Pack v2.0 Schema
 # Status: COMPLETED (v2.0.0)
 # Completed: 2026-02-27
-# Examples: packs/examples/xiaohongshu_beauty_review.json, packs/examples/generic_content_writer.json
+# Examples: packs/examples/xiaohongshu_knowledge_creator.json（可运行、通过 validate_pack）
+# 结构参考（无 prompt_template、不可运行）在 packs/templates/
 
 """
 Prompt Pack v2.0 Schema
