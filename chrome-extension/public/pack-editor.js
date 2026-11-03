@@ -126,7 +126,9 @@ function renderEmptyState() {
  */
 function createPackCard(pack) {
   const meta = pack.metadata || {};
-  const packId = meta.pack_id || pack.pack_id;
+  // 只认 metadata.pack_id 一条轨道（pack.pack_id 是后端形状的顶层轨道，
+  // 导入侧已收口不认；这里若继续回退，会把不合法的包显示成可编辑）。
+  const packId = meta.pack_id;
   const isDefault = pack.isDefault;
 
   const card = document.createElement('div');
@@ -199,7 +201,7 @@ function closeEditor() {
 function populateForm(pack) {
   const meta = pack.metadata || {};
 
-  packIdInput.value = meta.pack_id || pack.pack_id || '';
+  packIdInput.value = meta.pack_id || '';
   packNameInput.value = meta.pack_name || meta.name || '';
   packDescriptionInput.value = meta.description || '';
   packCategorySelect.value = meta.type || 'custom';
@@ -386,7 +388,7 @@ async function exportSelectedPacks() {
  */
 function getSelectedPackIds() {
   // 目前实现：返回所有自定义 Pack
-  return cachedPacks.filter(p => !p.isDefault).map(p => p.metadata?.pack_id || p.pack_id);
+  return cachedPacks.filter(p => !p.isDefault).map(p => p.metadata?.pack_id);
 }
 
 /**
