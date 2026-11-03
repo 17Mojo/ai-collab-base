@@ -97,17 +97,34 @@
     {
       "id": "N9",
       "priority": "P1",
-      "status": "open",
-      "title": "test_studio_integration 4 条常红：/api/notebooklm/generate 返回 404",
+      "status": "closed",
+      "title": "test_studio_integration 4 条常红：探活判据失效，8000 被别的项目占着也算「后端可达」",
       "reader": "任何看 CI 结果的人——4 条常红会把真红埋掉，让人养成「红是正常」的习惯",
       "where": [
-        "tests/integration/test_studio_integration.py:166,180,192,206,220"
+        "tests/integration/test_studio_integration.py:35-46"
       ],
-      "detail": "测试对 /api/notebooklm/generate 发请求，但进程内根本没有这个路由 ⇒ 404。4 个用例长期失败，与本次改动无关，但每次 CI 都要人工绕过去判断。",
+      "detail": "**【回溯修正】原 detail 写「进程内根本没有这个路由 ⇒ 404」——这句是错的。** 路由一直存在：api/notebooklm.py:324 `@router.post(\"/generate\")`，main.py:208 挂在 prefix `/api/notebooklm`，完整路径正是 `/api/notebooklm/generate`。真实根因是三层：① 8000 端口被另一个项目占着（`~/Documents/multi-vision agent rag/vqa_multimodal_rag/backend`，OpenAPI 386 条路径、0 条含 notebooklm）；② 测试探活探 `/api/health`，而本仓 health 路由是 `/health`（main.py:205 无 prefix），本仓没有 `/api/health`；③ 身份判据写成 `\"ai-collab\" in body or r.status == 200`，而本仓 health 返回 `\"service\": \"prompt-pack-api\"`（health.py:24）⇒ `ai-collab` 永不匹配，`or r.status == 200` 让任何占着 8000 的服务都算「可达」。三者合起来：冒充者有 `/api/health`（200）⇒ 探活成功 ⇒ 4 条测试去打它的 `/api/notebooklm/generate` ⇒ 404 恒红。",
       "impact": "CI 的红/绿信号被污染：真缺陷出现时容易被当成「又是那 4 条」忽略。",
-      "fix": "要么实现该路由并让测试通过，要么把测试标 skip 并写明原因，要么删掉死测试。不能让它继续常红。",
+      "fix": "探活改探本仓真实存在的 `/health`，身份判据认 `\"prompt-pack-api\"`，删掉 `or r.status == 200`。实测：修复前 4 failed / 9 passed / 1 skipped，修复后 0 failed / 9 passed / 5 skipped，4 条正确转 SKIPPED（理由「Backend not running on 127.0.0.1:8000」）。",
       "found_at": "2026-11-03",
-      "evidence": "pytest tests/integration/test_studio_integration.py 4 failed，全为 404；该文件 0 处引用 pack 路径"
+      "closed_at": "2026-11-03",
+      "evidence": "curl http://127.0.0.1:8000/openapi.json ⇒ title「Multi-Vision Agent RAG System 1.0.0」、386 条路径、含 notebooklm 的 0 条；lsof -iTCP:8000 ⇒ PID 24989，cwd 为 multi-vision agent rag/vqa_multimodal_rag/backend；AST 枚举本仓路由表确认 /api/notebooklm/generate 在列；pytest 修复前后对比见上"
+    },
+    {
+      "id": "N12",
+      "priority": "P2",
+      "status": "open",
+      "title": "Studio 4 条集成测试至今从未在本仓后端上真正执行过",
+      "reader": "以为「4 条转绿/转跳过就等于测过了」的人",
+      "where": [
+        "tests/integration/test_studio_integration.py:155-215",
+        "local-backend/app/api/notebooklm.py:324"
+      ],
+      "detail": "N9 修好后这 4 条不再常红，但它们只是**正确地跳过**了。要真正跑到，需要本仓后端（Prompt Pack API）在 127.0.0.1:8000 起来，而该端口当前被另一个项目占用。也就是说 `/api/notebooklm/generate` 这条链路（含 audio/video/slides/batch 产物生成）**从未被端到端验证过**。",
+      "impact": "无 CI 噪音，但存在未验证链路：Studio 产物生成的真实行为（返回结构、artifact_id 是否给出、错误路径）都是空白。",
+      "fix": "起本仓后端到 8000（或让测试的 BASE_URL 可用环境变量覆盖，改指向本仓实际端口）后跑一次这 4 条，把真实结果补进台账。跑之前先确认 8000 没被占。",
+      "found_at": "2026-11-03",
+      "evidence": "N9 修复后 pytest 输出 9 passed / 5 skipped，4 条 skip 理由均为「Backend not running on 127.0.0.1:8000」；本仓 health 路由为 /health，与测试原探的 /api/health 不符，说明这套测试从未针对本仓后端校准过"
     },
     {
       "id": "N10",
