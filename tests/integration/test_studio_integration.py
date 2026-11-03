@@ -34,15 +34,24 @@ import urllib.request
 
 BACKEND_REACHABLE = False
 try:
-    # 既要能 TCP 连接，又要返回 ai-collab 后端的标识
+    # 既要能 TCP 连接，又要确认 8000 上跑的**是本仓后端**——不是端口上有个 HTTP 服务就算。
     s = socket.create_connection(("127.0.0.1", 8000), timeout=0.5)
     s.close()
-    # 检查返回是否是 ai-collab
-    req = urllib.request.Request("http://127.0.0.1:8000/api/health")
+    # 身份判据取本仓真实的响应体标识：
+    #   - 路径探 `/health`（本仓 health.router 挂在无 prefix 的 `app.include_router`，
+    #     见 main.py:205；本仓**没有** `/api/health`）
+    #   - 标识认 `"prompt-pack-api"`（health.py:24 的 `service` 字段）
+    #
+    # 此前这里探 `/api/health`（本仓没这条路由）且判据是
+    # `"ai-collab" in body or r.status == 200`：`ai-collab` 永不匹配本仓响应，
+    # `or r.status == 200` 又让**任何**占着 8000 的服务都算「后端可达」⇒
+    # 8000 被别的项目占着时，4 条 Studio 测试会去打一个没有
+    # `/api/notebooklm/*` 的应用，恒红 404 而不是跳过。
+    req = urllib.request.Request("http://127.0.0.1:8000/health")
     with urllib.request.urlopen(req, timeout=1) as r:
         body = r.read().decode(errors="ignore")
-        BACKEND_REACHABLE = "ai-collab" in body or r.status == 200
-except (OSError, Exception):
+        BACKEND_REACHABLE = "prompt-pack-api" in body
+except Exception:
     BACKEND_REACHABLE = False
 
 
