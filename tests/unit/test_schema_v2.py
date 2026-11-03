@@ -104,6 +104,7 @@ class TestWorkflowStep:
             StepType.VALIDATION,
             StepType.FUSION,
             StepType.TRACKING,
+            StepType.AI,
         ]
 
         for step_type in step_types:
@@ -538,6 +539,22 @@ class TestPromptPackV2:
 
         assert restored.metadata.pack_id == pack.metadata.pack_id
         assert restored.metadata.pack_name == pack.metadata.pack_name
+
+    @pytest.mark.parametrize(
+        "raw_type,expected",
+        [
+            ("ANALYSIS", StepType.ANALYSIS),
+            ("Generation", StepType.GENERATION),
+            ("ai", StepType.AI),
+            ("AI", StepType.AI),
+        ],
+    )
+    def test_from_dict_normalizes_step_type_case(self, raw_type, expected):
+        """四套协议收口：from_dict 对 step.type 做大小写归一化"""
+        data = create_xiaohongshu_base().to_dict()
+        data["workflow"]["steps"] = [{"id": "step_1", "name": "步骤1", "type": raw_type}]
+        restored = PromptPackV2.from_dict(data)
+        assert restored.workflow.steps[0].type == expected
 
     def test_full_pack_roundtrip_symmetry(self):
         """完整 pack to_dict → from_dict → to_dict 双向对称

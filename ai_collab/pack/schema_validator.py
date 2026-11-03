@@ -100,7 +100,7 @@ class PackSchemaValidator:
     REQUIRED_STEP_FIELDS = ["id", "name", "type"]
 
     # 有效的 step 类型
-    VALID_STEP_TYPES = ["local", "analysis", "generation", "validation", "fusion", "tracking"]
+    VALID_STEP_TYPES = ["local", "analysis", "generation", "validation", "fusion", "tracking", "ai"]
 
     # 有效的目标平台 — 对齐 schema_v2.py TargetPlatform Enum
     VALID_PLATFORM_TYPES = ["xiaohongshu", "weibo", "douyin", "bilibili", "generic"]

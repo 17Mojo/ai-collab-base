@@ -446,7 +446,7 @@ class PackToStudioConverter:
         prompt = ""
 
         for step in pack["workflow"]["steps"]:
-            if step["type"] == "GENERATION":
+            if step["type"].upper() == "GENERATION":
                 prompt += step.get("template", "") + "\n"
 
         return prompt.strip()
@@ -456,7 +456,7 @@ class PackToStudioConverter:
         variables = []
 
         for step in pack["workflow"]["steps"]:
-            if step["type"] == "LOCAL":
+            if step["type"].upper() == "LOCAL":
                 for inp in step.get("inputs", []):
                     variables.append(
                         {
@@ -477,7 +477,7 @@ class PackToStudioConverter:
             studio_step = {"name": step["name"], "type": step["type"], "config": {}}
 
             # 转换配置
-            if step["type"] == "GENERATION":
+            if step["type"].upper() == "GENERATION":
                 studio_step["config"]["template"] = step.get("template", "")
                 studio_step["config"]["params"] = step.get("params", {})
 

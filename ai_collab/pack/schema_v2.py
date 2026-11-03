@@ -37,6 +37,7 @@ class StepType(Enum):
     VALIDATION = "validation"  # 交叉验证
     FUSION = "fusion"  # 智能融合
     TRACKING = "tracking"  # 发布追踪
+    AI = "ai"  # Chrome 侧统一 AI 调用原语
 
 
 class TargetPlatform(Enum):
@@ -720,7 +721,7 @@ class PromptPackV2:
             WorkflowStep(
                 id=step["id"],
                 name=step["name"],
-                type=StepType(step["type"]),
+                type=StepType(step["type"].lower()),
                 description=step.get("description", ""),
                 input_fields=step.get("input_fields", []),
                 output_field=step.get("output_field", ""),
