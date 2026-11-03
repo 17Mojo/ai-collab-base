@@ -110,6 +110,21 @@
       "evidence": "pytest tests/integration/test_studio_integration.py 4 failed，全为 404；该文件 0 处引用 pack 路径"
     },
     {
+      "id": "N10",
+      "priority": "P2",
+      "status": "open",
+      "title": "新装扩展零 Pack，DEFAULT_PACKS 只在未接入的死代码里",
+      "reader": "第一次安装扩展的用户：列表为空，需自行导入 Pack 才能用",
+      "where": [
+        "chrome-extension/src/background/service-worker.js:73"
+      ],
+      "detail": "service-worker 注释写「Pack 的事实源是 storage」，DEFAULT_PACKS（knowledge-query / article-writing）只存在于从未接线的 pack-storage-manager.js（PR #13 删除）。新装扩展 chrome.storage.local 为空 ⇒ 零 Pack。疑似有意为之（外部用户应自导入），但未声明。",
+      "impact": "无功能错误，但首次体验是空列表，没有引导以外的兜底。",
+      "fix": "若要默认包，在首次安装时写入 storage；若不要，在 popup 空列表时显式引导导入（已有部分）。",
+      "found_at": "2026-11-03",
+      "evidence": "grep DEFAULT_PACKS 仅命中 pack-storage-manager.js（孤儿）；新装 storage 为空"
+    },
+    {
       "id": "N1",
       "priority": "P1",
       "status": "closed",
