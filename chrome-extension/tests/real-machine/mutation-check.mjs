@@ -282,10 +282,19 @@ const MUTATIONS = [
     why: "Pack 的 id 在 metadata.pack_id 里；用 pack.id 会渲染出 data-id=\"undefined\"",
     target: "public/popup.js",
     find:
-      '        const id = pack.metadata?.pack_id || pack.pack_id || pack.id || "";',
+      '        const id = pack.metadata?.pack_id || "";',
     replace: '        const id = pack.id || "";',
     testFile: "extension-wiring.test.mjs",
     expectTest: "popup 渲染出来的 data-id",
+  },
+  {
+    name: "导入 Pack 的 ID 判据退回双轨",
+    why: "IMPORT_PACKS 一旦又放行顶层 pack_id，就会出现「导入报成功、UI 列得出、点运行必 Pack not found」——中间只有 console.warn 一条线索；而且报错文案写着「缺少 metadata.pack_id」，判据却认 pack.pack_id，文案与行为自相矛盾",
+    target: "src/background/service-worker.js",
+    find: "            const packId = pack.metadata?.pack_id;",
+    replace: "            const packId = pack.metadata?.pack_id || pack.pack_id;",
+    testFile: "pack-import-gate.test.mjs",
+    expectTest: "只带顶层 pack_id 的 Pack 必须被拒，且报错指出缺 metadata.pack_id",
   },
   {
     name: "public 下的脚本里写坏一个语法",

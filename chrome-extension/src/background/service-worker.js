@@ -235,7 +235,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const result = await chrome.storage.local.get("packs");
           const packs = result.packs || [];
           const packId = message.packData?.metadata?.pack_id || message.packId;
-          if (packs.some((p) => (p.metadata?.pack_id || p.pack_id) === packId)) {
+          if (packs.some((p) => p.metadata?.pack_id === packId)) {
             sendResponse({ success: false, error: `Pack 已存在: ${packId}` });
             return;
           }
@@ -255,7 +255,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const packs = result.packs || [];
           const packId = message.packId;
           const index = packs.findIndex(
-            (p) => (p.metadata?.pack_id || p.pack_id) === packId,
+            (p) => p.metadata?.pack_id === packId,
           );
           if (index === -1) {
             sendResponse({ success: false, error: `Pack 不存在: ${packId}` });
@@ -276,7 +276,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const result = await chrome.storage.local.get("packs");
           const packs = result.packs || [];
           const filtered = packs.filter(
-            (p) => (p.metadata?.pack_id || p.pack_id) !== message.packId,
+            (p) => p.metadata?.pack_id !== message.packId,
           );
           await chrome.storage.local.set({ packs: filtered });
           sendResponse({ success: true, packId: message.packId });
@@ -293,7 +293,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           let packs = result.packs || [];
           if (message.packIds && Array.isArray(message.packIds)) {
             packs = packs.filter((p) =>
-              message.packIds.includes(p.metadata?.pack_id || p.pack_id),
+              message.packIds.includes(p.metadata?.pack_id),
             );
           }
           const data = JSON.stringify({ packs }, null, 2);
@@ -331,13 +331,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const errors = [];
 
           for (const pack of incoming) {
-            const packId = pack.metadata?.pack_id || pack.pack_id;
+            // 只认 metadata.pack_id 一条轨道。
+            // 此前这里是 `pack.metadata?.pack_id || pack.pack_id`，把后端形状的
+            // 顶层 pack_id 也放行，而 pack-executor 的 loadPack() 严格只认
+            // metadata.pack_id ⇒ 导入报成功、UI 列得出、点运行必 "Pack not found"，
+            // 中间只有一条 console.warn。判据收口后，下面这句「缺少 metadata.pack_id」
+            // 才是真的。
+            const packId = pack.metadata?.pack_id;
             if (!packId) {
               errors.push({ packId: "(无 id)", error: "缺少 metadata.pack_id" });
               continue;
             }
             const exists = existing.some(
-              (p) => (p.metadata?.pack_id || p.pack_id) === packId,
+              (p) => p.metadata?.pack_id === packId,
             );
             if (exists && message.mergeStrategy === "skip") {
               errors.push({ packId, error: "已存在，跳过" });
@@ -345,7 +351,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             if (exists && message.mergeStrategy === "overwrite") {
               const idx = existing.findIndex(
-                (p) => (p.metadata?.pack_id || p.pack_id) === packId,
+                (p) => p.metadata?.pack_id === packId,
               );
               existing[idx] = pack;
             } else {

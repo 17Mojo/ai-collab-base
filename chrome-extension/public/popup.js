@@ -54,13 +54,17 @@ async function loadPacks() {
         </li>
       `;
     } else {
-      // Pack 的 id 藏在 metadata.pack_id 里（存储层、编辑器、执行器都用它）。
-      // 此前这里写的是 pack.id —— 那个字段根本不存在 ⇒ data-id="undefined"
-      // ⇒ 点击后执行的是 id 为 "undefined" 的 Pack。
+      // Pack 的 id 只有一条轨道：metadata.pack_id（存储层、编辑器、执行器都用它）。
+      // 此前这里写成 `pack.metadata?.pack_id || pack.pack_id || pack.id`，
+      // 后两项是不存在的字段（pack.id 那次让 data-id="undefined"，点下去执行的是
+      // id 为 "undefined" 的 Pack；pack.pack_id 是后端形状的顶层轨道，导入侧已收口不认）。
       packList.innerHTML = packs.map(pack => {
-        const id = pack.metadata?.pack_id || pack.pack_id || pack.id || "";
-        const name = pack.metadata?.pack_name || pack.name || id;
-        const desc = pack.metadata?.description || pack.description || "无描述";
+        const id = pack.metadata?.pack_id || "";
+        // pack.name / pack.description 与上面的 pack.id 同类：从来没有任何写入方
+        // 设过这两个顶层字段（写入方只有 CREATE/IMPORT，都只写 metadata.*）。
+        // 留着只是把一套不存在的协议继续描述下去 ⇒ 直接去掉。
+        const name = pack.metadata?.pack_name || id;
+        const desc = pack.metadata?.description || "无描述";
         return `
         <li class="pack-item" data-id="${id}">
           <div class="pack-name">${name}</div>
@@ -115,7 +119,7 @@ async function selectPack(packId) {
   try {
     const result = await chrome.storage.local.get('packs');
     const packs = result.packs || [];
-    const pack = packs.find(p => (p.metadata?.pack_id || p.pack_id || p.id) === packId);
+    const pack = packs.find(p => p.metadata?.pack_id === packId);
     const firstInputStep = pack?.workflow?.steps?.find(s => Array.isArray(s.input_fields) && s.input_fields.length);
     const fields = firstInputStep?.input_fields || [];
 
