@@ -396,6 +396,11 @@ class TestValidateStep:
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any("Invalid step type" in i.message for i in r.issues)
 
+    def test_ai_step_type_is_valid(self, minimal_valid_pack):
+        minimal_valid_pack["workflow"]["steps"][0]["type"] = "ai"
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert not any("Invalid step type" in i.message for i in r.issues)
+
     def test_input_fields_not_list(self, minimal_valid_pack):
         minimal_valid_pack["workflow"]["steps"][0]["input_fields"] = "x"
         r = PackSchemaValidator().validate_data(minimal_valid_pack)

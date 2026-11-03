@@ -122,6 +122,32 @@ def test_step_unknown_type_returns_skipped():
     assert "FOO_BAR" in out["message"]
 
 
+@pytest.mark.parametrize(
+    "raw_type,expected",
+    [
+        ("local", "LOCAL"),
+        ("analysis", "ANALYSIS"),
+        ("generation", "GENERATION"),
+        ("validation", "VALIDATION"),
+        ("fusion", "FUSION"),
+        ("tracking", "TRACKING"),
+        ("Local", "LOCAL"),
+        ("ANALYSIS", "ANALYSIS"),
+        ("ai", "AI"),
+        ("AI", "AI"),
+    ],
+)
+def test_step_dispatch_case_insensitive(tmp_path, raw_type, expected):
+    pack = _make_minimal_pack()
+    exe = PackExecutorMVP(pack)
+    step = {"type": raw_type}
+    if expected == "TRACKING":
+        step["output_file"] = str(tmp_path / "t.json")
+    out = exe._execute_step(step)
+    assert out["status"] == "success"
+    assert out["step_type"] == expected
+
+
 def test_step_missing_type_defaults_to_unknown():
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)

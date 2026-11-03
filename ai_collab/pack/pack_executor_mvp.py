@@ -91,7 +91,7 @@ class PackExecutorMVP:
         Returns:
             步骤执行结果
         """
-        step_type = step.get("type", "unknown")
+        step_type = step.get("type", "unknown").upper()
 
         # MVP版本：实现核心步骤类型
         if step_type == "LOCAL":
@@ -106,6 +106,10 @@ class PackExecutorMVP:
             return self._execute_fusion(step)
         elif step_type == "TRACKING":
             return self._execute_tracking(step)
+        elif step_type == "AI":
+            out = self._execute_generation(step)
+            out["step_type"] = "AI"
+            return out
         else:
             return {"status": "skipped", "message": f"步骤类型 {step_type} 暂不支持"}
 
