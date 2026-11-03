@@ -32,7 +32,7 @@
 | 1 | 打开 Extension Popup | 显示平台选择界面 |
 | 2 | 选择 "Pack 管理" 标签 | 显示 Pack 列表 |
 | 3 | 点击 "上传 Pack" 按钮 | 打开文件选择对话框 |
-| 4 | 选择 `packs/examples/ai_collab_intro.json` | 显示上传进度 |
+| 4 | 选择 `packs/templates/ai_collab_intro.json` | 显示上传进度 |
 | 5 | 点击 "验证" 按钮 | 显示验证结果 ✅ |
 | 6 | 点击 "执行 Pack" 按钮 | 开始执行，显示进度 |
 | 7 | 观察执行结果 | 显示步骤执行状态 |

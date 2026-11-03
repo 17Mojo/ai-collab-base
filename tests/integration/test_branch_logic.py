@@ -11,7 +11,9 @@ import pytest
 # Import schema classes
 from ai_collab.pack.schema_v2 import BranchCondition, RegexPattern, StepType, WorkflowStep
 
-PACK_DIR = Path("packs/examples")
+# error-handling-workflow.json 是唯一带 branches 的 Pack，2026-11-03 随
+# 「examples = 能跑的包」口径调整移入 templates/。本测试只验分支结构，不要求可运行。
+PACK_DIR = Path("packs/templates")
 
 
 class TestRegexPattern:

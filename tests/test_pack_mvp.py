@@ -28,7 +28,7 @@ def test_ai_collab_intro_pack():
     print("=" * 60)
 
     # 1. 加载Pack
-    pack_file = "packs/examples/ai_collab_intro.json"
+    pack_file = "packs/templates/ai_collab_intro.json"
     pack = load_pack(pack_file)
 
     print(f"\n✅ Pack加载成功: {pack['metadata']['pack_name']}")

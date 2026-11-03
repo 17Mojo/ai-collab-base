@@ -177,7 +177,10 @@ jobs:
           python-version: "3.10"
 
       - name: Validate Pack JSONs
+        # 两个目录都要能解析：examples 是可运行包，templates 是结构参考。
+        # 注意这里只查 JSON 语法——「能不能跑」由 tests/integration/test_pack_validation.py
+        # 的 test_examples_all_valid 守（走 validate_pack），别把那个删了只留这个。
         run: |
-          for pack in packs/examples/*.json; do
+          for pack in packs/examples/*.json packs/templates/*.json; do
             python -c "import json; json.load(open('$pack'))" && echo "✅ $pack"
           done

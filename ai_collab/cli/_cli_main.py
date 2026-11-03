@@ -4694,11 +4694,13 @@ def _handle_template_command(args, packs_root):
         "quality_validation_rules": "1. 输出内容准确\n2. 格式规范\n3. 语言流畅",
     }
 
-    # 保存模板到 packs/examples/
-    examples_dir = Path(packs_root) / "examples"
-    examples_dir.mkdir(parents=True, exist_ok=True)
+    # 保存模板到 packs/templates/
+    # 生成的骨架没有 prompt_template，按 2026-11-03 的目录约定属「结构参考」，
+    # 不能落进 packs/examples/（该目录只收通过 validate_pack 的可运行包）。
+    templates_dir = Path(packs_root) / "templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
 
-    output_path = examples_dir / f"{template['metadata']['pack_id']}.json"
+    output_path = templates_dir / f"{template['metadata']['pack_id']}.json"
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(template, f, ensure_ascii=False, indent=2)
