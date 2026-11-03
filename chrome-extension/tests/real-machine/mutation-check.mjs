@@ -365,6 +365,37 @@ const MUTATIONS = [
     testFile: "extension-wiring.test.mjs",
     expectTest: "交付给外部用户的那个冒烟 Pack",
   },
+  {
+    name: "D5 解包退回（定向标签页路径返回整个信封）",
+    why:
+      "D5 之前 _executeAIStep 把整条回话信封原样返回，" +
+      "于是 final_content 里是 6 个 [object Object]——用户看到的成品正文是一串占位符。" +
+      "修法是只取 response.result.content；退回去就等于把这个缺陷放回来",
+    target: "src/background/pack-executor.js",
+    find:
+      "      assertAIStepSucceeded(response, targetTabId);\n" +
+      '      return response?.result?.content ?? "";',
+    replace:
+      "      assertAIStepSucceeded(response, targetTabId);\n" +
+      "      return response;",
+    testFile: "pack-step-types.test.mjs",
+    expectTest: "_executeAIStep 解包回复内容，output 全为文本且无 [object Object]",
+  },
+  {
+    name: "D5 解包退回（广播路径返回整个信封）",
+    why:
+      "同上，但走的是「没有目标标签页」那条广播分支——" +
+      "两条 return 都得守，只守一条等于 D5 只修了一半",
+    target: "src/background/pack-executor.js",
+    find:
+      "    assertAIStepSucceeded(response, null);\n" +
+      '    return response?.result?.content ?? "";',
+    replace:
+      "    assertAIStepSucceeded(response, null);\n" +
+      "    return response;",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "没有目标标签页时才广播，并且要标明是广播",
+  },
 ];
 
 /**
