@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const packEditorBtn = document.getElementById('openPackEditorBtn');
   if (packEditorBtn) {
     packEditorBtn.addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('public/pack-editor.html') });
+      chrome.tabs.create({ url: chrome.runtime.getURL('pack-editor.html') });
     });
   }
 
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const styleEditorBtn = document.getElementById('openStyleEditorBtn');
   if (styleEditorBtn) {
     styleEditorBtn.addEventListener('click', () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL('public/style-editor.html') });
+      chrome.tabs.create({ url: chrome.runtime.getURL('style-editor.html') });
     });
   }
 

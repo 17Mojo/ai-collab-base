@@ -329,21 +329,21 @@ const MUTATIONS = [
     name: "popup 不再打开 Pack 编辑器",
     why: "popup 是外部用户看到的第一屏；没有导入入口就卡在第一步",
     target: "public/popup.js",
-    find: "      url: chrome.runtime.getURL('public/pack-editor.html')",
+    find: "      url: chrome.runtime.getURL('pack-editor.html')",
     replace: "      url: 'about:blank'",
     testFile: "extension-wiring.test.mjs",
     expectTest: "popup 必须有「导入 Pack」的入口",
   },
   {
-    name: "构建不再复制 public/ 嵌套那份",
+    name: "getURL 退回嵌套布局",
     why:
-      "代码里 getURL('public/pack-editor.html') 指的是嵌套布局；" +
-      "不复制的话那个 URL 在装好的扩展里 404，「导入 Pack」直接断掉",
-    target: "static-assets.cjs",
-    find: "    copyFileSync(src, resolve(nestedDir, file));\n",
-    replace: "",
+      "产物是扁平布局，getURL('public/...') 在装好的扩展里 404；" +
+      "「导入 Pack」「风格编辑器」直接断掉",
+    target: "public/popup.js",
+    find: "      url: chrome.runtime.getURL('pack-editor.html')",
+    replace: "      url: chrome.runtime.getURL('public/pack-editor.html')",
     testFile: "extension-wiring.test.mjs",
-    expectTest: "在构建产物里必须真的存在",
+    expectTest: "代码里 getURL 指到的页面，在构建产物里必须真的存在",
   },
   {
     name: "把交付给外部用户的冒烟 Pack 的提示词改掉",
