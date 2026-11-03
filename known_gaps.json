@@ -66,17 +66,18 @@
     {
       "id": "N7",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "D5 的解包修复没有变异覆盖",
       "reader": "维护变异门的人：这套「证明测试真能抓缺陷」的机制，对本次最关键的修复是失效的",
       "where": [
         "chrome-extension/tests/real-machine/mutation-check.mjs"
       ],
-      "detail": "MUTATIONS 共 29 条，针对 pack-executor.js 的只有 1 条，且是「定向投递」而非「解包」。D5（AI 回复解包）是把 `return response` 改成 `return response?.result?.content ?? \"\"`，这条改动没有任何变异盯着。",
+      "detail": "MUTATIONS 共 29 条，针对 pack-executor.js 的只有 1 条，且是「定向投递」而非「解包」。D5（AI 回复解包）是把 `return response` 改成 `return response?.result?.content ?? \"\"`，这条改动没有任何变异盯着。补覆盖时发现解包点有**两处**（定向标签页路径 :692、广播路径 :702），原 fix 只提了一条，只补一条等于 D5 只守一半。",
       "impact": "有人把解包改回去（比如重构时手滑），29/29 依然全杀、CI 依然绿，而 Pack 又会开始产出 [object Object]。",
-      "fix": "加一条变异：find: 'return response?.result?.content ?? \"\";' -> replace: 'return response;'，testFile: pack-step-types.test.mjs，expectTest: '_executeAIStep 解包回复内容'。",
+      "fix": "补两条变异（不是原建议的一条）：定向标签页路径与广播路径各一条，find 用 `assertAIStepSucceeded(...)` 上下文锚定以免两处串味。变异清单 30 → 32 条，两条各被指定测试杀死。",
       "found_at": "2026-11-03",
-      "evidence": "mutation-check.mjs MUTATIONS 数组，pack-executor.js 仅 1 条且 target 为定向投递"
+      "closed_at": "2026-11-03",
+      "evidence": "mutation-check.mjs MUTATIONS 数组，pack-executor.js 现有 3 条（定向投递 1 + 解包 2）；本地预检 32/32 全杀，最终以 CI 日志为准"
     },
     {
       "id": "N8",
