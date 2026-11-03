@@ -118,7 +118,15 @@ class PackExecutorMVP:
         print("  📝 本地处理...")
 
         # 获取输入
-        inputs = step.get("inputs", [])
+        # v1 形状：inputs 是 [{key, source, required, default}]，自带取值来源。
+        # v2 形状：input_fields 只是字段名列表，来源固定为 user_input。
+        # 两种都收，避免 Pack 从 v1 迁到 v2 之后执行器就哑了。
+        inputs = step.get("inputs")
+        if not inputs:
+            inputs = [
+                {"key": field, "source": "user_input"}
+                for field in step.get("input_fields", [])
+            ]
         for inp in inputs:
             key = inp.get("key")
             source = inp.get("source", "user_input")
@@ -167,12 +175,21 @@ class PackExecutorMVP:
             return self._execute_generation_with_consensus(step)
 
         # MVP版本：基于模板生成
-        template = step.get("template", "默认模板")
+        # v2 Pack 用 prompt_template，v1 用 template，取到哪个用哪个。
+        template = step.get("template") or step.get("prompt_template") or "默认模板"
         _ = step.get("params", {})  # 保留参数获取以维持原有接口
 
         # 简单模板替换
+        # 变量来源 = 用户输入 + 执行上下文。只从 context 取会让「没有 local 步骤
+        # 把输入搬进 context」的 Pack 留下原样占位符（{topic} 变成字面量输出），
+        # 而且不报错——这类静默失败最难发现。Chrome 侧 _buildPrompt 早已是
+        # { ...output, ...input } 合并，这里对齐。
+        substitute_vars: dict[str, Any] = {
+            **self.context.get("user_input", {}),
+            **self.context,
+        }
         generated_content = template
-        for key, value in self.context.items():
+        for key, value in substitute_vars.items():
             if isinstance(value, str):
                 generated_content = generated_content.replace(f"{{{key}}}", value)
 

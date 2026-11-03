@@ -1,121 +1,228 @@
 {
   "metadata": {
+    "pack_id": "ai-collab-intro",
     "pack_name": "AI协作系统介绍文案生成器",
-    "version": "1.0.0",
-    "type": "content_generation",
-    "author": "Claude Code",
-    "created_at": "2026-02-27",
-    "description": "生成AI协作系统的介绍文案，支持多种风格和平台"
+    "version": "2.0.0",
+    "type": "creative",
+    "description": "生成AI协作系统的介绍文案，支持多种风格和平台",
+    "designer": "Claude Code",
+    "created_at": "2026-02-27T00:00:00",
+    "updated_at": "2026-11-03T00:00:00",
+    "category": "内容创作",
+    "tags": [
+      "AI协作",
+      "介绍文案",
+      "markdown",
+      "结构参考"
+    ],
+    "language": "zh",
+    "estimated_efficiency_gain": "70%"
+  },
+  "domain": {
+    "primary_domain": "AI 协作系统内容创作",
+    "secondary_domains": [
+      "开发者工具推广",
+      "技术产品介绍"
+    ],
+    "target_platforms": [],
+    "target_audience": "开发者、技术决策者",
+    "brand_tone": "专业、清楚、不夸大",
+    "compliance_rules": [
+      "不承诺未实现的能力",
+      "必须写明适用边界",
+      "关键特性要可验证"
+    ]
   },
   "workflow": {
     "steps": [
       {
+        "id": "step_1_collect",
         "name": "收集用户输入",
-        "type": "LOCAL",
+        "type": "local",
         "description": "收集用户提供的主题和关键信息",
-        "inputs": [
-          {
-            "key": "topic",
-            "source": "user_input",
-            "required": true,
-            "description": "主题名称"
-          },
-          {
-            "key": "key_features",
-            "source": "user_input",
-            "required": true,
-            "description": "关键特性列表"
-          },
-          {
-            "key": "target_audience",
-            "source": "user_input",
-            "required": false,
-            "default": "开发者",
-            "description": "目标受众"
-          },
-          {
-            "key": "style",
-            "source": "user_input",
-            "required": false,
-            "default": "专业",
-            "description": "文案风格（专业/轻松/技术）"
+        "input_fields": [
+          "topic",
+          "key_features",
+          "target_audience",
+          "style"
+        ],
+        "output_field": "collected_inputs",
+        "config": {
+          "required_fields": [
+            "topic",
+            "key_features"
+          ],
+          "optional_fields": {
+            "target_audience": "开发者",
+            "style": "专业"
           }
-        ]
+        }
       },
       {
+        "id": "step_2_analyze",
         "name": "分析内容特征",
-        "type": "ANALYSIS",
+        "type": "analysis",
         "description": "分析输入内容，提取关键信息",
-        "analysis_type": "keyword_extraction",
-        "params": {
+        "input_fields": [
+          "topic",
+          "key_features"
+        ],
+        "output_field": "analysis_result",
+        "config": {
+          "analysis_type": "keyword_extraction",
           "extract_keywords": true,
           "analyze_sentiment": true,
           "identify_category": true
         }
       },
       {
+        "id": "step_3_generate",
         "name": "生成介绍文案",
-        "type": "GENERATION",
+        "type": "generation",
         "description": "基于模板和输入生成介绍文案",
+        "input_fields": [
+          "topic",
+          "key_features",
+          "target_audience",
+          "style"
+        ],
+        "output_field": "intro_copy",
         "template": "# {topic}\n\n## 简介\n\n{topic}是一个创新的系统，专为{target_audience}设计。\n\n## 核心特性\n\n{features_section}\n\n## 适用场景\n\n{use_cases}\n\n## 技术优势\n\n{tech_advantages}\n\n---\n*生成时间: {timestamp}*\n*风格: {style}*",
-        "params": {
+        "config": {
           "max_length": 1000,
           "include_examples": true,
-          "format": "markdown"
+          "format": "markdown",
+          "draft_intent": "把 {topic} 介绍给 {target_audience}，风格 {style}。要覆盖：它解决什么问题、核心特性（{key_features}）、适用场景、与替代方案的差别。写 markdown，不要空话。",
+          "needs_prompt_template": true
         }
       },
       {
+        "id": "step_4_validate",
         "name": "验证文案质量",
-        "type": "VALIDATION",
+        "type": "validation",
         "description": "验证生成的文案质量",
-        "validation_rules": [
-          {
-            "type": "length_check",
+        "input_fields": [
+          "intro_copy",
+          "key_features"
+        ],
+        "output_field": "validation_result",
+        "validation_criteria": {
+          "length_check": {
             "min_length": 200,
             "max_length": 2000
           },
-          {
-            "type": "keyword_coverage",
+          "keyword_coverage": {
             "min_coverage": 0.6
           },
-          {
-            "type": "structure_check",
-            "required_sections": ["简介", "核心特性", "适用场景"]
+          "structure_check": {
+            "required_sections": [
+              "简介",
+              "核心特性",
+              "适用场景"
+            ]
           }
-        ]
+        }
       }
     ]
   },
   "quality_metrics": {
-    "coverage": {
-      "weight": 0.3,
-      "description": "关键词覆盖率"
-    },
-    "creativity": {
-      "weight": 0.2,
-      "description": "创意度"
-    },
-    "accuracy": {
-      "weight": 0.3,
-      "description": "准确性"
-    },
-    "engagement": {
-      "weight": 0.2,
-      "description": "吸引力"
-    }
-  },
-  "examples": [
-    {
-      "input": {
-        "topic": "AI协作系统",
-        "key_features": ["双AI协作", "零成本", "完全离线", "自动冲突检测"],
-        "target_audience": "开发者",
-        "style": "专业"
+    "metrics": {
+      "coverage": {
+        "name": "coverage",
+        "description": "关键词覆盖率 - 用户给的关键特性是否都写进去了",
+        "check_method": "contains",
+        "weight": 0.3,
+        "min_threshold": 0.6
       },
-      "expected_output": {
-        "min_length": 300,
-        "must_include": ["双AI协作", "零成本", "完全离线"]
+      "creativity": {
+        "name": "creativity",
+        "description": "创意度 - 表达是否有记忆点，不是模板套话",
+        "check_method": "llm_judge",
+        "weight": 0.2,
+        "min_threshold": 0.5
+      },
+      "accuracy": {
+        "name": "accuracy",
+        "description": "准确性 - 技术描述与实现是否一致，不夸大",
+        "check_method": "llm_judge",
+        "weight": 0.3,
+        "min_threshold": 0.8
+      },
+      "engagement": {
+        "name": "engagement",
+        "description": "吸引力 - 开头是否让人愿意读下去",
+        "check_method": "llm_judge",
+        "weight": 0.2,
+        "min_threshold": 0.6
       }
-    }
-  ]
+    },
+    "normalization_method": "linear",
+    "validation_tolerance": 0.01
+  },
+  "example_library": {
+    "good_examples": [
+      {
+        "id": "example_ai_collab_system",
+        "input": {
+          "topic": "AI协作系统",
+          "key_features": [
+            "双AI协作",
+            "零成本",
+            "完全离线",
+            "自动冲突检测"
+          ],
+          "target_audience": "开发者",
+          "style": "专业"
+        },
+        "output": "AI协作系统让两个 AI 在同一份代码上并行工作而不打架：一个负责写，一个负责审，冲突在提交前就被拦下。全部本地运行，没有云端调用，所以零成本、完全离线。",
+        "description": "四个关键特性齐全、有具体机制、没有形容词堆砌的写法",
+        "score": 0.9
+      }
+    ],
+    "bad_examples": [],
+    "few_shot_template": "主题: {topic}\n受众: {target_audience}\n风格: {style}\n关键特性: {key_features}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": [
+      "叙事角度",
+      "详略程度",
+      "开头方式"
+    ],
+    "confidence_display": true,
+    "critical_facts_only": true,
+    "temperature": 0.7,
+    "output_format": "markdown",
+    "require_code_blocks": false
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "feedback_driven",
+    "auto_refine_threshold": 60.0,
+    "periodic_review_days": 30,
+    "allowed_actions": [
+      "rewrite_intro",
+      "tighten_claims",
+      "add_use_case"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": [
+      "execution_time",
+      "keyword_coverage",
+      "read_through_rate"
+    ],
+    "retention_days": 90,
+    "post_publish_tracking": null
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": true
+  },
+  "system_prompt": "你是技术产品文案作者。写给开发者看，不用营销腔。要求：先说清楚它解决什么问题，再列关键特性，每条特性都要能对应到具体机制；不用形容词堆砌；不确定的能力不写。",
+  "quality_validation_rules": "1. 开头必须明确说清解决什么问题\n2. 每条关键特性要落到具体机制，不能只有名词\n3. 必须有适用场景一节\n4. 不出现未实现能力的承诺\n5. 长度 200-2000 字"
 }

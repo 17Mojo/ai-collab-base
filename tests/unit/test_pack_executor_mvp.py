@@ -877,3 +877,42 @@ class TestModuleMainBlock:
             print(f"STDERR: {result.stderr[:500]}")
         assert "Prompt Pack MVP" in result.stdout
 
+
+
+# --- v2 形状兼容（2026-11-03）---
+# v1 的 local 步骤用 inputs: [{key, source}]，v2 只用 input_fields: ["a","b"]。
+# 迁移后的 Pack 若执行器不认 input_fields，local 步骤会 AttributeError。
+def test_local_step_accepts_v2_input_fields():
+    pack = _make_minimal_pack(
+        steps=[
+            {
+                "id": "s1",
+                "name": "collect",
+                "type": "local",
+                "input_fields": ["topic", "style"],
+                "output_field": "collected",
+            }
+        ]
+    )
+    result = PackExecutorMVP(pack).execute({"topic": "T", "style": "S"})
+    step = result["results"][0]
+    assert step["status"] == "success", step
+    assert step["outputs"] == {"topic": "T", "style": "S"}
+
+
+def test_generation_step_accepts_prompt_template():
+    """v2 用 prompt_template 而不是 template；两处都要能取到。"""
+    pack = _make_minimal_pack(
+        steps=[
+            {
+                "id": "s1",
+                "name": "gen",
+                "type": "generation",
+                "input_fields": ["topic"],
+                "prompt_template": "标题：{topic}",
+            }
+        ]
+    )
+    result = PackExecutorMVP(pack).execute({"topic": "AI协作"})
+    assert result["results"][0]["status"] == "success"
+    assert result["final_content"] == "标题：AI协作"
