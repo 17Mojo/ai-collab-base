@@ -143,12 +143,11 @@ refreshBtn.addEventListener('click', loadPacks);
 //
 // 此前 popup 里**没有任何**导入入口：列表为空时只显示「请先导入 Pack」，
 // 但用户既没有输入框、也没有可点的按钮能去导入 ⇒ 卡在第一步。
-// 导入界面在 Pack 编辑器页里，路径是 public/pack-editor.html
-// （构建时 public/ 会原样复制到 dist/public/，两种布局都打得开）。
+// 导入界面在 Pack 编辑器页里，产物是扁平布局，路径是 pack-editor.html
 openEditorBtn?.addEventListener('click', async () => {
   try {
     await chrome.tabs.create({
-      url: chrome.runtime.getURL('public/pack-editor.html')
+      url: chrome.runtime.getURL('pack-editor.html')
     });
   } catch (error) {
     updateStatus('打开编辑器失败');

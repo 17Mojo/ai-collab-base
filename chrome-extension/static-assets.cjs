@@ -56,16 +56,12 @@ function copyStaticAssets({ rootDir, destDir }) {
   const files = [];
   const icons = [];
 
-  // HTML 与 JS：扁平 + public/ 嵌套各一份
-  const nestedDir = resolve(destDir, "public");
-  if (!existsSync(nestedDir)) mkdirSync(nestedDir, { recursive: true });
+  // HTML 与 JS：扁平布局一份（产物 manifest 与 getURL 都用扁平路径）
   for (const file of STATIC_FILES) {
     const src = resolve(publicDir, file);
     if (!existsSync(src)) continue;
     copyFileSync(src, resolve(destDir, file));
-    copyFileSync(src, resolve(nestedDir, file));
     files.push(file);
-    files.push(`public/${file}`);
   }
 
   // 图标：只在扁平布局下放一份（manifest 指向 icons/iconN.png）
