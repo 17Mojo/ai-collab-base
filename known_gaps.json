@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-11-03",
+  "purpose": "已确认但本次未修的缺陷台账。宁可写下来也不要留在某人脑子里——下一个人接手时不必重新考古一遍。",
+  "conventions": {
+    "id": "N1、N2……递增，永不复用。关闭后把 status 改 closed 并保留条目与结论，不要删。",
+    "priority": {
+      "P0": "阻断交付或产出静默错误",
+      "P1": "影响正确性或 CI 可信度",
+      "P2": "技术债，已知边界内可接受",
+      "P3": "可选改进，不影响当前使用"
+    },
+    "reader": "每条必须写 reader：具体谁会因为这个缺陷被坑。写不出 reader 的条目说明还没想清楚影响。",
+    "where": "文件:行号。行号会随提交漂移，引用前请重新核对；对不上就更新，别照抄旧值。",
+    "status": "open / closed / wontfix"
+  },
+  "gaps": [
+    {
+      "id": "N2",
+      "priority": "P2",
+      "status": "open",
+      "title": "输入面板有 HTML 注入面",
+      "reader": "导入来源不可信 Pack 的用户：恶意包能改弹窗 UI（伪造输入框骗你填凭据），但无法执行脚本",
+      "where": [
+        "chrome-extension/public/popup.js:122-126",
+        "chrome-extension/src/background/service-worker.js:307-310"
+      ],
+      "detail": "selectPack 用模板串拼 innerHTML，把 pack.workflow.steps[].input_fields 的字段名直接插进 HTML；而 IMPORT_PACKS 只做 JSON.parse，不做 schema 校验，字段名完全由 Pack 作者控制。",
+      "impact": "MV3 默认 CSP（script-src 'self'）封掉了内联事件处理器，因此不是可执行 XSS；但可以注入任意标记来篡改弹窗外观，诱导用户往伪造的输入框里填东西。",
+      "fix": "改用 document.createElement + textContent，字段名只当文本节点；或对字段名做 ^[a-z_][a-z0-9_]*$ 白名单。",
+      "found_at": "2026-11-03",
+      "evidence": "popup.js:122 `packInputFields.innerHTML = fields.map(f => ...${f}...)`；service-worker.js:310 仅 `JSON.parse(message.jsonData)`"
+    },
+    {
+      "id": "N3",
+      "priority": "P2",
+      "status": "open",
+      "title": "空输入无校验，提示词带空洞发出去",
+      "reader": "不填输入直接点运行的用户：pack 报 completed，但发出去的提示词是「主题：。」这种残句，AI 回一堆废话",
+      "where": [
+        "chrome-extension/public/popup.js:107-137",
+        "chrome-extension/src/background/pack-executor.js:711-733"
+      ],
+      "detail": "输入框留空时 popup 传入 input.topic = \"\"（空串，不是 undefined），_buildPrompt 的 `value !== undefined` 守卫拦不住空串，于是 {{topic}} 被替换成空；_executeLocalStep 也没校验 pack 自己声明的 required_fields。",
+      "impact": "实测 status=completed，7 条提示词里 3 条出现空洞。用户拿到的是「成功」但内容是残的——最坏的一类失败：不报错。",
+      "fix": "popup 侧必填校验；引擎侧 _executeLocalStep 读 config.required_fields，缺失就 fail 该步骤而不是继续。",
+      "found_at": "2026-11-03",
+      "evidence": "实测空提交 -> status=completed，3/7 提示词空洞"
+    },
+    {
+      "id": "N4",
+      "priority": "P2",
+      "status": "open",
+      "title": "_executeLocalStep 按输入字段名建键，产出对象会被渲染成 [object Object]",
+      "reader": "写了 local 步骤并把它的 output_field 用在后续提示词里的 Pack 作者",
+      "where": [
+        "chrome-extension/src/background/pack-executor.js:623-641",
+        "chrome-extension/src/background/pack-executor.js:711-733"
+      ],
+      "detail": "_executeLocalStep 返回 `{ topic: ..., style: ... }` 这样的对象，却被整体存进 step.output_field（如 topic_info）。下游 prompt_template 里写 {{topic_info}} 时，_buildPrompt 用字符串替换对象，没有 String() 守卫 ⇒ 渲染成 [object Object]。",
+      "impact": "当前示例包里 topic_info 无人消费，所以没暴露。一旦有人按 v2 语义消费 local 步骤产出，就会得到字面量 [object Object]。D4 只修了包定义那一半，引擎侧这一半没动。",
+      "fix": "_executeLocalStep 返回的键名与 output_field 对齐；_buildPrompt 替换前对非字符串值做 String() 或 JSON.stringify，并在值不是字符串时告警。",
+      "found_at": "2026-11-03",
+      "evidence": "pack-executor.js:631-633 inputData[field] = input[field] || output[field]；:727 `prompt.replace(..., value)` 直接塞 value"
+    },
+    {
+      "id": "N7",
+      "priority": "P2",
+      "status": "open",
+      "title": "D5 的解包修复没有变异覆盖",
+      "reader": "维护变异门的人：这套「证明测试真能抓缺陷」的机制，对本次最关键的修复是失效的",
+      "where": [
+        "chrome-extension/tests/real-machine/mutation-check.mjs"
+      ],
+      "detail": "MUTATIONS 共 29 条，针对 pack-executor.js 的只有 1 条，且是「定向投递」而非「解包」。D5（AI 回复解包）是把 `return response` 改成 `return response?.result?.content ?? \"\"`，这条改动没有任何变异盯着。",
+      "impact": "有人把解包改回去（比如重构时手滑），29/29 依然全杀、CI 依然绿，而 Pack 又会开始产出 [object Object]。",
+      "fix": "加一条变异：find: 'return response?.result?.content ?? \"\";' -> replace: 'return response;'，testFile: pack-step-types.test.mjs，expectTest: '_executeAIStep 解包回复内容'。",
+      "found_at": "2026-11-03",
+      "evidence": "mutation-check.mjs MUTATIONS 数组，pack-executor.js 仅 1 条且 target 为定向投递"
+    },
+    {
+      "id": "N8",
+      "priority": "P3",
+      "status": "open",
+      "title": "broadcast 标识被删，而它从来没有消费者",
+      "reader": "以为「广播模式」会被提示的用户——这个 UX 保证从未落地",
+      "where": [
+        "chrome-extension/src/background/pack-executor.js",
+        "chrome-extension/tests/extension-wiring.test.mjs"
+      ],
+      "detail": "修复前 git grep broadcast 在 src/ 里只有产生它的那一行，没有任何读取方。extension-wiring.test.mjs 里那句「否则用户以为自己只发了一次」守的是一个从未实现的 UX 保证。现在标识彻底没了。",
+      "impact": "无功能损失（本来就没有消费者）。但那条测试断言的语义需要重新审视：它守的东西不存在。",
+      "fix": "若这个 UX 确实要，就给它一个真消费者（popup 提示「已广播到 N 个页面」）；若不要，把相关断言删掉而不是留一个空保证。",
+      "found_at": "2026-11-03",
+      "evidence": "修复前 git grep broadcast -- chrome-extension/src 只有产生侧；extension-wiring.test.mjs 断言已改为 output === \"回声\""
+    },
+    {
+      "id": "N1",
+      "priority": "P1",
+      "status": "closed",
+      "title": "pack-step-types 测试 5 依赖 cwd",
+      "reader": "在 chrome-extension/ 子目录下跑测试的人",
+      "where": ["chrome-extension/tests/pack-step-types.test.mjs"],
+      "detail": "原先用相对路径 './packs/examples/...'，只有从仓库根跑才通，在 chrome-extension/ 下 ENOENT。",
+      "impact": "无（已修）",
+      "fix": "改为 fileURLToPath(new URL('../../packs/examples/...', import.meta.url))。",
+      "found_at": "2026-11-03",
+      "closed_at": "2026-11-03",
+      "evidence": "两处 cwd 对比实测，修复后 chrome-extension/ 下直跑 5/5"
+    },
+    {
+      "id": "N5",
+      "priority": "P1",
+      "status": "closed",
+      "title": "package.json 的 test 脚本在 CI 的 Node 20 上跑不了",
+      "reader": "以为本地绿就等于 CI 绿的人",
+      "where": [".github/workflows/test.yml:148-154", "chrome-extension/package.json"],
+      "detail": "曾建议改成 node --test \"tests/**/*.test.mjs\"，该形式需 Node 21+（glob 支持），而 CI 钉 Node 20 ⇒ 在 CI 上必崩。仓库本来就有正确入口 tests/run-tests.mjs（自枚举文件，Node 18+ 可跑）。",
+      "impact": "无（已修）",
+      "fix": "\"test\": \"node tests/run-tests.mjs\"。",
+      "found_at": "2026-11-03",
+      "closed_at": "2026-11-03",
+      "evidence": "CI chrome-extension-tests 在 Node 20 上跑通，test.yml:148-154 留有注释说明为何不用 node --test"
+    },
+    {
+      "id": "N6",
+      "priority": "P1",
+      "status": "closed",
+      "title": "D3 打破既有交互测试",
+      "reader": "无（已修）",
+      "where": ["chrome-extension/tests/extension-wiring.test.mjs"],
+      "detail": "原测试断言「点 Pack 必须发 EXECUTE_PACK」，而 D3 之后点击只渲染输入面板。测试编码的是 D3 之前的交互，改测试而不是改代码。",
+      "impact": "无（已修）",
+      "fix": "改为「点 Pack → 断言面板可见且 topic 输入框存在 → 填值 → 点运行 → 断言 tabId 与 input.topic 透传」，保留原断言本意（tabId 必须传）。",
+      "found_at": "2026-11-03",
+      "closed_at": "2026-11-03",
+      "evidence": "全套 148/148 -> 更新后 147/147 + D5 回归 148/148"
+    }
+  ]
+}
