@@ -582,14 +582,23 @@ test("popup 要把用户当前所在的标签页告诉后台（否则 AI 步骤�
   item.click();
   await new Promise((r) => setTimeout(r, 0));
 
+  const panel = dom.window.document.getElementById("pack-input-panel");
+  assert.equal(panel.hidden, false, "有 input_fields 的 Pack 应渲染出输入面板");
+  const field = dom.window.document.querySelector('#pack-input-fields input[data-field="topic"]');
+  assert.ok(field, "应按 input_fields 渲染出 topic 输入框");
+  field.value = "接线测试";
+  dom.window.document.getElementById("run-pack-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+
   const exec = sent.find((m) => m?.type === "EXECUTE_PACK");
-  assert.ok(exec, "点 Pack 必须发出 EXECUTE_PACK");
+  assert.ok(exec, "点运行必须发出 EXECUTE_PACK");
   assert.equal(
     exec.tabId,
     7,
     "必须带上用户当前所在的标签页 id：后台据此精确投递，" +
       "不带就只能广播给每一个打开的 AI 页面",
   );
+  assert.equal(exec.input?.topic, "接线测试", "popup 必须把用户填的 input 透传给后台");
 });
 
 // ─────────────────────────────────────────────────────────────────────

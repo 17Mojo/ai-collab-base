@@ -387,6 +387,10 @@ class PackExecutor {
           const stepResult = await this._executeStep(step, execution);
           execution.steps.push(stepResult);
 
+          if (stepResult.output) {
+            execution.output[step.output_field || step.id] = stepResult.output;
+          }
+
           if (!stepResult.success) {
             throw new Error(`Step ${step.id} failed: ${stepResult.error}`);
           }
@@ -552,6 +556,11 @@ class PackExecutor {
           break;
 
         case "ai":
+        case "analysis":
+        case "generation":
+        case "validation":
+        case "fusion":
+        case "tracking":
           stepResult.output = await this._executeAIStep(step, execution);
           break;
 
@@ -594,6 +603,11 @@ class PackExecutor {
       case "local":
         return this._executeLocalStep(step, execution);
       case "ai":
+      case "analysis":
+      case "generation":
+      case "validation":
+      case "fusion":
+      case "tracking":
         return this._executeAIStep(step, execution);
       default:
         throw new Error(`Unknown step type: ${step.type}`);
@@ -699,8 +713,10 @@ class PackExecutor {
    */
   _buildPrompt(step, execution) {
     const template = step.prompt_template || "";
-    const input = execution.input;
+    const input = execution.input || {};
+    const output = execution.output || {};
     const overrides = execution.runtime_overrides || {};
+    const vars = { ...output, ...input };
 
     // 模板替换 - 优先使用 runtime_overrides 白名单字段
     let prompt = template;
@@ -712,9 +728,9 @@ class PackExecutor {
       }
     }
 
-    // 2. 替换其他 input 字段 (向后兼容)
-    for (const [key, value] of Object.entries(input)) {
-      if (key !== "runtime_overrides") {
+    // 2. 替换其他变量字段 (上游 output + 初始 input)
+    for (const [key, value] of Object.entries(vars)) {
+      if (key !== "runtime_overrides" && value !== undefined) {
         prompt = prompt.replace(new RegExp(`{{${key}}}`, "g"), value);
       }
     }
