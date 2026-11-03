@@ -12,7 +12,7 @@ from: Agent
 ```
 
 - Chrome 侧 `_buildPrompt` 里是 `step.prompt_template || ""` ⇒ **空串直接送 AI**。实测确认：即使补上类型让步骤能跑，发出的仍是空提示。
-- 唯一有提示词的是 `packs/examples/external-user-smoke.json`（**2026-10-25 新建**），但它只是**单步冒烟自检**，做不了业务演示。
+- 唯一有提示词的是 `packs/examples/external-user-smoke.json`（**2026-10-25 新建**），但它只是**单步冒烟自检**，做不了业务演示。2026-11-03 阶段一补了 `xiaohongshu_knowledge_creator.json`（7 条 `prompt_template`），阶段三把 15 个空壳移入 `packs/templates/`，`packs/examples/` 现只剩 2 个能跑的包。
 - 其余老包是 **5 月遗留骨架**，不是"内容没写完"这么简单。
 
 **由此推出的两件事：**
