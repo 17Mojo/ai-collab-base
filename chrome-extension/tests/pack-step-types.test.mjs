@@ -82,3 +82,40 @@ test("execute 顺序路径回写 output 且提示词无残留", async () => {
     assert.equal(prompt.match(/{{[^}]+}}/g), null, `${id} 不应残留占位符`);
   }
 });
+
+test("_executeAIStep 解包回复内容，output 全为文本且无 [object Object]", async () => {
+  const { default: PackExecutor } = await import("../src/background/pack-executor.js");
+  const fs = await import("node:fs/promises");
+  const pack = JSON.parse(await fs.readFile(PACK_PATH, "utf-8"));
+  const sentPrompts = [];
+  globalThis.chrome = {
+    tabs: {
+      sendMessage: async (_tabId, msg) => {
+        sentPrompts.push(msg.prompt);
+        return { success: true, result: { content: msg.prompt, messageCount: 1, duration: 0 } };
+      },
+    },
+  };
+  try {
+    const executor = new PackExecutor({ maxRetries: 0 });
+    executor.packs.set("xiaohongshu-knowledge-creator", pack);
+    const result = await executor.execute(
+      "xiaohongshu-knowledge-creator",
+      { topic: "AI写作工具", target_audience_level: "运营新手" },
+      { tabId: 1 },
+    );
+    assert.equal(result.status, "completed");
+    const AI_OUTPUT_FIELDS = ["hook_statement", "explanation_text", "use_cases", "boundary_notes", "takeaway_content", "visual_content", "final_content"];
+    for (const key of AI_OUTPUT_FIELDS) {
+      assert.equal(typeof result.output[key], "string", `output.${key} 应为文本`);
+      assert.equal(String(result.output[key]).includes("[object Object]"), false, `output.${key} 不应含 [object Object]`);
+    }
+    for (const prompt of sentPrompts) {
+      assert.equal(String(prompt).includes("[object Object]"), false, "投递的提示词不应含 [object Object]");
+    }
+    assert.equal(typeof result.output.final_content, "string");
+    assert.ok(result.output.final_content.length > 0);
+  } finally {
+    delete globalThis.chrome;
+  }
+});

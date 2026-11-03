@@ -689,7 +689,7 @@ class PackExecutor {
       // 这一步在 try/catch **外面**——否则它的错误信息会被
       // 上面的「无法把提示词发到标签页」再包一层，读起来像消息没送到。
       assertAIStepSucceeded(response, targetTabId);
-      return response;
+      return response?.result?.content ?? "";
     }
 
     // 没有目标标签页：广播。**每个**内容脚本都会收到并各自执行。
@@ -699,10 +699,7 @@ class PackExecutor {
       config,
     });
     assertAIStepSucceeded(response, null);
-    return {
-      ...(response || {}),
-      broadcast: true,
-    };
+    return response?.result?.content ?? "";
   }
 
   /**

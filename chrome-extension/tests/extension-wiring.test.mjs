@@ -795,9 +795,9 @@ test("没有目标标签页时才广播，并且要标明是广播", async () =>
   );
   assert.equal(calls.tabs.length, 0, "没有目标标签页时不该乱投到某个标签页");
   assert.equal(
-    result.steps[0].output.broadcast,
-    true,
-    "广播的结果要标明是广播（否则用户以为自己只发了一次）",
+    result.steps[0].output,
+    "回声",
+    "广播的结果也应是解包后的回复内容，而不是信封对象",
   );
 });
 
