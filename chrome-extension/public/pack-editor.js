@@ -202,7 +202,10 @@ function populateForm(pack) {
   const meta = pack.metadata || {};
 
   packIdInput.value = meta.pack_id || '';
-  packNameInput.value = meta.pack_name || meta.name || '';
+  // meta.name 是幽灵字段：PackMetadata（schema_v2.py:77）只有 pack_name，
+  // 语料 23 个 JSON 里 metadata.name 出现 0 次，任何写入方都只写 pack_name。
+  // 留着只会把一套不存在的协议继续描述下去。
+  packNameInput.value = meta.pack_name || '';
   packDescriptionInput.value = meta.description || '';
   packCategorySelect.value = meta.type || 'custom';
 
