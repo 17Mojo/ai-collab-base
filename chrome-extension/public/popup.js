@@ -81,7 +81,7 @@ async function loadPacks() {
  * 执行 Pack
  * @param {string} packId
  */
-async function executePack(packId) {
+async function executePack(packId, input) {
   updateStatus('执行中...');
 
   try {
@@ -89,7 +89,8 @@ async function executePack(packId) {
     const response = await chrome.runtime.sendMessage({
       type: 'EXECUTE_PACK',
       packId,
-      tabId
+      tabId,
+      input: input || {}
     });
 
     if (response.success) {
@@ -100,6 +101,38 @@ async function executePack(packId) {
   } catch (error) {
     updateStatus('执行失败');
     console.error('Execute pack error:', error);
+  }
+}
+
+const packInputPanel = document.getElementById('pack-input-panel');
+const packInputFields = document.getElementById('pack-input-fields');
+const runPackBtn = document.getElementById('run-pack-btn');
+let selectedPackId = null;
+
+async function selectPack(packId) {
+  selectedPackId = packId;
+
+  try {
+    const result = await chrome.storage.local.get('packs');
+    const packs = result.packs || [];
+    const pack = packs.find(p => (p.metadata?.pack_id || p.pack_id || p.id) === packId);
+    const firstInputStep = pack?.workflow?.steps?.find(s => Array.isArray(s.input_fields) && s.input_fields.length);
+    const fields = firstInputStep?.input_fields || [];
+
+    packInputFields.innerHTML = fields.map(f => `
+      <label style="display:block;font-size:13px;margin-bottom:6px">${f}
+        <input type="text" data-field="${f}" placeholder="${f}" />
+      </label>
+    `).join('');
+    packInputPanel.hidden = fields.length === 0;
+    updateStatus(fields.length ? `已选 ${packId}，填写输入后运行` : `已选 ${packId}`);
+
+    if (fields.length === 0) {
+      await executePack(packId, {});
+    }
+  } catch (error) {
+    updateStatus('选择 Pack 失败');
+    console.error('Select pack error:', error);
   }
 }
 
@@ -126,8 +159,17 @@ openEditorBtn?.addEventListener('click', async () => {
 packList.addEventListener('click', (e) => {
   const item = e.target.closest('.pack-item');
   if (item && item.dataset.id) {
-    executePack(item.dataset.id);
+    selectPack(item.dataset.id);
   }
+});
+
+runPackBtn?.addEventListener('click', async () => {
+  if (!selectedPackId) return;
+  const input = {};
+  packInputFields.querySelectorAll('input[data-field]').forEach(el => {
+    input[el.dataset.field] = el.value;
+  });
+  await executePack(selectedPackId, input);
 });
 
 // --- Studio 产物生成 ---
