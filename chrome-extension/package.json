@@ -3,7 +3,8 @@
     "build": "node build.js",
     "build:sw": "BUILD_TARGET=service-worker npx vite build",
     "build:cs": "BUILD_TARGET=content-script npx vite build",
-    "test:adapters": "node tests/adapter-matrix/adapter-test-runner.js"
+    "test:adapters": "node tests/adapter-matrix/adapter-test-runner.js",
+    "test": "node tests/run-tests.mjs"
   },
   "devDependencies": {
     "@playwright/cli": "^0.1.8",
