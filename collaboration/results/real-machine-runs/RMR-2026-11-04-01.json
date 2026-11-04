@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-04-01",
+  "created_at": "2026-11-04T10:37:36+08:00",
+  "updated_at": "2026-11-04T10:37:58+08:00",
+  "operator": "workbuddy_rasp",
+  "purpose": "L1 复跑轮：十平台 DOM 契约只读探针复跑（对照 2026-10-26 普查零漂移），外加提示词语义审计；无 L2（需人工真实发送）",
+  "platforms": [
+    "chatgpt",
+    "claude",
+    "gemini",
+    "deepseek",
+    "kimi",
+    "longcat",
+    "qianwen",
+    "yiyan",
+    "yuanbao",
+    "chatglm"
+  ],
+  "locales": [
+    "en-US"
+  ],
+  "records": [
+    {
+      "layer": "L1",
+      "platform": "gemini",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "",
+      "notes": "复跑 2026-11-04，选择器命中"
+    },
+    {
+      "layer": "L1",
+      "platform": "kimi",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "",
+      "notes": "复跑 2026-11-04，选择器命中"
+    },
+    {
+      "layer": "L1",
+      "platform": "longcat",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "",
+      "notes": "复跑 2026-11-04，选择器命中"
+    },
+    {
+      "layer": "L1",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "",
+      "notes": "复跑 2026-11-04，选择器命中"
+    },
+    {
+      "layer": "L1",
+      "platform": "yiyan",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "",
+      "notes": "复跑 2026-11-04，选择器命中"
+    },
+    {
+      "layer": "L1",
+      "platform": "yuanbao",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "",
+      "notes": "复跑 2026-11-04，选择器命中"
+    },
+    {
+      "layer": "L1",
+      "platform": "chatglm",
+      "status": "pass",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=pass：生产 adapter 在真机 DOM 上找到输入框"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "",
+      "notes": "复跑 2026-11-04，选择器命中"
+    },
+    {
+      "layer": "L1",
+      "platform": "chatgpt",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check：命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约未被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "bot_check：HTTP 403 人机拦截（非 adapter 结论）",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "claude",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=bot_check：命中人机校验/机器人拦截页（信号：http-status-403）——DOM 契约未被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "bot_check：HTTP 403 人机拦截（非 adapter 结论）",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "deepseek",
+      "status": "unverified",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [
+        "探针判定 outcome=login_wall：到达站点但落在登录墙——DOM 契约未被验证（不是 adapter 的结论）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L1-2026-11-04-en-US.json"
+      ],
+      "reason": "login_wall：落到登录墙（非 adapter 结论）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "chatgpt",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "claude",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "gemini",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:57+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "deepseek",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:58+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "kimi",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:58+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "longcat",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:58+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "qianwen",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:58+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "yiyan",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:58+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "yuanbao",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:58+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "chatglm",
+      "status": "not-run",
+      "locale": "en-US",
+      "checked_at": "2026-11-04T10:37:58+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
+      "notes": ""
+    }
+  ]
+}
