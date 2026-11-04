@@ -1,6 +1,6 @@
 ---
 name: 历史 Prompt Pack 是空壳（2026-11-03 考古结论）
-description: 16 个历史包共 62 个 AI 步骤、0 个有 prompt_template，Chrome 侧 `step.prompt_template || ""` 空串直送 AI；唯一有提示词的是 external-user-smoke.json（2026-10-25 新建，单步冒烟自检）；老包是 5 月遗留骨架，外部用户排演因此没有可跑的业务包
+description: 【2026-11-03 考古结论，随后已改观】当时 16 个历史包共 62 个 AI 步骤、0 个有 prompt_template，Chrome 侧空串直送 AI。现状：阶段一补了 xiaohongshu_knowledge_creator.json（7 条 prompt_template），阶段三把 15 个空壳移入 packs/templates/，packs/examples/ 只剩 2 个能跑的包。要点：能过校验 ≠ 能跑出产物
 type: project
 from: Agent
 ---
@@ -12,7 +12,7 @@ from: Agent
 ```
 
 - Chrome 侧 `_buildPrompt` 里是 `step.prompt_template || ""` ⇒ **空串直接送 AI**。实测确认：即使补上类型让步骤能跑，发出的仍是空提示。
-- 唯一有提示词的是 `packs/examples/external-user-smoke.json`（**2026-10-25 新建**），但它只是**单步冒烟自检**，做不了业务演示。2026-11-03 阶段一补了 `xiaohongshu_knowledge_creator.json`（7 条 `prompt_template`），阶段三把 15 个空壳移入 `packs/templates/`，`packs/examples/` 现只剩 2 个能跑的包。
+- 当时唯一有提示词的是 `packs/examples/external-user-smoke.json`（**2026-10-25 新建**），但它只是**单步冒烟自检**，做不了业务演示。**2026-11-03 后已改观**：阶段一补了 `xiaohongshu_knowledge_creator.json`（7 条 `prompt_template`），阶段三把 15 个空壳移入 `packs/templates/`，`packs/examples/` 现只剩 2 个能跑的包。
 - 其余老包是 **5 月遗留骨架**，不是"内容没写完"这么简单。
 
 **由此推出的两件事：**
