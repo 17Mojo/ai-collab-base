@@ -223,36 +223,7 @@ class QianwenAdapter extends PlatformAdapter {
     return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
-  /**
-   * 等待 AI 响应完成
-   */
-  async waitForResponse(timeout = 60000) {
-    const startTime = Date.now();
-    const initialCount = this.getMessageList().length;
-
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (Date.now() - startTime > timeout) {
-          clearInterval(interval);
-          reject(new Error("Qianwen: Response timeout"));
-          return;
-        }
-
-        const currentCount = this.getMessageList().length;
-        if (currentCount > initialCount && !this.isTyping()) {
-          clearInterval(interval);
-          const latest = this.getLatestMessage();
-          resolve({
-            messageCount: currentCount,
-            content: latest ? this._extractContent(latest) : "",
-            duration: Date.now() - startTime,
-          });
-        }
-      }, 500);
-    });
-  }
-
-  /**
+    /**
    * 提取消息内容
    *
    * 先看**元素自身**再找后代：站点的 markdown 容器有可能与答案卡是同一个

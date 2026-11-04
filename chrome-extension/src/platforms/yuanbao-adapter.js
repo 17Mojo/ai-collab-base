@@ -39,7 +39,24 @@ const SELECTORS = {
     ".message-item",
   ],
   messageContent: [".prose", '[class*="answer"]', '[class*="content"]'],
-  typingIndicator: ['[class*="loading"]', '[class*="generating"]', ".spinner"],
+  // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
+  // yb_v2 chunks：136（conv-item）+ 7972（SendButton）+ 3807/6742（hyc-deepthink）+ 7538（markdown）。
+  // 最强信号是**无哈希 data 属性**：data-conv-speaker="ai" + data-conv-outputting="true"
+  // （40280 段 renderDataConv 的 data-conv-outputting/e.dataAttrString 状态机）；
+  // 等首 token 的 ai-placeholder（outputing===2）兜底。
+  // 生成中 = 停止按钮：#yuanbao-send-btn[aria-label="停止回答"]（zh-CN）与
+  // [class*="SendButton_sendStop"]（类名本地名无哈希、语言无关）双轨。
+  // 深度思考骨架屏 .hyc-deepthink-steps__header-icon--anim 仅在 !isEnd && loading 挂载
+  // （thinkComplete 后 anim 动画移除，isEnd=true——不会误报完成态）。
+  // 流式打字点 .hyc-common-markdown__code__generating-dots（与数据插值同条件显隐）。
+  typingIndicator: [
+    '[data-conv-speaker="ai"][data-conv-outputting="true"]',
+    '[class*="ai-placeholder"]',
+    '#yuanbao-send-btn[aria-label="停止回答"]',
+    '[class*="SendButton_sendStop"]',
+    ".hyc-deepthink-steps__header-icon--anim",
+    ".hyc-common-markdown__code__generating-dots",
+  ],
 };
 
 /**
@@ -110,33 +127,7 @@ class YuanbaoAdapter extends PlatformAdapter {
     return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
-  async waitForResponse(timeout = 60000) {
-    const startTime = Date.now();
-    const initialCount = this.getMessageList().length;
-
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (Date.now() - startTime > timeout) {
-          clearInterval(interval);
-          reject(new Error("Yuanbao: Response timeout"));
-          return;
-        }
-
-        const currentCount = this.getMessageList().length;
-        if (currentCount > initialCount && !this.isTyping()) {
-          clearInterval(interval);
-          const latest = this.getLatestMessage();
-          resolve({
-            messageCount: currentCount,
-            content: latest ? this._extractContent(latest) : "",
-            duration: Date.now() - startTime,
-          });
-        }
-      }, 500);
-    });
-  }
-
-  _extractContent(element) {
+    _extractContent(element) {
     if (!element) return "";
     for (const sel of this.selectors.messageContent) {
       const el = element.querySelector(sel);

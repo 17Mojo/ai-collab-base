@@ -87,6 +87,7 @@ async function loadPacks() {
  */
 async function executePack(packId, input) {
   updateStatus('执行中...');
+  clearOutputs();
 
   try {
     const tabId = await getActiveTabId();
@@ -98,7 +99,10 @@ async function executePack(packId, input) {
     });
 
     if (response.success) {
-      updateStatus('执行成功');
+      // N13：此前这里只写「执行成功」，response.result.output（7 个产出字段）
+      // 直接丢弃——外部用户点了运行、报了成功、什么都没拿到。
+      const count = renderOutputs(response.result?.output);
+      updateStatus(count ? `执行成功，${count} 个产出见下` : '执行成功（无产出字段）');
     } else {
       updateStatus(`执行失败: ${response.error}`);
     }
@@ -174,6 +178,132 @@ runPackBtn?.addEventListener('click', async () => {
   });
   await executePack(selectedPackId, input);
 });
+
+// --- 执行产出展示（N13） ---
+const packOutputPanel = document.getElementById('pack-output-panel');
+const packOutputFields = document.getElementById('pack-output-fields');
+const exportOutputBtn = document.getElementById('export-output-btn');
+let lastOutputs = null;
+
+/**
+ * 清空产出面板（新一次执行前必须清掉旧产出，否则上一轮的会冒充本轮）
+ */
+function clearOutputs() {
+  lastOutputs = null;
+  if (packOutputPanel) packOutputPanel.hidden = true;
+  if (packOutputFields) packOutputFields.textContent = '';
+}
+
+/**
+ * 渲染执行产出。
+ *
+ * 每个 output 字段一个折叠块：字段名 + 长度 + 全文 + 复制按钮；
+ * 对象值按 JSON 展开。模型文本**只走 textContent**——产出是不可信内容，
+ * 走 innerHTML 就是给 popup 开注入面（台账 N2 同类）。
+ *
+ * @param {object} outputs EXECUTE_PACK 回执的 result.output
+ * @returns {number} 渲染出的字段数（0 = 没有产出可展示）
+ */
+function renderOutputs(outputs) {
+  if (!packOutputPanel || !packOutputFields) return 0;
+  const entries = Object.entries(outputs || {}).filter(([, v]) => v != null && v !== '');
+  packOutputFields.textContent = '';
+  for (const [key, value] of entries) {
+    const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    const details = document.createElement('details');
+    details.className = 'output-item';
+    details.dataset.field = key;
+
+    const summary = document.createElement('summary');
+    summary.textContent = `${key}（${text.length} 字）`;
+
+    const body = document.createElement('div');
+    body.className = 'output-text';
+    body.dataset.testid = 'output-text';
+    body.textContent = text;
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn-copy';
+    copyBtn.dataset.copyField = key;
+    copyBtn.textContent = '复制';
+
+    details.append(summary, body, copyBtn);
+    packOutputFields.appendChild(details);
+  }
+  lastOutputs = entries.length ? { ...outputs } : null;
+  packOutputPanel.hidden = entries.length === 0;
+  return entries.length;
+}
+
+/**
+ * 产出字段的完整文本（字符串原样；对象序列化）
+ * @param {string} key
+ * @returns {string}
+ */
+function outputFieldText(key) {
+  const value = lastOutputs?.[key];
+  if (value == null) return '';
+  return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+}
+
+/**
+ * 复制单个产出字段全文
+ * @param {string} key
+ */
+function copyOutputField(key) {
+  const text = outputFieldText(key);
+  if (!text) return;
+  const done = () => updateStatus(`已复制 ${key}`);
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+/**
+ * 剪贴板 API 不可用时的兜底（execCommand 已废弃，但老内核里仍管用）
+ * @param {string} text
+ * @param {() => void} done
+ */
+function fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    done();
+  } catch (error) {
+    updateStatus('复制失败，请手动选择文本');
+    console.warn('Copy fallback failed:', error);
+  }
+  ta.remove();
+}
+
+/** 导出全部产出为 JSON 文件 */
+function exportOutputs() {
+  if (!lastOutputs) return;
+  const json = JSON.stringify(lastOutputs, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pack-output-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  updateStatus('已导出 JSON');
+}
+
+packOutputFields?.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-copy-field]');
+  if (!btn) return;
+  copyOutputField(btn.dataset.copyField);
+});
+
+exportOutputBtn?.addEventListener('click', exportOutputs);
 
 // --- Studio 产物生成 ---
 const studioAudioCb = document.getElementById('studio-audio');

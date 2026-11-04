@@ -23,11 +23,23 @@ const SELECTORS = {
   // 于是 isTyping() 在空闲页恒为 true ⇒ waitForResponse 的
   // `!this.isTyping()` 条件**永远不成立** ⇒ 每次发送都必然 60 秒超时。
   //
-  // 保留 '[class*="generating"]' 与 '.typing-indicator'（都是具体指向）承担判定。
-  // **残留风险**：真正的生成指示器是否命中这两个选择器，尚未在已登录会话里
-  // 验证——若都不命中，isTyping() 会一直为 false，等待可能**提前**返回。
-  // 该项已登记为 L2 真机会话必验项。
-  typingIndicator: ['[class*="generating"]', ".typing-indicator"],
+  // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
+  // 停止回答按钮 = 生成中：StopGenerator 组件（c1a5e4f2910a4b555ce0.chunk.js JSX）
+  // 只在 isEventSourceaOpen 时渲染 button ga-data="stop"——**必须限定 button 标签**：
+  // div.sensitive[ga-data="stop"] 是内容安全敏感态的同名属性，不是生成指示器。
+  // 流式光标：85202fed1c5821c734fb.css「.markdown-body .loadingGif」注释明说
+  // 「当连续的图片输出且未结束时会显示这个图片」，仅流式注入、稳定后移除。
+  // 心跳思考态（「还在思考中，你先忙别的吧～」）渲染 div.loading-text，
+  // 但 bare loading-text 类在 16 个 chunk 里复用（知识加载中/认证中/图片上传中…），
+  // 不加限定误命中会让空闲页恒 true——加 is-no-data 限定（8461 chunk 的绑定
+  // class:["loading-text", isHeartbeat&&"is-no-data"]，仅心跳态带该修饰）。
+  // 编辑器场景另有 .stop-generate（sftc-edit 的「停止生成」遮罩按钮）。
+  typingIndicator: [
+    'button[ga-data="stop"]',
+    ".markdown-body .loadingGif",
+    ".loading-text.is-no-data",
+    ".stop-generate",
+  ],
 };
 
 /**
@@ -98,33 +110,7 @@ class ChatGLMAdapter extends PlatformAdapter {
     return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
-  async waitForResponse(timeout = 60000) {
-    const startTime = Date.now();
-    const initialCount = this.getMessageList().length;
-
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (Date.now() - startTime > timeout) {
-          clearInterval(interval);
-          reject(new Error("ChatGLM: Response timeout"));
-          return;
-        }
-
-        const currentCount = this.getMessageList().length;
-        if (currentCount > initialCount && !this.isTyping()) {
-          clearInterval(interval);
-          const latest = this.getLatestMessage();
-          resolve({
-            messageCount: currentCount,
-            content: latest ? this._extractContent(latest) : "",
-            duration: Date.now() - startTime,
-          });
-        }
-      }, 500);
-    });
-  }
-
-  _extractContent(element) {
+    _extractContent(element) {
     if (!element) return "";
     for (const sel of this.selectors.messageContent) {
       const el = element.querySelector(sel);

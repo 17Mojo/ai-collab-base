@@ -402,10 +402,10 @@ test("extractMessageContent 先看元素自身再查后代（容器=正文同体
 });
 
 // ─────────────────────────────────────────────────────────────────────
-// 5. 端到端：waitForResponse 的计数 + 生成中 双重条件
+// 5. 端到端：waitForResponse 的 计数 + 生成中 + 内容稳定 三重条件
 // ─────────────────────────────────────────────────────────────────────
 
-test("waitForResponse 等到「计数涨了且不再生成」才返回", async () => {
+test("waitForResponse 等到「内容稳住 且 不再生成」才返回（太早成功闸）", async () => {
   // 用「生成中」那份 fixture：输入区此时是「停止回答」按钮
   const dom = loadFixture("generating");
   const adapter = new QianwenAdapter();
@@ -416,7 +416,8 @@ test("waitForResponse 等到「计数涨了且不再生成」才返回", async (
     .replaceChildren();
 
   let settled = false;
-  const waiting = adapter.waitForResponse(8000).then((r) => {
+  // 稳定窗是 8 秒（wait-policy.STABLE_MS_DEFAULT），超时要给足
+  const waiting = adapter.waitForResponse(20000).then((r) => {
     settled = true;
     return r;
   });
@@ -433,6 +434,15 @@ test("waitForResponse 等到「计数涨了且不再生成」才返回", async (
 
   // 生成结束：停止回答 → 发送消息
   finishGenerating(dom.window.document);
+
+  // 生成停了 ≠ 完成：内容还要稳住整个稳定窗（8s）才算生成结束。
+  // 这一秒里旧判据（计数涨了且不再生成）已经返回了——「太早成功」就住在这。
+  await delay(1000);
+  assert.equal(
+    settled,
+    false,
+    "生成中指示器解除但内容还没稳住稳定窗——此刻返回就是太早成功",
+  );
 
   const result = await waiting;
   assert.equal(result.messageCount, 2, "应当看到 2 条消息");

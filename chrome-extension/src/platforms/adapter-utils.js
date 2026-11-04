@@ -8,6 +8,7 @@ import {
   injectIntoSlateEditor,
   slateModelIsEmpty,
 } from './slate-editor.js';
+import { sampleWaitState, STABLE_MS_DEFAULT } from '../utils/wait-policy.js';
 
 /**
  * 判断「编辑器自己的模型」有没有收到注入的文本。
@@ -424,32 +425,70 @@ export function findVisibleInput(selectors) {
 }
 
 /**
- * 等待 AI 响应完成（通用实现）
- * @param {Function} getMessageListFn - 获取消息列表的函数
- * @param {Function} isTypingFn - 检查是否正在输入的函数
- * @param {number} timeout - 超时时间（毫秒）
- * @returns {Promise<Object>}
+ * 等待 AI 响应完成（通用实现——全平台唯一一份等待口径）。
+ *
+ * ## 判定口径（2026-11-04 收口）
+ *
+ * 「完成」= **内容稳定**：正文连续 `stableMs`（wait-policy.STABLE_MS_DEFAULT）
+ * 毫秒不再变化才算生成结束——与 content-script.handleWaitForResponse 同一个
+ * 判据函数（wait-policy.sampleWaitState）。旧判据「消息数增长 且 不在生成中」
+ * 在千问真机上提前返回，取回的全是流式开头碎片（「太早成功」，台账 N14）。
+ * `isTyping()` 保留为**继续等**的信号：指示器认得准的平台在思考暂停期
+ * 不会被稳定性判据误放行。
+ *
+ * 各平台 adapter 的 `waitForResponse` 已收敛为对本函数的委托（基类
+ * PlatformAdapter.waitForResponse）——此前 11 份逐字副本各自维护旧判据。
+ *
+ * @param {Object} opts
+ * @param {() => Array<Element>} opts.getMessageList - 获取消息列表
+ * @param {(el: Element) => string} opts.extractContent - 取某条消息的正文
+ * @param {() => boolean} [opts.isTyping] - 是否仍在生成中（true 时继续等）
+ * @param {number} [opts.timeout] - 超时（毫秒）
+ * @param {number} [opts.stableMs] - 内容稳定窗口（毫秒，默认生产口径）
+ * @param {string} [opts.label] - 超时错误文案前缀（一般是 platformId）
+ * @returns {Promise<{messageCount: number, content: string, duration: number}>}
  */
-export async function waitForResponseGeneric(getMessageListFn, isTypingFn, timeout = 60000) {
+export async function waitForResponseGeneric({
+  getMessageList,
+  extractContent,
+  isTyping = () => false,
+  timeout = 60000,
+  stableMs = STABLE_MS_DEFAULT,
+  label = "",
+}) {
   const startTime = Date.now();
-  const initialMessageCount = getMessageListFn().length;
+  const initialCount = getMessageList().length;
+  let lastContent = null;
+  let lastChangeAt = null;
 
   return new Promise((resolve, reject) => {
-    const checkInterval = setInterval(() => {
+    const interval = setInterval(() => {
       if (Date.now() - startTime > timeout) {
-        clearInterval(checkInterval);
-        reject(new Error('Response timeout'));
+        clearInterval(interval);
+        reject(new Error(label ? `${label}: Response timeout` : "Response timeout"));
         return;
       }
 
-      const currentMessageCount = getMessageListFn().length;
-      const isStillTyping = isTypingFn();
+      const messages = getMessageList();
+      const currentCount = messages.length;
+      const latest = messages[messages.length - 1];
+      const content = latest ? extractContent(latest) : "";
 
-      if (currentMessageCount > initialMessageCount && !isStillTyping) {
-        clearInterval(checkInterval);
-        const latestMessage = getMessageListFn()[getMessageListFn().length - 1];
+      const state = sampleWaitState({
+        countGrew: currentCount > initialCount,
+        content,
+        now: Date.now(),
+        lastContent,
+        lastChangeAt,
+      }, stableMs);
+      lastContent = state.lastContent;
+      lastChangeAt = state.lastChangeAt;
+
+      if (state.ready && !isTyping()) {
+        clearInterval(interval);
         resolve({
-          messageCount: currentMessageCount,
+          messageCount: currentCount,
+          content,
           duration: Date.now() - startTime,
         });
       }

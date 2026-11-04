@@ -204,15 +204,16 @@
     {
       "id": "N13",
       "priority": "P1",
-      "status": "open",
+      "status": "closed",
       "title": "popup 执行完只报「执行成功」，7 个产出全部不展示",
       "reader": "跑完 Pack 后在 popup 里找产物的外部用户（以为「执行成功」就等于拿到产物的人）",
       "where": ["chrome-extension/public/popup.js:88-109"],
       "detail": "executePack() 收到 EXECUTE_PACK 回执后只看 response.success 渲染「执行成功/执行失败」，response.result.output（hook_statement 等 7 个产出字段）直接丢弃。产物只存在于①消息回执对象②AI 站点会话气泡里，用户得去会话里按消息顺序手动复制。2026-11-04 L2 自动化靠 chrome.runtime.sendMessage 直读回执绕过了它。",
       "impact": "扩展的核心交付物（Pack 产物）在主界面上等于不存在——外部用户视角是「点了运行、报了成功、什么都没拿到」。逼近 P0（阻断交付）；未升 P0 的理由是产物本体未损坏、可从会话找回。",
-      "fix": "在 popup 里渲染 response.result.output（7 字段折叠面板 + 一键复制/导出 JSON 即可）；顺手把「执行成功」文案改成「执行成功，N 个产出见下」。",
+      "fix": "popup 渲染 response.result.output：renderOutputs() 按字段折叠面板（每字段显示字数 + textContent 写入，模型文本永不进 innerHTML）+ 单字段复制（clipboard API + execCommand 兜底）+ 导出全量 JSON；「执行成功」文案改「执行成功，N 个产出见下」，无产出字段时明说「执行成功（无产出字段）」。守卫：extension-wiring.test.mjs 4 条（渲染/textContent 注入锚/复制/导出）+ mutation-check 4 条变异。",
       "found_at": "2026-11-04",
-      "evidence": "L2 首跑复盘确认（popup 目前只显示成功/失败，不展示 7 个产出）；popup.js:100-101 只调 updateStatus('执行成功')；自动化驱动 chrome-extension/tests/real-machine/l2-qianwen-auto.mjs 直读 execRes.result.output 即产物本身"
+      "closed_at": "2026-11-04",
+      "evidence": "L2 首跑复盘确认缺陷（popup 只显示成功/失败）；修复后 extension-wiring.test.mjs 213/213 全绿（含恶意 <img onerror> 注入锚），4 条变异锚可杀（删 render/innerHTML 替换/复制丢字段/导出清空各有一条测试变红）"
     },
     {
       "id": "N14",
@@ -227,7 +228,7 @@
       ],
       "detail": "三层缺陷叠加：① isTyping() 未命中千问「✨ 努力工作中 用时N秒」状态行，思考停顿骗过稳定窗提前返回；② extractMessageContent 全卡 textContent 回退把「正在思考中/阅读技能并构思」状态条拼进正文（25-41 字）；③ 碎片阈值 20 字拦不住 20-26 字带主题 ack。结果：L2 首跑 7/7 段取回 3-15 字碎片全部 success=true，碎片代入下游模板链式污染。",
       "impact": "产出静默错误（P0 定义原点）：回执说成功，拿到的是流式开头/ack；下游步骤在垃圾上继续生成；§4.5 语义裁决 7/7 不合格。",
-      "fix": "PR #21（内容稳定性等待 + 20 字碎片闸）只堵一部分（复跑二 6/7 仍绕闸）；PR #22 补齐：typingIndicator census 选择器（button[data-status=\"working\"]、[class*=\"generatingThinking\"]）+ 抽取契约收紧（自身→后代→空串，禁全卡回退）+ 阈值 20→50（step 级 min_output_length 可覆写）+ 稳定窗 4s→8s。边界：只闭 qianwen 执行器路径；其余平台 typing 选择器（docs §6.2 #3）与 observer 路径旧判据仍 open。",
+      "fix": "PR #21（内容稳定性等待 + 20 字碎片闸）只堵一部分（复跑二 6/7 仍绕闸）；PR #22 补齐：typingIndicator census 选择器（button[data-status=\"working\"]、[class*=\"generatingThinking\"]）+ 抽取契约收紧（自身→后代→空串，禁全卡回退）+ 阈值 20→50（step 级 min_output_length 可覆写）+ 稳定窗 4s→8s。边界更新（2026-11-04 后续批次）：observer 路径已收口——waitForResponseGeneric 与基类 waitForResponse 统一走 sampleWaitState（内容稳 8s 且非空且计数涨才算完成），10 个平台的手写 waitForResponse 副本全部删除；l2-model 重放同一判据函数。其余 5 平台（kimi/chatglm/yiyan/longcat/yuanbao）typingIndicator 已按零发送静态普查证据落地（站点 bundle 字面量级出处，typing-indicator-contract.test.mjs 33 条 + 9 条变异锚）；仍未真机验证（chatgpt/claude/gemini=bot_check 403、deepseek=登录墙）。",
       "found_at": "2026-11-04",
       "closed_at": "2026-11-04",
       "evidence": "collaboration/results/RESULT-L2-SEMANTIC-VERDICT-2026-11-04.md 三轮弧线表；回执 runs/evidence/L2-qianwen-auto-*.json（首跑碎片/复跑二绕闸/复跑三全过）；166/166 测试绿 + CI 41 条变异全杀；复跑三真机 7/7 真产出（45/443/302/239/215/586/1279 字）"

@@ -5,7 +5,8 @@
 
 import PlatformAdapter from "./adapter.js";
 import DOMObserver from "../utils/dom-observer.js";
-import { findElement, findElements, findVisibleElement, extractMessageContent } from "./adapter-utils.js";
+import { findElement, findElements, findVisibleElement } from './adapter-utils.js';
+;
 
 /**
  * ChatGPT 选择器配置
@@ -137,43 +138,7 @@ class ChatGPTAdapter extends PlatformAdapter {
     return !!typingIndicator;
   }
 
-  /**
-   * 等待 AI 响应完成
-   * @param {number} timeout
-   * @returns {Promise<Object>}
-   */
-  async waitForResponse(timeout = 60000) {
-    const startTime = Date.now();
-    const initialMessageCount = this.getMessageList().length;
-
-    return new Promise((resolve, reject) => {
-      const checkInterval = setInterval(() => {
-        if (Date.now() - startTime > timeout) {
-          clearInterval(checkInterval);
-          reject(new Error("Response timeout"));
-          return;
-        }
-
-        const currentMessageCount = this.getMessageList().length;
-        const isStillTyping = this.isTyping();
-
-        if (currentMessageCount > initialMessageCount && !isStillTyping) {
-          clearInterval(checkInterval);
-
-          const latestMessage = this.getLatestMessage();
-          const content = extractMessageContent(latestMessage, SELECTORS.messageContent);
-
-          resolve({
-            messageCount: currentMessageCount,
-            content,
-            duration: Date.now() - startTime,
-          });
-        }
-      }, 500);
-    });
-  }
-
-  /**
+    /**
    * 获取平台配置
    * @returns {Object}
    */
