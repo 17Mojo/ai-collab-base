@@ -234,6 +234,41 @@ def test_verify_cross_checks_probe_evidence_against_claim(tmp_path):
     assert any("证据与结论不符" in e for e in errors)
 
 
+def test_verify_tolerates_binary_evidence_files(tmp_path):
+    """L2 证据里带截图（PNG）是常态——verify 不许因二进制文件炸掉（2026-11-04 实测炸过）。"""
+    _make_run(tmp_path)
+    probe = _write_probe_verdict(tmp_path / "ev.json", "gemini", "pass")
+    shot = tmp_path / "shot.png"
+    shot.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00\x89\xff\xfe" * 8)
+    assert mod._probe_outcome(shot, "gemini") is None
+    assert (
+        _record(
+            tmp_path,
+            "RMR-TEST-001",
+            status="pass",
+            locale="zh-CN",
+            evidence=["截图+回执齐了"],
+            evidence_file=[str(probe), str(shot)],
+        )
+        == 0
+    )
+    assert (
+        _record(
+            tmp_path,
+            "RMR-TEST-001",
+            layer="L2",
+            platform="gemini",
+            status="not-run",
+            reason="本轮只跑 L1",
+        )
+        == 0
+    )
+    path = tmp_path / "collaboration" / "results" / "real-machine-runs" / "RMR-TEST-001.json"
+    run = json.loads(path.read_text(encoding="utf-8"))
+    errors, _verdict, _complete = mod.verify_run(run, tmp_path)
+    assert errors == []
+
+
 def test_verify_requires_l2_record_for_every_platform(tmp_path):
     _make_run(tmp_path, platforms=("gemini", "claude"))
     evidence = _write_probe_verdict(tmp_path / "ev.json", "gemini", "pass")
