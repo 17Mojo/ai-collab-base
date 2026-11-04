@@ -2,7 +2,7 @@
   "schema_version": 1,
   "run_id": "RMR-2026-11-04-01",
   "created_at": "2026-11-04T10:37:36+08:00",
-  "updated_at": "2026-11-04T10:37:58+08:00",
+  "updated_at": "2026-11-04T19:59:25+08:00",
   "operator": "workbuddy_rasp",
   "purpose": "L1 复跑轮：十平台 DOM 契约只读探针复跑（对照 2026-10-26 普查零漂移），外加提示词语义审计；无 L2（需人工真实发送）",
   "platforms": [
@@ -280,6 +280,23 @@
       "evidence_files": [],
       "reason": "本轮仅 L1 复跑；L2 需人工真实发送（红线：探针永不发送）",
       "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-04T19:59:25+08:00",
+      "evidence": [
+        "复跑三（PR #22 构建 + 清 SW ScriptCache + SW 自检通过）：7/7 真产出（45/443/302/239/215/586/1279 字），零碎片零污染，每段真实等待 26-37 秒；§4.2 第 5 步三件事全成立",
+        "三轮轨迹：首跑 7 段碎片 fail（11:47 记录，产出数据存 RESULT 文档 §2 表——当时未建回执保留协议，原回执已被覆盖）→ 复跑一 SW ScriptCache 污染无效 run（回执 .stale-sw-contaminated.*，台账 N15）→ 复跑二 干净 SW 下三路绕闸 fail（回执 .round2-clean.json）→ 复跑三 全过"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-04.json",
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-04.png"
+      ],
+      "reason": "",
+      "notes": "§4.5 semantic 裁决：semantic-marginal（合格 5 / 勉强 2 / 不合格 0；勉强=hook 主题词自足性 + boundary 否定语境「全能」词面，均为编辑润色层）——语义裁决属人证不是机证。详见 collaboration/results/RESULT-L2-SEMANTIC-VERDICT-2026-11-04.md；历史回执：.stale-sw-contaminated.json/.png、.round2-clean.json"
     }
   ]
 }

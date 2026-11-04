@@ -192,10 +192,14 @@ def default_locale(run: dict) -> str:
 
 
 def _probe_outcome(evidence_file: Path, platform: str) -> str | None:
-    """从 L1 探针 JSON 证据里取某个平台的 outcome；不是探针产物则返回 None。"""
+    """从 L1 探针 JSON 证据里取某个平台的 outcome；不是探针产物则返回 None。
+
+    L2 证据常含截图（PNG）等二进制文件——按「不是探针 JSON」跳过，
+    不许因为解码炸掉整个对账（2026-11-04 verify 实测炸过）。
+    """
     try:
         data = json.loads(evidence_file.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return None
     if not isinstance(data, dict):
         return None

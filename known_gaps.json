@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-03",
+  "updated_at": "2026-11-04",
   "purpose": "已确认但本次未修的缺陷台账。宁可写下来也不要留在某人脑子里——下一个人接手时不必重新考古一遍。",
   "conventions": {
     "id": "N1、N2……递增，永不复用。关闭后把 status 改 closed 并保留条目与结论，不要删。",
@@ -200,6 +200,67 @@
       "found_at": "2026-11-03",
       "closed_at": "2026-11-03",
       "evidence": "全套 148/148 -> 更新后 147/147 + D5 回归 148/148"
+    },
+    {
+      "id": "N13",
+      "priority": "P1",
+      "status": "open",
+      "title": "popup 执行完只报「执行成功」，7 个产出全部不展示",
+      "reader": "跑完 Pack 后在 popup 里找产物的外部用户（以为「执行成功」就等于拿到产物的人）",
+      "where": ["chrome-extension/public/popup.js:88-109"],
+      "detail": "executePack() 收到 EXECUTE_PACK 回执后只看 response.success 渲染「执行成功/执行失败」，response.result.output（hook_statement 等 7 个产出字段）直接丢弃。产物只存在于①消息回执对象②AI 站点会话气泡里，用户得去会话里按消息顺序手动复制。2026-11-04 L2 自动化靠 chrome.runtime.sendMessage 直读回执绕过了它。",
+      "impact": "扩展的核心交付物（Pack 产物）在主界面上等于不存在——外部用户视角是「点了运行、报了成功、什么都没拿到」。逼近 P0（阻断交付）；未升 P0 的理由是产物本体未损坏、可从会话找回。",
+      "fix": "在 popup 里渲染 response.result.output（7 字段折叠面板 + 一键复制/导出 JSON 即可）；顺手把「执行成功」文案改成「执行成功，N 个产出见下」。",
+      "found_at": "2026-11-04",
+      "evidence": "L2 首跑复盘确认（popup 目前只显示成功/失败，不展示 7 个产出）；popup.js:100-101 只调 updateStatus('执行成功')；自动化驱动 chrome-extension/tests/real-machine/l2-qianwen-auto.mjs 直读 execRes.result.output 即产物本身"
+    },
+    {
+      "id": "N14",
+      "priority": "P0",
+      "status": "closed",
+      "title": "AI 步骤把流式开头碎片/状态条文本当成功产出（「太早成功」+ 三路绕闸）",
+      "reader": "看到 success=true 就以为拿到完整回复的人（含下游 prompt 模板——碎片会被代入链式污染）",
+      "where": [
+        "chrome-extension/src/utils/wait-policy.js",
+        "chrome-extension/src/platforms/adapter-utils.js",
+        "chrome-extension/src/platforms/qianwen-adapter.js"
+      ],
+      "detail": "三层缺陷叠加：① isTyping() 未命中千问「✨ 努力工作中 用时N秒」状态行，思考停顿骗过稳定窗提前返回；② extractMessageContent 全卡 textContent 回退把「正在思考中/阅读技能并构思」状态条拼进正文（25-41 字）；③ 碎片阈值 20 字拦不住 20-26 字带主题 ack。结果：L2 首跑 7/7 段取回 3-15 字碎片全部 success=true，碎片代入下游模板链式污染。",
+      "impact": "产出静默错误（P0 定义原点）：回执说成功，拿到的是流式开头/ack；下游步骤在垃圾上继续生成；§4.5 语义裁决 7/7 不合格。",
+      "fix": "PR #21（内容稳定性等待 + 20 字碎片闸）只堵一部分（复跑二 6/7 仍绕闸）；PR #22 补齐：typingIndicator census 选择器（button[data-status=\"working\"]、[class*=\"generatingThinking\"]）+ 抽取契约收紧（自身→后代→空串，禁全卡回退）+ 阈值 20→50（step 级 min_output_length 可覆写）+ 稳定窗 4s→8s。边界：只闭 qianwen 执行器路径；其余平台 typing 选择器（docs §6.2 #3）与 observer 路径旧判据仍 open。",
+      "found_at": "2026-11-04",
+      "closed_at": "2026-11-04",
+      "evidence": "collaboration/results/RESULT-L2-SEMANTIC-VERDICT-2026-11-04.md 三轮弧线表；回执 runs/evidence/L2-qianwen-auto-*.json（首跑碎片/复跑二绕闸/复跑三全过）；166/166 测试绿 + CI 41 条变异全杀；复跑三真机 7/7 真产出（45/443/302/239/215/586/1279 字）"
+    },
+    {
+      "id": "N15",
+      "priority": "P1",
+      "status": "open",
+      "title": "MV3 SW ScriptCache 按 URL 粘住旧构建，dist 重建后闸门静默失效",
+      "reader": "复跑真机自动化前不清缓存、以为 dist 重建就生效的人",
+      "where": [
+        "<persistent-profile>/Default/Service Worker/ScriptCache/<hash>_0",
+        "chrome-extension/tests/real-machine/l2-qianwen-auto.mjs"
+      ],
+      "detail": "持久 Chrome profile 的 Service Worker/ScriptCache 按 URL 缓存 SW 脚本，dist/ 重建不失效。内容脚本每次页面注入读盘是新的，SW 是旧的——新旧混跑，闸门（assertUsableAIContent）在旧 SW 里不存在，静默失效。2026-11-04 复跑一实锤：17 字 ack 过 20 字闸「悖论」，静态分析（bundle 含闸门）与运行时行为对不上，二分到缓存文件 2cc80dabc69f58b6_0：mtime 11:42:05、0 处闸门标记、109,923B vs 当前 110,625B。",
+      "impact": "真机结论被静默污染——看似「修复无效」，实为旧构建在跑；复跑一整轮作废（污染版回执 .stale-sw-contaminated.* 留档为教训）。",
+      "fix": "协议（不是代码修复，平台行为）：复跑前清 Default/Service Worker|Code Cache|Extension Scripts；自动化驱动内置 SW 自检探针（hasGate/hasStatusSelector/hasMin50 任一 false 即中止）。协议已产品化进 l2-qianwen-auto.mjs 头注释+代码；手动加载扩展的人仍需自行清缓存，故保持 open。",
+      "found_at": "2026-11-04",
+      "evidence": "缓存文件 mtime/size/标记物三重取证；复跑一回执 .stale-sw-contaminated.json/.png；复跑二清缓存后 hasGate:true 同代码立即翻案（同构建不同结论）"
+    },
+    {
+      "id": "N16",
+      "priority": "P2",
+      "status": "closed",
+      "title": "real_machine_regression verify 撞上 PNG 证据文件直接 UnicodeDecodeError 崩掉",
+      "reader": "给 L2 记录挂截图证据后跑 verify 的人",
+      "where": ["scripts/real_machine_regression.py:_probe_outcome"],
+      "detail": "_probe_outcome 对每个 evidence_file 直接 read_text(utf-8) 再 json.loads，except 只接 (OSError, json.JSONDecodeError)——PNG 截图（L2 证据的常态，docs §5.1）在 read_text 就抛 UnicodeDecodeError，不在捕获列，整个 verify 崩掉。L1 时代证据全是探针 JSON 所以没炸。",
+      "impact": "L2 记录挂截图后台账无法对账（verify 崩溃退出，掩盖真正的一致性检查）。",
+      "fix": "except 收宽到 (OSError, UnicodeDecodeError, json.JSONDecodeError)——非探针 JSON 一律返回 None 跳过。tests/unit/test_real_machine_regression.py::test_verify_tolerates_binary_evidence_files 覆盖（锚=回退 except 即红）。",
+      "found_at": "2026-11-04",
+      "closed_at": "2026-11-04",
+      "evidence": "RMR-2026-11-04-01 verify 实测崩溃栈（UnicodeDecodeError 0x89 PNG 魔数）；修复后同记录 verify errors=[]；单测 19/19、全量 tests/unit 2781 passed"
     }
   ]
 }
