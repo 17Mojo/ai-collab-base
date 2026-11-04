@@ -32,11 +32,11 @@ let swImportCounter = 0;
  */
 
 /**
- * 默认回声正文。必须**长于**执行器的最短回复阈值（20 字符）——
+ * 默认回声正文。必须**长于**执行器的最短回复阈值（50 字符）——
  * 回声短了会被「碎片判失败」闸门拦下，成功路径的测试会误红。
  */
 export const ECHO_CONTENT =
-  "回声：这是一段足够长的模拟回复正文，用来通过 AI 回复可用性阈值校验。";
+  "回声：这是一段足够长的模拟回复正文，用来通过 AI 回复可用性阈值校验，长度必须超过五十字符的默认下限才能不被碎片闸门误杀。";
 
 export async function loadServiceWorker(packs, options = {}) {
   const store = { packs };

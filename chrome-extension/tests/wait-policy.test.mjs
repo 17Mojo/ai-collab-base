@@ -105,8 +105,21 @@ test("isUsableAIContent：空串/碎片/非字符串不可用，长文可用；m
   assert.equal(isUsableAIContent("收到，"), false, "流式开头碎片不可用");
   assert.equal(isUsableAIContent({ toString: () => "x" }), false, "非字符串不可用");
   assert.equal(isUsableAIContent(null), false, "null 不可用");
+  // 真机第二轮的污染 ack（25–41 字）压线过 20 字闸——50 字下必须拦住。
   assert.equal(
-    isUsableAIContent("这是一段长度超过二十个字符的完整回复正文，应当可用。"),
+    isUsableAIContent("收到，我将为你构思符合要求的小红书开头。正在思考中"),
+    false,
+    "ack 混入状态条文本（25 字）也不许冒充正文",
+  );
+  assert.equal(
+    isUsableAIContent("收到，我将为你构思符合要求的小红书开头。阅读技能并构思开头已读取文件撰写单句开场白"),
+    false,
+    "ack 混入状态条文本（41 字）也不许冒充正文",
+  );
+  assert.equal(
+    isUsableAIContent(
+      "这是一段长度超过五十个字符的完整回复正文，用来验证默认阈值不会把真正的产出拦在门外，应当可用并且足够长。",
+    ),
     true,
     "长文可用",
   );
@@ -115,5 +128,19 @@ test("isUsableAIContent：空串/碎片/非字符串不可用，长文可用；m
     true,
     "step.config.min_output_length 放宽阈值后短回复可用",
   );
-  assert.equal(MIN_AI_CONTENT_LENGTH_DEFAULT, 20, "默认阈值是 20 字符");
+  assert.equal(MIN_AI_CONTENT_LENGTH_DEFAULT, 50, "默认阈值是 50 字符");
+});
+
+test("默认稳定窗是 8 秒：5 秒定格不算完成，8 秒才算（防思考停顿误判）", () => {
+  // 千问真机：ack 句定格后还有 10s+ 的「努力工作中」思考停顿，4 秒窗
+  // 会在停顿里放行。用**写死的毫秒数**钉住默认值——按常量算边界的话，
+  // 常量被改坏测试也跟着一起变，等于没有测试。
+  const content = "收到，我将为你构思符合要求的小红书开头。";
+  let s = sampleWaitState({ countGrew: true, content, now: 5000, lastContent: content, lastChangeAt: 0 });
+  assert.equal(s.ready, false, "5 秒稳定（旧默认窗）不许放行——思考停顿还没走完");
+
+  s = sampleWaitState({ countGrew: true, content, now: 8000, lastContent: content, lastChangeAt: 0 });
+  assert.equal(s.ready, true, "8 秒稳定才放行");
+
+  assert.equal(STABLE_MS_DEFAULT, 8000, "默认稳定窗是 8000 毫秒");
 });

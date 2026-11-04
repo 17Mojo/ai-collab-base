@@ -341,6 +341,38 @@ test("AI 步骤取回流式开头碎片时，整个 Pack 必须失败", async ()
   );
 });
 
+test("污染 ack 混入状态条文本也不许冒充正文（真机第二轮压线过闸实锤）", async () => {
+  // 2026-11-04 真机第二轮：ack 句混入「正在思考中」等状态条文本后有 25–41 字，
+  // 压线过了 20 字闸。50 字默认阈值下必须拦住——阈值回退就是把这缺陷放回来。
+  const { send } = await loadServiceWorker([AI_PACK], {
+    tabsSendMessageResponse: {
+      success: true,
+      result: {
+        content:
+          "收到，我将为你构思符合要求的小红书开头。阅读技能并构思开头已读取文件撰写单句开场白",
+      },
+    },
+  });
+
+  const response = await send({
+    type: "EXECUTE_PACK",
+    packId: "wiring-ai",
+    input: {},
+    tabId: 42,
+  });
+
+  assert.equal(
+    response?.success,
+    false,
+    `污染 ack 冒充回复时 Pack 必须失败，实际：${JSON.stringify(response?.result || response)}`,
+  );
+  assert.match(
+    response?.error || "",
+    /不可用|碎片|长度/,
+    "错误信息里要能看出「回复不可用」",
+  );
+});
+
 test("step.config.min_output_length 放宽阈值后，短回复必须成功（别把闸门拆成没有闸门）", async () => {
   // 反向测试：阈值可以按步骤放宽，但闸门本身必须还在（上一条守着）。
   const packWithLooseMin = {

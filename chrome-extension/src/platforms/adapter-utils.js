@@ -490,11 +490,20 @@ export function extractMessageContent(messageElement, contentSelectors = []) {
   if (!messageElement) return '';
 
   for (const selector of contentSelectors) {
-    const contentEl = messageElement.querySelector(selector);
+    // 先看**元素自身**再找后代：markdown 容器可能与消息卡是同一个元素，
+    // 只查后代会漏掉它（qianwen-contract 的「同元素」用例钉着这一点）。
+    const self = messageElement.matches?.(selector) ? messageElement : null;
+    const contentEl = self || messageElement.querySelector(selector);
     if (contentEl) return contentEl.textContent.trim();
   }
 
-  // fallback: 直接取 textContent
+  // 契约收紧（2026-11-04）：给了 contentSelectors 却一个都没命中时，
+  // **禁止**回退整卡 textContent——那会把「正在思考中」「阅读技能并构思」
+  // 这类状态条文本混进正文（千问真机第二轮 step_2/step_3 的污染实锤），
+  // 短短几行状态条就够把碎片顶过长度闸门。返回空串让等待继续，
+  // 等真正的正文容器渲染出来再取。
+  if (contentSelectors.length > 0) return '';
+
   return messageElement.textContent?.trim() || '';
 }
 
