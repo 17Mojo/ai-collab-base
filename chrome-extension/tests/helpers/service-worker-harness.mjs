@@ -26,10 +26,18 @@ let swImportCounter = 0;
  * @param {Object[]} packs - 放进 chrome.storage.local["packs"] 的 Pack
  * @param {Object} [options]
  * @param {any} [options.tabsSendMessageResponse] - 内容脚本对 SEND_TO_AI 的回话
- *   （默认 `{success: true, result: {content: "回声"}}`）。
+ *   （默认 `{success: true, result: {content: ECHO_CONTENT}}`）。
  *   传 `{success: false, error: "..."}` 可以模拟「内容脚本报告失败」。
  * @returns {Promise<{listener: Function, send: Function, sendAs: Function, store: Object, tabMessages: Array}>}
  */
+
+/**
+ * 默认回声正文。必须**长于**执行器的最短回复阈值（20 字符）——
+ * 回声短了会被「碎片判失败」闸门拦下，成功路径的测试会误红。
+ */
+export const ECHO_CONTENT =
+  "回声：这是一段足够长的模拟回复正文，用来通过 AI 回复可用性阈值校验。";
+
 export async function loadServiceWorker(packs, options = {}) {
   const store = { packs };
   const listeners = [];
@@ -58,7 +66,7 @@ export async function loadServiceWorker(packs, options = {}) {
         tabMessages.push({ tabId, msg });
         return options.tabsSendMessageResponse ?? {
           success: true,
-          result: { content: "回声" },
+          result: { content: ECHO_CONTENT },
         };
       },
     },

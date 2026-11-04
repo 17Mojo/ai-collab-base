@@ -3,6 +3,11 @@
  * Pack 执行引擎，负责执行 Prompt Pack 的 workflow
  */
 
+import {
+  MIN_AI_CONTENT_LENGTH_DEFAULT,
+  isUsableAIContent,
+} from "../utils/wait-policy.js";
+
 /**
  * Runtime Override 白名单 (prompt-pack-runtime-style Requirement 2)
  */
@@ -57,6 +62,44 @@ function assertAIStepSucceeded(response, targetTabId) {
   throw new Error(
     `${where}没能完成这次发送：${response.error || "未知原因"}。` +
       "如果那个网站要求先登录，请先在页面上登录再重试。",
+  );
+}
+
+/**
+ * 校验 AI 步骤取回的正文是**可用的完整回复**，不是流式开头碎片。
+ *
+ * ## 为什么必须有这一步（2026-11-04 千问真机实锤）
+ *
+ * `assertAIStepSucceeded` 只看回话信封上的 success 位——而内容脚本
+ * 在「太早成功」缺陷下会把流式开头碎片（'收到，'）如实当作 content
+ * 交上来，信封照样是 success。于是 8 步 Pack 全部「成功」，
+ * 产物却是 7 段碎片 + 1 个空串（空串那个连 output 字段都没进）。
+ *
+ * 这一步把「内容可用」变成硬闸门：空串 / 纯空白 / 短于阈值
+ * （默认 20 字符，`step.config.min_output_length` 可按步骤覆盖）
+ * 一律判失败——碎片冒充回复到此为止。
+ *
+ * 守护：tests/external-user-path.test.mjs 的
+ * 「AI 步骤取回流式开头碎片时，整个 Pack 必须失败」。
+ *
+ * @param {string} content - 内容脚本交上来的正文
+ * @param {Object} step - 步骤定义（读 `config.min_output_length`）
+ * @param {number|null} targetTabId - 目标标签页（null = 广播）
+ * @throws {Error} 内容为空或短于阈值时抛出
+ */
+function assertUsableAIContent(content, step, targetTabId) {
+  const minLen = step?.config?.min_output_length ?? MIN_AI_CONTENT_LENGTH_DEFAULT;
+  if (isUsableAIContent(content, minLen)) return;
+
+  const text = typeof content === "string" ? content.trim() : "";
+  const where =
+    targetTabId === null || targetTabId === undefined
+      ? "页面"
+      : `标签页 ${targetTabId}`;
+  throw new Error(
+    `${where}取回的 AI 回复不可用（长度 ${text.length} < ${minLen}）：` +
+      "回复多半还没生成完就被取走（流式开头碎片）。" +
+      "请重试；若反复出现，说明该站点的「生成中」信号没被认出来。",
   );
 }
 
@@ -689,7 +732,9 @@ class PackExecutor {
       // 这一步在 try/catch **外面**——否则它的错误信息会被
       // 上面的「无法把提示词发到标签页」再包一层，读起来像消息没送到。
       assertAIStepSucceeded(response, targetTabId);
-      return response?.result?.content ?? "";
+      const content = response?.result?.content ?? "";
+      assertUsableAIContent(content, step, targetTabId);
+      return content;
     }
 
     // 没有目标标签页：广播。**每个**内容脚本都会收到并各自执行。
@@ -699,7 +744,9 @@ class PackExecutor {
       config,
     });
     assertAIStepSucceeded(response, null);
-    return response?.result?.content ?? "";
+    const content = response?.result?.content ?? "";
+    assertUsableAIContent(content, step, null);
+    return content;
   }
 
   /**

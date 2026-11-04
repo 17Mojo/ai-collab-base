@@ -311,6 +311,70 @@ test("内容脚本成功时，Pack 必须成功（别把这条测成永远失败
   );
 });
 
+test("AI 步骤取回流式开头碎片时，整个 Pack 必须失败", async () => {
+  // 2026-11-04 千问真机实锤：'收到，' 这种流式开头碎片被当成完成的回复，
+  // 8 步 Pack 全部「成功」而产物是 7 段碎片 + 1 个空串。
+  // 碎片必须判失败，不许再冒充回复。
+  const { send } = await loadServiceWorker([AI_PACK], {
+    tabsSendMessageResponse: {
+      success: true,
+      result: { content: "收到，" },
+    },
+  });
+
+  const response = await send({
+    type: "EXECUTE_PACK",
+    packId: "wiring-ai",
+    input: {},
+    tabId: 42,
+  });
+
+  assert.equal(
+    response?.success,
+    false,
+    `碎片冒充回复时 Pack 必须失败，实际：${JSON.stringify(response?.result || response)}`,
+  );
+  assert.match(
+    response?.error || "",
+    /不可用|碎片|长度/,
+    "错误信息里要能看出「回复不可用」",
+  );
+});
+
+test("step.config.min_output_length 放宽阈值后，短回复必须成功（别把闸门拆成没有闸门）", async () => {
+  // 反向测试：阈值可以按步骤放宽，但闸门本身必须还在（上一条守着）。
+  const packWithLooseMin = {
+    ...AI_PACK,
+    workflow: {
+      steps: [
+        {
+          ...AI_PACK.workflow.steps[0],
+          config: { min_output_length: 2 },
+        },
+      ],
+    },
+  };
+  const { send } = await loadServiceWorker([packWithLooseMin], {
+    tabsSendMessageResponse: {
+      success: true,
+      result: { content: "收到，" },
+    },
+  });
+
+  const response = await send({
+    type: "EXECUTE_PACK",
+    packId: "wiring-ai",
+    input: {},
+    tabId: 42,
+  });
+
+  assert.equal(
+    response?.success,
+    true,
+    `放宽阈值后短回复必须成功，实际：${JSON.stringify(response?.error || response)}`,
+  );
+});
+
 // ─────────────────────────────────────────────────────────────────────
 // ③ 导入界面不许比后台更严
 // ─────────────────────────────────────────────────────────────────────

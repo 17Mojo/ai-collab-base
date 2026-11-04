@@ -13,6 +13,9 @@
 // 从适配器文件导入选择器配置（构建时自动同步）
 // ============================================================================
 
+// 等待策略：内容稳定性判据（防「太早成功」）
+import { sampleWaitState } from "../utils/wait-policy.js";
+
 import { SELECTORS as CLAUDE_SELECTORS } from "../platforms/claude-adapter.js";
 import { SELECTORS as CHATGPT_SELECTORS } from "../platforms/chatgpt-adapter.js";
 import { SELECTORS as GEMINI_SELECTORS } from "../platforms/gemini-adapter.js";
@@ -266,12 +269,21 @@ function isTyping() {
 
 /**
  * 等待 AI 响应完成
+ *
+ * 「完成」的定义（2026-11-04 起）：**内容稳定**——正文连续
+ * 一段窗口（wait-policy 的 STABLE_MS_DEFAULT）不再变化才算生成结束。
+ * 旧判据「消息数增加 且 不在生成中」在千问真机上提前返回，
+ * 取回的全是流式开头碎片（'收到，'）——见 wait-policy.js 顶部。
+ * `isTyping()` 仍保留为**继续等**的信号：指示器认得准的平台
+ * 在思考暂停期不会被稳定性判据误放行。
  */
 async function handleWaitForResponse(timeout = 60000) {
   if (!currentConfig) throw new Error("No adapter available");
 
   const startTime = Date.now();
   const initialCount = findElements(currentConfig.messageList).length;
+  let lastContent = null;
+  let lastChangeAt = null;
 
   return new Promise((resolve, reject) => {
     const interval = setInterval(() => {
@@ -281,17 +293,25 @@ async function handleWaitForResponse(timeout = 60000) {
         return;
       }
 
-      const currentCount = findElements(currentConfig.messageList).length;
-      if (currentCount > initialCount && !isTyping()) {
+      const messages = findElements(currentConfig.messageList);
+      const currentCount = messages.length;
+      const latestMessage = messages[messages.length - 1];
+      const content = latestMessage
+        ? extractMessageContent(latestMessage, currentConfig.messageContent)
+        : "";
+
+      const state = sampleWaitState({
+        countGrew: currentCount > initialCount,
+        content,
+        now: Date.now(),
+        lastContent,
+        lastChangeAt,
+      });
+      lastContent = state.lastContent;
+      lastChangeAt = state.lastChangeAt;
+
+      if (state.ready && !isTyping()) {
         clearInterval(interval);
-
-        const messages = findElements(currentConfig.messageList);
-        const latestMessage = messages[messages.length - 1];
-        const content = extractMessageContent(
-          latestMessage,
-          currentConfig.messageContent,
-        );
-
         resolve({
           messageCount: currentCount,
           content,

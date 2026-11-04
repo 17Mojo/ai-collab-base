@@ -374,7 +374,9 @@ const MUTATIONS = [
     target: "src/background/pack-executor.js",
     find:
       "      assertAIStepSucceeded(response, targetTabId);\n" +
-      '      return response?.result?.content ?? "";',
+      '      const content = response?.result?.content ?? "";\n' +
+      "      assertUsableAIContent(content, step, targetTabId);\n" +
+      "      return content;",
     replace:
       "      assertAIStepSucceeded(response, targetTabId);\n" +
       "      return response;",
@@ -389,12 +391,47 @@ const MUTATIONS = [
     target: "src/background/pack-executor.js",
     find:
       "    assertAIStepSucceeded(response, null);\n" +
-      '    return response?.result?.content ?? "";',
+      '    const content = response?.result?.content ?? "";\n' +
+      "    assertUsableAIContent(content, step, null);\n" +
+      "    return content;",
     replace:
       "    assertAIStepSucceeded(response, null);\n" +
       "    return response;",
     testFile: "extension-wiring.test.mjs",
     expectTest: "没有目标标签页时才广播，并且要标明是广播",
+  },
+
+  // ── 内容稳定性等待 + 碎片判失败（2026-11-04 千问真机实锤）──────
+  //
+  // 真机首跑 8 步 Pack 全部「成功」而产物是 7 段 '收到，' 碎片 + 1 个空串：
+  // 旧判据「消息数增加 且 不在生成中」在流式开口瞬间就放行。
+  // 下面三条变异分别把三道新闸门拆掉，证明测试真的守着它们。
+  {
+    name: "碎片/空内容判定失效（恒可用）",
+    why: "'收到，' 这种流式开头碎片冒充完成的回复；闸门失效就等于把缺陷放回来",
+    target: "src/utils/wait-policy.js",
+    find: "  return text.length >= minLen;",
+    replace: "  return true;",
+    testFile: "external-user-path.test.mjs",
+    expectTest: "AI 步骤取回流式开头碎片时，整个 Pack 必须失败",
+  },
+  {
+    name: "空内容也判完成",
+    why: "空串是「还没开始流」（千问实跑里 step_6 的空产物就是这么来的），判完成就会把空串当回复取走",
+    target: "src/utils/wait-policy.js",
+    find: "text.length > 0 && nextLastChangeAt != null",
+    replace: "true && nextLastChangeAt != null",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "空内容永不判完成（防把流式开头当回复）",
+  },
+  {
+    name: "稳定窗口失效（内容一出现就算完成）",
+    why: "退回「内容非空即完成」就又变成太早成功——流式开头恰好是非空的",
+    target: "src/utils/wait-policy.js",
+    find: "now - nextLastChangeAt >= stableMs;",
+    replace: "true;",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "内容还在变化时不判完成",
   },
 ];
 
