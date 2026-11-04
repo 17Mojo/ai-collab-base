@@ -732,6 +732,13 @@ const AI_PACK = {
 let executorImportCounter = 0;
 
 /**
+ * 回声正文。必须长于执行器的最短回复阈值（20 字符）——
+ * 短回声会被「碎片判失败」闸门拦下，成功路径的测试会误红。
+ */
+const ECHO =
+  "回声：这是一段足够长的模拟回复正文，用来通过 AI 回复可用性阈值校验。";
+
+/**
  * 在假 chrome 里跑**生产执行器**。
  *
  * @param {Object} [options] - 假 chrome 的行为开关
@@ -744,7 +751,7 @@ async function loadExecutor(options = {}) {
     runtime: {
       sendMessage: async (msg) => {
         calls.runtime.push(msg);
-        return { success: true, result: { content: "回声" } };
+        return { success: true, result: { content: ECHO } };
       },
     },
     tabs: {
@@ -753,7 +760,7 @@ async function loadExecutor(options = {}) {
         if (options.tabsSendThrows) {
           throw new Error("Could not establish connection.");
         }
-        return { success: true, result: { content: "回声" } };
+        return { success: true, result: { content: ECHO } };
       },
     },
   };
@@ -796,7 +803,7 @@ test("没有目标标签页时才广播，并且要标明是广播", async () =>
   assert.equal(calls.tabs.length, 0, "没有目标标签页时不该乱投到某个标签页");
   assert.equal(
     result.steps[0].output,
-    "回声",
+    ECHO,
     "广播的结果也应是解包后的回复内容，而不是信封对象",
   );
 });
