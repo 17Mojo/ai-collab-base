@@ -106,6 +106,18 @@ const SELECTORS = {
   ],
 
   typingIndicator: [
+    // 工作台 agent 状态行按钮（2026-11-04 产物普查：claw-desktop-main.js
+    // 里的 JSX `className:"status-bBRyPA"` 是 CSS Modules 哈希类名，
+    // 但 **data-status 是无哈希属性**——状态机 M="generating" ⟹ data-status="working"，
+    // 文本即截图实证的「✨ 努力工作中 用时N秒」。整个思考停顿期它都挂着，
+    // 不认它就等于在停顿期盲放行（第二轮复跑 6/7 产出是 ack 的根因）。
+    // 注意别把 data-status="waiting"/"complete" 算进来：那是「等待你回复」
+    // 与「已完成工作」，不是生成中。
+    'button[data-status="working"]',
+    // 深度思考块（2026-11-04 产物普查：分片 187.js 的 answer_think_text 组件，
+    // processing 时渲染 CSS Modules 类 generatingThinking，本地名跨发版稳定，
+    // 同 [class*="markdown-content"] 的包含匹配惯例）。
+    '[class*="generatingThinking"]',
     // 等待首个 token 的「接收中」点点点卡片（class 字面量，无哈希）。
     'div.answer-receiving-card',
     // 生成中：输入区右下角的按钮从「发送消息」换成「停止回答」
@@ -246,6 +258,11 @@ class QianwenAdapter extends PlatformAdapter {
    * 先看**元素自身**再找后代：站点的 markdown 容器有可能与答案卡是同一个
    * 元素，只查后代会漏掉它，接着退到 '.qk-md-text' 就只拿到第一段，
    * 多段落答案会被截断。
+   *
+   * 契约收紧（2026-11-04，与 adapter-utils.extractMessageContent 同步）：
+   * 选择器一个都没命中时不许回退整卡 textContent——那会把「正在思考中」
+   * 之类的状态条文本混进正文（真机第二轮污染实锤），返回空串等正文容器
+   * 渲染出来再取。
    */
   _extractContent(element) {
     if (!element) return "";
@@ -254,7 +271,7 @@ class QianwenAdapter extends PlatformAdapter {
       const el = self || element.querySelector(sel);
       if (el) return el.textContent.trim();
     }
-    return element.textContent?.trim() || "";
+    return "";
   }
 
   /**

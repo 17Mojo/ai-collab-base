@@ -433,6 +433,74 @@ const MUTATIONS = [
     testFile: "wait-policy.test.mjs",
     expectTest: "内容还在变化时不判完成",
   },
+
+  // ── 第二轮：生成中状态行 + 抽取契约 + 阈值/稳定窗（2026-11-04）────
+  //
+  // 真机第二轮（清缓存干净复跑）实锤的三重绕过：ack 混入状态条文本
+  // 25–41 字压线过 20 字闸、稳定窗在「努力工作中」思考停顿里放行、
+  // 抽取 fallback 把状态条当正文。下面六条变异把六道新闸门逐个拆掉。
+  {
+    name: "千问生成中状态行选择器被删（努力工作中不被认出）",
+    why:
+      "「✨ 努力工作中 用时N秒」是 claw-desktop-main.js 状态行按钮的 " +
+      "data-status=working——删掉它就是在思考停顿期盲放行，抓走的全是 ack",
+    target: "src/platforms/qianwen-adapter.js",
+    find: "    'button[data-status=\"working\"]',\n",
+    replace: "",
+    testFile: "real-machine/qianwen-contract.test.mjs",
+    expectTest: "生成中状态行（data-status=working）也判定 isTyping()",
+  },
+  {
+    name: "adapter-utils 抽取契约收紧失效（恢复全卡回退）",
+    why: "回退整卡 textContent 就会把「正在思考中/努力工作中」状态条混进正文（真机第二轮 step_2/3 污染实锤）",
+    target: "src/platforms/adapter-utils.js",
+    find: "  if (contentSelectors.length > 0) return '';",
+    replace: "  if (contentSelectors.length > 0) return messageElement.textContent?.trim() || '';",
+    testFile: "real-machine/qianwen-contract.test.mjs",
+    expectTest: "extractMessageContent 同样不许回退整卡文本",
+  },
+  {
+    name: "adapter-utils 自身匹配被删（容器=正文同体丢段落）",
+    why: "只查后代会漏掉「容器本身就是 markdown」的形态，退回全卡文本又把状态条带进来",
+    target: "src/platforms/adapter-utils.js",
+    find: "    const self = messageElement.matches?.(selector) ? messageElement : null;",
+    replace: "    const self = null;",
+    testFile: "real-machine/qianwen-contract.test.mjs",
+    expectTest: "extractMessageContent 先看元素自身再查后代",
+  },
+  {
+    name: "千问 _extractContent 契约收紧失效（恢复全卡回退）",
+    why: "与 adapter-utils 同步的另一半——只堵一处等于没堵",
+    target: "src/platforms/qianwen-adapter.js",
+    find:
+      "      if (el) return el.textContent.trim();\n" +
+      "    }\n" +
+      '    return "";',
+    replace:
+      "      if (el) return el.textContent.trim();\n" +
+      "    }\n" +
+      "    return element.textContent?.trim() || \"\";",
+    testFile: "real-machine/qianwen-contract.test.mjs",
+    expectTest: "选择器未命中时不许回退整卡文本（状态条不许混进正文）",
+  },
+  {
+    name: "碎片阈值回退（50→20）",
+    why: "20 分不开 ack 与正文——真机第二轮 ack 带主题词 20–26 字、混状态条 25–41 字全部压线过闸",
+    target: "src/utils/wait-policy.js",
+    find: "export const MIN_AI_CONTENT_LENGTH_DEFAULT = 50;",
+    replace: "export const MIN_AI_CONTENT_LENGTH_DEFAULT = 20;",
+    testFile: "external-user-path.test.mjs",
+    expectTest: "污染 ack 混入状态条文本也不许冒充正文",
+  },
+  {
+    name: "稳定窗回退（8s→4s）",
+    why: "4 秒窗在「努力工作中」思考停顿里被误判成生成结束（真机第二轮复跑 6/7 产出是 ack 的直接原因）",
+    target: "src/utils/wait-policy.js",
+    find: "export const STABLE_MS_DEFAULT = 8000;",
+    replace: "export const STABLE_MS_DEFAULT = 4000;",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "默认稳定窗是 8 秒：5 秒定格不算完成，8 秒才算（防思考停顿误判）",
+  },
 ];
 
 /**

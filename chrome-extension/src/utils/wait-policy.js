@@ -23,10 +23,17 @@
  */
 
 /** 内容稳定多久才算「生成结束」（毫秒）。 */
-export const STABLE_MS_DEFAULT = 4000;
+// 8 秒（2026-11-04 第二轮）：4 秒在千问「努力工作中」思考停顿期会被误判成
+// 生成结束——ack 句定格 4 秒后停顿还在继续，正文还没流出来。
+// 8 秒是停顿泄漏的兜底，根修是认出「努力工作中」状态行（见 qianwen-adapter）。
+export const STABLE_MS_DEFAULT = 8000;
 
 /** AI 步骤可接受的最短回复长度（字符，trim 后计）。 */
-export const MIN_AI_CONTENT_LENGTH_DEFAULT = 20;
+// 50（2026-11-04 第二轮）：20 分不开 ack 与正文——真机第二轮里 ack 句带主题词
+// 有 20–26 字，还混入「正在思考中」状态条文本到 25–41 字，全部压线过 20 的闸。
+// 真正文 100–300 字；预期短产出的步骤（如一句话开头）用
+// `step.config.min_output_length` 按步放宽。
+export const MIN_AI_CONTENT_LENGTH_DEFAULT = 50;
 
 /**
  * 采样一次等待状态（内容稳定性判据）。

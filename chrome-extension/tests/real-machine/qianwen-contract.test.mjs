@@ -42,6 +42,7 @@ import { dirname, join } from "node:path";
 import { JSDOM } from "jsdom";
 
 import QianwenAdapter from "../../src/platforms/qianwen-adapter.js";
+import { extractMessageContent } from "../../src/platforms/adapter-utils.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -288,6 +289,116 @@ test("等待首个 token 时消息数不因接收卡片而增加", () => {
     1,
     "接收中卡片不是一条消息：用户一按下发送计数就 +1 会导致提前返回",
   );
+});
+
+test("生成中状态行（data-status=working）也判定 isTyping()", () => {
+  // 2026-11-04 真机第二轮根因：「✨ 努力工作中 用时N秒」状态行在整个思考
+  // 停顿期都挂着，但旧选择器（接收中卡片/停止回答）一个都认不出它 ⇒
+  // 稳定窗在停顿里放行，抓走的全是 ack。状态行来自工作台 agent 包
+  // claw-desktop-main.js 的 JSX：className 是 CSS Modules 哈希，
+  // 但 data-status 是无哈希属性，生成中取值 "working"（M="generating"）。
+  const dom = new JSDOM(
+    `<button type="button" class="status-bBRyPA" data-status="working">
+       <span class="label-DNOZdE">努力工作中 用时4秒</span>
+     </button>`,
+    { url: "https://www.qianwen.com/" },
+  );
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+  globalThis.location = dom.window.location;
+  globalThis.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
+
+  const adapter = new QianwenAdapter();
+  assert.equal(
+    adapter.isTyping(),
+    true,
+    "「努力工作中」状态行就是生成中的信号，不认它就会在思考停顿期盲放行",
+  );
+});
+
+test("已完成状态行（data-status=complete）不算生成中", () => {
+  // 反向测试：同一个状态行按钮在答完后 data-status 变成 "complete"
+  // （文本「已完成工作 用时N秒」）——那是在收工，不是在生成。
+  // 选择器只许认 "working"，把整条按钮都算上就会永远等不到「不再生成」。
+  const dom = new JSDOM(
+    `<button type="button" class="status-bBRyPA" data-status="complete">
+       <span class="label-DNOZdE">已完成工作 用时12秒</span>
+     </button>`,
+    { url: "https://www.qianwen.com/" },
+  );
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+  globalThis.location = dom.window.location;
+  globalThis.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
+
+  const adapter = new QianwenAdapter();
+  assert.equal(adapter.isTyping(), false, "已完成状态行不许判定为正在生成");
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// 5. 抽取契约：状态条不许混进正文（2026-11-04 真机第二轮污染实锤）
+// ─────────────────────────────────────────────────────────────────────
+
+test("选择器未命中时不许回退整卡文本（状态条不许混进正文）", () => {
+  // 真机第二轮 step_3 的实锤形状：思考停顿期 .qk-markdown 还没渲染，
+  // 旧 fallback 把整卡 textContent 当正文——「正在思考中」就这么混进来的，
+  // 25 字压线过了长度闸。收紧后必须返回空串，让等待继续。
+  const dom = new JSDOM(
+    `<div class="answer-common-card answer-text md-text-card">
+       <div class="answer_think_text"><img class="_generatingThinking_x1a2b_7">正在思考中</div>
+     </div>`,
+    { url: "https://www.qianwen.com/" },
+  );
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+  globalThis.location = dom.window.location;
+  globalThis.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
+
+  const adapter = new QianwenAdapter();
+  const card = dom.window.document.querySelector(".answer-text");
+
+  assert.equal(
+    adapter._extractContent(card),
+    "",
+    "正文容器还没渲染出来时必须返回空串，不许把「正在思考中」状态条当正文",
+  );
+});
+
+test("extractMessageContent 同样不许回退整卡文本", () => {
+  // 内容脚本的 handleWaitForResponse 走的是 adapter-utils 这条抽取路径，
+  // 契约必须与 adapter._extractContent 一致，否则污染只堵了一半。
+  const dom = new JSDOM(
+    `<div class="answer-common-card">
+       <div class="status-row">努力工作中 用时4秒</div>
+     </div>`,
+    { url: "https://www.qianwen.com/" },
+  );
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+
+  const card = dom.window.document.querySelector(".answer-common-card");
+  assert.equal(
+    extractMessageContent(card, [".qk-markdown"]),
+    "",
+    "contentSelectors 未命中时返回空串，不许把状态行文本当正文",
+  );
+});
+
+test("extractMessageContent 先看元素自身再查后代（容器=正文同体不许丢段落）", () => {
+  const dom = new JSDOM(
+    `<div class="answer-common-card qk-markdown">
+       <p><span class="qk-md-text">第一段。</span></p>
+       <p><span class="qk-md-text">第二段。</span></p>
+     </div>`,
+    { url: "https://www.qianwen.com/" },
+  );
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+
+  const card = dom.window.document.querySelector(".answer-common-card");
+  const content = extractMessageContent(card, [".qk-markdown", ".qk-md-text"]);
+  assert.match(content, /第一段/, `正文缺第一段：${content}`);
+  assert.match(content, /第二段/, `正文缺第二段（只取到第一段）：${content}`);
 });
 
 // ─────────────────────────────────────────────────────────────────────
