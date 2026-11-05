@@ -43,7 +43,7 @@
  *   LEVEL   受众层级（默认「普通上班族」）
  *   OUT     回执 JSON 路径（默认 evidence/L2-qianwen-auto-<今天>.json）
  *   SHOT    会话截图路径（默认与 OUT 同名 .png）
- *   PROFILE 持久 profile 目录（默认 /tmp/rm-qianwen-l2-profile）
+ *   PROFILE 持久 profile 目录（默认 ~/Library/Application Support/rm-qianwen-l2-profile；勿指回 /tmp——会被系统清）
  *
  * 同日重跑默认覆盖同名回执——要留档先改名（`.roundN` / `.stale-sw-*` 后缀惯例）
  * 或显式设 OUT/SHOT。
@@ -51,13 +51,16 @@
 
 import { chromium } from "playwright";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const EXT = fileURLToPath(new URL("../../dist", import.meta.url));
 const PACK_PATH = `${REPO_ROOT}packs/examples/xiaohongshu_knowledge_creator.json`;
-const PROFILE = process.env.PROFILE || "/tmp/rm-qianwen-l2-profile";
+// 登录态存盘不能放 /tmp（macOS 会定期清，QR 重登成本高）也不能进仓库树（含 cookie），
+// 落 ~/Library/Application Support/ 下的固定目录（2026-11-05 工程债收口）。
+const PROFILE = process.env.PROFILE || `${homedir()}/Library/Application Support/rm-qianwen-l2-profile`;
 const TODAY = new Date().toISOString().slice(0, 10);
 const EVIDENCE_DIR = `${REPO_ROOT}collaboration/results/real-machine-runs/evidence`;
 const OUT = process.env.OUT || `${EVIDENCE_DIR}/L2-qianwen-auto-${TODAY}.json`;

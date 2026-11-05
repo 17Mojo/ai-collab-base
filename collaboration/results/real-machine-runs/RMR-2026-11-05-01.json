@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-05-01",
+  "created_at": "2026-11-05T12:25:40+08:00",
+  "updated_at": "2026-11-05T12:26:08+08:00",
+  "operator": "workbuddy_rasp",
+  "purpose": "L2 千问单平台复跑：PR #24 后构建 + Playwright 自动化真 Pack（xiaohongshu-knowledge-creator 8 步），含 §4.5 语义裁决；profile 工程债收口（/tmp → ~/Library/Application Support）",
+  "platforms": [
+    "qianwen"
+  ],
+  "locales": [
+    "zh-CN"
+  ],
+  "records": [
+    {
+      "layer": "L2",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-05T12:25:40+08:00",
+      "evidence": [
+        "真 Pack 复跑（PR #24 后构建 dist 2026-11-05 11:45，SW 自检三标记全 true，全新 profile 扫码重建）：8/8 步 success=True，7/7 真产出（66/502/319/242/125/463/637 字），零 ack 零碎片，全部过 50 字闸，3m30s 每步真等生成",
+        "§4.5 语义裁决（机器评分）：semantic-marginal（合格 6 / 勉强 1 / 不合格 0）——唯一勉强为 hook ③ 代词自足性，与 11-04 复跑三同位置稳定复现（F 类映射缺口，修法在提示词层）；boundary ③ 词面命中本轮不复现"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-05.json",
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-05.png",
+        "collaboration/results/RESULT-L2-SEMANTIC-VERDICT-2026-11-05.md"
+      ],
+      "reason": "",
+      "notes": "L2 技术判定与语义判定两把尺子都记；语义裁决属机器评分（AI 自评按 §4.5 逐条勾判），不是人工验收，不说「验收通过」。环境备注：当日 /tmp/rm-qianwen-l2-profile 被 macOS 清理致登录态丢失（扫码重建）——工程债已收口，PROFILE 默认迁至 ~/Library/Application Support/rm-qianwen-l2-profile"
+    },
+    {
+      "layer": "L1",
+      "platform": "qianwen",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-05T12:26:08+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮为 scoped L2 单平台复跑（真 Pack Playwright 自动化），未跑 L1 DOM 契约探针；L1 基线见 RMR-2026-11-04-01（qianwen 探针零漂移）",
+      "notes": ""
+    }
+  ]
+}
