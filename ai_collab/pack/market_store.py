@@ -56,7 +56,18 @@ class PackMarketStore:
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
 
     def _init_schema(self) -> None:
-        """初始化数据库表结构"""
+        """初始化数据库表结构（含旧库迁移）
+
+        迁移策略（2026-11-05，known_gaps N17 收口）：
+        - pack_listings 新库 DDL 直接带 ``dependencies TEXT NOT NULL DEFAULT '[]'``；
+          旧库（无该列）通过 PRAGMA table_info 探测后 ``ALTER TABLE ADD COLUMN``
+          就地补齐，既有行落默认 ``[]``，数据零丢失。
+        - pack_versions 为**追加式版本历史**：PRIMARY KEY (pack_id, version)，
+          INSERT OR IGNORE —— 每个版本只留「首次归档快照」（发布时状态），
+          同版本的元数据改动（如 approve 改 status）不重写历史；
+          pack_listings 仍是当前真值。update_listing 覆盖前先归档旧行，
+          所以迁移前的存量行也会在首次更新时补进历史。
+        """
         with _connect(self.db_path) as conn:
             cursor = conn.cursor()
 
@@ -71,12 +82,43 @@ class PackMarketStore:
                     author TEXT NOT NULL,
                     category TEXT NOT NULL,
                     tags TEXT NOT NULL,
+                    dependencies TEXT NOT NULL DEFAULT '[]',
                     downloads INTEGER DEFAULT 0,
                     rating REAL DEFAULT 0.0,
                     rating_count INTEGER DEFAULT 0,
                     status TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
+                )
+            """
+            )
+
+            # 旧库迁移：pack_listings 缺 dependencies 列则就地补齐
+            cursor.execute("PRAGMA table_info(pack_listings)")
+            existing_cols = {row[1] for row in cursor.fetchall()}
+            if "dependencies" not in existing_cols:
+                cursor.execute(
+                    "ALTER TABLE pack_listings ADD COLUMN dependencies "
+                    "TEXT NOT NULL DEFAULT '[]'"
+                )
+
+            # Pack 版本历史表（追加式，见方法 docstring 的语义说明）
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pack_versions (
+                    pack_id TEXT NOT NULL,
+                    version TEXT NOT NULL,
+                    pack_name TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    author TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    tags TEXT NOT NULL,
+                    dependencies TEXT NOT NULL DEFAULT '[]',
+                    status TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    archived_at TEXT NOT NULL,
+                    PRIMARY KEY (pack_id, version)
                 )
             """
             )
@@ -122,8 +164,69 @@ class PackMarketStore:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_rating_pack ON pack_ratings(pack_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_rating_user ON pack_ratings(user_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedback_pack ON user_feedback(pack_id)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_versions_pack ON pack_versions(pack_id)"
+            )
 
             conn.commit()
+
+    # ========== 内部工具 ==========
+
+    @staticmethod
+    def _row_to_listing(row: sqlite3.Row) -> PackListing:
+        """把 pack_listings 行转为 PackListing（含 dependencies 反序列化）。
+
+        dependencies 列损坏时降级为空列表，不阻断读取。
+        """
+        try:
+            deps = json.loads(row["dependencies"] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            deps = []
+        return PackListing(
+            pack_id=row["pack_id"],
+            pack_name=row["pack_name"],
+            version=row["version"],
+            description=row["description"],
+            author=row["author"],
+            category=row["category"],
+            tags=json.loads(row["tags"]),
+            downloads=row["downloads"],
+            rating=row["rating"],
+            rating_count=row["rating_count"],
+            status=PackStatus(row["status"]),
+            dependencies=deps if isinstance(deps, list) else [],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    @staticmethod
+    def _archive_version(conn: sqlite3.Connection, listing: PackListing) -> None:
+        """把 listing 快照归档进 pack_versions（追加式，INSERT OR IGNORE）。
+
+        (pack_id, version) 已归档则不覆盖——历史保留「首次归档快照」。
+        """
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO pack_versions (
+                pack_id, version, pack_name, description, author, category,
+                tags, dependencies, status, created_at, updated_at, archived_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                listing.pack_id,
+                listing.version,
+                listing.pack_name,
+                listing.description,
+                listing.author,
+                listing.category,
+                json.dumps(listing.tags),
+                json.dumps(listing.dependencies),
+                listing.status.value,
+                listing.created_at.isoformat(),
+                listing.updated_at.isoformat(),
+                datetime.now().isoformat(),
+            ),
+        )
 
     # ========== Pack 列表操作 ==========
 
@@ -143,8 +246,9 @@ class PackMarketStore:
                     """
                     INSERT INTO pack_listings (
                         pack_id, pack_name, version, description, author, category,
-                        tags, downloads, rating, rating_count, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        tags, dependencies, downloads, rating, rating_count,
+                        status, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                         listing.pack_id,
@@ -154,6 +258,7 @@ class PackMarketStore:
                         listing.author,
                         listing.category,
                         json.dumps(listing.tags),
+                        json.dumps(listing.dependencies),
                         listing.downloads,
                         listing.rating,
                         listing.rating_count,
@@ -162,6 +267,7 @@ class PackMarketStore:
                         listing.updated_at.isoformat(),
                     ),
                 )
+                self._archive_version(conn, listing)
                 conn.commit()
                 return True
         except sqlite3.IntegrityError:
@@ -185,24 +291,13 @@ class PackMarketStore:
             if row is None:
                 return None
 
-            return PackListing(
-                pack_id=row["pack_id"],
-                pack_name=row["pack_name"],
-                version=row["version"],
-                description=row["description"],
-                author=row["author"],
-                category=row["category"],
-                tags=json.loads(row["tags"]),
-                downloads=row["downloads"],
-                rating=row["rating"],
-                rating_count=row["rating_count"],
-                status=PackStatus(row["status"]),
-                created_at=datetime.fromisoformat(row["created_at"]),
-                updated_at=datetime.fromisoformat(row["updated_at"]),
-            )
+            return self._row_to_listing(row)
 
     def update_listing(self, listing: PackListing) -> bool:
         """更新 Pack 列表项
+
+        覆盖前先把库中旧行归档进 pack_versions（迁移前存量行由此补进历史），
+        再归档新快照（同版本已归档则忽略，见 _archive_version）。
 
         Args:
             listing: Pack 列表项
@@ -212,12 +307,20 @@ class PackMarketStore:
         """
         try:
             with _connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT * FROM pack_listings WHERE pack_id = ?", (listing.pack_id,)
+                )
+                old_row = cursor.fetchone()
+                if old_row is not None:
+                    self._archive_version(conn, self._row_to_listing(old_row))
                 cursor.execute(
                     """
                     UPDATE pack_listings SET
                         pack_name = ?, version = ?, description = ?, author = ?, category = ?,
-                        tags = ?, downloads = ?, rating = ?, rating_count = ?, status = ?, updated_at = ?
+                        tags = ?, dependencies = ?, downloads = ?, rating = ?, rating_count = ?,
+                        status = ?, updated_at = ?
                     WHERE pack_id = ?
                 """,
                     (
@@ -227,6 +330,7 @@ class PackMarketStore:
                         listing.author,
                         listing.category,
                         json.dumps(listing.tags),
+                        json.dumps(listing.dependencies),
                         listing.downloads,
                         listing.rating,
                         listing.rating_count,
@@ -235,8 +339,11 @@ class PackMarketStore:
                         listing.pack_id,
                     ),
                 )
+                updated = cursor.rowcount > 0
+                if updated:
+                    self._archive_version(conn, listing)
                 conn.commit()
-                return cursor.rowcount > 0
+                return updated
         except sqlite3.IntegrityError:
             return False
 
@@ -300,24 +407,7 @@ class PackMarketStore:
             cursor.execute(query, params)
             rows = cursor.fetchall()
 
-            return [
-                PackListing(
-                    pack_id=row["pack_id"],
-                    pack_name=row["pack_name"],
-                    version=row["version"],
-                    description=row["description"],
-                    author=row["author"],
-                    category=row["category"],
-                    tags=json.loads(row["tags"]),
-                    downloads=row["downloads"],
-                    rating=row["rating"],
-                    rating_count=row["rating_count"],
-                    status=PackStatus(row["status"]),
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
-                )
-                for row in rows
-            ]
+            return [self._row_to_listing(row) for row in rows]
 
     def search_listings(self, query: str, limit: int = 100) -> list[PackListing]:
         """搜索 Pack 列表项（支持模糊匹配）
@@ -344,24 +434,57 @@ class PackMarketStore:
 
             rows = cursor.fetchall()
 
-            return [
-                PackListing(
-                    pack_id=row["pack_id"],
-                    pack_name=row["pack_name"],
-                    version=row["version"],
-                    description=row["description"],
-                    author=row["author"],
-                    category=row["category"],
-                    tags=json.loads(row["tags"]),
-                    downloads=row["downloads"],
-                    rating=row["rating"],
-                    rating_count=row["rating_count"],
-                    status=PackStatus(row["status"]),
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
+            return [self._row_to_listing(row) for row in rows]
+
+    # ========== Pack 版本历史操作 ==========
+
+    def list_versions(self, pack_id: str) -> list[dict[str, Any]]:
+        """列出 Pack 版本历史（追加式归档，按归档时间升序）
+
+        每个 (pack_id, version) 只有一条「首次归档快照」；即使 pack_listings
+        中的当前行已被覆盖或删除，历史仍可查（回滚/审计依据）。
+
+        Args:
+            pack_id: Pack ID
+
+        Returns:
+            版本快照字典列表（含 archived_at），无历史返回空列表
+        """
+        with _connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM pack_versions
+                WHERE pack_id = ? ORDER BY archived_at ASC, rowid ASC
+            """,
+                (pack_id,),
+            )
+            rows = cursor.fetchall()
+
+            versions: list[dict[str, Any]] = []
+            for row in rows:
+                try:
+                    deps = json.loads(row["dependencies"] or "[]")
+                except (json.JSONDecodeError, TypeError):
+                    deps = []
+                versions.append(
+                    {
+                        "pack_id": row["pack_id"],
+                        "version": row["version"],
+                        "pack_name": row["pack_name"],
+                        "description": row["description"],
+                        "author": row["author"],
+                        "category": row["category"],
+                        "tags": json.loads(row["tags"]),
+                        "dependencies": deps if isinstance(deps, list) else [],
+                        "status": row["status"],
+                        "created_at": row["created_at"],
+                        "updated_at": row["updated_at"],
+                        "archived_at": row["archived_at"],
+                    }
                 )
-                for row in rows
-            ]
+            return versions
 
     # ========== Pack 评价操作 ==========
 

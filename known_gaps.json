@@ -277,22 +277,25 @@
     {
       "id": "N17",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "市场表 pack_listings 无 dependencies 列且 pack_id 主键单行（无版本历史）",
       "reader": "想在市场库持久化依赖图、或让同一 pack 多版本共存的人——publish 新版本会单行覆盖旧版，依赖数据入库即丢",
       "where": [
-        "ai_collab/pack/market_store.py:66",
-        "ai_collab/pack/market_store.py:188",
-        "ai_collab/cli/pack_market.py:266"
+        "ai_collab/pack/market_store.py:58",
+        "ai_collab/pack/market_store.py:233",
+        "ai_collab/pack/market_store.py:296",
+        "ai_collab/pack/market_store.py:441"
       ],
       "detail": "DDL 中 pack_id 是 TEXT PRIMARY KEY（单行最新版模型），且没有 dependencies 列——PackListing dataclass 有该字段但 create_listing/get_listing 都不持久化，get_listing 回填恒为空。pack publish/install/upgrade CLI 落地时（2026-11-05，RESULT-REALPATH-MARKET-CLI-2026-11-05 §2.3）已适配：同 id 发更高版本走 update_listing 单行覆盖（保留下载/评分计数），install 依赖图从 packs/ 正文 JSON 补齐。",
       "impact": "市场库无法回答「这个 pack 依赖什么」（只有正文 JSON 知道）；无法回滚历史版本或并存多版本（覆盖不可逆）。",
-      "fix": "schema 迁移：pack_listings 加 dependencies TEXT（JSON 序列化）或单开 pack_dependencies 表；如需多版本共存再引入 pack_versions 表并调整 publish/upgrade 语义。涉及迁移策略（旧库兼容），单开条目做。"
+      "fix": "已收口（2026-11-05）：pack_listings 加 dependencies TEXT NOT NULL DEFAULT '[]'，旧库经 PRAGMA table_info 探测后 ALTER TABLE ADD COLUMN 就地迁移（存量行零丢失，17 项迁移测试含旧库保真验证）；create/update/get/list/search 全链路持久化 dependencies，market_api.create_pack/update_pack 增参数、list_pack_versions 暴露，PackListing.from_dict 补 dependencies（to_dict/from_dict 对称）。新增 pack_versions 追加式版本历史（PRIMARY KEY (pack_id, version)，INSERT OR IGNORE，每版本留首次归档快照；update_listing 覆盖前先归档旧行，迁移前存量行由此补进历史；delete_listing 不清历史）。CLI 增 pack history 子命令；install 依赖图以市场表为准，正文 JSON 降级为兜底。单行覆盖语义保留（pack_listings = 当前真值）。",
+      "closed_at": "2026-11-05",
+      "evidence": "tests/unit/pack/test_market_store_migration.py 17/17 绿（迁移/持久化/历史语义/API 接线）；tests/unit/cli/test_pack_market_cli.py 增 history 3 例 + store 依赖优先 1 例；真 sqlite E2E：publish 1.0.0 → republish 2.0.0 单行更新 → history 2 条快照 → install@^2.0.0 用市场表依赖（无正文兜底消息）→ 真库直查 pack_versions 2 行/pack_listings 1 行验证一致。mypy/ruff 干净，CI 全矩阵绿。"
     },
     {
       "id": "N18",
       "priority": "P3",
-      "status": "open",
+      "status": "closed",
       "title": "4 个 templates Pack 缺顶层 section，validate_pack 过不了",
       "reader": "拿 packs/templates/ 当 schema 完整性基准、或对这批 Pack 跑 validate_pack(strict=True) 的人",
       "where": [
@@ -303,7 +306,9 @@
       ],
       "detail": "2026-11-05 全仓 sweep（metric name-as-key 口径统一后）：4 个模板缺 generation_params/optimization/performance_tracking/collaboration（travel 另缺 example_library）等顶层 section。其余 10 个 pack 文件 validate_pack 全绿（正典 beauty pack 从 5 error 收到 0）。非 metric 口径问题——是模板本身缺段。",
       "impact": "validate_pack 全仓 sweep 不干净；想批量发布这批模板时 publish 闸门（pack validate 同款判据）会拦下缺段项。",
-      "fix": "补齐缺失 section（对齐 schema_validator REQUIRED_TOP_LEVEL），或明确这批是轻量模板并把顶层 section 改为可选/分层 schema。"
+      "fix": "已收口（2026-11-05）：4 模板补齐 generation_params/optimization/performance_tracking/collaboration（schema_v2 dataclass 默认值；bilibili/xiaohongshu 按平台补 post_publish_tracking 指标），travel 另补 example_library + metadata.designer/created_at/updated_at（designer=git 初始提交作者 17Mojo，created_at=git 首提交时间2026-05-11T12:35:42，不伪造）。回溯补充（登记后新证据）：基线复查发现台账未记的两类错误一并修——3 模板 quality_metrics.metrics 是 list 非 name-as-key 对象（转规范格式：name→key、measurement_method→check_method、threshold→min_threshold），example_library 用非规范 examples 键（按 tags 拆 good_examples/bad_examples，补 PackExample 必填 description/score/validation_notes，score 取仓库惯例占位值good≈92/bad≈35，output 压平为 str 对齐消费面类型）。",
+      "closed_at": "2026-11-05",
+      "evidence": "validate_pack(strict=True) 4/4 零 error（基线 5/5/5/8）；schema_v2.PromptPackV2.from_dict 4/4 解析通过（双消费面验收——from_dict 冒烟曾抓到示例缺 description 的 KeyError，系拆 examples 引入的回归，已补字段修复）。全仓 sweep 余 6 个 FAIL 均为 manifest/VERSION/exports 归档文件（非 pack 本体，sweep 口径问题，不在本条范围）。pack+cli+validator 回归 646 passed（新增 22），69 broker-EEXIST 假阳性与基线持平。"
     }
   ]
 }

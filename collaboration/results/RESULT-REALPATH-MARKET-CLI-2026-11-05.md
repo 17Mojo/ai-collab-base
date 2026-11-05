@@ -115,7 +115,16 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
    （key 即 name，对齐 schema_v2.from_dict 消费面），正典 Pack 5 error → 0。
 3. ~~dependency.py 范围语法对齐~~ **已收口**：`*`/x/X 通配、部分版本补零、
    AND 空格分隔检查路径对齐（`_check_single_expression` 与 `_parse_range` 分隔符一致）。
-4. 市场表 dependencies 列 + 版本历史（若需要多版本共存）——涉及 schema 迁移，
-   **已登记 `known_gaps.json` N17**（P2，open），单开条目做。
-5. NotebookLM MCP / codex CLI 接入后补 REAL 复测（2026-11-05 复探 blocker 原样，
+4. ~~市场表 dependencies 列 + 版本历史~~ **已收口**（2026-11-05 晚批，`known_gaps` N17 closed）：
+   pack_listings 加 `dependencies TEXT`（旧库 PRAGMA 探测 + ALTER TABLE 就地迁移，存量行
+   零丢失）；新增 pack_versions 追加式版本历史（每版本一条首次归档快照，update 覆盖前
+   先归档旧行）；market_api 增 `list_pack_versions`，CLI 增 `pack history` 子命令；
+   install 依赖图以市场表为准、正文 JSON 降级兜底。验证：迁移测试 17/17 + 真 sqlite E2E
+   （publish → republish → history → install）全链一致。
+5. ~~4 templates 缺顶层 section~~ **已收口**（2026-11-05 晚批，`known_gaps` N18 closed）：
+   4 模板补 generation_params/optimization/performance_tracking/collaboration（travel 另补
+   example_library + metadata 三字段，取 git 真值不伪造）；回溯修正台账未记的两类错误
+   （metrics list→name-as-key、examples 键拆 good/bad 并补 PackExample 必填字段）。
+   验证：validate_pack(strict=True) 4/4 零 error + schema_v2.from_dict 4/4 解析通过。
+6. NotebookLM MCP / codex CLI 接入后补 REAL 复测（2026-11-05 复探 blocker 原样，
    见 §1.3/1.4 注记）。

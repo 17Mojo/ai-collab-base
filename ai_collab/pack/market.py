@@ -102,6 +102,7 @@ class PackListing:
             rating=data.get("rating", 0.0),
             rating_count=data.get("rating_count", 0),
             status=PackStatus(data.get("status", "pending")),
+            dependencies=data.get("dependencies", []),
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
         )

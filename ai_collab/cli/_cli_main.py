@@ -4253,7 +4253,7 @@ def cmd_pack(args):
         output_dir = getattr(args, "output", None) or os.path.join(workspace, "conversion_output")
         return _handle_convert_command(args, output_dir)
 
-    # Pack 市场（publish/install/upgrade）
+    # Pack 市场（publish/install/upgrade/history）
     elif args.subcommand == "publish":
         return _handle_publish_command(args, packs_root, workspace)
 
@@ -4262,6 +4262,9 @@ def cmd_pack(args):
 
     elif args.subcommand == "upgrade":
         return _handle_upgrade_command(args, packs_root, workspace)
+
+    elif args.subcommand == "history":
+        return _handle_history_command(args, packs_root, workspace)
 
     return 0
 
@@ -4895,6 +4898,15 @@ def _handle_upgrade_command(args, packs_root, workspace):
     db_path = os.path.join(workspace, "data", "packs.db")
     cli = PackMarketCLI(db_path=db_path, packs_root=packs_root)
     return cli.upgrade(args.name)
+
+
+def _handle_history_command(args, packs_root, workspace):
+    """处理 Pack 版本历史查询（pack_versions 归档）"""
+    from ai_collab.cli.pack_market import PackMarketCLI
+
+    db_path = os.path.join(workspace, "data", "packs.db")
+    cli = PackMarketCLI(db_path=db_path, packs_root=packs_root)
+    return cli.history(args.name)
 
 
 def _handle_sharing_command(args, packs_root):
@@ -5747,6 +5759,10 @@ def main():
     # pack upgrade（对比市场最新 + 依赖冲突扫描）
     upgrade_parser = pack_subparsers.add_parser("upgrade", help="升级已安装 Pack")
     upgrade_parser.add_argument("name", help="已安装的 Pack 名称或 id")
+
+    # pack history（pack_versions 版本历史）
+    history_parser = pack_subparsers.add_parser("history", help="查看 Pack 版本历史")
+    history_parser.add_argument("name", help="Pack 名称或 id")
 
     # pack convert 子命令（Owner 需求 → Pack 草稿，ReAct 转换）
     convert_parser = pack_subparsers.add_parser("convert", help="Owner 需求 → Pack 草稿（ReAct 转换）")
