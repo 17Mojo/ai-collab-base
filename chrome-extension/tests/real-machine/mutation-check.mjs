@@ -60,20 +60,29 @@ const TMP_ROOT = join(EXT_ROOT, ".mutation-tmp");
 const MUTATIONS = [
   // ── L2 判定逻辑 ──────────────────────────────────────────────
   {
-    name: "把「计数增长」从 > 改成 >=",
-    why: "生产口径是严格大于；改成 >= 会把「一条都没多」误判为已回复",
+    name: "把「计数增长」从 > 改成 >=（判定报告位）",
+    why: "生产口径是严格大于；报告位改成 >= 会把「一条都没多」谎报成 countGrew",
     target: "real-machine/l2-model.mjs",
-    find: "usable[i].messageCount > initial && usable[i].isTyping === false",
-    replace: "usable[i].messageCount >= initial && usable[i].isTyping === false",
+    find: "usable.some((s) => s.messageCount > initial)",
+    replace: "usable.some((s) => s.messageCount >= initial)",
+    testFile: "real-machine/l2-model.test.mjs",
+    expectTest: "生成中解除但计数没涨",
+  },
+  {
+    name: "把「计数增长」从 > 改成 >=（重放放行位）",
+    why: "重放放行位改成 >= 会把「一条都没多」的稳定正文时间线误判为已回复——这就是「误判为已回复」的产生点",
+    target: "real-machine/l2-model.mjs",
+    find: "countGrew: s.messageCount > initial,",
+    replace: "countGrew: s.messageCount >= initial,",
     testFile: "real-machine/l2-model.test.mjs",
     expectTest: "生成中解除但计数没涨",
   },
   {
     name: "把「不在生成中」这个条件去掉",
-    why: "去掉后等待会在生成中途提前返回——这正是 isTyping 选错时的真实故障模式",
+    why: "去掉后稳定窗一到就返回，不管还在不在生成中——思考停顿期就会提前取走半截正文，这正是 isTyping 选错时的真实故障模式",
     target: "real-machine/l2-model.mjs",
-    find: "if (usable[i].messageCount > initial && usable[i].isTyping === false) {",
-    replace: "if (usable[i].messageCount > initial) {",
+    find: "if (state.ready && s.isTyping === false) {",
+    replace: "if (state.ready) {",
     testFile: "real-machine/l2-model.test.mjs",
     expectTest: "计数涨了但 isTyping 恒为 true",
   },
@@ -93,7 +102,7 @@ const MUTATIONS = [
     find: "productionContentNonEmpty: Boolean(prodResult && (prodResult.content || \"\").trim().length > 0),",
     replace: "productionContentNonEmpty: true,",
     testFile: "real-machine/l2-model.test.mjs",
-    expectTest: "等待成功但正文是空的",
+    expectTest: "productionContentNonEmpty 揪出抽取断链",
   },
   {
     name: "证据文件不再脱敏",
@@ -567,10 +576,10 @@ const MUTATIONS = [
   {
     name: "l2-model 重放回退旧口径（重放与生产分叉）",
     why: "观测器重放必须走 sampleWaitState 同一判据——回退旧口径就又造出第二把尺子",
-    target: "tests/real-machine/l2-model.mjs",
+    target: "real-machine/l2-model.mjs",
     find: "if (state.ready && s.isTyping === false) {",
     replace: "if (s.messageCount > initial && s.isTyping === false) {",
-    testFile: "l2-model.test.mjs",
+    testFile: "real-machine/l2-model.test.mjs",
     expectTest: "内容持续在变的流式时间线不许判成功",
   },
 

@@ -109,12 +109,16 @@ test("内容持续在变的流式时间线不许判成功（重放侧太早成�
 });
 
 test("计数涨了但 isTyping 恒为 true —— 不会成功（Kimi/ChatGLM 那类缺陷）", () => {
+  // 正文从第 1 帧起就稳住（连着三帧不变）——稳定窗已满足，
+  // 唯一拦路的是 isTyping 恒 true。不这么写，「去掉 isTyping 条件」的变异
+  // 会被稳定窗掩蔽（两道闸同时拦着，拆掉一道照样红不了）。
   const samples = timeline([
     [0, false, ""],
     [1, true, "…"],
     [1, true, "…"],
+    [1, true, "…"],
   ]);
-  const v = buildVerdict(samples, { settled: true, result: null, error: "Kimi: Response timeout" });
+  const v = buildVerdict(samples, { settled: true, result: null, error: "Kimi: Response timeout" }, null, 1000);
   assert.equal(v.countGrew, true, "计数确实涨了");
   assert.equal(v.typingCleared, true, "有一帧是 false（起点那帧），但没能同时满足");
   assert.equal(v.wouldResolve, false, "生产口径要求两者同时成立");
@@ -124,11 +128,14 @@ test("计数涨了但 isTyping 恒为 true —— 不会成功（Kimi/ChatGLM �
 });
 
 test("生成中解除但计数没涨 —— 不会成功（取消息列表选错）", () => {
+  // 正文已稳住——稳定窗已满足，唯一拦路的是计数没涨。
+  // 不这么写，「> 改成 >=」的变异会被空内容/稳定窗掩蔽。
   const samples = timeline([
-    [37, false, ""],
-    [37, false, ""],
+    [37, false, "回复"],
+    [37, false, "回复"],
+    [37, false, "回复"],
   ]);
-  const v = buildVerdict(samples, { settled: true, result: null, error: "Response timeout" });
+  const v = buildVerdict(samples, { settled: true, result: null, error: "Response timeout" }, null, 1000);
   assert.equal(v.countGrew, false);
   assert.equal(v.wouldResolve, false);
   assert.equal(v.initialMessageCount, 37);
