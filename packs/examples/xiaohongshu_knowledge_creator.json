@@ -47,7 +47,7 @@
         "input_fields": ["topic_info"],
         "output_field": "hook_statement",
         "ai_models": ["qianwen"],
-        "prompt_template": "你要写一条小红书知识图文的开头。主题：{{topic}}。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去。只输出这一句开头。",
+        "prompt_template": "你要写一条小红书知识图文的开头。主题：{{topic}}。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。",
         "config": {
           "output_rules": [
             "开头必须是明确观点",

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-05-02",
+  "created_at": "2026-11-05T12:48:55+08:00",
+  "updated_at": "2026-11-05T12:48:55+08:00",
+  "operator": "workbuddy_rasp",
+  "purpose": "hook ③ 修法验证轮：step_2_hook 提示词加「代词自足」一句（F 类映射缺口），同题单变量 L2 复跑 + §4.5 语义裁决；新 profile 路径首跑（登录态迁移零扫码）",
+  "platforms": [
+    "qianwen"
+  ],
+  "locales": [
+    "zh-CN"
+  ],
+  "records": [
+    {
+      "layer": "L1",
+      "platform": "qianwen",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-05T12:48:55+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "scoped L2 单平台修法验证轮，未跑 L1 DOM 契约探针；L1 基线见 RMR-2026-11-04-01",
+      "notes": ""
+    },
+    {
+      "layer": "L2",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-05T12:48:55+08:00",
+      "evidence": [
+        "hook 修法验证复跑（同日同题同平台同构建，唯一变量=step_2_hook prompt_template 加代词自足要求）：8/8 步 success，7/7 真产出（41/456/221/204/204/426/1008 字），hook 41 字过步级闸 min_output_length=15（pack-executor.js:91 覆盖生效），3m52s",
+        "§4.5 语义裁决（机器评分）：semantic-pass（7 合格 / 0 勉强 / 0 不合格）——三轮首次无勉强，hook ③ 翻合格（对象代词悬空→自定义主语结构）；方差声明 n=1 不宣布因果闭合，判法注记两处（hook ③ 宽严两读、boundary ③「全自动搞定一切」告诫语境）留人工复核"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-05.round2.json",
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-05.round2.png",
+        "collaboration/results/RESULT-L2-SEMANTIC-VERDICT-2026-11-05-round2.md"
+      ],
+      "reason": "",
+      "notes": "机器评分不是人工验收，不说「验收通过」。环境：新 profile 路径首跑（~/Library/Application Support/rm-qianwen-l2-profile，登录态自 /tmp 迁移零扫码）；跑前 N15 清 SW 三缓存。对照：11-04 5/2/0 → 11-05 6/1/0 → 本轮 7/0/0"
+    }
+  ]
+}
