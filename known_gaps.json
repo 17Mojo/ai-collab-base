@@ -34,34 +34,37 @@
     {
       "id": "N3",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "空输入无校验，提示词带空洞发出去",
       "reader": "不填输入直接点运行的用户：pack 报 completed，但发出去的提示词是「主题：。」这种残句，AI 回一堆废话",
       "where": [
-        "chrome-extension/public/popup.js:107-137",
-        "chrome-extension/src/background/pack-executor.js:711-733"
+        "chrome-extension/public/popup.js:130-195",
+        "chrome-extension/src/background/pack-executor.js:598-604",
+        "chrome-extension/src/background/pack-executor.js:707-721"
       ],
       "detail": "输入框留空时 popup 传入 input.topic = \"\"（空串，不是 undefined），_buildPrompt 的 `value !== undefined` 守卫拦不住空串，于是 {{topic}} 被替换成空；_executeLocalStep 也没校验 pack 自己声明的 required_fields。",
       "impact": "实测 status=completed，7 条提示词里 3 条出现空洞。用户拿到的是「成功」但内容是残的——最坏的一类失败：不报错。",
-      "fix": "popup 侧必填校验；引擎侧 _executeLocalStep 读 config.required_fields，缺失就 fail 该步骤而不是继续。",
+      "fix": "已收口（2026-11-05）：双层拦截。① popup 侧 selectPack 读 firstInputStep.config.required_fields 渲染 data-required + 红星，运行前空串/纯空白拦截（「请填写必填输入」），不发 EXECUTE_PACK；② 引擎侧 _executeStep 进 try 前走 _missingRequiredFields（空串/纯空白/null 均算缺，值从 input∪上游 output 并集找），缺失即确定性 fail 该步骤（不进重试），顺序路径中止整个执行。注：原 fix 草案写「_executeLocalStep 读 required_fields」，实际落在 _executeStep 前置守卫——覆盖 local/AI 全部步骤类型，比草案更宽。",
       "found_at": "2026-11-03",
-      "evidence": "实测空提交 -> status=completed，3/7 提示词空洞"
+      "evidence": "pack-step-types.test.mjs 4 条（缺失含空串/纯空白/null 全拒；确定性失败 delayCalls=0；上游 output 可满足且返回形状不变；空 topic 端到端 status=failed、AI 步不被调用）+ extension-wiring.test.mjs 1 条（popup 留空不放行、data-required 标记）；变异锚「N3：必填空串/纯空白检查被删」被 _executeStep 拒绝 required_fields 缺失 杀死，mutation-check 61/61 全杀；chrome-extension 全量 227/227 绿。",
+      "closed_at": "2026-11-05"
     },
     {
       "id": "N4",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "_executeLocalStep 按输入字段名建键，产出对象会被渲染成 [object Object]",
       "reader": "写了 local 步骤并把它的 output_field 用在后续提示词里的 Pack 作者",
       "where": [
-        "chrome-extension/src/background/pack-executor.js:623-641",
-        "chrome-extension/src/background/pack-executor.js:711-733"
+        "chrome-extension/src/background/pack-executor.js:802-816",
+        "chrome-extension/src/background/pack-executor.js:818-847"
       ],
       "detail": "_executeLocalStep 返回 `{ topic: ..., style: ... }` 这样的对象，却被整体存进 step.output_field（如 topic_info）。下游 prompt_template 里写 {{topic_info}} 时，_buildPrompt 用字符串替换对象，没有 String() 守卫 ⇒ 渲染成 [object Object]。",
       "impact": "当前示例包里 topic_info 无人消费，所以没暴露。一旦有人按 v2 语义消费 local 步骤产出，就会得到字面量 [object Object]。D4 只修了包定义那一半，引擎侧这一半没动。",
-      "fix": "_executeLocalStep 返回的键名与 output_field 对齐；_buildPrompt 替换前对非字符串值做 String() 或 JSON.stringify，并在值不是字符串时告警。",
+      "fix": "已收口（2026-11-05）：_buildPrompt 两处替换统一走新 _stringifyVarValue——字符串直通，对象/数组 JSON.stringify（circular 兜底 String()），null→\"null\"，number/bool 走 String()；非字符串值一律 console.warn 留痕。注：原 fix 草案的「_executeLocalStep 键名与 output_field 对齐」未采用——保持 fromInput.output.<字段名> 既有返回形状（已被测试锚定），[object Object] 的产生点在替换侧序列化缺失，修替换侧即可闭合。",
       "found_at": "2026-11-03",
-      "evidence": "pack-executor.js:631-633 inputData[field] = input[field] || output[field]；:727 `prompt.replace(..., value)` 直接塞 value"
+      "evidence": "pack-step-types.test.mjs 2 条（_buildPrompt 对象值 JSON 序列化、无 [object Object]、≥3 console.warn；{{topic_info}} 端到端消费无 [object Object]）；变异锚「N4：模板变量值序列化被绕过」被 _buildPrompt 对对象值 JSON 序列化 杀死，mutation-check 61/61 全杀；chrome-extension 全量 227/227 绿。",
+      "closed_at": "2026-11-05"
     },
     {
       "id": "N7",

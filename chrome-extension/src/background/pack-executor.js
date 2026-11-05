@@ -592,6 +592,17 @@ class PackExecutor {
       error: null,
     };
 
+    // N3：pack 自己声明的 required_fields 缺失（含空串）——确定性失败，
+    // 不进重试、不带空洞继续。残句提示词（「主题：。」）出城是最坏一类失败：
+    // 报 completed 但内容是残的。这里 fail 该步骤，顺序路径随即中止整个执行。
+    const missing = this._missingRequiredFields(step, execution);
+    if (missing.length) {
+      stepResult.error = `缺少必填输入: ${missing.join(", ")}`;
+      stepResult.endTime = Date.now();
+      stepResult.duration = stepResult.endTime - stepResult.startTime;
+      return stepResult;
+    }
+
     try {
       switch (step.type) {
         case "local":
@@ -683,6 +694,28 @@ class PackExecutor {
   }
 
   /**
+   * 检查 pack 声明的 config.required_fields 是否齐备（N3）。
+   *
+   * 空串/纯空白也算缺——`execution.input[field] || ...` 这类取值会把空串
+   * 静默吞成 undefined，popup 留空提交时残句就是这么产生的。
+   * 值从 input + 上游 output 的并集里找（步骤输入两处都可能来）。
+   *
+   * @param {Object} step
+   * @param {Object} execution
+   * @returns {string[]} 缺失的字段名
+   */
+  _missingRequiredFields(step, execution) {
+    const required = (step.config || {}).required_fields || [];
+    const pool = { ...(execution.output || {}), ...(execution.input || {}) };
+    return required.filter((field) => {
+      const value = pool[field];
+      if (value === undefined || value === null) return true;
+      if (typeof value === "string" && value.trim() === "") return true;
+      return false;
+    });
+  }
+
+  /**
    * 执行 AI 步骤
    * @param {Object} step
    * @param {Object} execution
@@ -755,6 +788,33 @@ class PackExecutor {
    * @param {Object} execution
    * @returns {string}
    */
+  /**
+   * 模板变量值转字符串（N4）。
+   *
+   * `prompt.replace(..., value)` 遇到对象会隐式调用 String(value) ⇒ 字面量
+   * [object Object] 进提示词。对象/数组走 JSON.stringify，其余走 String()；
+   * 非字符串值一律 console.warn 留痕（pack 作者据此发现自己的模板在消费对象）。
+   *
+   * @param {string} key - 变量名（仅用于告警）
+   * @param {any} value
+   * @returns {string}
+   */
+  _stringifyVarValue(key, value) {
+    if (typeof value === "string") return value;
+    console.warn(
+      `[pack-executor] 模板变量 {{${key}}} 的值不是字符串（${typeof value}），已序列化后替换`,
+    );
+    if (value === null) return "null";
+    if (typeof value === "object") {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
+  }
+
   _buildPrompt(step, execution) {
     const template = step.prompt_template || "";
     const input = execution.input || {};
@@ -768,14 +828,20 @@ class PackExecutor {
     // 1. 替换 runtime_overrides 字段 (白名单约束)
     for (const key of ALLOWED_OVERRIDE_KEYS) {
       if (overrides[key] !== undefined) {
-        prompt = prompt.replace(new RegExp(`{{${key}}}`, "g"), overrides[key]);
+        prompt = prompt.replace(
+          new RegExp(`{{${key}}}`, "g"),
+          this._stringifyVarValue(key, overrides[key]),
+        );
       }
     }
 
     // 2. 替换其他变量字段 (上游 output + 初始 input)
     for (const [key, value] of Object.entries(vars)) {
       if (key !== "runtime_overrides" && value !== undefined) {
-        prompt = prompt.replace(new RegExp(`{{${key}}}`, "g"), value);
+        prompt = prompt.replace(
+          new RegExp(`{{${key}}}`, "g"),
+          this._stringifyVarValue(key, value),
+        );
       }
     }
 
