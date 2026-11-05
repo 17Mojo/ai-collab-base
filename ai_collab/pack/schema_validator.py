@@ -459,8 +459,13 @@ class PackSchemaValidator:
         except (TypeError, ValueError):
             tolerance = 0.01
 
-        # 必需的 metric 字段 — 对齐 schema_v2.py QualityMetric
-        required_metric_fields = ["name", "description", "check_method", "weight"]
+        # 必需的 metric 内嵌字段 — 对齐 schema_v2.QualityMetrics.from_dict 的消费面：
+        # description/check_method/weight 必填；metric 名称由 dict **key** 提供
+        # （name-as-key 是仓库正典格式，from_dict 以 key 构造 QualityMetric.name）。
+        # 内嵌 name 不再要求（2026-11-05 口径统一收口——此前要求内嵌 name 导致
+        # 正典 Pack 全体 5 error 过不了，与 pack validate 口径错位）；
+        # 若内嵌 name 存在且与 key 不一致 → warning（歧义提示，以 key 为准）。
+        required_metric_fields = ["description", "check_method", "weight"]
 
         total_weight = 0.0
         for name, metric in metrics["metrics"].items():
@@ -476,6 +481,12 @@ class PackSchemaValidator:
                         f"$.quality_metrics.metrics.{name}.{req_field}",
                         f"Missing required metric field: {req_field}",
                     )
+
+            if "name" in metric and metric["name"] != name:
+                result.add_warning(
+                    f"$.quality_metrics.metrics.{name}.name",
+                    "metric.name 与 key 不一致（以 key 为准）",
+                )
 
             if "weight" in metric:
                 try:

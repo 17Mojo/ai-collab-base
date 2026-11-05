@@ -34,12 +34,15 @@
   当前会话无该 builtin，marketplace `search_plugins` 未找到 NotebookLM 连接器。
 - 结论：**外部依赖缺失，通路不可测**。fallback/跨源验证逻辑此前已实测成立
   （见 RUNTIME-REALTEST），REAL 片段待 MCP 连接器接入后补验。
+- 〔2026-11-05 复探〕工具注册表仍无 notebooklm 系工具，市场仍无 NotebookLM
+  连接器（模糊命中乐享/飞书等均非目标）——blocker 原样成立。
 
 ### 1.4 codex_cli / codearts 服务商 —— 阻塞 ✗
 
 - 两者都需要外部 CLI 二进制（`which codex` 等 PATH 探测），本机未安装。
 - 结论：**外部依赖缺失，通路不可测**。role_prefix 回退映射（claude_code→C、
   codearts_agent→A、codex→O）源码层成立，运行时未验。
+- 〔2026-11-05 复探〕`which codex codearts` 仍 not found——blocker 原样成立。
 
 ---
 
@@ -102,8 +105,17 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
 
 ## 四、后续
 
-1. 共识引擎：失败 provider 显式降级标记（禁用 `[X REAL]` 假填充命名；mode_used 诚实化）。
-2. schema_validator 与 pack validate 口径统一（metric name-as-key vs name-field）。
-3. dependency.py 范围语法对齐（`*` 通配 / 部分版本 / AND 空格），或全库统一到严格子集。
-4. 市场表 dependencies 列 + 版本历史（若需要多版本共存）——涉及 schema 迁移，单开条目。
-5. NotebookLM MCP / codex CLI 接入后补 REAL 复测。
+〔2026-11-05 晚批销账〕1–3 已在本批修复收口（见 daily log / 同日后续 PR）：
+
+1. ~~共识引擎：失败 provider 显式降级标记~~ **已收口**：`_mock_provider_response`
+   假「REAL」填充器删除，client=None/缺 query/调用失败一律如实抛错（对齐模块头
+   「REAL: 失败直接抛错」契约），结果新增 `failed_providers` 降级清单；
+   原 `test_generate_consensus_real_when_available`（靠假填充通过的锚）重写。
+2. ~~schema_validator 与 pack validate 口径统一~~ **已收口**：metric name-as-key
+   （key 即 name，对齐 schema_v2.from_dict 消费面），正典 Pack 5 error → 0。
+3. ~~dependency.py 范围语法对齐~~ **已收口**：`*`/x/X 通配、部分版本补零、
+   AND 空格分隔检查路径对齐（`_check_single_expression` 与 `_parse_range` 分隔符一致）。
+4. 市场表 dependencies 列 + 版本历史（若需要多版本共存）——涉及 schema 迁移，
+   **已登记 `known_gaps.json` N17**（P2，open），单开条目做。
+5. NotebookLM MCP / codex CLI 接入后补 REAL 复测（2026-11-05 复探 blocker 原样，
+   见 §1.3/1.4 注记）。

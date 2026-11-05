@@ -168,6 +168,33 @@ class TestSemVerCompatibility:
         assert dep.is_compatible_with("invalid") is False
         assert dep.is_compatible_with("") is False
 
+    def test_wildcard_star_matches_all(self):
+        """* / x / X 通配匹配一切（2026-11-05 收口锚，此前 ValueError）"""
+        for expr in ("*", "x", "X"):
+            dep = PackDependency(name="test", version_range=expr)
+            assert dep.is_compatible_with("0.0.1") is True
+            assert dep.is_compatible_with("1.2.3") is True
+            assert dep.is_compatible_with("9.9.9") is True
+
+    def test_partial_version_padded(self):
+        """部分版本号自动补零（2026-11-05 收口锚，此前 ^1.0 直接 ValueError）"""
+        dep = PackDependency(name="test", version_range="^1.0")
+        assert dep.is_compatible_with("1.2.0") is True
+        assert dep.is_compatible_with("2.0.0") is False
+
+        dep2 = PackDependency(name="test", version_range=">=2")
+        assert dep2.is_compatible_with("2.1.0") is True
+        assert dep2.is_compatible_with("1.9.0") is False
+
+    def test_space_separated_and_combo(self):
+        """空格 AND 与逗号 AND 等价（2026-11-05 收口锚——此前空格组合式
+        __post_init__ 校验能过但 is_compatible_with 永远 False）"""
+        dep = PackDependency(name="test", version_range=">=1.0.0 <2.0.0")
+        assert dep.is_compatible_with("1.5.0") is True
+        assert dep.is_compatible_with("1.0.0") is True
+        assert dep.is_compatible_with("2.0.0") is False
+        assert dep.is_compatible_with("0.9.0") is False
+
 
 class TestDependencyNode:
     """测试 DependencyNode 数据类"""

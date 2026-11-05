@@ -10,6 +10,12 @@
 - FALLBACK: 优先尝试 REAL，失败后回退 MOCK
 - REAL: 仅真实链路，失败直接抛错
 
+遥测诚实化（2026-11-05 收口）：
+- provider 调用失败/配置缺口（client=None、缺 query 方法）一律如实抛错，
+  由 _query_multiple_ais_real 过滤——**禁止**用 mock 填充冒充成功
+  （历史上存在 "[X REAL] …真实观点" 假文本 + mode="real" 的误导性遥测）；
+- 结果携带 failed_providers 显式降级清单（mode="real" 且 sources 均为真产出）。
+
 v1.2 新增:
 - 可插拔 provider 架构
 - 超时控制
@@ -106,6 +112,7 @@ class ConsensusEngine:
             return self.cache[topic]
 
         mode_used = "mock"
+        failed_providers: list[str] = []
         if self._mock:
             self._logger.warning(f"[Mock模式] {self._mock_reason}")
             responses = await self._query_multiple_ais_mock(topic)
@@ -113,6 +120,14 @@ class ConsensusEngine:
             try:
                 responses = await self._query_multiple_ais_real(topic)
                 mode_used = "real"
+                # 降级遥测：失败 provider 显式列出，禁止用假填充掩盖（2026-11-05 收口）
+                attempted = [n for n, p in self.providers.items() if p.enabled]
+                succeeded = {r.get("provider") for r in responses}
+                failed_providers = [n for n in attempted if n not in succeeded]
+                if failed_providers:
+                    self._logger.warning(
+                        f"[Consensus] REAL 部分降级，失败 provider: {failed_providers}"
+                    )
             except Exception as exc:
                 if self._mode == IntegrationMode.FALLBACK:
                     self._logger.warning(f"[Consensus] REAL失败,回退到Mock: {exc}")
@@ -132,6 +147,7 @@ class ConsensusEngine:
             "timestamp": datetime.now().isoformat(),
             "version": "1.1",
             "mode": mode_used,
+            "failed_providers": failed_providers,
         }
         self.cache[topic] = result
         return result
@@ -272,8 +288,9 @@ class ConsensusEngine:
         """
         # 检查是否有真实的 client
         if provider.client is None:
-            # 没有真实 client,使用模拟响应
-            return await self._mock_provider_response(topic, provider)
+            # 配置缺口不是可用性：如实抛错，不造假填充（2026-11-05 收口——
+            # 此前这里返回 "[X REAL] …真实观点" 假文本冒充成功，是误导性遥测）
+            raise ConnectionError(f"Provider {provider.name} 未配置真实 client")
 
         # 尝试调用真实的 provider client
         try:
@@ -292,34 +309,15 @@ class ConsensusEngine:
                     loop = asyncio.get_event_loop()
                     result = await loop.run_in_executor(None, provider.client.query, topic)
                 return self._normalize_client_response(result, provider)
-            else:
-                self._logger.warning(f"[Consensus] Provider {provider.name} client 没有 query 方法")
-                return await self._mock_provider_response(topic, provider)
+            raise ConnectionError(f"Provider {provider.name} client 缺少 query 方法")
 
+        except ConnectionError:
+            raise
         except Exception as e:
             self._logger.error(f"[Consensus] Provider {provider.name} client 调用失败: {e}")
-            # 失败时返回模拟响应
-            return await self._mock_provider_response(topic, provider)
-
-    async def _mock_provider_response(self, topic: str, provider: AIProvider) -> dict[str, Any]:
-        """
-        生成模拟 provider 响应
-
-        Args:
-            topic: 查询主题
-            provider: Provider 配置
-
-        Returns:
-            模拟响应
-        """
-        # 模拟 API 调用延迟
-        await asyncio.sleep(0.1)
-
-        return {
-            "ai": provider.name,
-            "response": f"[{provider.name.upper()} REAL] 关于{topic}的真实观点...",
-            "confidence": 0.9,
-        }
+            # 失败如实上抛，由 _query_multiple_ais_real 过滤/汇总；
+            # 禁止用 mock 填充冒充成功（2026-11-05 收口）
+            raise
 
     def _normalize_client_response(self, response: Any, provider: AIProvider) -> dict[str, Any]:
         """

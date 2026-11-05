@@ -84,17 +84,14 @@ class PackMarketCLI:
 
     @staticmethod
     def _mk_dep(name: str, range_expr: str, optional: bool = False) -> PackDependency:
-        """构造 PackDependency，归一化人类写法。
+        """构造 PackDependency，归一化人类写法（双保险层）。
 
-        范围解析器（dependency.py）语法严格，这里有三步归一化：
-        - `*`/空/x/any → `>=0.0.0`（解析器不认 `*` 通配）；
-        - 部分版本号补零：`^1.0` → `^1.0.0`、`>=2` → `>=2.0.0`
-          （解析器要求完整 major.minor.patch）；
-        - AND 组合统一为逗号分隔：`>=1.0.0 <2.0.0` → `>=1.0.0,<2.0.0`
-          （dependency.py 预存不一致：__post_init__ 校验认空格分隔，但
-          is_compatible_with 的 _check_single_expression 只认 `,`/`&`，
-          空格组合式校验能过却匹配永远 False——此处转逗号绕开；
-          模块层根治留作后续）。
+        模块层（dependency.py）已于 2026-11-05 收口同一组语法缺口
+        （`*` 通配 / 部分版本补零 / AND 空格分隔），此处归一化保留为
+        输入侧预处理，行为与模块层一致：
+        - `*`/空/x/any → `>=0.0.0`；
+        - 部分版本号补零：`^1.0` → `^1.0.0`、`>=2` → `>=2.0.0`；
+        - AND 组合统一为逗号分隔（`>=1.0.0 <2.0.0` → `>=1.0.0,<2.0.0`）。
         OR 组合（`|`）原样保留，各 OR 分支内部同样归一化。
         """
         expr = (range_expr or "").strip()

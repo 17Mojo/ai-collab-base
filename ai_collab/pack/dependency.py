@@ -29,6 +29,20 @@ class ComparisonOperator(Enum):
     AND = " &"  # 与逻辑
 
 
+def _pad_partial_version(version: str) -> str:
+    """部分版本号补零到完整 major.minor.patch。
+
+    `'1.0'` → `'1.0.0'`、`'2'` → `'2.0.0'`；完整版本与 prerelease/build
+    后缀原样保留；无法识别的串原样返回（由后续 from_string 抛错）。
+    2026-11-05 范围语法收口：解析器此前要求完整三段版本，`^1.0` 直接 ValueError。
+    """
+    m = re.match(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?((?:[-+].*)?)$", version)
+    if not m:
+        return version
+    major, minor, patch, suffix = m.groups()
+    return f"{major}.{minor or 0}.{patch or 0}{suffix or ''}"
+
+
 @dataclass
 class PackDependency:
     """Pack 依赖定义"""
@@ -92,36 +106,41 @@ class PackDependency:
         expr = expr.strip()
 
         try:
+            # 通配符：* / x / X 匹配一切（2026-11-05 收口，此前直接 ValueError）
+            if expr in ("*", "x", "X"):
+                return ComparisonOperator.GREATER_EQUAL, "0.0.0"
+
             # 精确匹配
             if expr.startswith("="):
-                return ComparisonOperator.EXACT, expr[1:]
+                return ComparisonOperator.EXACT, _pad_partial_version(expr[1:])
 
             # 单个版本号 (默认精确匹配)
             if not any(op in expr[:3] for op in ["<", ">", "^", "~"]):
-                # 检查是否为有效版本号
-                PackVersion.from_string(expr)
-                return ComparisonOperator.EXACT, expr
+                # 检查是否为有效版本号（部分版本补零：'1.0' → '1.0.0'）
+                padded = _pad_partial_version(expr)
+                PackVersion.from_string(padded)
+                return ComparisonOperator.EXACT, padded
 
             # 大于
             if expr.startswith(">="):
-                return ComparisonOperator.GREATER_EQUAL, expr[2:]
+                return ComparisonOperator.GREATER_EQUAL, _pad_partial_version(expr[2:])
             if expr.startswith(">"):
-                return ComparisonOperator.GREATER_THAN, expr[1:]
+                return ComparisonOperator.GREATER_THAN, _pad_partial_version(expr[1:])
 
             # 小于
             if expr.startswith("<="):
-                return ComparisonOperator.LESS_EQUAL, expr[2:]
+                return ComparisonOperator.LESS_EQUAL, _pad_partial_version(expr[2:])
             if expr.startswith("<"):
-                return ComparisonOperator.LESS_THAN, expr[1:]
+                return ComparisonOperator.LESS_THAN, _pad_partial_version(expr[1:])
 
             # 版本前缀兼容 ^1.2.3 -> >=1.2.0 <2.0.0
             if expr.startswith("^"):
-                version = PackVersion.from_string(expr[1:])
+                version = PackVersion.from_string(_pad_partial_version(expr[1:]))
                 return ComparisonOperator.CARET, str(version)
 
             # 版本范围兼容 ~1.2.3 -> >=1.2.3 <1.3.0
             if expr.startswith("~"):
-                version = PackVersion.from_string(expr[1:])
+                version = PackVersion.from_string(_pad_partial_version(expr[1:]))
                 return ComparisonOperator.TILDE, str(version)
 
             raise ValueError(f"Unknown range expression: {expr}")
@@ -156,10 +175,14 @@ class PackDependency:
 
     def _check_single_expression(self, target: PackVersion, expr: str) -> bool:
         """检查单个表达式"""
-        # 分解 AND 条件
-        conditions = re.split(r"\s*,\s*|\s*&\s*", expr)
+        # 分解 AND 条件（`,`/`&`/空格——与 __post_init__._parse_range 的
+        # 分隔符集合对齐；此前检查路径漏了空格分隔，空格组合式校验能过
+        # 却永远 False，2026-11-05 收口）
+        conditions = re.split(r"\s*,\s*|\s*&\s*|\s+", expr)
 
         for condition in conditions:
+            if not condition:
+                continue
             if not self._check_condition(target, condition.strip()):
                 return False
 
