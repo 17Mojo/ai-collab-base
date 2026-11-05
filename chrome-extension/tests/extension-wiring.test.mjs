@@ -425,6 +425,7 @@ const LOCAL_PACK = {
         type: "local",
         input_fields: ["topic"],
         output_field: "out",
+        config: { required_fields: ["topic"] },
       },
     ],
   },
@@ -599,6 +600,52 @@ test("popup 要把用户当前所在的标签页告诉后台（否则 AI 步骤�
       "不带就只能广播给每一个打开的 AI 页面",
   );
   assert.equal(exec.input?.topic, "接线测试", "popup 必须把用户填的 input 透传给后台");
+});
+
+test("popup 必填输入留空不放行（N3：空串出城会拼出残句提示词还报 completed）", async () => {
+  const html = readFileSync(join(EXT_ROOT, "public", "popup.html"), "utf-8");
+  const dom = new JSDOM(html, {
+    url: "https://localhost/",
+    runScripts: "outside-only",
+  });
+
+  const sent = [];
+  dom.window.chrome = {
+    storage: { local: { get: async () => ({ packs: [LOCAL_PACK] }) } },
+    runtime: {
+      sendMessage: async (msg) => {
+        sent.push(msg);
+        return { success: true };
+      },
+      getURL: (p) => `chrome-extension://fake-id/${p}`,
+    },
+    tabs: {
+      query: async () => [{ id: 7 }],
+      create: async () => ({ id: 8 }),
+    },
+  };
+
+  dom.window.eval(readFileSync(join(EXT_ROOT, "public", "popup.js"), "utf-8"));
+  await new Promise((r) => setTimeout(r, 0));
+
+  dom.window.document.querySelector(".pack-item").click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  const field = dom.window.document.querySelector('#pack-input-fields input[data-field="topic"]');
+  assert.ok(field, "应渲染出 topic 输入框");
+  assert.equal(field.dataset.required, "1", "必填字段要带 data-required 标记");
+  field.value = "   "; // 纯空白也算空
+
+  dom.window.document.getElementById("run-pack-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  const exec = sent.find((m) => m?.type === "EXECUTE_PACK");
+  assert.equal(exec, undefined, "必填留空不许发出 EXECUTE_PACK——残句提示词就是这么出城的");
+  assert.match(
+    dom.window.document.getElementById("status").textContent || "",
+    /请填写必填输入.*topic/,
+    "状态行要指名道姓说清缺哪个字段",
+  );
 });
 
 // ─────────────────────────────────────────────────────────────────────

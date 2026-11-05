@@ -119,3 +119,206 @@ test("_executeAIStep 解包回复内容，output 全为文本且无 [object Obje
     delete globalThis.chrome;
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// N3：required_fields 守卫（空串也算缺——残句提示词的源头）
+// ─────────────────────────────────────────────────────────────────────
+
+test("_executeStep 拒绝 required_fields 缺失（含空串/纯空白）的步骤", async () => {
+  const { default: PackExecutor } = await import("../src/background/pack-executor.js");
+  const step = {
+    id: "s1",
+    name: "收集",
+    type: "local",
+    input_fields: ["topic"],
+    config: { required_fields: ["topic"] },
+    retry: false,
+  };
+  for (const input of [{}, { topic: "" }, { topic: "   " }, { topic: null }]) {
+    const executor = new PackExecutor({ maxRetries: 3 });
+    const result = await executor._executeStep(step, { input, output: {} });
+    assert.equal(result.success, false, `input=${JSON.stringify(input)} 应失败`);
+    assert.match(result.error || "", /缺少必填输入: topic/);
+    assert.equal(result.output, null);
+  }
+});
+
+test("_executeStep 必填校验是确定性失败，不进重试", async () => {
+  const { default: PackExecutor } = await import("../src/background/pack-executor.js");
+  const executor = new PackExecutor({ maxRetries: 3, retryDelay: 50 });
+  let delayCalls = 0;
+  executor._delay = async () => {
+    delayCalls += 1;
+  };
+  const result = await executor._executeStep(
+    {
+      id: "s1",
+      name: "收集",
+      type: "local",
+      input_fields: ["topic"],
+      config: { required_fields: ["topic"] },
+    },
+    { input: { topic: "" }, output: {} },
+  );
+  assert.equal(result.success, false);
+  assert.equal(delayCalls, 0, "必填缺失是确定性失败——一次重试都不该有");
+});
+
+test("_executeStep 必填可由上游 output 满足；齐备时 local 步骤照常产出", async () => {
+  const { default: PackExecutor } = await import("../src/background/pack-executor.js");
+  const executor = new PackExecutor({ maxRetries: 0 });
+  const step = {
+    id: "s1",
+    name: "收集",
+    type: "local",
+    input_fields: ["topic"],
+    output_field: "topic_info",
+    config: { required_fields: ["topic"] },
+    retry: false,
+  };
+  // input 缺、上游 output 有 ⇒ 满足
+  const fromOutput = await executor._executeStep(step, {
+    input: {},
+    output: { topic: "上游题" },
+  });
+  assert.equal(fromOutput.success, true);
+
+  // input 有 ⇒ 满足，产出形状（input 字段名建键）保持不变
+  const fromInput = await executor._executeStep(step, {
+    input: { topic: "用户题" },
+    output: {},
+  });
+  assert.equal(fromInput.success, true);
+  assert.equal(fromInput.output.topic, "用户题");
+});
+
+test("必填失败会中止整个执行（status=failed，不再有残句提示词出城）", async () => {
+  const { default: PackExecutor } = await import("../src/background/pack-executor.js");
+  const pack = {
+    metadata: { pack_id: "n3-pack", pack_name: "N3", version: "1.0.0" },
+    workflow: {
+      steps: [
+        {
+          id: "step_1",
+          name: "收集",
+          type: "local",
+          input_fields: ["topic"],
+          output_field: "topic_info",
+          config: { required_fields: ["topic"] },
+        },
+        {
+          id: "step_2",
+          name: "生成",
+          type: "generation",
+          prompt_template: "主题：{{topic}}。",
+          output_field: "text",
+        },
+      ],
+    },
+  };
+  const executor = new PackExecutor({ maxRetries: 0 });
+  executor.packs.set("n3-pack", pack);
+  let aiCalled = false;
+  executor._executeAIStep = async () => {
+    aiCalled = true;
+    return "不该走到这里";
+  };
+  const result = await executor.execute("n3-pack", { topic: "" }, { tabId: null });
+  assert.equal(result.status, "failed");
+  assert.match(result.errors?.[0]?.message || "", /Step step_1 failed: 缺少必填输入: topic/);
+  assert.equal(aiCalled, false, "step_1 失败后不许再发提示词");
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// N4：对象产出序列化（[object Object] 不许进提示词）
+// ─────────────────────────────────────────────────────────────────────
+
+test("_buildPrompt 对对象值 JSON 序列化，不产生 [object Object]", async () => {
+  const { default: PackExecutor } = await import("../src/background/pack-executor.js");
+  const executor = new PackExecutor();
+  const warns = [];
+  const origWarn = console.warn;
+  console.warn = (...a) => warns.push(a.join(" "));
+  try {
+    const step = { prompt_template: "信息:{{topic_info}} 数:{{count}} 标:{{flag}}" };
+    const prompt = executor._buildPrompt(step, {
+      input: {},
+      output: {
+        topic_info: { topic: "AI写作", style: "口语" },
+        count: 3,
+        flag: true,
+      },
+    });
+    assert.equal(prompt.includes("[object Object]"), false, "对象必须被序列化");
+    assert.match(prompt, /"topic":"AI写作"/, "对象应以 JSON 形式出现");
+    assert.match(prompt, /数:3/, "数字走 String()");
+    assert.match(prompt, /标:true/, "布尔走 String()");
+    assert.ok(warns.length >= 3, `非字符串替换必须告警，实际 ${warns.length} 条`);
+    assert.ok(warns.some((w) => w.includes("topic_info")));
+  } finally {
+    console.warn = origWarn;
+  }
+});
+
+test("local 步骤对象产出经 {{output_field}} 消费时不出现 [object Object]", async () => {
+  const { default: PackExecutor } = await import("../src/background/pack-executor.js");
+  const pack = {
+    metadata: { pack_id: "n4-pack", pack_name: "N4", version: "1.0.0" },
+    workflow: {
+      steps: [
+        {
+          id: "step_1",
+          name: "收集",
+          type: "local",
+          input_fields: ["topic", "style"],
+          output_field: "topic_info",
+          config: { operation: "merge" },
+        },
+        {
+          id: "step_2",
+          name: "生成",
+          type: "generation",
+          input_fields: ["topic_info"],
+          prompt_template: "背景:{{topic_info}}",
+          output_field: "text",
+        },
+      ],
+    },
+  };
+  const sent = [];
+  globalThis.chrome = {
+    tabs: {
+      sendMessage: async (_tabId, msg) => {
+        sent.push(msg.prompt);
+        return {
+          success: true,
+          result: {
+            // 回复要过 assertUsableAIContent 的最小长度闸（默认 50 字）
+            content: msg.prompt + "（这里是足够长的模拟回复正文，越过最小长度闸，仅供本用例验证序列化。）",
+            messageCount: 1,
+            duration: 0,
+          },
+        };
+      },
+    },
+  };
+  try {
+    const executor = new PackExecutor({ maxRetries: 0 });
+    executor.packs.set("n4-pack", pack);
+    const result = await executor.execute(
+      "n4-pack",
+      { topic: "AI写作", style: "口语" },
+      { tabId: 1 },
+    );
+    assert.equal(result.status, "completed");
+    for (const prompt of sent) {
+      assert.equal(prompt.includes("[object Object]"), false, "提示词不许含 [object Object]");
+    }
+    assert.ok(
+      sent.some((p) => p.includes('"topic":"AI写作"')),
+      "topic_info 对象应以 JSON 进提示词",
+    );
+  } finally {
+    delete globalThis.chrome;
+  }
+});

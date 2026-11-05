@@ -665,6 +665,25 @@ const MUTATIONS = [
     testFile: "typing-indicator-contract.test.mjs",
     expectTest: "元宝：data-conv-outputting 状态属性",
   },
+  // ── N3/N4：pack 执行器输入护栏与变量序列化（2026-11-05）──────
+  {
+    name: "N3：必填空串/纯空白检查被删",
+    why: "空串被当齐备 ⇒ popup 留空提交照样放行，残句提示词（「主题：。」）出城——N3 缺陷的产生点",
+    target: "src/background/pack-executor.js",
+    find: '      if (typeof value === "string" && value.trim() === "") return true;\n',
+    replace: "",
+    testFile: "pack-step-types.test.mjs",
+    expectTest: "_executeStep 拒绝 required_fields 缺失",
+  },
+  {
+    name: "N4：模板变量值序列化被绕过",
+    why: "对象值直接进 replace ⇒ 隐式 ToString ⇒ [object Object] 进提示词——N4 缺陷的产生点",
+    target: "src/background/pack-executor.js",
+    find: "          this._stringifyVarValue(key, value),\n",
+    replace: "          value,\n",
+    testFile: "pack-step-types.test.mjs",
+    expectTest: "_buildPrompt 对对象值 JSON 序列化",
+  },
 ];
 
 /**

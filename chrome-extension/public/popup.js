@@ -116,6 +116,7 @@ const packInputPanel = document.getElementById('pack-input-panel');
 const packInputFields = document.getElementById('pack-input-fields');
 const runPackBtn = document.getElementById('run-pack-btn');
 let selectedPackId = null;
+let selectedRequiredFields = [];
 
 async function selectPack(packId) {
   selectedPackId = packId;
@@ -126,12 +127,19 @@ async function selectPack(packId) {
     const pack = packs.find(p => p.metadata?.pack_id === packId);
     const firstInputStep = pack?.workflow?.steps?.find(s => Array.isArray(s.input_fields) && s.input_fields.length);
     const fields = firstInputStep?.input_fields || [];
+    // N3：必填清单来自 pack 自己声明的 config.required_fields（12 个 pack 的既有惯例）
+    selectedRequiredFields = Array.isArray(firstInputStep?.config?.required_fields)
+      ? firstInputStep.config.required_fields
+      : [];
 
-    packInputFields.innerHTML = fields.map(f => `
-      <label style="display:block;font-size:13px;margin-bottom:6px">${f}
-        <input type="text" data-field="${f}" placeholder="${f}" />
+    packInputFields.innerHTML = fields.map(f => {
+      const required = selectedRequiredFields.includes(f);
+      return `
+      <label style="display:block;font-size:13px;margin-bottom:6px">${f}${required ? ' <span style="color:#c00">*</span>' : ''}
+        <input type="text" data-field="${f}" ${required ? 'data-required="1"' : ''} placeholder="${f}" />
       </label>
-    `).join('');
+    `;
+    }).join('');
     packInputPanel.hidden = fields.length === 0;
     updateStatus(fields.length ? `已选 ${packId}，填写输入后运行` : `已选 ${packId}`);
 
@@ -176,6 +184,13 @@ runPackBtn?.addEventListener('click', async () => {
   packInputFields.querySelectorAll('input[data-field]').forEach(el => {
     input[el.dataset.field] = el.value;
   });
+  // N3：必填留空不放行——空串出城会拼出「主题：。」这类残句提示词，
+  // pack 还报 completed（不报错的失败，最坏的一类）。
+  const missing = selectedRequiredFields.filter(f => !String(input[f] ?? '').trim());
+  if (missing.length) {
+    updateStatus(`请填写必填输入：${missing.join('、')}`);
+    return;
+  }
   await executePack(selectedPackId, input);
 });
 
