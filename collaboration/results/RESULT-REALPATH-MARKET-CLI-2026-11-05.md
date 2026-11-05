@@ -127,4 +127,6 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
    （metrics list→name-as-key、examples 键拆 good/bad 并补 PackExample 必填字段）。
    验证：validate_pack(strict=True) 4/4 零 error + schema_v2.from_dict 4/4 解析通过。
 6. NotebookLM MCP / codex CLI 接入后补 REAL 复测（2026-11-05 复探 blocker 原样，
-   见 §1.3/1.4 注记）。
+   见 §1.3/1.4 注记）。〔2026-11-05 19:5x 二次复探〕blocker 不变：工具注册表无
+   notebooklm 工具、marketplace 搜索仅金融/法律类模糊命中、`which codex codearts`
+   均未安装、`~/.workbuddy/mcp.json` 仅 llm-wiki/MiniMax/chrome-devtools/comfy-mcp。

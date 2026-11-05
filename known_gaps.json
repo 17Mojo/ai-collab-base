@@ -308,7 +308,21 @@
       "impact": "validate_pack 全仓 sweep 不干净；想批量发布这批模板时 publish 闸门（pack validate 同款判据）会拦下缺段项。",
       "fix": "已收口（2026-11-05）：4 模板补齐 generation_params/optimization/performance_tracking/collaboration（schema_v2 dataclass 默认值；bilibili/xiaohongshu 按平台补 post_publish_tracking 指标），travel 另补 example_library + metadata.designer/created_at/updated_at（designer=git 初始提交作者 17Mojo，created_at=git 首提交时间2026-05-11T12:35:42，不伪造）。回溯补充（登记后新证据）：基线复查发现台账未记的两类错误一并修——3 模板 quality_metrics.metrics 是 list 非 name-as-key 对象（转规范格式：name→key、measurement_method→check_method、threshold→min_threshold），example_library 用非规范 examples 键（按 tags 拆 good_examples/bad_examples，补 PackExample 必填 description/score/validation_notes，score 取仓库惯例占位值good≈92/bad≈35，output 压平为 str 对齐消费面类型）。",
       "closed_at": "2026-11-05",
-      "evidence": "validate_pack(strict=True) 4/4 零 error（基线 5/5/5/8）；schema_v2.PromptPackV2.from_dict 4/4 解析通过（双消费面验收——from_dict 冒烟曾抓到示例缺 description 的 KeyError，系拆 examples 引入的回归，已补字段修复）。全仓 sweep 余 6 个 FAIL 均为 manifest/VERSION/exports 归档文件（非 pack 本体，sweep 口径问题，不在本条范围）。pack+cli+validator 回归 646 passed（新增 22），69 broker-EEXIST 假阳性与基线持平。"
+      "evidence": "validate_pack(strict=True) 4/4 零 error（基线 5/5/5/8）；schema_v2.PromptPackV2.from_dict 4/4 解析通过（双消费面验收——from_dict 冒烟曾抓到示例缺 description 的 KeyError，系拆 examples 引入的回归，已补字段修复）。全仓 sweep 余 6 个 FAIL 均为 manifest/VERSION/exports 归档文件（非 pack 本体，sweep 口径问题，不在本条范围）。pack+cli+validator 回归 646 passed（新增 22），69 broker-EEXIST 假阳性与基线持平。后续（同日）：tests/unit/pack/test_pack_files_gate.py 落 sweep 口径门禁（is_pack_file 判据=metadata.pack_id 对齐 IMPORT_PACKS，活体轨道 templates/examples 双消费面全量），上述 sweep 误报口径收口。"
+    },
+    {
+      "id": "N19",
+      "priority": "P3",
+      "status": "wontfix",
+      "title": "exports/_archive 归档导出物带 pack_id 但 schema 漂移（type/platform 不在现行枚举）",
+      "reader": "把 packs/exports 的导出快照当 Pack 导入（IMPORT_PACKS）或对 exports/ 整树跑 validate_pack sweep 的人",
+      "where": [
+        "packs/exports/_archive/email_auto_reply_export_20260404_112051.json"
+      ],
+      "detail": "sweep 口径收口（2026-11-05）时定性：该归档文件有 metadata.pack_id（IMPORT_PACKS 会收）但 metadata.type=utility、domain.target_platforms 含 email，均不在现行枚举（VALID_PACK_TYPES / VALID_PLATFORM_TYPES）——导出当时 schema 与现行不一致的历史漂移。其余 manifest.json/VERSION.json 无 pack_id，已被 is_pack_file 判据天然排除。",
+      "impact": "若把归档导出物当活体 Pack 导入/校验，会遇到「导入收下但 validate_pack 报 2 error」的错位；对 exports/ 整树 sweep 会出假 FAIL。",
+      "fix": "wontfix——exports/_archive 是历史导出快照，按「历史记录不回填」不动它；sweep 口径已把 exports/ 排除在活体轨道外（validate_all_packs docstring + test_pack_files_gate.py）。真要用归档内容，以现行 schema 手工转写后放回 templates/examples 轨道。",
+      "found_at": "2026-11-05"
     }
   ]
 }
