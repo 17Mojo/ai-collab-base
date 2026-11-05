@@ -590,6 +590,17 @@ class PackExecutor {
       success: false,
       output: null,
       error: null,
+      // N8：投递方式标记。判定与 _executeAIStep 的分支同源：
+      // targetTabId 非空 ⇒ chrome.tabs.sendMessage 精确投递到那一个标签页；
+      // 否则 chrome.runtime.sendMessage 广播——**每一个**内容脚本都会收到并各自发。
+      // popup 据此提示「已广播到所有打开的 AI 页面」，否则用户以为只发了一次。
+      // local 步骤不投递，null。
+      delivery:
+        step.type === "local"
+          ? null
+          : execution.targetTabId != null
+            ? "precise"
+            : "broadcast",
     };
 
     // N3：pack 自己声明的 required_fields 缺失（含空串）——确定性失败，

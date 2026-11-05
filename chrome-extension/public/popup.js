@@ -58,20 +58,31 @@ async function loadPacks() {
       // 此前这里写成 `pack.metadata?.pack_id || pack.pack_id || pack.id`，
       // 后两项是不存在的字段（pack.id 那次让 data-id="undefined"，点下去执行的是
       // id 为 "undefined" 的 Pack；pack.pack_id 是后端形状的顶层轨道，导入侧已收口不认）。
-      packList.innerHTML = packs.map(pack => {
-        const id = pack.metadata?.pack_id || "";
+      //
+      // N2：id/name/desc 全来自 Pack 作者（IMPORT_PACKS 只校验 pack_id 存在性），
+      // innerHTML 拼接会把它们当 HTML 解析——伪造「版本过期，请输入凭据」这类
+      // UI 的注入面（台账原只记输入面板，这里是同类第二处）。一律 DOM 构建：
+      // 文本只走 textContent，属性只走 dataset。
+      packList.textContent = '';
+      for (const pack of packs) {
+        const id = pack.metadata?.pack_id || '';
         // pack.name / pack.description 与上面的 pack.id 同类：从来没有任何写入方
         // 设过这两个顶层字段（写入方只有 CREATE/IMPORT，都只写 metadata.*）。
         // 留着只是把一套不存在的协议继续描述下去 ⇒ 直接去掉。
         const name = pack.metadata?.pack_name || id;
-        const desc = pack.metadata?.description || "无描述";
-        return `
-        <li class="pack-item" data-id="${id}">
-          <div class="pack-name">${name}</div>
-          <div class="pack-desc">${desc}</div>
-        </li>
-      `;
-      }).join('');
+        const desc = pack.metadata?.description || '无描述';
+        const li = document.createElement('li');
+        li.className = 'pack-item';
+        li.dataset.id = id;
+        const nameEl = document.createElement('div');
+        nameEl.className = 'pack-name';
+        nameEl.textContent = name;
+        const descEl = document.createElement('div');
+        descEl.className = 'pack-desc';
+        descEl.textContent = desc;
+        li.append(nameEl, descEl);
+        packList.appendChild(li);
+      }
     }
 
     updateStatus('就绪');
@@ -102,7 +113,13 @@ async function executePack(packId, input) {
       // N13：此前这里只写「执行成功」，response.result.output（7 个产出字段）
       // 直接丢弃——外部用户点了运行、报了成功、什么都没拿到。
       const count = renderOutputs(response.result?.output);
-      updateStatus(count ? `执行成功，${count} 个产出见下` : '执行成功（无产出字段）');
+      // N8：没指定标签页时 AI 提示词是广播投递（每个内容脚本各收一次、各发一次）。
+      // 不提示的话用户以为只发了一次——这里给「广播」一个真消费者。
+      const broadcasted = (response.result?.steps || []).some(
+        (s) => s?.delivery === 'broadcast',
+      );
+      const tail = broadcasted ? '（未指定标签页：提示词已广播到所有打开的 AI 页面）' : '';
+      updateStatus((count ? `执行成功，${count} 个产出见下` : '执行成功（无产出字段）') + tail);
     } else {
       updateStatus(`执行失败: ${response.error}`);
     }
@@ -132,14 +149,30 @@ async function selectPack(packId) {
       ? firstInputStep.config.required_fields
       : [];
 
-    packInputFields.innerHTML = fields.map(f => {
+    // N2：字段名来自 Pack 作者（IMPORT_PACKS 不做 schema 校验），此前
+    // innerHTML 拼接会把它当 HTML/属性解析——伪造输入框骗凭据的注入面。
+    // 改走 DOM 构建：文本只走 textContent，属性只走 setAttribute/属性赋值，
+    // 字段名永远是纯文本（含 `<` `"` 也只显示为字面量）。
+    packInputFields.replaceChildren();
+    for (const f of fields) {
       const required = selectedRequiredFields.includes(f);
-      return `
-      <label style="display:block;font-size:13px;margin-bottom:6px">${f}${required ? ' <span style="color:#c00">*</span>' : ''}
-        <input type="text" data-field="${f}" ${required ? 'data-required="1"' : ''} placeholder="${f}" />
-      </label>
-    `;
-    }).join('');
+      const label = document.createElement('label');
+      label.style.cssText = 'display:block;font-size:13px;margin-bottom:6px';
+      label.appendChild(document.createTextNode(f));
+      if (required) {
+        const star = document.createElement('span');
+        star.style.color = '#c00';
+        star.textContent = ' *';
+        label.appendChild(star);
+      }
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.setAttribute('data-field', f);
+      if (required) input.setAttribute('data-required', '1');
+      input.placeholder = f;
+      label.appendChild(input);
+      packInputFields.appendChild(label);
+    }
     packInputPanel.hidden = fields.length === 0;
     updateStatus(fields.length ? `已选 ${packId}，填写输入后运行` : `已选 ${packId}`);
 

@@ -649,6 +649,141 @@ test("popup 必填输入留空不放行（N3：空串出城会拼出残句提示
 });
 
 // ─────────────────────────────────────────────────────────────────────
+// 4a. popup 不可信数据渲染（N2：Pack 作者控制的字符串不许当 HTML 解析）
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * 用给定的 packs 起一份 popup（JSDOM），返回 dom。
+ * chrome API 模拟与 N3 测试同款。
+ */
+async function loadPopupWithPacks(packs, onMessage) {
+  const html = readFileSync(join(EXT_ROOT, "public", "popup.html"), "utf-8");
+  const dom = new JSDOM(html, {
+    url: "https://localhost/",
+    runScripts: "outside-only",
+  });
+  dom.window.chrome = {
+    storage: { local: { get: async () => ({ packs }) } },
+    runtime: {
+      sendMessage: async (msg) => {
+        if (onMessage) return onMessage(msg);
+        return { success: true };
+      },
+      getURL: (p) => `chrome-extension://fake-id/${p}`,
+    },
+    tabs: {
+      query: async () => [{ id: 7 }],
+      create: async () => ({ id: 8 }),
+    },
+  };
+  dom.window.eval(readFileSync(join(EXT_ROOT, "public", "popup.js"), "utf-8"));
+  await new Promise((r) => setTimeout(r, 0));
+  return dom;
+}
+
+test("N2：输入字段名含 HTML 时不得被解析（只当文本）", async () => {
+  const EVIL_FIELD = '"><img src=x data-evil="1"><i x="';
+  const evilPack = {
+    metadata: { pack_id: "wiring-evil", pack_name: "注入探针", version: "1.0.0" },
+    workflow: {
+      steps: [
+        {
+          id: "step_1",
+          type: "local",
+          input_fields: [EVIL_FIELD],
+          output_field: "out",
+        },
+      ],
+    },
+  };
+  const dom = await loadPopupWithPacks([evilPack]);
+  dom.window.document.querySelector(".pack-item").click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  const panel = dom.window.document.getElementById("pack-input-fields");
+  assert.equal(panel.querySelector("img"), null, "字段名里的 <img> 不许被解析成元素");
+  assert.equal(panel.querySelector("i"), null, "字段名里的 <i> 不许被解析成元素");
+  const input = panel.querySelector("input[data-field]");
+  assert.ok(input, "输入框必须渲染出来");
+  assert.equal(
+    input.dataset.field,
+    EVIL_FIELD,
+    "data-field 必须原样保留字段名——setAttribute 转义，不许破出属性",
+  );
+  const label = input.closest("label");
+  assert.ok(
+    label.textContent.includes("<img"),
+    "字段名只当纯文本显示（尖括号是字面量，不是标记）",
+  );
+});
+
+test("N2：pack 列表 name/description 含 HTML 时不得被解析", async () => {
+  const evilPack = {
+    metadata: {
+      pack_id: "wiring-evil2",
+      pack_name: '<img src=x data-evil="1">伪造名字',
+      description: '<b onclick="x">危险描述</b>',
+    },
+    workflow: { steps: [] },
+  };
+  const dom = await loadPopupWithPacks([evilPack]);
+  const list = dom.window.document.getElementById("packList");
+  assert.equal(list.querySelector("img"), null, "pack_name 里的 <img> 不许被解析成元素");
+  assert.equal(list.querySelector("b"), null, "description 里的 <b> 不许被解析成元素");
+  const item = list.querySelector(".pack-item");
+  assert.equal(item.dataset.id, "wiring-evil2", "data-id 走 dataset，原样保留");
+  assert.match(
+    item.querySelector(".pack-name").textContent,
+    /伪造名字/,
+    "名字只当纯文本显示",
+  );
+});
+
+test("N8：广播投递时 popup 要提示用户（不能让他以为只发了一次）", async () => {
+  const pack = {
+    metadata: { pack_id: "wiring-ai-2", pack_name: "广播提示", version: "1.0.0" },
+    workflow: {
+      steps: [
+        {
+          id: "step_1",
+          type: "ai",
+          input_fields: ["topic"],
+          output_field: "out",
+          prompt_template: "说说{{topic}}",
+        },
+      ],
+    },
+  };
+  const dom = await loadPopupWithPacks([pack], async (msg) => {
+    if (msg?.type === "EXECUTE_PACK") {
+      return {
+        success: true,
+        result: {
+          status: "completed",
+          output: { out: "回声" },
+          steps: [{ id: "step_1", delivery: "broadcast" }],
+        },
+      };
+    }
+    return { success: true };
+  });
+  dom.window.document.querySelector(".pack-item").click();
+  await new Promise((r) => setTimeout(r, 0));
+  dom.window.document
+    .querySelector('#pack-input-fields input[data-field="topic"]')
+    .value = "接线测试";
+  dom.window.document.getElementById("run-pack-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  const status = dom.window.document.getElementById("status").textContent || "";
+  assert.match(
+    status,
+    /已广播/,
+    `状态行必须提示广播——用户开着多个 AI 页面时会各收到一次：${status}`,
+  );
+});
+
+// ─────────────────────────────────────────────────────────────────────
 // 4b. popup 执行产出展示（N13：产出此前被丢弃，用户拿不到 Pack 产物）
 // ─────────────────────────────────────────────────────────────────────
 
@@ -986,6 +1121,7 @@ test("AI 步骤要发到指定标签页，不能广播给每个打开的 AI 页�
     0,
     "不能广播：用户开着 3 个 AI 页面时，广播会让他在 3 个页面里各收到一次提示词",
   );
+  assert.equal(result.steps[0].delivery, "precise", "精确投递要在结果里标 precise（N8 标记）");
 });
 
 test("没有目标标签页时才广播，并且要标明是广播", async () => {
@@ -1003,6 +1139,11 @@ test("没有目标标签页时才广播，并且要标明是广播", async () =>
     result.steps[0].output,
     ECHO,
     "广播的结果也应是解包后的回复内容，而不是信封对象",
+  );
+  assert.equal(
+    result.steps[0].delivery,
+    "broadcast",
+    "结果里必须标明是广播——popup 据此提示「已广播到所有打开的 AI 页面」（N8 真消费者）",
   );
 });
 
