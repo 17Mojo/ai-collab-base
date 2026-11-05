@@ -149,6 +149,7 @@ coverage.xml
 
 # AI-collab specific ephemeral artifacts
 test_tracking_history.json
+.reviews/
 chrome-extension/tests/logs/
 chrome-extension/tests/screenshots/*.png
 !chrome-extension/tests/screenshots/.gitkeep
