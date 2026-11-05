@@ -347,7 +347,7 @@ logs/backups/               72 项
 | **P0** | 决定示例包去向：回灌到当前 schema，或显式标 `@deprecated` 并移出 `packs/examples/` | `packs/examples/*.json` | 二选一，不许中间态 |
 | **P0** | Chrome 侧补 4 种 step type 分支，或明确写死「Chrome 只支持 local/ai」并在导入时前置拦截 | `pack-executor.js:476,520` | 导入非法 type 时应报错而非执行到一半抛异常 |
 | **P1** | `pyproject.toml:6` 改 `requires-python = ">=3.10"`，classifiers 删 3.8/3.9 | `pyproject.toml` | 与 CI 矩阵一致 |
-| **P1** | 加一条守护测试：`validate_all_packs("packs/examples/")` 必须全过 | `tests/unit/` | 该测试现在应**红**，红了才证明它在守护 |
+| **P1** | 加一条守护测试：`validate_all_packs("packs/examples/")` 必须全过 | `tests/unit/` | 该测试现在应**红**，红了才证明它在守护；已落地 2026-11-05（`test_pack_files_gate.py`） |
 | **P1** | 合入 `chore/untrack-node-modules` | `.git` | `git ls-files \| grep -c node_modules` == 0 |
 | **P2** | 拆 `_cli_main.py`，先把最大的 `cmd_sessions` / `cmd_tasks` 抽到独立模块 | `ai_collab/cli/` | 单文件降到 3,000 行以下 |
 | **P2** | 二选一给 `session_auto_register` 改名（如 `session_observation_sync`） | `ai_collab/` | 与 `session_autoregistration` 不再视觉混淆 |
@@ -488,7 +488,7 @@ B 的失败是**预期行为**（没有打开 AI 页面标签，内容脚本不�
 | **P0** | 统一步骤类型协议：三选一 —— ① Chrome 补 4 种分支；② Schema 收编 `ai`；③ 显式声明「Pack 分 Python 执行档 / Chrome 执行档」 | §9.3 真机，交集只剩 `local` |
 | **P0** | 示例包按新协议回灌，或移出 `packs/examples/` | §9.1，0/17 |
 | **P1** | `pyproject.toml:6` → `>=3.10` | §9.1，54/28 与 CI 矩阵不匹配 |
-| **P1** | 加 `validate_all_packs("packs/examples/")` 守护测试（现在应红） | §9.1，无测试守护 |
+| **P1** | 加 `validate_all_packs("packs/examples/")` 守护测试（现在应红） | §9.1，无测试守护→已落地 2026-11-05（`test_pack_files_gate.py`） |
 | **P1** | 合入 `chore/untrack-node-modules`；顺带解决 worktree 假依赖 | §9.4.3，会误导构建 |
 | **P2** | 修 `build.js` 的 `dist/public/` 双份复制 | §9.4.1 |
 | **P2** | Pack ID 统一为单一字段来源 | §9.4.2 |

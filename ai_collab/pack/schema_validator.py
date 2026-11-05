@@ -558,18 +558,50 @@ def validate_pack(file_path: str, strict: bool = True) -> ValidationResult:
     return validator.validate_file(file_path)
 
 
+def is_pack_file(source: str | Path | dict[str, Any]) -> bool:
+    """判定「什么算 Pack」——判据与 IMPORT_PACKS 处理器同款。
+
+    权威判据只有一个：``metadata.pack_id`` 非空（chrome-extension
+    service-worker.js 的 IMPORT_PACKS 是唯一判定方；manifest.json / VERSION.json
+    这类元数据文件没有该字段，不会被当 Pack 扫）。
+
+    Args:
+        source: Pack JSON 路径，或已解析的 JSON 字典
+
+    Returns:
+        是否算 Pack 文件（路径不存在 / JSON 解析失败 / 判据不满足 → False）
+    """
+    if isinstance(source, dict):
+        data: dict[str, Any] | None = source
+    else:
+        try:
+            with open(source, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return False
+    if not isinstance(data, dict):
+        return False
+    meta = data.get("metadata")
+    return isinstance(meta, dict) and bool(meta.get("pack_id"))
+
+
 def validate_all_packs(
     directory: str = "packs/examples", strict: bool = True
 ) -> dict[str, ValidationResult]:
     """
-    验证目录下所有 Pack 文件
+    验证目录下所有 Pack 文件（按 is_pack_file 判据过滤）
+
+    口径（2026-11-05 sweep 收口）：只扫「算 Pack」的 JSON（metadata.pack_id 非空，
+    与 IMPORT_PACKS 同款判据）；manifest.json / VERSION.json 等元数据文件自动跳过。
+    活体 Pack 轨道是 packs/templates 与 packs/examples；packs/exports 是导出快照
+    归档（历史产物，可能不满足现行 schema），不在 sweep 范围。
 
     Args:
         directory: Pack 文件目录
         strict: 是否启用严格模式
 
     Returns:
-        Dict[str, ValidationResult]: 文件路径到验证结果的映射
+        Dict[str, ValidationResult]: 文件路径到验证结果的映射（仅 Pack 文件）
     """
     results: dict[str, ValidationResult] = {}
     pack_dir = Path(directory)
@@ -578,6 +610,8 @@ def validate_all_packs(
         return results
 
     for pack_file in pack_dir.glob("*.json"):
+        if not is_pack_file(pack_file):
+            continue
         results[str(pack_file)] = validate_pack(str(pack_file), strict)
 
     return results
