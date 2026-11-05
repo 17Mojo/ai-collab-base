@@ -29,11 +29,23 @@ const SELECTORS = {
   // 后果：isTyping() 在空闲页恒为 true ⇒ waitForResponse 的
   // `!this.isTyping()` 条件**永远不成立** ⇒ 每次发送都必然 60 秒超时。
   //
-  // 保留 '.loading' 与 '.generating'（都是具体类名）承担「正在生成」的判定。
-  // **残留风险**：真正的生成指示器是否命中这两个类名，尚未在已登录会话里
-  // 验证——若都不命中，isTyping() 会一直为 false，等待可能**提前**返回
-  // （回复还在流式输出中）。该项已登记为 L2 真机会话必验项。
-  typingIndicator: [".loading", ".generating"],
+  // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
+  // entry.js 16700/38420 段（Segment 组件）+ c8a0d849f0c85-JL2OvW0_.js + cfd0f68ad57e5-CaZXnu1D.js。
+  // 生成中状态行是**服务端状态机下发的 tips 文案流**（happy/「正在生成中…」/「不支持此格式」），
+  // 渲染为 segment-generate-tip；类名是 BEM 字面量（BOLahTei.css 有 .segment .segment-generate-tip
+  // 的字级/行高样式），无哈希。等待首响应 spinner 挂在用户消息条目上：
+  // chat-content-item awaiting-first-response 内嵌 .awaiting-loading（条目 2604 行
+  // 「awaiting-first-response 类只在等待期挂」）。PENDING 态渲染 div.segment-pending-loading。
+  // 停止输出按钮 = 生成中：send-button-container 加 stop 类（cfd0f68ad57e5 的 JSX
+  // class 绑定 {stop: P.value}，P 即 isGenerating），停答后 stop 类摘掉。
+  // **排除** core-spiral-loading（role=status 仅在传 ariaLabel 时加）——该组件在
+  // 历史列表/文件卡等多处复用，「生成中用法」只是其中一处，误命中会让空闲页恒 true。
+  typingIndicator: [
+    ".segment .segment-generate-tip",
+    ".chat-content-item.awaiting-first-response .awaiting-loading",
+    ".segment .segment-pending-loading",
+    ".send-button-container.stop",
+  ],
 };
 
 /**
@@ -104,33 +116,7 @@ class KimiAdapter extends PlatformAdapter {
     return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
-  async waitForResponse(timeout = 60000) {
-    const startTime = Date.now();
-    const initialCount = this.getMessageList().length;
-
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (Date.now() - startTime > timeout) {
-          clearInterval(interval);
-          reject(new Error("Kimi: Response timeout"));
-          return;
-        }
-
-        const currentCount = this.getMessageList().length;
-        if (currentCount > initialCount && !this.isTyping()) {
-          clearInterval(interval);
-          const latest = this.getLatestMessage();
-          resolve({
-            messageCount: currentCount,
-            content: latest ? this._extractContent(latest) : "",
-            duration: Date.now() - startTime,
-          });
-        }
-      }, 500);
-    });
-  }
-
-  _extractContent(element) {
+    _extractContent(element) {
     if (!element) return "";
     for (const sel of this.selectors.messageContent) {
       const el = element.querySelector(sel);

@@ -71,30 +71,54 @@ test("--headless 会关掉有头模式", () => {
   assert.equal(parseArgs([]).headed, true);
 });
 
-test("计数增长且生成中解除 —— 会成功", () => {
+test("计数增长且生成中解除、内容稳住 —— 会成功", () => {
   const samples = timeline([
     [0, false, ""],
     [0, true, ""],
     [1, true, "…"],
     [1, false, "答案是 2"],
+    [1, false, "答案是 2"],
+    [1, false, "答案是 2"],
   ]);
-  const v = buildVerdict(samples, { settled: true, result: { messageCount: 1, content: "答案是 2", duration: 1500 } });
+  const v = buildVerdict(samples, { settled: true, result: { messageCount: 1, content: "答案是 2", duration: 1500 } }, null, 1000);
   assert.equal(v.wouldResolve, true);
   assert.equal(v.countGrew, true);
   assert.equal(v.typingCleared, true);
   assert.equal(v.contentNonEmpty, true);
   assert.equal(v.productionContentNonEmpty, true);
-  assert.equal(v.resolveAtSampleIndex, 3);
+  // 内容在 i=3（t=2500）定格，稳定窗 1000ms ⇒ i=5（t=3500）才判完成
+  assert.equal(v.resolveAtSampleIndex, 5);
   assert.equal(v.consistent, true);
 });
 
+test("内容持续在变的流式时间线不许判成功（重放侧太早成功锚）", () => {
+  const samples = timeline([
+    [0, false, ""],
+    [1, false, "收"],
+    [1, false, "收到，"],
+    [1, false, "收到，我"],
+    [1, false, "收到，我将"],
+    [1, false, "收到，我将为你写"],
+  ]);
+  const v = buildVerdict(samples, { settled: false, result: null, error: null }, null, 1000);
+  assert.equal(
+    v.wouldResolve,
+    false,
+    "每一帧内容都在变——旧口径「计数涨了且不在生成中」在 i=1 就放行，这正是太早成功",
+  );
+});
+
 test("计数涨了但 isTyping 恒为 true —— 不会成功（Kimi/ChatGLM 那类缺陷）", () => {
+  // 正文从第 1 帧起就稳住（连着三帧不变）——稳定窗已满足，
+  // 唯一拦路的是 isTyping 恒 true。不这么写，「去掉 isTyping 条件」的变异
+  // 会被稳定窗掩蔽（两道闸同时拦着，拆掉一道照样红不了）。
   const samples = timeline([
     [0, false, ""],
     [1, true, "…"],
     [1, true, "…"],
+    [1, true, "…"],
   ]);
-  const v = buildVerdict(samples, { settled: true, result: null, error: "Kimi: Response timeout" });
+  const v = buildVerdict(samples, { settled: true, result: null, error: "Kimi: Response timeout" }, null, 1000);
   assert.equal(v.countGrew, true, "计数确实涨了");
   assert.equal(v.typingCleared, true, "有一帧是 false（起点那帧），但没能同时满足");
   assert.equal(v.wouldResolve, false, "生产口径要求两者同时成立");
@@ -104,26 +128,48 @@ test("计数涨了但 isTyping 恒为 true —— 不会成功（Kimi/ChatGLM �
 });
 
 test("生成中解除但计数没涨 —— 不会成功（取消息列表选错）", () => {
+  // 正文已稳住——稳定窗已满足，唯一拦路的是计数没涨。
+  // 不这么写，「> 改成 >=」的变异会被空内容/稳定窗掩蔽。
   const samples = timeline([
-    [37, false, ""],
-    [37, false, ""],
+    [37, false, "回复"],
+    [37, false, "回复"],
+    [37, false, "回复"],
   ]);
-  const v = buildVerdict(samples, { settled: true, result: null, error: "Response timeout" });
+  const v = buildVerdict(samples, { settled: true, result: null, error: "Response timeout" }, null, 1000);
   assert.equal(v.countGrew, false);
   assert.equal(v.wouldResolve, false);
   assert.equal(v.initialMessageCount, 37);
 });
 
-test("等待成功但正文是空的 —— 等待过了但回复取不到", () => {
+test("页面正文稳住了但生产取到空 —— productionContentNonEmpty 揪出抽取断链", () => {
+  const samples = timeline([
+    [0, false, ""],
+    [1, false, "页面上明明有的正文"],
+    [1, false, "页面上明明有的正文"],
+    [1, false, "页面上明明有的正文"],
+  ]);
+  const v = buildVerdict(samples, { settled: true, result: { messageCount: 1, content: "  ", duration: 800 } }, null, 1000);
+  assert.equal(v.wouldResolve, true, "页面时间线上等待条件确实满足了");
+  assert.equal(v.contentNonEmpty, true);
+  assert.equal(v.productionContentNonEmpty, false, "生产代码取到的是空的——抽取断链");
+  assert.equal(v.consistent, true, "等待逻辑本身没矛盾");
+});
+
+test("页面正文为空时重放绝不判成功（太早成功闸——旧口径这里会放行）", () => {
   const samples = timeline([
     [0, false, ""],
     [1, false, ""],
+    [1, false, ""],
   ]);
-  const v = buildVerdict(samples, { settled: true, result: { messageCount: 1, content: "  ", duration: 800 } });
-  assert.equal(v.wouldResolve, true, "等待条件确实满足了");
-  assert.equal(v.contentNonEmpty, false, "但页面上取到的正文是空的");
-  assert.equal(v.productionContentNonEmpty, false, "生产代码取到的也是空的");
-  assert.equal(v.consistent, true, "等待逻辑本身没矛盾");
+  const v = buildVerdict(samples, { settled: true, result: { messageCount: 1, content: "  ", duration: 800 } }, null, 1000);
+  assert.equal(
+    v.wouldResolve,
+    false,
+    "空内容永不判完成——旧口径「计数涨了且不在生成中」在 i=1 就放行了",
+  );
+  assert.equal(v.contentNonEmpty, false);
+  assert.equal(v.productionContentNonEmpty, false);
+  assert.equal(v.consistent, false, "生产却说 settled——这就是太早成功的形状");
 });
 
 test("生产结果与时间线重放不一致时，consistent 为 false", () => {
@@ -144,12 +190,15 @@ test("基准取生产启动那一刻的计数，而不是第一个采样", () =>
   const samples = timeline([
     [1, false, ""],
     [2, false, "回复"],
+    [2, false, "回复"],
+    [2, false, "回复"],
   ]);
-  const v = buildVerdict(samples, { settled: true, result: { messageCount: 2, content: "回复", duration: 500 } }, 0);
+  const v = buildVerdict(samples, { settled: true, result: { messageCount: 2, content: "回复", duration: 500 } }, 0, 1000);
   assert.equal(v.initialMessageCount, 0);
   assert.equal(v.baselineFromProduction, true);
   assert.equal(v.countGrew, true);
   assert.equal(v.wouldResolve, true);
+  assert.equal(v.resolveAtSampleIndex, 3);
 });
 
 test("没有生产基准时，退回第一个采样的计数", () => {

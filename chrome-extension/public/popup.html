@@ -198,6 +198,44 @@
     .status-area .artifact-item.error {
       color: #f44336;
     }
+
+    .output-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .output-item summary {
+      cursor: pointer;
+      font-size: 12px;
+      color: #4fc3f7;
+    }
+
+    .output-item .output-text {
+      margin: 6px 0;
+      padding: 6px;
+      background: #0f3460;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .btn-copy {
+      padding: 2px 8px;
+      font-size: 11px;
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      color: #eee;
+      cursor: pointer;
+    }
+
+    .btn-copy:hover {
+      background: #0f3460;
+    }
   </style>
 </head>
 <body>
@@ -221,6 +259,13 @@
       <h3 id="pack-input-title">Pack 输入</h3>
       <div id="pack-input-fields" class="studio-focus" data-testid="pack-input-fields"></div>
       <button id="run-pack-btn" class="btn-primary" data-testid="run-pack-btn">运行 Pack</button>
+    </section>
+
+    <!-- 执行产出面板（N13：产出此前只在回执里，用户拿不到） -->
+    <section id="pack-output-panel" class="panel" data-testid="pack-output-panel" aria-labelledby="pack-output-title" hidden>
+      <h3 id="pack-output-title">执行产出</h3>
+      <div id="pack-output-fields" data-testid="pack-output-fields"></div>
+      <button id="export-output-btn" class="btn-primary" data-testid="export-output-btn">导出 JSON</button>
     </section>
 
     <!-- Studio 产物生成面板 -->

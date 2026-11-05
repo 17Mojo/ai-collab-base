@@ -602,6 +602,157 @@ test("popup 要把用户当前所在的标签页告诉后台（否则 AI 步骤�
 });
 
 // ─────────────────────────────────────────────────────────────────────
+// 4b. popup 执行产出展示（N13：产出此前被丢弃，用户拿不到 Pack 产物）
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * 跑一遍 popup 的执行流（选 Pack → 填 topic → 点运行）。
+ * EXECUTE_PACK 回执的产出由 outputs 决定。
+ */
+async function drivePopupExecution(outputs) {
+  const html = readFileSync(join(EXT_ROOT, "public", "popup.html"), "utf-8");
+  const dom = new JSDOM(html, {
+    url: "https://localhost/",
+    runScripts: "outside-only",
+  });
+  const sent = [];
+  dom.window.chrome = {
+    storage: { local: { get: async () => ({ packs: [LOCAL_PACK] }) } },
+    runtime: {
+      sendMessage: async (msg) => {
+        sent.push(msg);
+        if (msg?.type === "EXECUTE_PACK") {
+          return { success: true, result: { status: "completed", output: outputs } };
+        }
+        return { success: true };
+      },
+      getURL: (p) => `chrome-extension://fake-id/${p}`,
+    },
+    tabs: {
+      query: async () => [{ id: 7 }],
+      create: async () => ({ id: 8 }),
+    },
+  };
+  dom.window.eval(readFileSync(join(EXT_ROOT, "public", "popup.js"), "utf-8"));
+  await new Promise((r) => setTimeout(r, 0));
+  dom.window.document.querySelector(".pack-item").click();
+  await new Promise((r) => setTimeout(r, 0));
+  const field = dom.window.document.querySelector('#pack-input-fields input[data-field="topic"]');
+  field.value = "接线测试";
+  dom.window.document.getElementById("run-pack-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+  return { dom, sent };
+}
+
+test("popup 执行成功必须展示产出（N13：不许只报状态把产出丢掉）", async () => {
+  const outputs = {
+    hook_statement: "这是一句足够长的钩子，验证产出全文能被渲染出来。",
+    topic_info: { topic: "接线测试", target_audience_level: "普通上班族" },
+    empty_one: "",
+  };
+  const { dom } = await drivePopupExecution(outputs);
+
+  const panel = dom.window.document.getElementById("pack-output-panel");
+  assert.equal(
+    panel.hidden,
+    false,
+    "执行成功后面板必须显示——此前只写「执行成功」，response.result.output 被直接丢弃",
+  );
+  const hookBlock = dom.window.document.querySelector('[data-field="hook_statement"]');
+  assert.ok(hookBlock, "每个产出字段都要有对应块");
+  assert.match(
+    hookBlock.textContent || "",
+    /钩子/,
+    "产出全文必须可见（折叠块里），不是只有字段名",
+  );
+  assert.match(
+    dom.window.document.getElementById("status").textContent || "",
+    /2 个产出/,
+    "状态行要报产出数（字段去空后是 2 个）",
+  );
+  assert.ok(
+    !dom.window.document.querySelector('[data-field="empty_one"]'),
+    "空产出不占块",
+  );
+  const topicBlock = dom.window.document.querySelector('[data-field="topic_info"]');
+  assert.match(
+    topicBlock.textContent || "",
+    /"topic"/,
+    "对象产出按 JSON 展开（不许是 [object Object]）",
+  );
+});
+
+test("产出文本必须走 textContent（模型文本不许进 innerHTML）", async () => {
+  const evil = '<img src=x onerror="window.__pwned=1">注入<script>window.__pwned=1</script>';
+  const { dom } = await drivePopupExecution({ hook_statement: evil });
+
+  assert.equal(dom.window.__pwned, undefined, "产出里的标签不许被执行");
+  assert.ok(
+    !dom.window.document.querySelector("#pack-output-fields img"),
+    "产出里的标签不许变成真元素（innerHTML 回归会在这里现形）",
+  );
+  const hookBlock = dom.window.document.querySelector('[data-field="hook_statement"]');
+  assert.match(
+    hookBlock.textContent || "",
+    /<img/,
+    "产出必须按字面文本显示——模型文本是不可信内容，进 innerHTML 就是注入面",
+  );
+});
+
+test("产出复制按钮把该字段全文放进剪贴板", async () => {
+  const outputs = { hook_statement: "复制我，全文一个字都不能少。" };
+  const { dom } = await drivePopupExecution(outputs);
+
+  const copied = [];
+  Object.defineProperty(dom.window.navigator, "clipboard", {
+    value: { writeText: async (t) => copied.push(t) },
+    configurable: true,
+  });
+
+  const copyBtn = dom.window.document.querySelector('button[data-copy-field="hook_statement"]');
+  assert.ok(copyBtn, "每个产出块都要有复制按钮");
+  copyBtn.click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  assert.equal(copied.length, 1, "点复制要写一次剪贴板");
+  assert.equal(copied[0], outputs.hook_statement, "复制的必须是该字段全文");
+  assert.match(
+    dom.window.document.getElementById("status").textContent || "",
+    /已复制/,
+    "复制后要有反馈",
+  );
+});
+
+test("导出 JSON 按钮产出全量产出 JSON", async () => {
+  const outputs = {
+    hook_statement: "导出验证钩子",
+    topic_info: { topic: "接线测试" },
+  };
+  const { dom } = await drivePopupExecution(outputs);
+
+  // 记录 Blob 构造（jsdom 各版本 Blob API 不一，直接记 parts 最稳）
+  const blobs = [];
+  dom.window.Blob = class {
+    constructor(parts, opts) {
+      this.parts = parts;
+      this.type = opts?.type || "";
+      blobs.push(this);
+    }
+  };
+  dom.window.URL.createObjectURL = () => "blob:fake";
+  dom.window.URL.revokeObjectURL = () => {};
+
+  dom.window.document.getElementById("export-output-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  assert.equal(blobs.length, 1, "导出必须产生一个 Blob");
+  assert.equal(blobs[0].type, "application/json", "导出 MIME 是 JSON");
+  const parsed = JSON.parse(blobs[0].parts[0]);
+  assert.equal(parsed.hook_statement, outputs.hook_statement, "导出的 JSON 必须含产出全文");
+  assert.equal(parsed.topic_info.topic, "接线测试", "对象产出也要完整导出");
+});
+
+// ─────────────────────────────────────────────────────────────────────
 // 5. public/ 下的脚本必须能被解析
 // ─────────────────────────────────────────────────────────────────────
 

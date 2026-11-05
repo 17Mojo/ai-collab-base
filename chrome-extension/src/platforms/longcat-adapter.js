@@ -12,7 +12,24 @@ const SELECTORS = {
   sendButton: ['button[type="submit"]', 'img[cursor="pointer"]'],
   messageList: [".message", '[class*="response"]', '[class*="chat-item"]'],
   messageContent: [".prose", ".response-content", '[class*="content"]'],
-  typingIndicator: ['[class*="loading"]', '[class*="generating"]'],
+  // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
+  // s3.meituan.net/.../js/ chunk 8575268a + 27443337 + f8ccdd86。
+  // 聊天流式主链：等待首 token 打字点 v-loading-dot（chatStatus===LOADING 时渲染，
+  // LoadingDot 组件类名无哈希）；生成中 = 停止按钮 stop-generate（StopGenerator.vue
+  // 渲染 div.stop-generate，仅 LOADING||OUTPUT 挂载，答完即卸——停止按钮存在 ⇔ 正在生成）。
+  // 深研/文件任务：PROCESSING 态点点点 loading-dot-box（点击→中断）；
+  // 图片/视频生成中 loading-text（「正在生成图片...」）。
+  // **排除** reason-title（「正在思考中...」标题）：DeepthinkThinkingStatus.vue 的标题
+  // 元素思考完成后文案变「已完成思考」但**元素保留**（qianwen data-status=complete
+  // 同类边界——完成后还在 DOM 里的不许算生成中，否则 isTyping 恒 true ⇒ 每次必超时）。
+  // 也排除 generating:"正在生成中，请稍后再试"（conversation.js:1369 冲突拦截提示，非状态行）。
+  typingIndicator: [
+    ".assistant-main .v-loading-dot",
+    ".v-loading-dot",
+    '[class*="stop-generate"]',
+    '[class*="loading-dot-box"]',
+    '[class*="loading-text"]',
+  ],
 };
 
 /**
@@ -83,33 +100,7 @@ class LongCatAdapter extends PlatformAdapter {
     return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
-  async waitForResponse(timeout = 60000) {
-    const startTime = Date.now();
-    const initialCount = this.getMessageList().length;
-
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (Date.now() - startTime > timeout) {
-          clearInterval(interval);
-          reject(new Error("LongCat: Response timeout"));
-          return;
-        }
-
-        const currentCount = this.getMessageList().length;
-        if (currentCount > initialCount && !this.isTyping()) {
-          clearInterval(interval);
-          const latest = this.getLatestMessage();
-          resolve({
-            messageCount: currentCount,
-            content: latest ? this._extractContent(latest) : "",
-            duration: Date.now() - startTime,
-          });
-        }
-      }, 500);
-    });
-  }
-
-  _extractContent(element) {
+    _extractContent(element) {
     if (!element) return "";
     for (const sel of this.selectors.messageContent) {
       const el = element.querySelector(sel);

@@ -41,7 +41,20 @@ const SELECTORS = {
     ".chat-item",
   ],
   messageContent: [".prose", '[class*="answer"]', '[class*="content"]'],
-  typingIndicator: ['[class*="loading"]', '[class*="generating"]', ".spinner"],
+  // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
+  // main-130a629d.js（入口主包）：深度思考加载行是自定义元素 <thinking-loading>
+  // （「正在思考」文本挂其上，标签名无哈希；仅流式生成期挂载，旧版中间停顿态已弃用）；
+  // 纯文本答案的「生成中...」加载行是 text-loading（thinking-loading 同族兄弟）。
+  // 生成中 = 状态盒出现「停止回答」按钮：answer-generate-state-button[data-module="stop"]
+  // （类名与 data-module 均无哈希，module=stop 区分于发送按钮的 send/insert）。
+  // aria 兜底：[class*="statusbox"] 容器内的 [role="button"][aria-label="停止回答"]。
+  typingIndicator: [
+    "thinking-loading",
+    '[class*="thinking-loading"]',
+    '[class*="text-loading"]',
+    '.answer-generate-state-button[data-module="stop"]',
+    '[class*="statusbox"] [role="button"][aria-label="停止回答"]',
+  ],
 };
 
 /**
@@ -113,33 +126,7 @@ class YiyanAdapter extends PlatformAdapter {
     return findVisibleElement(this.selectors.typingIndicator) !== null;
   }
 
-  async waitForResponse(timeout = 60000) {
-    const startTime = Date.now();
-    const initialCount = this.getMessageList().length;
-
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (Date.now() - startTime > timeout) {
-          clearInterval(interval);
-          reject(new Error("Yiyan: Response timeout"));
-          return;
-        }
-
-        const currentCount = this.getMessageList().length;
-        if (currentCount > initialCount && !this.isTyping()) {
-          clearInterval(interval);
-          const latest = this.getLatestMessage();
-          resolve({
-            messageCount: currentCount,
-            content: latest ? this._extractContent(latest) : "",
-            duration: Date.now() - startTime,
-          });
-        }
-      }, 500);
-    });
-  }
-
-  _extractContent(element) {
+    _extractContent(element) {
     if (!element) return "";
     for (const sel of this.selectors.messageContent) {
       const el = element.querySelector(sel);

@@ -9,6 +9,7 @@
  */
 
 import { sanitizeText } from "./sanitize.mjs";
+import { sampleWaitState, STABLE_MS_DEFAULT } from "../../src/utils/wait-policy.js";
 
 /** 采样间隔（毫秒）——与生产 waitForResponse 的 500ms 轮询一致。 */
 export const SAMPLE_INTERVAL = 500;
@@ -229,8 +230,11 @@ export function resolveLocales(args) {
 /**
  * 依据采样时间线判定「生产的等待逻辑会不会成功」。
  *
- * 判定口径与生产 `waitForResponseGeneric` **逐字一致**：
- *   当前消息数 > 初始消息数  且  不在生成中
+ * 判定口径与生产 `waitForResponseGeneric` **同一个判据函数**
+ * （wait-policy.sampleWaitState，2026-11-04 收口）：消息数增长、
+ * 正文非空、且正文连续 `stableMs`（默认 STABLE_MS_DEFAULT=8s）不再变化
+ * 才算完成——旧口径「计数增长且不在生成中」会把流式开头当完成
+ * （太早成功，台账 N14）。时间轴用采样的 `t`（观测器每帧都打）。
  *
  * 为什么要重放一遍而不直接看生产结果：
  *   生产结果是黑盒，只能告诉你「成功/失败」。重放能告诉你
@@ -239,12 +243,13 @@ export function resolveLocales(args) {
  *
  * 两者的不一致本身也是有价值的信息，所以 `consistent` 单独记一位。
  *
- * @param {Array<object>} samples - 采样序列
+ * @param {Array<object>} samples - 采样序列（每帧含 t/messageCount/isTyping/lastContent）
  * @param {object} waitResult - 生产 waitForResponse 的结果
  * @param {number|null} [baselineCount] - 生产等待启动那一刻的消息数
+ * @param {number} [stableMs] - 内容稳定窗口（默认生产口径；单测可缩窗）
  * @returns {object}
  */
-export function buildVerdict(samples, waitResult, baselineCount = null) {
+export function buildVerdict(samples, waitResult, baselineCount = null, stableMs = STABLE_MS_DEFAULT) {
   const usable = samples.filter((s) => typeof s.messageCount === "number");
 
   // 基准优先用「生产等待启动那一刻」的计数——生产函数就是在那一刻
@@ -262,10 +267,27 @@ export function buildVerdict(samples, waitResult, baselineCount = null) {
   const lastContent = usable.length ? usable[usable.length - 1].lastContent || "" : "";
   const contentNonEmpty = lastContent.trim().length > 0;
 
-  // 「按生产口径重放时间线，第一次同时满足两个条件是在第几个样本」
+  // 「按生产口径重放时间线，第一次满足完成条件是在第几个样本」——
+  // 与 waitForResponseGeneric 走同一个 sampleWaitState，不再各自维护口径。
   let resolveAtIndex = null;
+  let lastSeen = null;
+  let lastChangeAt = null;
   for (let i = 0; i < usable.length; i += 1) {
-    if (usable[i].messageCount > initial && usable[i].isTyping === false) {
+    const s = usable[i];
+    const now = typeof s.t === "number" ? s.t : i * SAMPLE_INTERVAL;
+    const state = sampleWaitState(
+      {
+        countGrew: s.messageCount > initial,
+        content: typeof s.lastContent === "string" ? s.lastContent : "",
+        now,
+        lastContent: lastSeen,
+        lastChangeAt,
+      },
+      stableMs,
+    );
+    lastSeen = state.lastContent;
+    lastChangeAt = state.lastChangeAt;
+    if (state.ready && s.isTyping === false) {
       resolveAtIndex = i;
       break;
     }
