@@ -25,14 +25,19 @@
  * 粘住：`dist/` 重建后 SW 仍跑旧代码（内容脚本每次注入读盘是新的）——
  * 闸门静默失效，跑出来的是一份看似成功的污染回执（17 字 ack 过 20 字闸）。
  *
- * 复跑前**必须**清缓存：
- *   rm -rf "<PROFILE>/Default/Service Worker" \
- *          "<PROFILE>/Default/Code Cache" \
- *          "<PROFILE>/Default/Extension Scripts"
- *
- * 脚本内置 SW 自检探针（hasGate / hasStatusSelector / hasMin50 三个标记物），
+ * **本脚本启动时自动清三缓存**（`clear-sw-cache.mjs`，唯一权威路径来源）：
+ *   Default/Service Worker | Default/Code Cache | Default/Extension Scripts
+ * 登录态（Cookies / Local Storage 等）不在其中，不受影响。
+ * SW 自检探针（hasGate / hasStatusSelector / hasMin50）仍保留兜底——
  * 任一 false 直接中止。标记物随构建演进——改了 wait-policy 常量名/闸门名，
  * 同步改探针里的 includes() 字面量。
+ *
+ * 手动加载扩展（不走本脚本）的人：跑
+ *   node tests/real-machine/clear-sw-cache.mjs [--dry-run]
+ * 同一协议、同一条命令；不要靠记忆写 rm -rf。
+ *
+ * WorkBuddy 沙箱环境跑本脚本如在清缓存处被 safe-delete shim 拦（>50 项），
+ * 对该进程设 `CODEBUDDY_SAFE_DELETE_ENABLED=0`（shim 自带开关）。
  *
  * ## 用法
  *
@@ -55,6 +60,8 @@ import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { clearSwCaches } from "./clear-sw-cache.mjs";
+
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const EXT = fileURLToPath(new URL("../../dist", import.meta.url));
 const PACK_PATH = `${REPO_ROOT}packs/examples/xiaohongshu_knowledge_creator.json`;
@@ -72,6 +79,14 @@ const PACK_ID = "xiaohongshu-knowledge-creator";
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 async function main() {
+  // N15 协议：启动前清三缓存（自动），SW 自检探针兜底。
+  const cleared = clearSwCaches(PROFILE);
+  if (!cleared.ok) throw new Error("清缓存计划被拒: " + cleared.reason);
+  for (const r of cleared.removed) {
+    log(`已清缓存: ${r.path}（${r.files} 文件, ${r.bytes} 字节）`);
+  }
+  for (const s of cleared.skipped) log(`缓存不存在（跳过）: ${s}`);
+
   log("启动自动化 Chromium（挂载 dist 扩展）…");
   const context = await chromium.launchPersistentContext(PROFILE, {
     headless: false,
@@ -113,7 +128,10 @@ async function main() {
     : null;
   log("SW 自检:", JSON.stringify(probe ?? "探测失败"));
   if (probe && (!probe.hasGate || !probe.hasStatusSelector || !probe.hasMin50)) {
-    throw new Error("SW 加载的不是带闸门的构建（ScriptCache 粘连？）—— 先按头注释清缓存再跑");
+    throw new Error(
+      "SW 加载的不是带闸门的构建（自动清缓存后仍粘连？）—— " +
+        "手动跑 tests/real-machine/clear-sw-cache.mjs 并重启 Chrome 后重试",
+    );
   }
 
   const page = await context.newPage();
