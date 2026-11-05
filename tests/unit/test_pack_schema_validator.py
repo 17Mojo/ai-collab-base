@@ -473,14 +473,50 @@ class TestValidateQualityMetrics:
         assert len(qm_issues) == 0
 
     def test_metric_missing_required_field_errors(self, minimal_valid_pack):
-        """metric 缺 name/description/check_method → error"""
+        """metric 缺内嵌必需字段 description/check_method → error（name 由 key 提供）"""
         minimal_valid_pack["quality_metrics"] = {
             "metrics": {"a": {"weight": 1.0}}
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "Missing required metric field: name" in i.message
+            "Missing required metric field: description" in i.message
             and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+        assert any(
+            "Missing required metric field: check_method" in i.message
+            and i.severity == ValidationSeverity.ERROR
+            for i in r.issues
+        )
+        # name 不再是内嵌必需字段（name-as-key 正典格式）
+        assert not any("Missing required metric field: name" in i.message for i in r.issues)
+
+    def test_metric_name_as_key_without_inner_name_passes(self, minimal_valid_pack):
+        """name-as-key 正典格式（内嵌无 name）→ quality_metrics 零 error（口径统一锚）"""
+        minimal_valid_pack["quality_metrics"] = {
+            "metrics": {
+                "coverage": {"description": "d", "check_method": "c", "weight": 0.6},
+                "accuracy": {"description": "d", "check_method": "c", "weight": 0.4},
+            }
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        qm_errors = [
+            i
+            for i in r.issues
+            if i.path.startswith("$.quality_metrics") and i.severity == ValidationSeverity.ERROR
+        ]
+        assert qm_errors == []
+
+    def test_metric_inner_name_mismatch_warns(self, minimal_valid_pack):
+        """内嵌 name 与 key 不一致 → warning（以 key 为准，防歧义）"""
+        minimal_valid_pack["quality_metrics"] = {
+            "metrics": {
+                "a": {"name": "b", "description": "d", "check_method": "c", "weight": 1.0}
+            }
+        }
+        r = PackSchemaValidator().validate_data(minimal_valid_pack)
+        assert any(
+            "metric.name 与 key 不一致" in i.message and i.severity == ValidationSeverity.WARNING
             for i in r.issues
         )
 

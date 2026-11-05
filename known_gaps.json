@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-04",
+  "updated_at": "2026-11-05",
   "purpose": "已确认但本次未修的缺陷台账。宁可写下来也不要留在某人脑子里——下一个人接手时不必重新考古一遍。",
   "conventions": {
     "id": "N1、N2……递增，永不复用。关闭后把 status 改 closed 并保留条目与结论，不要删。",
@@ -165,7 +165,9 @@
       "status": "closed",
       "title": "pack-step-types 测试 5 依赖 cwd",
       "reader": "在 chrome-extension/ 子目录下跑测试的人",
-      "where": ["chrome-extension/tests/pack-step-types.test.mjs"],
+      "where": [
+        "chrome-extension/tests/pack-step-types.test.mjs"
+      ],
       "detail": "原先用相对路径 './packs/examples/...'，只有从仓库根跑才通，在 chrome-extension/ 下 ENOENT。",
       "impact": "无（已修）",
       "fix": "改为 fileURLToPath(new URL('../../packs/examples/...', import.meta.url))。",
@@ -179,7 +181,10 @@
       "status": "closed",
       "title": "package.json 的 test 脚本在 CI 的 Node 20 上跑不了",
       "reader": "以为本地绿就等于 CI 绿的人",
-      "where": [".github/workflows/test.yml:148-154", "chrome-extension/package.json"],
+      "where": [
+        ".github/workflows/test.yml:148-154",
+        "chrome-extension/package.json"
+      ],
       "detail": "曾建议改成 node --test \"tests/**/*.test.mjs\"，该形式需 Node 21+（glob 支持），而 CI 钉 Node 20 ⇒ 在 CI 上必崩。仓库本来就有正确入口 tests/run-tests.mjs（自枚举文件，Node 18+ 可跑）。",
       "impact": "无（已修）",
       "fix": "\"test\": \"node tests/run-tests.mjs\"。",
@@ -193,7 +198,9 @@
       "status": "closed",
       "title": "D3 打破既有交互测试",
       "reader": "无（已修）",
-      "where": ["chrome-extension/tests/extension-wiring.test.mjs"],
+      "where": [
+        "chrome-extension/tests/extension-wiring.test.mjs"
+      ],
       "detail": "原测试断言「点 Pack 必须发 EXECUTE_PACK」，而 D3 之后点击只渲染输入面板。测试编码的是 D3 之前的交互，改测试而不是改代码。",
       "impact": "无（已修）",
       "fix": "改为「点 Pack → 断言面板可见且 topic 输入框存在 → 填值 → 点运行 → 断言 tabId 与 input.topic 透传」，保留原断言本意（tabId 必须传）。",
@@ -207,7 +214,9 @@
       "status": "closed",
       "title": "popup 执行完只报「执行成功」，7 个产出全部不展示",
       "reader": "跑完 Pack 后在 popup 里找产物的外部用户（以为「执行成功」就等于拿到产物的人）",
-      "where": ["chrome-extension/public/popup.js:88-109"],
+      "where": [
+        "chrome-extension/public/popup.js:88-109"
+      ],
       "detail": "executePack() 收到 EXECUTE_PACK 回执后只看 response.success 渲染「执行成功/执行失败」，response.result.output（hook_statement 等 7 个产出字段）直接丢弃。产物只存在于①消息回执对象②AI 站点会话气泡里，用户得去会话里按消息顺序手动复制。2026-11-04 L2 自动化靠 chrome.runtime.sendMessage 直读回执绕过了它。",
       "impact": "扩展的核心交付物（Pack 产物）在主界面上等于不存在——外部用户视角是「点了运行、报了成功、什么都没拿到」。逼近 P0（阻断交付）；未升 P0 的理由是产物本体未损坏、可从会话找回。",
       "fix": "popup 渲染 response.result.output：renderOutputs() 按字段折叠面板（每字段显示字数 + textContent 写入，模型文本永不进 innerHTML）+ 单字段复制（clipboard API + execCommand 兜底）+ 导出全量 JSON；「执行成功」文案改「执行成功，N 个产出见下」，无产出字段时明说「执行成功（无产出字段）」。守卫：extension-wiring.test.mjs 4 条（渲染/textContent 注入锚/复制/导出）+ mutation-check 4 条变异。",
@@ -255,13 +264,46 @@
       "status": "closed",
       "title": "real_machine_regression verify 撞上 PNG 证据文件直接 UnicodeDecodeError 崩掉",
       "reader": "给 L2 记录挂截图证据后跑 verify 的人",
-      "where": ["scripts/real_machine_regression.py:_probe_outcome"],
+      "where": [
+        "scripts/real_machine_regression.py:_probe_outcome"
+      ],
       "detail": "_probe_outcome 对每个 evidence_file 直接 read_text(utf-8) 再 json.loads，except 只接 (OSError, json.JSONDecodeError)——PNG 截图（L2 证据的常态，docs §5.1）在 read_text 就抛 UnicodeDecodeError，不在捕获列，整个 verify 崩掉。L1 时代证据全是探针 JSON 所以没炸。",
       "impact": "L2 记录挂截图后台账无法对账（verify 崩溃退出，掩盖真正的一致性检查）。",
       "fix": "except 收宽到 (OSError, UnicodeDecodeError, json.JSONDecodeError)——非探针 JSON 一律返回 None 跳过。tests/unit/test_real_machine_regression.py::test_verify_tolerates_binary_evidence_files 覆盖（锚=回退 except 即红）。",
       "found_at": "2026-11-04",
       "closed_at": "2026-11-04",
       "evidence": "RMR-2026-11-04-01 verify 实测崩溃栈（UnicodeDecodeError 0x89 PNG 魔数）；修复后同记录 verify errors=[]；单测 19/19、全量 tests/unit 2781 passed"
+    },
+    {
+      "id": "N17",
+      "priority": "P2",
+      "status": "open",
+      "title": "市场表 pack_listings 无 dependencies 列且 pack_id 主键单行（无版本历史）",
+      "reader": "想在市场库持久化依赖图、或让同一 pack 多版本共存的人——publish 新版本会单行覆盖旧版，依赖数据入库即丢",
+      "where": [
+        "ai_collab/pack/market_store.py:66",
+        "ai_collab/pack/market_store.py:188",
+        "ai_collab/cli/pack_market.py:266"
+      ],
+      "detail": "DDL 中 pack_id 是 TEXT PRIMARY KEY（单行最新版模型），且没有 dependencies 列——PackListing dataclass 有该字段但 create_listing/get_listing 都不持久化，get_listing 回填恒为空。pack publish/install/upgrade CLI 落地时（2026-11-05，RESULT-REALPATH-MARKET-CLI-2026-11-05 §2.3）已适配：同 id 发更高版本走 update_listing 单行覆盖（保留下载/评分计数），install 依赖图从 packs/ 正文 JSON 补齐。",
+      "impact": "市场库无法回答「这个 pack 依赖什么」（只有正文 JSON 知道）；无法回滚历史版本或并存多版本（覆盖不可逆）。",
+      "fix": "schema 迁移：pack_listings 加 dependencies TEXT（JSON 序列化）或单开 pack_dependencies 表；如需多版本共存再引入 pack_versions 表并调整 publish/upgrade 语义。涉及迁移策略（旧库兼容），单开条目做。"
+    },
+    {
+      "id": "N18",
+      "priority": "P3",
+      "status": "open",
+      "title": "4 个 templates Pack 缺顶层 section，validate_pack 过不了",
+      "reader": "拿 packs/templates/ 当 schema 完整性基准、或对这批 Pack 跑 validate_pack(strict=True) 的人",
+      "where": [
+        "packs/templates/bilibili_video_script.json",
+        "packs/templates/weekly_report.json",
+        "packs/templates/xiaohongshu_food_explore.json",
+        "packs/templates/travel_planner_north_guide.json"
+      ],
+      "detail": "2026-11-05 全仓 sweep（metric name-as-key 口径统一后）：4 个模板缺 generation_params/optimization/performance_tracking/collaboration（travel 另缺 example_library）等顶层 section。其余 10 个 pack 文件 validate_pack 全绿（正典 beauty pack 从 5 error 收到 0）。非 metric 口径问题——是模板本身缺段。",
+      "impact": "validate_pack 全仓 sweep 不干净；想批量发布这批模板时 publish 闸门（pack validate 同款判据）会拦下缺段项。",
+      "fix": "补齐缺失 section（对齐 schema_validator REQUIRED_TOP_LEVEL），或明确这批是轻量模板并把顶层 section 改为可选/分层 schema。"
     }
   ]
 }

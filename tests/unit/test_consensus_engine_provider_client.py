@@ -98,30 +98,34 @@ class TestSyncProviderClient:
 
 
 class TestProviderClientFailure:
-    """Test provider client failure handling"""
+    """Test provider client failure handling
+
+    2026-11-05 诚实化收口：client=None / 缺 query / 调用失败不再返回
+    "[X REAL] …真实观点" 假填充冒充成功（误导性遥测）——失败如实上抛，
+    全部失败时 FALLBACK 模式整体降级为标注 Mock 的三件套。
+    """
 
     @pytest.mark.asyncio
     async def test_provider_client_not_found(self):
-        """Test provider client not found (None)"""
+        """client=None 是配置缺口：如实失败降级，不给 test_none 配假填充"""
         engine = ConsensusEngine()
-        # Register provider with None client
         engine.providers["test_none"] = AIProvider(
             name="test_none", client=None, timeout=30.0, enabled=True
         )
 
         result = await engine.generate_consensus("test")
 
-        # Should use mock response
-        assert "topic" in result
-        # Check if test_none is in sources (it should be using mock response)
-        sources = result["sources"]
-        ai_names = [s["ai"] for s in sources]
-        # The engine should still include this provider in the results
-        assert "test_none" in ai_names or len(sources) > 0
+        # 全部 provider 配置缺口 → FALLBACK 整体降级（默认 fallback 模式）
+        assert result["mode"] == "fallback"
+        # 假填充禁止复活锚：失败 provider 不得出现在 sources 里冒充成功
+        assert "test_none" not in [s["ai"] for s in result["sources"]]
+        for s in result["sources"]:
+            assert "真实观点" not in s["response"]
+            assert " REAL]" not in s["response"]
 
     @pytest.mark.asyncio
     async def test_provider_client_no_query_method(self):
-        """Test provider client without query method"""
+        """client 缺 query 方法：如实失败降级，不造假填充"""
         client_without_query = Mock(spec=[])  # No query method
 
         engine = ConsensusEngine()
@@ -129,12 +133,14 @@ class TestProviderClientFailure:
 
         result = await engine.generate_consensus("test")
 
-        # Should use mock response
-        assert "topic" in result
+        assert result["mode"] == "fallback"
+        assert "no_query" not in [s["ai"] for s in result["sources"]]
+        for s in result["sources"]:
+            assert "真实观点" not in s["response"]
 
     @pytest.mark.asyncio
     async def test_provider_client_exception(self):
-        """Test provider client raising exception"""
+        """sync client 调用抛异常：如实失败降级，吞异常换假填充禁止复活"""
         failing_client = Mock()
         failing_client.query = Mock(side_effect=Exception("API failure"))
 
@@ -143,12 +149,14 @@ class TestProviderClientFailure:
 
         result = await engine.generate_consensus("test")
 
-        # Should use mock response on failure
-        assert "topic" in result
+        assert result["mode"] == "fallback"
+        assert "failing" not in [s["ai"] for s in result["sources"]]
+        for s in result["sources"]:
+            assert "真实观点" not in s["response"]
 
     @pytest.mark.asyncio
     async def test_async_provider_client_exception(self):
-        """Test async provider client raising exception"""
+        """async client 调用抛异常：同上，如实失败降级"""
         failing_async_client = AsyncMock()
         failing_async_client.query = AsyncMock(side_effect=Exception("Async API failure"))
 
@@ -157,8 +165,10 @@ class TestProviderClientFailure:
 
         result = await engine.generate_consensus("test")
 
-        # Should use mock response on failure
-        assert "topic" in result
+        assert result["mode"] == "fallback"
+        assert "failing_async" not in [s["ai"] for s in result["sources"]]
+        for s in result["sources"]:
+            assert "真实观点" not in s["response"]
 
 
 class TestResponseNormalization:
@@ -232,9 +242,10 @@ class TestTimeoutAndRetry:
         engine = ConsensusEngine()
         engine.register_provider("slow", slow_client, timeout=0.1)  # Very short timeout
 
-        # Should timeout and use mock response
+        # 超时如实失败：其余默认 provider 也全缺口 → 整体降级 fallback
         result = await engine.generate_consensus("test")
-        assert "topic" in result
+        assert result["mode"] == "fallback"
+        assert "slow" not in [s["ai"] for s in result["sources"]]
 
     @pytest.mark.asyncio
     async def test_provider_retry_on_failure(self):
@@ -259,8 +270,9 @@ class TestTimeoutAndRetry:
 
         result = await engine.generate_consensus("test")
 
-        # Should succeed (either after retries or using mock response)
-        assert "topic" in result
-        # The retry mechanism should have been triggered
-        # Note: Due to failure handling, it might use mock response instead
-        assert fail_count >= 1  # At least one attempt was made
+        # 第 3 次真成功——sources 是真产出，不是假填充
+        assert any(s["response"] == "success after retries" for s in result["sources"])
+        assert result["mode"] == "real"
+        # 其余默认 provider（client=None 配置缺口）如实进 failed_providers
+        assert set(result["failed_providers"]) == {"chatgpt", "claude", "kimi", "qianwen"}
+        assert fail_count >= 3  # 重试机制真跑了
