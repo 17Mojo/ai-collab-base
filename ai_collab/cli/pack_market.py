@@ -22,11 +22,12 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
+from ..pack.dependency import DependencyNode, DependencyResolver, PackDependency
+from ..pack.market import PackListing, PackStatus
 from ..pack.market_api import PackMarketAPI
 from ..pack.market_store import PackMarketStore
-from ..pack.market import PackListing, PackStatus
-from ..pack.dependency import DependencyNode, DependencyResolver, PackDependency
 from ..pack.version import PackVersion
 
 
@@ -42,9 +43,10 @@ class PackMarketCLI:
 
     # ---------- 公共 ----------
 
-    def _load_index(self) -> dict:
+    def _load_index(self) -> dict[str, Any]:
         try:
-            return json.loads(self.index_path.read_text(encoding="utf-8"))
+            data: dict[str, Any] = json.loads(self.index_path.read_text(encoding="utf-8"))
+            return data
         except (FileNotFoundError, json.JSONDecodeError):
             return {"version": "1.0.0", "installed": {}}
 
@@ -54,9 +56,10 @@ class PackMarketCLI:
             json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-    def _load_pack_json(self, path: str) -> dict | None:
+    def _load_pack_json(self, path: str) -> dict[str, Any] | None:
         try:
-            return json.loads(Path(path).read_text(encoding="utf-8"))
+            data: dict[str, Any] = json.loads(Path(path).read_text(encoding="utf-8"))
+            return data
         except FileNotFoundError:
             print(f"\n错误: 文件不存在: {path}")
             return None
@@ -371,7 +374,7 @@ class PackMarketCLI:
         return 0
 
 
-def main() -> None:
+def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="Pack 市场管理 (publish/install/upgrade)")
