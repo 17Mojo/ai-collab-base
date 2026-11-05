@@ -18,18 +18,19 @@
     {
       "id": "N2",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "输入面板有 HTML 注入面",
       "reader": "导入来源不可信 Pack 的用户：恶意包能改弹窗 UI（伪造输入框骗你填凭据），但无法执行脚本",
       "where": [
-        "chrome-extension/public/popup.js:122-126",
-        "chrome-extension/src/background/service-worker.js:307-310"
+        "chrome-extension/public/popup.js:62-93",
+        "chrome-extension/public/popup.js:152-175"
       ],
-      "detail": "selectPack 用模板串拼 innerHTML，把 pack.workflow.steps[].input_fields 的字段名直接插进 HTML；IMPORT_PACKS 校验了 metadata.pack_id 存在性，但对其余字段不做 schema 校验，字段名完全由 Pack 作者控制。",
+      "detail": "selectPack 用模板串拼 innerHTML，把 pack.workflow.steps[].input_fields 的字段名直接插进 HTML；IMPORT_PACKS 校验了 metadata.pack_id 存在性，但对其余字段不做 schema 校验，字段名完全由 Pack 作者控制。**回溯补齐（2026-11-05）**：pack 列表渲染（pack_name/description/id 三字段同样插 innerHTML）是台账未记的同类第二面——伪造「版本过期请输凭据」类 UI 同样可行。",
       "impact": "MV3 默认 CSP（script-src 'self'）封掉了内联事件处理器，因此不是可执行 XSS；但可以注入任意标记来篡改弹窗外观，诱导用户往伪造的输入框里填东西。",
-      "fix": "改用 document.createElement + textContent，字段名只当文本节点；或对字段名做 ^[a-z_][a-z0-9_]*$ 白名单。",
+      "fix": "已收口（2026-11-05）：两处 Pack 数据渲染全部改 DOM 构建——文本只走 textContent/createTextNode，属性只走 setAttribute/dataset（字段名含 `<` `\"` 也只显示为字面量）；输入面板 + pack 列表全覆盖。未采用「字段名白名单正则」方案：白名单会误拒合法名（连字符/中文字段名），DOM 构建已根治注入。studio 面（displayStudioStatus/error 串）信任边界不同（后端回执非 Pack 数据）另行登记 N20。",
       "found_at": "2026-11-03",
-      "evidence": "popup.js:122 `packInputFields.innerHTML = fields.map(f => ...${f}...)`；service-worker.js:330-337 校验 metadata.pack_id 存在但其余仅 JSON.parse"
+      "evidence": "extension-wiring.test.mjs 2 条（字段名 `\"><img ...>\"` 不解析成元素、data-field 属性原样、尖括号字面量显示；pack_name/description 含 `<img>/<b>` 不解析）；变异锚 2 条（输入面板 createTextNode→innerHTML、列表 textContent→innerHTML）均被指定测试杀死，mutation-check 65/65 全杀；chrome-extension 全量 230/230 绿。",
+      "closed_at": "2026-11-05"
     },
     {
       "id": "N3",
@@ -85,18 +86,19 @@
     {
       "id": "N8",
       "priority": "P3",
-      "status": "open",
+      "status": "closed",
       "title": "broadcast 标识被删，而它从来没有消费者",
       "reader": "以为「广播模式」会被提示的用户——这个 UX 保证从未落地",
       "where": [
-        "chrome-extension/src/background/pack-executor.js",
-        "chrome-extension/tests/extension-wiring.test.mjs"
+        "chrome-extension/src/background/pack-executor.js:592-605",
+        "chrome-extension/public/popup.js:112-122"
       ],
       "detail": "修复前 git grep broadcast 在 src/ 里只有产生它的那一行，没有任何读取方。extension-wiring.test.mjs 里那句「否则用户以为自己只发了一次」守的是一个从未实现的 UX 保证。现在标识彻底没了。",
       "impact": "无功能损失（本来就没有消费者）。但那条测试断言的语义需要重新审视：它守的东西不存在。",
-      "fix": "若这个 UX 确实要，就给它一个真消费者（popup 提示「已广播到 N 个页面」）；若不要，把相关断言删掉而不是留一个空保证。",
+      "fix": "已收口（2026-11-05）：裁决「要这个 UX」——广播是真实兜底路径（无 tabId 时 runtime.sendMessage 到每个内容脚本），静默广播正是「以为只发一次」的坑。stepResult 增 delivery 标记（判定与 _executeAIStep 分支同源：targetTabId 非空⇒precise，否则 broadcast；local=null），popup 执行成功行据 steps[].delivery 提示「未指定标签页：提示词已广播到所有打开的 AI 页面」。注：fix 草案写「已广播到 N 个页面」——runtime.sendMessage 不回报收方数量，N 不可得知，不伪报数字，只说「所有打开的 AI 页面」。",
       "found_at": "2026-11-03",
-      "evidence": "修复前 git grep broadcast -- chrome-extension/src 只有产生侧；extension-wiring.test.mjs 断言已改为 output === \"回声\""
+      "evidence": "extension-wiring.test.mjs：广播/精确两测补 delivery 断言（标记与真实投递方式在同一条测试里互钉）+ 新增 popup 提示测；变异锚 2 条（标记谎报 precise→被「没有目标标签页时才广播」杀、popup 提示摘除→被「N8：广播投递时 popup 要提示」杀），mutation-check 65/65 全杀；chrome-extension 全量 230/230 绿。",
+      "closed_at": "2026-11-05"
     },
     {
       "id": "N9",
@@ -327,6 +329,21 @@
       "impact": "若把归档导出物当活体 Pack 导入/校验，会遇到「导入收下但 validate_pack 报 2 error」的错位；对 exports/ 整树 sweep 会出假 FAIL。",
       "fix": "wontfix——exports/_archive 是历史导出快照，按「历史记录不回填」不动它；sweep 口径已把 exports/ 排除在活体轨道外（validate_all_packs docstring + test_pack_files_gate.py）。真要用归档内容，以现行 schema 手工转写后放回 templates/examples 轨道。",
       "found_at": "2026-11-05"
+    },
+    {
+      "id": "N20",
+      "priority": "P3",
+      "status": "open",
+      "title": "Studio 产物状态区有 HTML 注入面（数据源是后端回执，非 Pack）",
+      "reader": "把 Studio 后端回执/错误串当可信数据渲染进 innerHTML 的人",
+      "where": [
+        "chrome-extension/public/popup.js:388-426"
+      ],
+      "detail": "displayStudioStatus 用 innerHTML 拼 content_type/mode/download_url（download_url 直接进 href，未做协议白名单），两个错误分支把 response?.error / error.message 拼进 innerHTML。与 N2 同机械类，但信任边界不同：数据来自 GENERATE_STUDIO_ARTIFACTS 后端回执与扩展消息错误，不来自 Pack 作者——故从 N2 拆出独立条目，不混销。",
+      "impact": "MV3 CSP（script-src 'self'）同样封脚本执行，只余标记注入/钓鱼 href 面；前提还得是后端或消息层先被污染——现实威胁低于 N2。download_url 放行 javascript: 伪协议是其中最实的一条。",
+      "fix": "同 N2 改法（DOM 构建 + 文本 textContent）+ download_url 仅放行 ^https?://；或判可接受风险后 wontfix。收口时补变异锚，不修裸奔不留无锚修复。",
+      "found_at": "2026-11-05",
+      "evidence": "N2 收口全扫 popup.js 的 innerHTML 面时发现：popup.js:389（artifacts 动态插值）/423/426（错误串插值）三处动态面，:410 为静态串无风险"
     }
   ]
 }
