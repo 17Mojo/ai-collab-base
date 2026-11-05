@@ -456,7 +456,7 @@ class TestPackMarketCLIInstall:
     def test_install_deps_from_local_body(
         self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
     ):
-        """市场库不存 dependencies（表无列）→ 从 packs/ 正文 JSON 补依赖图"""
+        """市场条目 dependencies 为空（旧库存量条目）→ 从 packs/ 正文 JSON 补依赖图兜底"""
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
@@ -469,7 +469,7 @@ class TestPackMarketCLIInstall:
 
         store = MagicMock()
         listing = MagicMock()
-        listing.dependencies = []  # store 层丢依赖（真库行为）
+        listing.dependencies = []  # 市场条目无依赖记录（N17 后为存量旧条目场景）
         store.get_listing.return_value = listing
         mock_store_class.return_value = store
 
@@ -497,6 +497,56 @@ class TestPackMarketCLIInstall:
             (tmp_path / "packs" / ".packs-index.json").read_text(encoding="utf-8")
         )
         assert index["installed"]["demo-pack"]["dependencies"] == body_deps
+
+    @patch("ai_collab.cli.pack_market.DependencyResolver")
+    @patch("ai_collab.cli.pack_market.PackMarketStore")
+    @patch("ai_collab.cli.pack_market.PackMarketAPI")
+    def test_install_prefers_store_dependencies(
+        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path, capsys
+    ):
+        """市场表 dependencies 非空 → 以市场库为准，不走正文 JSON 兜底"""
+        from ai_collab.cli.pack_market import PackMarketCLI
+
+        api = MagicMock()
+        api.list_packs.return_value = {
+            "packs": [
+                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}
+            ]
+        }
+        mock_api_class.return_value = api
+
+        store_deps = [{"name": "store-base", "version": "^1.0.0", "optional": False}]
+        store = MagicMock()
+        listing = MagicMock()
+        listing.dependencies = store_deps
+        store.get_listing.return_value = listing
+        mock_store_class.return_value = store
+
+        resolver = MagicMock()
+        resolver.get_install_order.return_value = ["store-base", "demo-pack"]
+        resolver.detect_conflicts.return_value = []
+        resolver.check_compatibility.return_value = True
+        mock_resolver_class.return_value = resolver
+
+        packs_root = tmp_path / "packs" / "examples"
+        packs_root.mkdir(parents=True)
+        body_deps = [{"name": "body-base", "version": "^2.0.0", "optional": False}]
+        (packs_root / "demo-pack.json").write_text(
+            json.dumps(_pack_dict(deps=body_deps)), encoding="utf-8"
+        )
+
+        cli = PackMarketCLI(
+            db_path=str(tmp_path / "packs.db"), packs_root=str(tmp_path / "packs")
+        )
+        code = cli.install("demo-pack")
+
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "依赖来源" not in out  # 未走正文兜底
+        index = json.loads(
+            (tmp_path / "packs" / ".packs-index.json").read_text(encoding="utf-8")
+        )
+        assert index["installed"]["demo-pack"]["dependencies"] == store_deps
 
 
 class TestPackMarketCLIUpgrade:
@@ -650,6 +700,98 @@ class TestPackMarketCLIUpgrade:
         assert "主版本变更" in out
 
 
+class TestPackMarketCLIHistory:
+    """history：pack_versions 版本历史查询"""
+
+    @patch("ai_collab.cli.pack_market.DependencyResolver")
+    @patch("ai_collab.cli.pack_market.PackMarketStore")
+    @patch("ai_collab.cli.pack_market.PackMarketAPI")
+    def test_history_lists_versions(
+        self, mock_api_class, mock_store_class, mock_resolver_class, capsys
+    ):
+        from ai_collab.cli.pack_market import PackMarketCLI
+
+        store = MagicMock()
+        listing = MagicMock()
+        listing.pack_id = "demo-pack"
+        store.get_listing.return_value = listing
+        store.list_versions.return_value = [
+            {
+                "version": "1.0.0",
+                "status": "pending",
+                "dependencies": [],
+                "archived_at": "2026-11-05T10:00:00",
+            },
+            {
+                "version": "2.0.0",
+                "status": "approved",
+                "dependencies": [{"name": "base", "version": "^1.0.0"}],
+                "archived_at": "2026-11-05T11:00:00",
+            },
+        ]
+        mock_store_class.return_value = store
+
+        cli = PackMarketCLI(db_path="x.db", packs_root="packs")
+        code = cli.history("demo-pack")
+
+        assert code == 0
+        store.list_versions.assert_called_once_with("demo-pack")
+        out = capsys.readouterr().out
+        assert "v1.0.0" in out and "v2.0.0" in out
+        assert "base" in out  # 依赖明细
+
+    @patch("ai_collab.cli.pack_market.DependencyResolver")
+    @patch("ai_collab.cli.pack_market.PackMarketStore")
+    @patch("ai_collab.cli.pack_market.PackMarketAPI")
+    def test_history_unknown_pack_returns_1(
+        self, mock_api_class, mock_store_class, mock_resolver_class, capsys
+    ):
+        from ai_collab.cli.pack_market import PackMarketCLI
+
+        api = MagicMock()
+        api.list_packs.return_value = {"packs": []}
+        mock_api_class.return_value = api
+
+        store = MagicMock()
+        store.get_listing.return_value = None
+        store.list_versions.return_value = []
+        mock_store_class.return_value = store
+
+        cli = PackMarketCLI(db_path="x.db", packs_root="packs")
+        code = cli.history("nope")
+
+        assert code == 1
+        assert "无版本历史" in capsys.readouterr().out
+
+    @patch("ai_collab.cli.pack_market.DependencyResolver")
+    @patch("ai_collab.cli.pack_market.PackMarketStore")
+    @patch("ai_collab.cli.pack_market.PackMarketAPI")
+    def test_history_resolves_pack_name_to_id(
+        self, mock_api_class, mock_store_class, mock_resolver_class
+    ):
+        """pack_name 传入 → 经市场当前条目反查 pack_id 再查历史"""
+        from ai_collab.cli.pack_market import PackMarketCLI
+
+        api = MagicMock()
+        api.list_packs.return_value = {
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}]
+        }
+        mock_api_class.return_value = api
+
+        store = MagicMock()
+        store.get_listing.return_value = None  # 按名字直接查 id 查不到
+        store.list_versions.return_value = [
+            {"version": "1.2.0", "status": "pending", "dependencies": [], "archived_at": "t"}
+        ]
+        mock_store_class.return_value = store
+
+        cli = PackMarketCLI(db_path="x.db", packs_root="packs")
+        code = cli.history("Demo Pack")
+
+        assert code == 0
+        store.list_versions.assert_called_once_with("demo-pack")
+
+
 class TestPackMarketCLIMain:
     """main() 参数解析（返回码约定对齐 pack_import.main）"""
 
@@ -727,3 +869,17 @@ class TestPackMarketCLIMain:
             main()
 
         mock_cli_class.assert_called_once_with(db_path="x.db", packs_root="p")
+
+    @patch("ai_collab.cli.pack_market.PackMarketCLI")
+    def test_main_history(self, mock_cli_class):
+        from ai_collab.cli.pack_market import main
+
+        cli = MagicMock()
+        cli.history.return_value = 0
+        mock_cli_class.return_value = cli
+
+        with patch("sys.argv", ["pack_market.py", "history", "demo"]):
+            code = main()
+
+        assert code == 0
+        cli.history.assert_called_once_with("demo")

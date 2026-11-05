@@ -34,6 +34,7 @@ class PackMarketAPI:
         author: str,
         category: str,
         tags: list[str] | None = None,
+        dependencies: list[dict] | None = None,
     ) -> dict[str, Any]:
         """创建新 Pack
 
@@ -44,6 +45,7 @@ class PackMarketAPI:
             author: 作者
             category: 类别
             tags: 标签列表
+            dependencies: 依赖列表（[{name, version, optional}, ...]）
 
         Returns:
             操作结果
@@ -59,6 +61,7 @@ class PackMarketAPI:
             category=category,
             tags=tags or [],
             status=PackStatus.PENDING,
+            dependencies=dependencies or [],
         )
 
         success = self.store.create_listing(listing)
@@ -93,6 +96,7 @@ class PackMarketAPI:
         description: str | None = None,
         category: str | None = None,
         tags: list[str] | None = None,
+        dependencies: list[dict] | None = None,
     ) -> dict[str, Any]:
         """更新 Pack 信息
 
@@ -103,6 +107,7 @@ class PackMarketAPI:
             description: 新描述（可选）
             category: 新类别（可选）
             tags: 新标签列表（可选）
+            dependencies: 新依赖列表（可选）
 
         Returns:
             操作结果
@@ -123,6 +128,8 @@ class PackMarketAPI:
             listing.category = category
         if tags is not None:
             listing.tags = tags
+        if dependencies is not None:
+            listing.dependencies = dependencies
 
         listing.updated_at = datetime.now()
 
@@ -197,6 +204,26 @@ class PackMarketAPI:
             "success": True,
             "packs": [listing.to_dict() for listing in listings],
             "count": len(listings),
+        }
+
+    def list_pack_versions(self, pack_id: str) -> dict[str, Any]:
+        """列出 Pack 版本历史（追加式归档快照）
+
+        Args:
+            pack_id: Pack ID
+
+        Returns:
+            版本历史列表（按归档时间升序）；pack 既无当前条目也无历史时返回错误
+        """
+        versions = self.store.list_versions(pack_id)
+        if not versions and self.store.get_listing(pack_id) is None:
+            return {"success": False, "error": f"Pack {pack_id} not found"}
+
+        return {
+            "success": True,
+            "pack_id": pack_id,
+            "versions": versions,
+            "count": len(versions),
         }
 
     # ========== Pack 评价管理 ==========

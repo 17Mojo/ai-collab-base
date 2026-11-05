@@ -6,8 +6,17 @@
     "type": "business",
     "description": "专为南方小土豆前往北方旅游规划旅游攻略，提供定制化旅行建议和信息",
     "category": "旅游规划",
-    "tags": ["旅游", "攻略", "北方", "南方小土豆", "定制"],
-    "language": "zh"
+    "tags": [
+      "旅游",
+      "攻略",
+      "北方",
+      "南方小土豆",
+      "定制"
+    ],
+    "language": "zh",
+    "designer": "17Mojo",
+    "created_at": "2026-05-11T12:35:42",
+    "updated_at": "2026-11-05T00:00:00"
   },
   "workflow": {
     "steps": [
@@ -15,28 +24,37 @@
         "id": "step_1_destination",
         "name": "目的地分析",
         "type": "analysis",
-        "ai_models": ["qianwen"],
+        "ai_models": [
+          "qianwen"
+        ],
         "description": "分析目的地历史、文化、美食、人文"
       },
       {
         "id": "step_2_schedule",
         "name": "行程安排",
         "type": "generation",
-        "ai_models": ["qianwen", "zhipu"],
+        "ai_models": [
+          "qianwen",
+          "zhipu"
+        ],
         "description": "规划每天详细行程，包括景点、时间表、交通路线"
       },
       {
         "id": "step_3_nightlife",
         "name": "夜生活推荐",
         "type": "generation",
-        "ai_models": ["qianwen"],
+        "ai_models": [
+          "qianwen"
+        ],
         "description": "推荐夜间活动地点、特色饭店、网红饭店"
       },
       {
         "id": "step_4_safety",
         "name": "安全防护指南",
         "type": "analysis",
-        "ai_models": ["qianwen"],
+        "ai_models": [
+          "qianwen"
+        ],
         "description": "提供天气情况、出行注意事项、安全注意事项"
       },
       {
@@ -49,14 +67,18 @@
         "id": "step_6_dialect",
         "name": "方言教学",
         "type": "generation",
-        "ai_models": ["qianwen"],
+        "ai_models": [
+          "qianwen"
+        ],
         "description": "讲解当地常用方言"
       },
       {
         "id": "step_7_transport",
         "name": "公共交通规划",
         "type": "generation",
-        "ai_models": ["qianwen"],
+        "ai_models": [
+          "qianwen"
+        ],
         "description": "规划市区及旅游景点交通方式"
       },
       {
@@ -70,8 +92,13 @@
   "system_prompt": "你是旅游博主，专为南方小土豆前往北方旅游规划旅游攻略。使用Emoji使内容更具吸引力，使用粗体表示重要内容。特别关注南方人在北方旅游可能遇到的气候、文化和生活方式差异。",
   "domain": {
     "primary_domain": "旅游规划",
-    "secondary_domains": ["北方旅游", "南方游客指南"],
-    "target_platforms": ["generic"],
+    "secondary_domains": [
+      "北方旅游",
+      "南方游客指南"
+    ],
+    "target_platforms": [
+      "generic"
+    ],
     "target_audience": "南方小土豆（南方游客）",
     "brand_tone": "热情、专业、贴心"
   },
@@ -108,5 +135,52 @@
         "min_threshold": 0.8
       }
     }
+  },
+  "example_library": {
+    "good_examples": [],
+    "bad_examples": [],
+    "few_shot_template": ""
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": [
+      "emotional_tone",
+      "narrative_style",
+      "feature_highlighting"
+    ],
+    "confidence_display": true,
+    "critical_facts_only": true,
+    "temperature": 0.7,
+    "output_format": "markdown",
+    "require_code_blocks": false
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "feedback_driven",
+    "auto_refine_threshold": 60.0,
+    "periodic_review_days": 30,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "periodic_template_optimization",
+      "example_library_update",
+      "metric_weight_adjustment"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": [
+      "execution_time",
+      "generation_success_rate",
+      "average_quality_score",
+      "user_satisfaction"
+    ],
+    "retention_days": 90
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
   }
 }

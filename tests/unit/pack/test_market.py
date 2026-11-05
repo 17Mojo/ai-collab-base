@@ -315,6 +315,7 @@ class TestPackMarketStore:
             assert "pack_listings" in tables
             assert "pack_ratings" in tables
             assert "user_feedback" in tables
+            assert "pack_versions" in tables  # N17 版本历史表
 
     def test_create_listing(self, store, sample_listing):
         """测试创建 Pack 列表项"""

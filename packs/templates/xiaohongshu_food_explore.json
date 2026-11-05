@@ -9,14 +9,26 @@
     "created_at": "2026-04-13T12:00:00",
     "updated_at": "2026-04-13T12:00:00",
     "category": "美食探店",
-    "tags": ["小红书", "美食", "探店", "点评", "文案"],
+    "tags": [
+      "小红书",
+      "美食",
+      "探店",
+      "点评",
+      "文案"
+    ],
     "language": "zh",
     "estimated_efficiency_gain": "80%"
   },
   "domain": {
     "primary_domain": "小红书美食运营",
-    "secondary_domains": ["内容创作", "餐厅点评", "本地生活"],
-    "target_platforms": ["xiaohongshu"],
+    "secondary_domains": [
+      "内容创作",
+      "餐厅点评",
+      "本地生活"
+    ],
+    "target_platforms": [
+      "xiaohongshu"
+    ],
     "target_audience": "美食博主、探店达人、本地生活运营",
     "brand_tone": "真实、诱人、实用",
     "compliance_rules": [
@@ -33,7 +45,12 @@
         "name": "店铺信息收集",
         "type": "local",
         "description": "收集店铺基础信息",
-        "input_fields": ["shop_name", "address", "cuisine_type", "price_range"],
+        "input_fields": [
+          "shop_name",
+          "address",
+          "cuisine_type",
+          "price_range"
+        ],
         "output_field": "shop_info",
         "ai_models": null,
         "parallel": false,
@@ -44,8 +61,15 @@
         "auto_trigger": false,
         "trigger_delay": null,
         "config": {
-          "required_fields": ["shop_name", "address"],
-          "optional_fields": ["cuisine_type", "price_range", "business_hours"]
+          "required_fields": [
+            "shop_name",
+            "address"
+          ],
+          "optional_fields": [
+            "cuisine_type",
+            "price_range",
+            "business_hours"
+          ]
         }
       },
       {
@@ -53,15 +77,25 @@
         "name": "菜品点评生成",
         "type": "ai",
         "description": "根据菜品信息生成专业点评",
-        "input_fields": ["dishes", "taste_notes", "presentation"],
+        "input_fields": [
+          "dishes",
+          "taste_notes",
+          "presentation"
+        ],
         "output_field": "dish_reviews",
-        "ai_models": ["gpt-4", "claude-3"],
+        "ai_models": [
+          "gpt-4",
+          "claude-3"
+        ],
         "parallel": true,
         "cross_review": true,
         "validation_criteria": {
           "min_length": 50,
           "max_length": 500,
-          "required_elements": ["口感描述", "推荐指数"]
+          "required_elements": [
+            "口感描述",
+            "推荐指数"
+          ]
         },
         "fusion_rules": null,
         "estimated_time": 60,
@@ -77,9 +111,15 @@
         "name": "氛围描述生成",
         "type": "ai",
         "description": "描述店铺环境和用餐氛围",
-        "input_fields": ["decor_style", "ambiance", "service_quality"],
+        "input_fields": [
+          "decor_style",
+          "ambiance",
+          "service_quality"
+        ],
         "output_field": "atmosphere_text",
-        "ai_models": ["gpt-4"],
+        "ai_models": [
+          "gpt-4"
+        ],
         "parallel": false,
         "cross_review": false,
         "validation_criteria": {
@@ -97,9 +137,15 @@
         "name": "拍照建议生成",
         "type": "ai",
         "description": "提供菜品和环境的拍照建议",
-        "input_fields": ["dishes", "lighting", "angles"],
+        "input_fields": [
+          "dishes",
+          "lighting",
+          "angles"
+        ],
         "output_field": "photo_tips",
-        "ai_models": ["gpt-4"],
+        "ai_models": [
+          "gpt-4"
+        ],
         "parallel": false,
         "cross_review": false,
         "validation_criteria": null,
@@ -117,13 +163,23 @@
         "name": "文案整合输出",
         "type": "local",
         "description": "整合所有内容生成最终文案",
-        "input_fields": ["shop_info", "dish_reviews", "atmosphere_text", "photo_tips"],
+        "input_fields": [
+          "shop_info",
+          "dish_reviews",
+          "atmosphere_text",
+          "photo_tips"
+        ],
         "output_field": "final_content",
         "ai_models": null,
         "parallel": false,
         "cross_review": false,
         "validation_criteria": {
-          "required_sections": ["标题", "正文", "标签", "拍照建议"]
+          "required_sections": [
+            "标题",
+            "正文",
+            "标签",
+            "拍照建议"
+          ]
         },
         "fusion_rules": {
           "strategy": "sequential_merge",
@@ -141,7 +197,10 @@
         "name": "效果追踪",
         "type": "local",
         "description": "记录发布后的数据表现",
-        "input_fields": ["post_id", "publish_time"],
+        "input_fields": [
+          "post_id",
+          "publish_time"
+        ],
         "output_field": "tracking_data",
         "ai_models": null,
         "parallel": false,
@@ -152,47 +211,52 @@
         "auto_trigger": true,
         "trigger_delay": 86400,
         "config": {
-          "metrics": ["likes", "comments", "shares", "saves"]
+          "metrics": [
+            "likes",
+            "comments",
+            "shares",
+            "saves"
+          ]
         }
       }
     ]
   },
   "quality_metrics": {
-    "metrics": [
-      {
-        "name": "内容原创度",
+    "metrics": {
+      "内容原创度": {
+        "description": "内容原创度（测量方式: similarity_check）",
+        "check_method": "similarity_check",
         "weight": 0.25,
-        "threshold": 0.8,
-        "measurement_method": "similarity_check"
+        "min_threshold": 0.8
       },
-      {
-        "name": "信息完整度",
-        "weight": 0.20,
-        "threshold": 0.9,
-        "measurement_method": "field_coverage"
+      "信息完整度": {
+        "description": "信息完整度（测量方式: field_coverage）",
+        "check_method": "field_coverage",
+        "weight": 0.2,
+        "min_threshold": 0.9
       },
-      {
-        "name": "用户互动率",
+      "用户互动率": {
+        "description": "用户互动率（测量方式: engagement_rate）",
+        "check_method": "engagement_rate",
         "weight": 0.25,
-        "threshold": 0.05,
-        "measurement_method": "engagement_rate"
+        "min_threshold": 0.05
       },
-      {
-        "name": "转化效果",
+      "转化效果": {
+        "description": "转化效果（测量方式: conversion_tracking）",
+        "check_method": "conversion_tracking",
         "weight": 0.15,
-        "threshold": 0.02,
-        "measurement_method": "conversion_tracking"
+        "min_threshold": 0.02
       },
-      {
-        "name": "合规性",
+      "合规性": {
+        "description": "合规性（测量方式: compliance_check）",
+        "check_method": "compliance_check",
         "weight": 0.15,
-        "threshold": 1.0,
-        "measurement_method": "compliance_check"
+        "min_threshold": 1.0
       }
-    ]
+    }
   },
   "example_library": {
-    "examples": [
+    "good_examples": [
       {
         "id": "good_example_1",
         "name": "火锅探店优秀案例",
@@ -201,24 +265,90 @@
           "cuisine_type": "川渝火锅",
           "price_range": "人均120元"
         },
-        "output": {
-          "title": "成都必吃！这家火锅让我连吃三天都不腻",
-          "content_preview": "红油翻滚间，毛肚七上八下..."
-        },
-        "tags": ["优秀案例", "火锅", "成都"]
-      },
+        "output": "成都必吃！这家火锅让我连吃三天都不腻\n红油翻滚间，毛肚七上八下...",
+        "tags": [
+          "优秀案例",
+          "火锅",
+          "成都"
+        ],
+        "description": "火锅探店优秀案例",
+        "score": 92.0,
+        "validation_notes": ""
+      }
+    ],
+    "bad_examples": [
       {
         "id": "bad_example_1",
         "name": "过度夸张反面案例",
         "input": {
           "shop_name": "某网红店"
         },
-        "output": {
-          "content_preview": "全世界最好吃！不吃后悔一辈子！"
-        },
-        "tags": ["反面案例", "过度夸张"],
-        "issues": ["违反广告法", "过度夸张"]
+        "output": "全世界最好吃！不吃后悔一辈子！",
+        "tags": [
+          "反面案例",
+          "过度夸张"
+        ],
+        "issues": [
+          "违反广告法",
+          "过度夸张"
+        ],
+        "description": "违反广告法、过度夸张",
+        "score": 35.0,
+        "validation_notes": "违反广告法、过度夸张"
       }
+    ],
+    "few_shot_template": ""
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": [
+      "emotional_tone",
+      "narrative_style",
+      "feature_highlighting"
+    ],
+    "confidence_display": true,
+    "critical_facts_only": true,
+    "temperature": 0.7,
+    "output_format": "markdown",
+    "require_code_blocks": false
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "feedback_driven",
+    "auto_refine_threshold": 60.0,
+    "periodic_review_days": 30,
+    "allowed_actions": [
+      "auto_refine_low_scoring",
+      "periodic_template_optimization",
+      "example_library_update",
+      "metric_weight_adjustment"
     ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": [
+      "execution_time",
+      "generation_success_rate",
+      "average_quality_score",
+      "user_satisfaction"
+    ],
+    "retention_days": 90,
+    "post_publish_tracking": {
+      "enabled": true,
+      "delay_hours": 24,
+      "metrics": [
+        "likes",
+        "collects",
+        "comments",
+        "shares"
+      ]
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": false
   }
 }

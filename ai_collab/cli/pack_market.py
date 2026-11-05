@@ -1,19 +1,20 @@
-"""Pack 市场 CLI：publish / install / upgrade
+"""Pack 市场 CLI：publish / install / upgrade / history
 
-对应 `ai_collab.cli pack publish|install|upgrade` 子命令（2026-11-05 落地，
+对应 `ai_collab.cli pack publish|install|upgrade|history` 子命令（2026-11-05 落地，
 此前只有模块层 market_api/dependency 无 CLI 门面）。
 
 语义边界（如实）：
 - publish：`pack validate` 同款判据 + SemVer 校验 + 入市场库（默认 PENDING，--approve 直批）；
-  dependencies 来自 Pack JSON 的 `dependencies` 字段（[{name, version}, ...]）。
-  市场表是 pack_id 主键**单行**（无版本历史）：同 id 发更高版本 = 单行覆盖更新
-  （保留下载/评分计数），非更高版本拒发。
+  dependencies 来自 Pack JSON 的 `dependencies` 字段（[{name, version}, ...]），随
+  listing 持久化进市场表 dependencies 列（N17 收口后）。市场表是 pack_id 主键**单行**
+  （当前真值）：同 id 发更高版本 = 单行覆盖更新（保留下载/评分计数），非更高版本拒发；
+  被覆盖的旧版本快照存入 pack_versions 版本历史（追加式，pack history 可查）。
 - install：按名称/版本范围在市场库选版 → 范围校验 → 依赖解析（安装顺序/冲突）→
-  记入 packs/.packs-index.json 并累加下载计数。市场库只存元数据不存正文，也
-  **不持久化 dependencies**（表无该列）——依赖图从 packs/ 下的正文 JSON 补齐；
-  正文仍以 packs/ 目录下的 JSON 文件为准。
+  记入 packs/.packs-index.json 并累加下载计数。依赖图优先取市场表 dependencies 列，
+  为空时从 packs/ 正文 JSON 补齐（旧库/老条目的兜底）；正文仍以 packs/ 目录为准。
 - upgrade：对比本地索引已装版本与市场最新 → 兼容性/破坏性变更提示（SemVer 主版本），
   并检查升级后与已装 Pack 的依赖约束冲突。
+- history：查 pack_versions 版本历史（每版本一条首次归档快照，含依赖与状态）。
 """
 
 from __future__ import annotations
@@ -184,8 +185,9 @@ class PackMarketCLI:
             dependencies=deps,
         )
         if not self.store.create_listing(listing):
-            # 同 pack_id 已在库：市场表是 pack_id 主键单行（无版本历史表），
-            # 新版本走 update_listing 单行覆盖；非更高版本拒发。
+            # 同 pack_id 已在库：市场表是 pack_id 主键单行（当前真值），
+            # 新版本走 update_listing 单行覆盖（旧行存入 pack_versions 历史）；
+            # 非更高版本拒发。
             existing = self.store.get_listing(listing.pack_id)
             if existing is None:
                 print("\n✗ 入库失败")
@@ -263,8 +265,8 @@ class PackMarketCLI:
         listing = self.store.get_listing(pack_id)
         deps = list(getattr(listing, "dependencies", []) or [])
         if not deps:
-            # 市场表无 dependencies 列（store 层不持久化依赖）——按既有边界
-            # 「市场存元数据，正文以 packs/ 为准」，从本地正文 JSON 补依赖图。
+            # 市场表 dependencies 为空（旧库存量条目 / 显式无依赖）——按既有边界
+            # 「市场存元数据，正文以 packs/ 为准」，从本地正文 JSON 补依赖图兜底。
             for body in sorted(self.packs_root.rglob(f"{pack_id}.json")):
                 try:
                     body_pack = json.loads(body.read_text(encoding="utf-8"))
@@ -272,7 +274,7 @@ class PackMarketCLI:
                     continue
                 deps = self._deps_from_pack(body_pack)
                 if deps:
-                    print(f"  依赖来源: {body}（市场库不存依赖）")
+                    print(f"  依赖来源: {body}（市场库该条目无依赖记录，从正文补齐）")
                     break
         root = DependencyNode(pack_id=pack_id, version=version)
         for d in deps:
@@ -370,11 +372,52 @@ class PackMarketCLI:
         print(f"✓ 升级完成: {match_id} v{current} → v{latest_v}")
         return 0
 
+    # ---------- history ----------
+
+    def history(self, name: str) -> int:
+        """查版本历史：pack_versions 每版本一条首次归档快照。
+
+        name 可以是 pack_id 或 pack_name（经市场当前条目反查 id）。
+        """
+        pack_id = name
+        listing = self.store.get_listing(name)
+        if listing is not None:
+            pack_id = listing.pack_id
+        else:
+            packs = self.api.list_packs().get("packs", [])
+            match = next(
+                (p for p in packs if p.get("pack_name") == name or p.get("pack_id") == name),
+                None,
+            )
+            if match is not None:
+                pack_id = str(match.get("pack_id"))
+
+        versions = self.store.list_versions(pack_id)
+        if not versions:
+            print(f"\n✗ 无版本历史: {name}")
+            return 1
+
+        print(f"\n版本历史: {pack_id}（{len(versions)} 条首次归档快照，按归档时间升序）")
+        current = self.store.get_listing(pack_id)
+        if current is not None:
+            print(f"  当前真值: v{current.version} [{current.status.value}]（pack_listings）")
+        for v in versions:
+            deps = v.get("dependencies") or []
+            dep_note = f"{len(deps)} 项依赖" if deps else "无依赖"
+            print(
+                f"  v{v['version']}  [快照:{v.get('status', '?')}]  {dep_note}"
+                f"  归档于 {v.get('archived_at', '?')}"
+            )
+            for d in deps:
+                if isinstance(d, dict):
+                    print(f"    - {d.get('name')} {d.get('version', '*')}")
+        return 0
+
 
 def main() -> int:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Pack 市场管理 (publish/install/upgrade)")
+    parser = argparse.ArgumentParser(description="Pack 市场管理 (publish/install/upgrade/history)")
     parser.add_argument("--db", default="data/packs.db", help="市场库路径")
     parser.add_argument("--packs-root", default="packs", help="本地 packs 目录")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -389,12 +432,17 @@ def main() -> int:
     p_up = sub.add_parser("upgrade", help="升级 Pack（对比最新 + 冲突扫描）")
     p_up.add_argument("name", help="已安装的 Pack 名称或 id")
 
+    p_hist = sub.add_parser("history", help="查看 Pack 版本历史（pack_versions 归档）")
+    p_hist.add_argument("name", help="Pack 名称或 id")
+
     args = parser.parse_args()
     cli = PackMarketCLI(db_path=args.db, packs_root=args.packs_root)
     if args.cmd == "publish":
         return cli.publish(args.path, approve=args.approve)
     elif args.cmd == "install":
         return cli.install(args.name)
+    elif args.cmd == "history":
+        return cli.history(args.name)
     return cli.upgrade(args.name)
 
 
