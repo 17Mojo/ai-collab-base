@@ -245,7 +245,7 @@
     {
       "id": "N15",
       "priority": "P1",
-      "status": "open",
+      "status": "closed",
       "title": "MV3 SW ScriptCache 按 URL 粘住旧构建，dist 重建后闸门静默失效",
       "reader": "复跑真机自动化前不清缓存、以为 dist 重建就生效的人",
       "where": [
@@ -254,9 +254,10 @@
       ],
       "detail": "持久 Chrome profile 的 Service Worker/ScriptCache 按 URL 缓存 SW 脚本，dist/ 重建不失效。内容脚本每次页面注入读盘是新的，SW 是旧的——新旧混跑，闸门（assertUsableAIContent）在旧 SW 里不存在，静默失效。2026-11-04 复跑一实锤：17 字 ack 过 20 字闸「悖论」，静态分析（bundle 含闸门）与运行时行为对不上，二分到缓存文件 2cc80dabc69f58b6_0：mtime 11:42:05、0 处闸门标记、109,923B vs 当前 110,625B。",
       "impact": "真机结论被静默污染——看似「修复无效」，实为旧构建在跑；复跑一整轮作废（污染版回执 .stale-sw-contaminated.* 留档为教训）。",
-      "fix": "协议（不是代码修复，平台行为）：复跑前清 Default/Service Worker|Code Cache|Extension Scripts；自动化驱动内置 SW 自检探针（hasGate/hasStatusSelector/hasMin50 任一 false 即中止）。协议已产品化进 l2-qianwen-auto.mjs 头注释+代码；手动加载扩展的人仍需自行清缓存，故保持 open。",
+      "fix": "已收口（2026-11-05）：三缓存路径收敛为唯一权威来源 tests/real-machine/clear-sw-cache.mjs（CACHE_DIRS + planCleanup 路径守卫「非 Chrome profile 拒绝执行」+ dry-run）。两条消费路径全覆盖：① l2-qianwen-auto.mjs 启动时自动清三缓存（SW 自检探针保留兜底，任一标记 false 仍中止）；② 手动加载扩展的人跑 `node tests/real-machine/clear-sw-cache.mjs` 一条命令（此前只能靠记忆 rm -rf 三个路径——这就是本条保持 open 的缺口）。登录态（Cookies/Local Storage 等）不在三缓存目录内，不受影响。",
       "found_at": "2026-11-04",
-      "evidence": "缓存文件 mtime/size/标记物三重取证；复跑一回执 .stale-sw-contaminated.json/.png；复跑二清缓存后 hasGate:true 同代码立即翻案（同构建不同结论）"
+      "evidence": "守卫测试 clear-sw-cache.test.mjs 7/7 绿，含两条防过删变异锚（计划绝不含 Cookies/Local Storage/Preferences/History；删除后 Preferences 与 Local Storage 必须存活）+ dry-run 不删/缺目录 skipped/非 profile ok:false 不抛错；CLI 三态冒烟（dry-run / 实删计数 / 非 profile 拒绝 exit=1）；chrome-extension 全量 220/220 绿（213 旧 + 7 新）。残余风险如实记录：手动加载者若既不跑 helper 也不看协议仍可能被粘连构建骗过——强制面缺位属平台行为，工具与协议已齐备。",
+      "closed_at": "2026-11-05"
     },
     {
       "id": "N16",
