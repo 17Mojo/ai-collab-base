@@ -405,6 +405,32 @@ def classify_task(task: dict, existing: dict, args) -> dict:
     return {"candidate": True, "dispatched": True, "already": False, "reopened": False}
 
 
+def enrich_with_notebooklm(tasks: list, mode: str = "fallback") -> int:
+    """对派单任务做 NotebookLM 知识增强，返回增强成功数。
+
+    2026-11-06 REAL 复测实锤：dispatch_once 此前直接调用本函数，
+    但全仓既无定义也无 import——`--enrich-notebooklm` 非 dry-run 路径
+    一触即 NameError，功能从未真正接线。这里补齐包装并显式接
+    `enrich_dispatch_payload`（批量版，带部分失败统计）。
+
+    mode 大小写归一到 dispatch_notebooklm 的口径（REAL/FALLBACK/MOCK）；
+    use_cli=True ⇒ 仅 REAL 模式走 nlm CLI 真查询，其余模式走
+    NotebookLMIntegration 既有语义（见 enrich_task_with_notebooklm）。
+    """
+    repo_root = Path(__file__).resolve().parent.parent
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    from ai_collab.integrations.dispatch_notebooklm import enrich_dispatch_payload
+
+    candidates = [t for t in tasks if isinstance(t, dict) and t.get("task_id")]
+    _, stats = enrich_dispatch_payload(
+        candidates,
+        mode=mode.upper(),
+        use_cli=True,
+    )
+    return stats["enriched"]
+
+
 def dispatch_once(args) -> int:
     workspace = Path(args.workspace)
     state = read_state(workspace)

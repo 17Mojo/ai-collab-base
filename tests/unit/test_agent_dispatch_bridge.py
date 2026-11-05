@@ -888,3 +888,70 @@ def test_dispatch_report_generated_at_passes_freshness_check(tmp_path):
 
     assert freshness["is_fresh"] is True, freshness
     assert freshness["warning"] is None
+
+
+# ── 2026-11-06 REAL 复测：--enrich-notebooklm 接线 ─────────────────────
+# 此前 dispatch_once 调用 enrich_with_notebooklm 但全仓无定义无 import，
+# --enrich-notebooklm 非 dry-run 一触即 NameError——功能从未真正接线。
+
+
+def test_dispatch_enrich_notebooklm_wired_without_nameerror(tmp_path):
+    """--enrich-notebooklm 非 dry-run 必须真跑通增强并计数（NameError 回归锚）。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-ENRICH-001"] = {
+        "task_id": "TASK-ENRICH-001",
+        "ai_type": "claude_code",
+        "assignee": "claude_code",
+        "status": "planning",
+        "updated_at": "2026-03-03T14:00:00+08:00",
+        "acceptance_commands": [],
+        "result_file": "collaboration/results/RESULT_TASK-ENRICH-001.md",
+    }
+    _write_state(workspace, payload)
+
+    result = _run_dispatch(workspace, "--include-pending", "--enrich-notebooklm")
+    assert result.returncode == 0, f"不应 NameError/崩溃：{result.stderr}"
+
+    report = json.loads(
+        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
+    )
+    assert report["notebooklm_enriched"] == 1, report
+
+
+def test_enrich_with_notebooklm_wraps_payload_with_cli_real_semantics(monkeypatch):
+    """包装层契约：mode 归一大写、use_cli=True、过滤非任务项、返回增强计数。"""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("agent_dispatch_bridge", SCRIPT)
+    bridge = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bridge)
+
+    captured = {}
+
+    def fake_payload(candidates, *, mode, use_cli, **kwargs):
+        captured["candidates"] = candidates
+        captured["mode"] = mode
+        captured["use_cli"] = use_cli
+        return list(candidates), {
+            "enriched": len(candidates),
+            "failed": 0,
+            "skipped": 0,
+            "errors": [],
+        }
+
+    import ai_collab.integrations.dispatch_notebooklm as dnl
+
+    monkeypatch.setattr(dnl, "enrich_dispatch_payload", fake_payload)
+
+    n = bridge.enrich_with_notebooklm(
+        [{"task_id": "T1"}, {"task_id": "T2"}, "junk", {}, {"no_id": 1}],
+        mode="fallback",
+    )
+
+    assert n == 2
+    assert captured["mode"] == "FALLBACK", "mode 必须归一到 dispatch_notebooklm 的大写口径"
+    assert captured["use_cli"] is True
+    assert [t["task_id"] for t in captured["candidates"]] == ["T1", "T2"]

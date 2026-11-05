@@ -317,3 +317,39 @@ class TestBuildQueriesForTask:
         tech, history = _build_queries_for_task(task)
 
         assert "Redis 缓存" in tech
+
+
+class TestQueryNotebooklmViaCliEnv:
+    """CLI 查询的环境构造（2026-11-06 REAL 复测实锤项）"""
+
+    def test_proxy_env_sets_both_cases(self, monkeypatch):
+        """代理必须大小写成对写——httpx 优先读小写，只写大写会被宿主小写值劫走。"""
+        import subprocess as sp
+
+        import ai_collab.integrations.dispatch_notebooklm as dnl
+
+        captured = {}
+
+        class FakeResult:
+            returncode = 0
+            stdout = '{"value": {"answer": "ok", "sources_used": [], "conversation_id": "c1"}}'
+            stderr = ""
+
+        def fake_run(cmd, capture_output=True, text=True, env=None, timeout=None):
+            captured["cmd"] = cmd
+            captured["env"] = env
+            return FakeResult()
+
+        monkeypatch.setattr(sp, "run", fake_run)
+        monkeypatch.setattr(dnl.subprocess, "run", fake_run)
+
+        result = dnl._query_notebooklm_via_cli(
+            "测试问题", "nb-123", proxy="http://proxy.local:7890"
+        )
+
+        assert result["mode"] == "real"
+        assert result["answer"] == "ok"
+        for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+            assert captured["env"][key] == "http://proxy.local:7890", key
+        assert captured["cmd"][1:3] == ["notebook", "query"]
+        assert captured["cmd"][3] == "nb-123"
