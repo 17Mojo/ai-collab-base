@@ -36,6 +36,22 @@
   （见 RUNTIME-REALTEST），REAL 片段待 MCP 连接器接入后补验。
 - 〔2026-11-05 复探〕工具注册表仍无 notebooklm 系工具，市场仍无 NotebookLM
   连接器（模糊命中乐享/飞书等均非目标）——blocker 原样成立。
+- 〔2026-11-06 复测〕**接入面全部打通，卡点收敛到一条认证续期**。用户指向
+  参考库 ai-collab-system 后定位真实实现面：notebooklm-py CLI（`nlm`/
+  `notebooklm` v0.8.5，`~/.local/bin/`，本机**早已安装**——此前只探
+  `which codex codearts` 漏探这两个名字）+ `~/.claude/skills/notebooklm-cli/`
+  技能包。实测链路：① 宿主 shell 的大小写代理变量均指向沙箱代理 65179，
+  它掐断 Google CONNECT（curl 直打 notebooklm/cloud/docs.google.com 经
+  7890 全通）——全量改写代理变量后直抵 Google；② WorkBuddy broker 垫片
+  丢 exist_ok 在 `~/.notebooklm-mcp-cli` mkdir 上触发 EEXIST 假阳性——
+  `env -u PYTHONPATH`（垫片经 PYTHONPATH 注入 sitecustomize）绕开；
+  ③ 真查询链路就绪（`nlm notebook query <id> <q>` 即引擎
+  `_query_notebooklm_via_cli` 所调命令），认证报 expired（auth.json
+  缓存 >168h 过期策略）。**续期无法在本进程树内完成**：nlm login 与
+  手工/launchd (`open -na`) 起 Chrome 全部死于「sandbox initialization
+  failed: Operation not permitted」→ GPU FATAL（seatbelt 继承，/tmp 新鲜
+  profile 同死，用户 Finder 起的 Chrome 156 正常）——需用户在**自己的
+  终端**跑一次 `nlm login`（官方流，rookiepy/CDP 续期），之后即可补真查询。
 
 ### 1.4 codex_cli / codearts 服务商 —— 阻塞 ✗
 
@@ -43,6 +59,14 @@
 - 结论：**外部依赖缺失，通路不可测**。role_prefix 回退映射（claude_code→C、
   codearts_agent→A、codex→O）源码层成立，运行时未验。
 - 〔2026-11-05 复探〕`which codex codearts` 仍 not found——blocker 原样成立。
+- 〔2026-11-06 复测〕**映射层运行时已验，CLI 执行仍缺二进制**。穷举探测
+  （PATH / `~/.local/bin` / brew / npm -g / uv tools / 参考库）codex 与
+  codearts 二进制均不存在；参考库侧配置齐备（`collaboration/config-drafts/
+  codex.config.toml`、`codex_integration.py` 的 `shutil.which("codex")` 调用
+  约定、`.cc-claude-codex/` 历史运行日志）但运行时依旧缺席。role_prefix
+  回退映射**运行时实测通过**：`resolve_ack_prefix/resolve_run_hint` 对
+  claude_code→C/C.RUN、codearts_agent→A/A.RUN、codex→O/O.RUN、未知→Z/Z.RUN
+  全对（`ai_collab/role_prefix.py:52` FALLBACK_ACK_PREFIX 真跑）。
 
 ---
 
@@ -98,8 +122,8 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
 |---|---|
 | 共识 REAL（Ollama gemma4:31b-cloud） | **成立**（真文本 + mode_used=real + 缓存幂等） |
 | 共识失败静默假填充（名字带 REAL） | **实锤缺陷**（误导性遥测，记后续项） |
-| NotebookLM REAL | **阻塞**（MCP 连接器/builtin 缺失） |
-| codex_cli / codearts 运行时 | **阻塞**（外部 CLI 未安装） |
+| NotebookLM REAL | **阻塞**（MCP 连接器/builtin 缺失）→〔11-06〕CLI 通路实测打通，仅剩认证续期人工检查点（§1.3） |
+| codex_cli / codearts 运行时 | **阻塞**（外部 CLI 未安装）→〔11-06〕映射层运行时已验，二进制仍缺（§1.4） |
 | pack publish / install / upgrade | **成立**（31 单测 + 端到端真机链路全绿） |
 | 市场表版本模型 / 依赖持久化 / 校验口径 / 范围语法 | 4 项模块层真相对账（§2.3），CLI 层已适配或绕开，根治留后续 |
 
@@ -130,3 +154,15 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
    见 §1.3/1.4 注记）。〔2026-11-05 19:5x 二次复探〕blocker 不变：工具注册表无
    notebooklm 工具、marketplace 搜索仅金融/法律类模糊命中、`which codex codearts`
    均未安装、`~/.workbuddy/mcp.json` 仅 llm-wiki/MiniMax/chrome-devtools/comfy-mcp。
+   〔2026-11-06 复测〕见 §1.3/1.4 新注记。NotebookLM 侧：CLI 早已安装（`nlm`
+   v0.8.5），网络/垫片/命令链全部实测打通，仅剩认证续期一条**人工检查点**——
+   WorkBuddy 进程树起不了 Chrome（seatbelt 继承，沙箱内外、launchd 代拉、
+   新鲜 profile 全死于同一 FATAL），请用户在自己终端跑 `nlm login` 后即可
+   补一条 `nlm notebook query` 真查询收尾。codex 侧：二进制依旧缺席（如实），
+   role_prefix 映射已运行时实测通过。**顺手实锤两条链路缺陷并已修复**：
+   ① `agent_dispatch_bridge.py` 的 `--enrich-notebooklm` 路径调用从未定义的
+   `enrich_with_notebooklm`（一触 NameError，功能从未接线）→ 补包装接
+   `enrich_dispatch_payload`（mode 归一大写、use_cli=True、返回增强计数）；
+   ② `_query_notebooklm_via_cli` 代理只写大写 env，httpx 优先读小写被宿主
+   沙箱代理劫走 → 大小写成对写。回归锚：bridge 测试 +2（含 NameError 黑盒
+   回归）、dispatch 单测 +1（代理成对断言），60/60 + 集成 11/11 绿。

@@ -175,6 +175,10 @@ def _query_notebooklm_via_cli(
     env = os.environ.copy()
     env["HTTP_PROXY"] = proxy
     env["HTTPS_PROXY"] = proxy
+    # 大小写成对写：httpx 优先读小写 http_proxy（2026-11-06 REAL 复测实锤——
+    # 宿主环境里小写被指向沙箱代理，只设大写时 nlm 的请求被劫走并 502/000）。
+    env["http_proxy"] = proxy
+    env["https_proxy"] = proxy
 
     last_error: Exception | None = None
     for attempt in range(retries + 1):
