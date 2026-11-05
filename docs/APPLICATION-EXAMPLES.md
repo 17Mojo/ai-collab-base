@@ -276,10 +276,11 @@ $ python3 -m ai_collab.cli orchestration status   # 绑定状态 + 角色 + 命�
 
 场景描述：管理 Pack 的校验、评分、版本与兼容性。
 
-〔修订注〕原稿的 `pack publish / pack install / pack upgrade` 三条 CLI **不存在**
-（实测 `invalid choice`），依赖解析/影响面分析目前只在模块层
-（`ai_collab/pack/dependency.py`、`prompt_pack/compatibility.py`），无对应 CLI 入口；
-上表命令换成实盘真子命令。
+〔修订注〕原稿的 `pack publish / pack install / pack upgrade` 三条 CLI 曾**不存在**
+（实测 `invalid choice`）；**2026-11-05 已落地**（`ai_collab/cli/pack_market.py`），
+实测成立，命令如下。依赖解析/影响面分析在模块层
+（`ai_collab/pack/dependency.py`、`prompt_pack/compatibility.py`），CLI 面现覆盖
+发布/安装/升级主链。
 
 ### 交互过程（实盘命令面）
 
@@ -296,15 +297,29 @@ $ python3 -m ai_collab.cli pack check-compat --source 1.4.0 --target 2.0.0
     〔修订注〕这是版本号比较，不是 pack-vs-pack 影响面分析
 $ python3 -m ai_collab.cli pack version bump|history --name <pack>
 $ python3 -m ai_collab.cli pack import|export|template|search|browse|trending|…
+
+# ── 市场发布/安装/升级（2026-11-05 落地，实测成立）──
+$ python3 -m ai_collab.cli pack publish --path packs/examples/<id>.json [--approve]
+    # pack validate 同款判据 + SemVer 校验 → 入市场库（默认 PENDING，--approve 直批）
+    # 市场表是 pack_id 主键单行：同 id 发更高版本 = 单行覆盖（保留下载/评分计数），非更高版本拒发
+$ python3 -m ai_collab.cli pack install <id>[@<范围>]
+    # 选版（范围如 ^1.0.0，部分版本 ^1.0 自动补零，* 通配可用）→ 依赖解析（安装顺序/冲突）
+    # → 登记 packs/.packs-index.json（下载计数 +1）
+    # 市场库不持久化 dependencies（表无该列）——依赖图从 packs/ 正文 JSON 补齐
+$ python3 -m ai_collab.cli pack upgrade <id>
+    # 对比本地索引已装版本与市场最新 → SemVer 主版本破坏性提示 + 已装依赖冲突扫描 → 更新索引
 ```
 
-〔修订注〕发布/安装/升级市场流（publish/install/upgrade + 依赖树 + CompatibilityReport
-影响包分析）标注为**规划态**：模块文件（market_api/dependency/version 等）已就位，
-CLI 门面未接线。要生态级操作请直接调用 `ai_collab/pack/` 模块 API。
+〔修订注〕语义边界（实测对账）：① 市场库是 **pack_id 单行最新版**模型，无版本历史表，
+新版本覆盖旧版；② dependencies 只在正文 JSON 中，市场库存元数据；③ 发布闸门用
+`pack validate` 同款轻量判据——`schema_validator.validate_pack` 是另一套更严口径
+（要求 metric 内嵌 name，仓库正典 Pack 不满足），不作发布闸门。CompatibilityReport
+影响包分析仍无 CLI 入口（模块层 `prompt_pack/compatibility.py`）。
 
 ### 涉及文件
-- `ai_collab/cli/_cli_main.py` — pack 子命令面（list/show/activate/recommend/version/check-compat/search/browse/trending/rate/share/validate/template/export/import/convert）
-- `ai_collab/pack/market_api.py` / `dependency.py` / `version.py` / `schema_validator.py`
+- `ai_collab/cli/_cli_main.py` — pack 子命令面（list/show/activate/recommend/version/check-compat/search/browse/trending/rate/share/validate/template/export/import/publish/install/upgrade/convert）
+- `ai_collab/cli/pack_market.py` — publish/install/upgrade 门面（2026-11-05 落地）
+- `ai_collab/pack/market_api.py` / `market_store.py` / `dependency.py` / `version.py` / `schema_validator.py`
 - `ai_collab/prompt_pack/compatibility.py` / `rating.py`
 
 ---
@@ -316,9 +331,11 @@ CLI 门面未接线。要生态级操作请直接调用 `ai_collab/pack/` 模块
 | 小红书测评 | 单平台 Pack 工作流 | 引擎能力成立；示例 Pack 形态以本文为准（6 步无模板） |
 | 多平台共创 | 并发注入 → 共识 → 风格注入 | 幂等/策略链成立；共识=拼接合并，字段名以本文为准 |
 | 多 Agent 开发 | ACK 闭环 | 看门狗/审计/补票成立；A.RUN↔X.RUN 以本文映射为准 |
-| 深度研究 | NotebookLM + 多源聚合 | fallback 与跨源验证成立；REAL/真实片段待 MCP 接入后验证 |
+| 深度研究 | NotebookLM + 多源聚合 | fallback 与跨源验证成立；REAL 已打通共识 provider（Ollama 真模型），NotebookLM REAL 仍待 MCP 接入 |
 | Hook 保护 | 注入/预检/快照/退出检查 | 四 hook 全部真拦截真注入；快照无哈希 |
-| Pack 管理 | 校验/评分/版本/兼容 | 校验/评分/版本比较成立；publish/install/upgrade 规划态 |
+| Pack 管理 | 校验/评分/版本/兼容 | 校验/评分/版本比较成立；publish/install/upgrade 2026-11-05 落地实测成立 |
 
 > 更正溯源：`RESULT-PACK-REALTEST-2026-11-05.md`（文件/命令面）、
-> `RESULT-RUNTIME-REALTEST-2026-11-05.md`（运行时行为）。发现新漂移请开条目追加实测。
+> `RESULT-RUNTIME-REALTEST-2026-11-05.md`（运行时行为）、
+> `RESULT-REALPATH-MARKET-CLI-2026-11-05.md`（REAL 通路 + 市场 CLI 落地）。
+> 发现新漂移请开条目追加实测。

@@ -4253,6 +4253,16 @@ def cmd_pack(args):
         output_dir = getattr(args, "output", None) or os.path.join(workspace, "conversion_output")
         return _handle_convert_command(args, output_dir)
 
+    # Pack 市场（publish/install/upgrade）
+    elif args.subcommand == "publish":
+        return _handle_publish_command(args, packs_root, workspace)
+
+    elif args.subcommand == "install":
+        return _handle_install_command(args, packs_root, workspace)
+
+    elif args.subcommand == "upgrade":
+        return _handle_upgrade_command(args, packs_root, workspace)
+
     return 0
 
 
@@ -4858,6 +4868,33 @@ def _handle_convert_command(args, output_dir):
     print(f"输出目录: {output_dir}")
 
     return convert_requirement_file(args.requirement, output_dir, getattr(args, "verbose", False))
+
+
+def _handle_publish_command(args, packs_root, workspace):
+    """处理 Pack 市场发布命令（schema 校验 + SemVer + 入市场库）"""
+    from ai_collab.cli.pack_market import PackMarketCLI
+
+    db_path = os.path.join(workspace, "data", "packs.db")
+    cli = PackMarketCLI(db_path=db_path, packs_root=packs_root)
+    return cli.publish(args.path, approve=getattr(args, "approve", False))
+
+
+def _handle_install_command(args, packs_root, workspace):
+    """处理 Pack 市场安装命令（选版 + 依赖解析 + 登记本地索引）"""
+    from ai_collab.cli.pack_market import PackMarketCLI
+
+    db_path = os.path.join(workspace, "data", "packs.db")
+    cli = PackMarketCLI(db_path=db_path, packs_root=packs_root)
+    return cli.install(args.name)
+
+
+def _handle_upgrade_command(args, packs_root, workspace):
+    """处理 Pack 市场升级命令（版本对比 + 依赖冲突扫描）"""
+    from ai_collab.cli.pack_market import PackMarketCLI
+
+    db_path = os.path.join(workspace, "data", "packs.db")
+    cli = PackMarketCLI(db_path=db_path, packs_root=packs_root)
+    return cli.upgrade(args.name)
 
 
 def _handle_sharing_command(args, packs_root):
@@ -5697,6 +5734,19 @@ def main():
     import_parser.add_argument("--source", required=True, help="Pack 文件路径")
     import_parser.add_argument("--target", help="目标目录（默认：examples）")
     import_parser.add_argument("--force", action="store_true", help="覆盖已存在的文件")
+
+    # pack publish（市场发布：schema+SemVer 校验 → 入市场库）
+    publish_parser = pack_subparsers.add_parser("publish", help="发布 Pack 到市场库")
+    publish_parser.add_argument("--path", required=True, help="Pack JSON 文件路径")
+    publish_parser.add_argument("--approve", action="store_true", help="直接批准上架（默认 PENDING）")
+
+    # pack install（选版 + 依赖解析 + 登记本地索引）
+    install_parser = pack_subparsers.add_parser("install", help="从市场库安装 Pack")
+    install_parser.add_argument("name", help="Pack 名称或 id，可带 @版本范围（如 demo@^1.0.0）")
+
+    # pack upgrade（对比市场最新 + 依赖冲突扫描）
+    upgrade_parser = pack_subparsers.add_parser("upgrade", help="升级已安装 Pack")
+    upgrade_parser.add_argument("name", help="已安装的 Pack 名称或 id")
 
     # pack convert 子命令（Owner 需求 → Pack 草稿，ReAct 转换）
     convert_parser = pack_subparsers.add_parser("convert", help="Owner 需求 → Pack 草稿（ReAct 转换）")
