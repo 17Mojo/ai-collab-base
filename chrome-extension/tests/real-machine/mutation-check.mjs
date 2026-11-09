@@ -721,6 +721,34 @@ const MUTATIONS = [
     testFile: "extension-wiring.test.mjs",
     expectTest: "N8：广播投递时 popup 要提示",
   },
+  // ── N10：首装播种（2026-11-09）────────────────────────────────
+  {
+    name: "N10：首装播种调用被摘除",
+    why: "摘掉 seedDefaultPacksIfEmpty() 调用，新装用户又回到零 Pack 空列表（台账 N10 原始缺陷）",
+    target: "src/background/service-worker.js",
+    find: "        await seedDefaultPacksIfEmpty();\n",
+    replace: "",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "首次安装且 storage 为空时播种默认 Pack",
+  },
+  {
+    name: "N10：空仓判定被拆掉（已有 Pack 也被覆盖）",
+    why: "空仓判定失效后播种会覆盖用户已有 Pack——备份还原/侧载场景静默丢数据",
+    target: "src/background/service-worker.js",
+    find: "  if (packs.length > 0) return [];",
+    replace: "  if (false) return [];",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "已有 Pack 时不许被默认 Pack 覆盖",
+  },
+  {
+    name: "N10：update 也播种（用户删光被静默塞回）",
+    why: "reason 闸门失效后每次更新都播种——用户有意删光的默认 Pack 被静默塞回来",
+    target: "src/background/service-worker.js",
+    find: '      if (details.reason === "install") {',
+    replace: "      if (true) {",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "update 不播种",
+  },
 ];
 
 /**

@@ -41,12 +41,13 @@ export const ECHO_CONTENT =
 export async function loadServiceWorker(packs, options = {}) {
   const store = { packs };
   const listeners = [];
+  const installedListeners = [];
   const tabMessages = [];
 
   globalThis.chrome = {
     runtime: {
       sendMessage: async () => undefined,
-      onInstalled: { addListener: () => {} },
+      onInstalled: { addListener: (fn) => installedListeners.push(fn) },
       onMessage: {
         addListener: (fn) => listeners.push(fn),
       },
@@ -135,5 +136,16 @@ export async function loadServiceWorker(packs, options = {}) {
       );
     });
 
-  return { listener, send, sendAs, store, tabMessages };
+  /**
+   * 触发 onInstalled 事件（N10 首装播种测试用）。
+   * 等一个宏任务让监听器里的 async IIFE 跑完。
+   *
+   * @param {Object} details - 形如 {reason: "install"}
+   */
+  const fireInstalled = async (details) => {
+    for (const fn of installedListeners) fn(details);
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
+  return { listener, send, sendAs, store, tabMessages, fireInstalled };
 }

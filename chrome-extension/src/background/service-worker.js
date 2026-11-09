@@ -17,6 +17,7 @@ import LongCatAdapter from "../platforms/longcat-adapter.js";
 import DeepSeekAdapter from "../platforms/deepseek-adapter.js";
 import PackExecutor from "./pack-executor.js";
 import NotebookLMPackExecutorBridge from "./notebooklm-packexecutor-bridge.js";
+import { DEFAULT_PACKS } from "./default-packs.js";
 
 // 平台适配器注册表 — 11 个平台全部注册
 // key: URL 中匹配的域名片段（用于 getAdapter() 的 url.includes(platform) 匹配）
@@ -79,6 +80,22 @@ async function syncPacksToExecutor() {
 }
 
 /**
+ * 首装播种（N10）：storage 为空时写入 DEFAULT_PACKS。
+ *
+ * 只允许 onInstalled(reason === "install") 调用——update 不播种
+ * （用户可能有意删光），已有 Pack 时绝不覆盖（备份还原/侧载场景）。
+ *
+ * @returns {Promise<string[]>} 播种的 pack_id（未播种则空数组）
+ */
+async function seedDefaultPacksIfEmpty() {
+  const result = await chrome.storage.local.get("packs");
+  const packs = result.packs || [];
+  if (packs.length > 0) return [];
+  await chrome.storage.local.set({ packs: [...DEFAULT_PACKS] });
+  return DEFAULT_PACKS.map((p) => p.metadata.pack_id);
+}
+
+/**
  * 从 URL 里取主机名（取不到就返回空串）。
  * @param {string} url
  * @returns {string}
@@ -133,7 +150,18 @@ function getAdapter(url) {
 // 监听扩展安装
 chrome.runtime.onInstalled.addListener((details) => {
   console.log("[Prompt Pack] Installed:", details.reason);
-  initialize();
+  // 首装播种必须先于 initialize（initialize 会把 storage 同步进执行器）；
+  // 播种后重跑 initialize 保证执行器拿到默认 Pack。
+  (async () => {
+    try {
+      if (details.reason === "install") {
+        await seedDefaultPacksIfEmpty();
+      }
+    } catch (error) {
+      console.warn("[Prompt Pack] 首装播种失败：", error.message);
+    }
+    initialize();
+  })();
 });
 
 // 监听来自 Content Script 的消息
