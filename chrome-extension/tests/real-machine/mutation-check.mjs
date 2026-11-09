@@ -777,6 +777,34 @@ const MUTATIONS = [
     testFile: "extension-wiring.test.mjs",
     expectTest: "错误串（response.error / error.message）含 HTML",
   },
+  // ── N11：孤儿 pack_id 残留可见化（2026-11-09）──────────────────
+  {
+    name: "N11：GET_ALL_PACKS 打标被摘（孤儿包伪装正常）",
+    why: "不打 unrecognized:true，旧格式僵尸包就伪装成正常 Pack——台账 N11「既不可见又不可清理」的产生点",
+    target: "src/background/service-worker.js",
+    find: "            p.metadata?.pack_id ? p : { ...p, unrecognized: true },",
+    replace: "            p,",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "GET_ALL_PACKS 给孤儿包打 unrecognized:true",
+  },
+  {
+    name: "N11：popup 孤儿判定被拆（警告永不出现）",
+    why: "判定恒 false 后僵尸行不再出警告，回到不可见僵尸状态",
+    target: "public/popup.js",
+    find: "        const unrecognized = !id;",
+    replace: "        const unrecognized = false;",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "popup 对孤儿包出可见警告",
+  },
+  {
+    name: "N11：popup 警告文案被摘（可见警告变哑巴）",
+    why: "警告元素还在但文案为空——「可见警告」变回空保证",
+    target: "public/popup.js",
+    find: "          warnEl.textContent = '⚠️ 无法识别（旧格式残留，缺 metadata.pack_id）：不可执行、不可删除，数据已保留';",
+    replace: "          warnEl.textContent = '';",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "popup 对孤儿包出可见警告",
+  },
 ];
 
 /**

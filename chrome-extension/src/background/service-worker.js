@@ -249,7 +249,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       (async () => {
         try {
           const result = await chrome.storage.local.get("packs");
-          const packs = result.packs || [];
+          // N11：旧版 IMPORT_PACKS 放进来的顶层 pack_id 残留（缺 metadata.pack_id）
+          // 不可执行、DELETE_PACK 也匹配不到——打 unrecognized:true 让消费方
+          // 显式标注（popup 出可见警告），而不是伪装成正常 Pack 或被静默删掉。
+          const packs = (result.packs || []).map((p) =>
+            p.metadata?.pack_id ? p : { ...p, unrecognized: true },
+          );
           sendResponse({ packs });
         } catch (error) {
           sendResponse({ packs: [], error: error.message });

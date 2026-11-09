@@ -155,3 +155,4 @@ chrome-extension/tests/screenshots/*.png
 !chrome-extension/tests/screenshots/.gitkeep
 packs/exports/*.json
 !packs/exports/_archive/.gitkeep
+.arts/

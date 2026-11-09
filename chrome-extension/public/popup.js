@@ -66,14 +66,19 @@ async function loadPacks() {
       packList.textContent = '';
       for (const pack of packs) {
         const id = pack.metadata?.pack_id || '';
+        // N11：缺 metadata.pack_id 的行是旧版 IMPORT_PACKS 的顶层 pack_id 残留
+        // （不可执行、DELETE_PACK 也匹配不到的僵尸数据）——出可见警告标注出来，
+        // 数据保留不删（静默删用户数据是另一种作恶）。
+        const unrecognized = !id;
         // pack.name / pack.description 与上面的 pack.id 同类：从来没有任何写入方
         // 设过这两个顶层字段（写入方只有 CREATE/IMPORT，都只写 metadata.*）。
         // 留着只是把一套不存在的协议继续描述下去 ⇒ 直接去掉。
-        const name = pack.metadata?.pack_name || id;
+        const name = pack.metadata?.pack_name || (unrecognized ? `旧格式 Pack（${pack.pack_id || '无 id'}）` : id);
         const desc = pack.metadata?.description || '无描述';
         const li = document.createElement('li');
-        li.className = 'pack-item';
+        li.className = unrecognized ? 'pack-item pack-unrecognized' : 'pack-item';
         li.dataset.id = id;
+        if (unrecognized) li.dataset.unrecognized = 'true';
         const nameEl = document.createElement('div');
         nameEl.className = 'pack-name';
         nameEl.textContent = name;
@@ -81,6 +86,12 @@ async function loadPacks() {
         descEl.className = 'pack-desc';
         descEl.textContent = desc;
         li.append(nameEl, descEl);
+        if (unrecognized) {
+          const warnEl = document.createElement('div');
+          warnEl.className = 'pack-warn';
+          warnEl.textContent = '⚠️ 无法识别（旧格式残留，缺 metadata.pack_id）：不可执行、不可删除，数据已保留';
+          li.append(warnEl);
+        }
         packList.appendChild(li);
       }
     }
