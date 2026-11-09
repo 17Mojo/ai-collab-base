@@ -1196,3 +1196,63 @@ test("交付给外部用户的那个冒烟 Pack，执行器必须真的能跑起
     `发出去的提示词必须包含那句让 AI 复述的话，实际：${calls.tabs[0].msg.prompt}`,
   );
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// N10：首装零 Pack 体验（DEFAULT_PACKS 播种）
+//
+// 新装扩展的 storage 是空的 ⇒ 此前用户面对的是零 Pack 空列表
+// （DEFAULT_PACKS 写了却从未接线，PR #13 连死代码一起删了）。
+// 这三条钉住播种的边界：空仓才播、update 不播、已有绝不覆盖
+// ——用户删光/自行导入的选择必须被尊重。
+// ─────────────────────────────────────────────────────────────────────
+
+test("N10：首次安装且 storage 为空时播种默认 Pack", async () => {
+  const { store, fireInstalled } = await loadServiceWorker([]);
+  assert.deepEqual(store.packs, [], "前置：起始必须是空仓");
+
+  await fireInstalled({ reason: "install" });
+
+  const ids = store.packs.map((p) => p.metadata.pack_id);
+  assert.deepEqual(
+    ids,
+    ["knowledge-query", "article-writing"],
+    `首装后 storage 里必须有这两张默认 Pack，实际：${ids.join(", ") || "（空）"}`,
+  );
+  for (const pack of store.packs) {
+    assert.ok(
+      pack.metadata?.pack_name,
+      `播种的 Pack 必须带 pack_name（popup 靠它渲染列表）：${pack.metadata?.pack_id}`,
+    );
+  }
+});
+
+test("N10：已有 Pack 时不许被默认 Pack 覆盖", async () => {
+  const EXISTING = {
+    metadata: { pack_id: "wiring-local", pack_name: "用户自己的 Pack" },
+    workflow: {
+      steps: [{ id: "s1", name: "步", type: "local", config: { required_fields: [] } }],
+    },
+  };
+  const { store, fireInstalled } = await loadServiceWorker([EXISTING]);
+
+  await fireInstalled({ reason: "install" });
+
+  const ids = store.packs.map((p) => p.metadata.pack_id);
+  assert.deepEqual(
+    ids,
+    ["wiring-local"],
+    `已有 Pack 时播种必须让路（备份还原/侧载场景），实际：${ids.join(", ")}`,
+  );
+});
+
+test("N10：update 不播种——用户可能有意删光", async () => {
+  const { store, fireInstalled } = await loadServiceWorker([]);
+
+  await fireInstalled({ reason: "update" });
+
+  assert.deepEqual(
+    store.packs,
+    [],
+    "更新时绝不播种：用户可能有意删光默认 Pack，静默塞回去等于不尊重选择",
+  );
+});
