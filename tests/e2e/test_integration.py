@@ -175,29 +175,41 @@ class TestChromeExtensionFiles:
         assert "execute(message.packId" in flat, "缺少 packExecutor.execute 调用"
         assert "new PackExecutor" in content, "缺少 PackExecutor 构造"
 
-    def test_pack_storage_manager_exists(self):
-        """测试 src/background/pack-storage-manager.js 存在"""
-        path = os.path.join(self._ext_root(), "src", "background", "pack-storage-manager.js")
-        assert os.path.exists(path), "pack-storage-manager.js 不存在"
-
-    def test_pack_storage_manager_api(self):
-        """测试 PackStorageManager 关键 API（AES-GCM 已弃用，换为新缓存契约）"""
-        path = os.path.join(self._ext_root(), "src", "background", "pack-storage-manager.js")
-        with open(path, encoding="utf-8") as f:
-            content = f.read()
-
-        for api in ("PackStorageManager", "getStorageInfo", "mergeWithDefaults",
-                    "refreshCache", "importPacks", "exportPacks"):
-            assert api in content, f"缺少 API: {api}"
-
     def test_default_packs_registry(self):
-        """测试 DEFAULT_PACKS 至少注册 knowledge-query 与 article-writing"""
-        path = os.path.join(self._ext_root(), "src", "background", "pack-storage-manager.js")
+        """测试 DEFAULT_PACKS 至少注册 knowledge-query 与 article-writing
+
+        事实源是 src/background/default-packs.js：原 pack-storage-manager.js 从未接线，
+        已在 5c4eabc 删除，DEFAULT_PACKS 从 git 历史（5c4eabc^）还原到独立模块。
+        守护点不止「id 在」——schema 必须是 metadata.pack_id + workflow.steps，
+        否则首装播种写进 storage 的 Pack 执行器读不懂，等于没播种。
+        """
+        path = os.path.join(self._ext_root(), "src", "background", "default-packs.js")
+        assert os.path.exists(path), "default-packs.js 不存在"
         with open(path, encoding="utf-8") as f:
             content = f.read()
 
-        assert "knowledge-query" in content, "缺少默认包 knowledge-query"
-        assert "article-writing" in content, "缺少默认包 article-writing"
+        assert "export const DEFAULT_PACKS" in content, "缺少 DEFAULT_PACKS 导出"
+        for pack_id in ("knowledge-query", "article-writing"):
+            assert f'pack_id: "{pack_id}"' in content, f"缺少默认包: {pack_id}"
+        assert "workflow:" in content, "默认 Pack 缺少 workflow 字段"
+        assert "steps: [" in content, "默认 Pack 缺少 workflow.steps"
+
+    def test_seed_default_packs_wiring(self):
+        """测试首装播种真的接在 onInstalled 上（N10）
+
+        default-packs.js 存在但没人 import，等于零 Pack 空列表照旧出现。
+        守三条：service-worker 导入它、播种函数存在、只有 install 才播种
+        （update 时用户可能已主动删光，不该被复活）。
+        """
+        path = os.path.join(self._ext_root(), "src", "background", "service-worker.js")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+
+        assert 'from "./default-packs.js"' in content, "service-worker 未导入 default-packs.js"
+        assert "function seedDefaultPacksIfEmpty" in content, "缺少 seedDefaultPacksIfEmpty"
+        flat = re.sub(r"\s+", "", content)
+        assert 'details.reason==="install"' in flat, "播种未限制在 install 分支"
+        assert "chrome.storage.local.set({packs:" in flat, "播种未写入 storage 的 packs 键"
 
     def test_content_script_initialization_order(self):
         """测试 Content Script 注入配置正确（run_at + 单 content-script.js）"""
@@ -251,16 +263,10 @@ class TestChromeExtensionFiles:
             manifest = json.load(f)
         assert manifest["background"].get("type") == "module", "background.type 应为 module"
 
-    def test_background_storage_cache_keys(self):
-        """测试 Background 存储 cache 键约定（替代 STORAGE_SCHEMA_VERSION）"""
-        path = os.path.join(self._ext_root(), "src", "background", "pack-storage-manager.js")
-        with open(path, encoding="utf-8") as f:
-            content = f.read()
-
-        assert "cacheKey" in content, "缺少 cacheKey 配置"
-        assert "cacheTimestampKey" in content, "缺少 cacheTimestampKey 配置"
-        assert "cacheTTL" in content, "缺少 cacheTTL TTL 配置"
-        assert "5 * 60 * 1000" in content, "缺少 5 分钟 TTL 默认值"
+    # 已删除 test_background_storage_cache_keys：它断言的 cacheKey / cacheTimestampKey /
+    # cacheTTL / 5 分钟 TTL 全部来自 5c4eabc 删掉的 pack-storage-manager.js。
+    # 现行架构里 storage 是唯一事实源（syncPacksToExecutor 直读），没有缓存层，
+    # 继续断言一个不存在的契约只会让门禁永久红着、最后被当成噪音忽略。
 
     def test_settings_handler_api(self):
         """测试设置处理器（替代 options/options.js + getSettings/updateSettings）"""
