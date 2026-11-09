@@ -4,8 +4,12 @@ CC Claude Codex 集成模块
 最小落地目标：
 - 在项目内维护 .cc-claude-codex/ 状态目录
 - 生成 codex-progress.md 批次任务文件
-- 调用 codex CLI 执行任务并输出日志
+- 调用执行器（2026-11-09 起为 Claude Code `claude -p` 无头模式）执行任务并输出日志
 - 将执行进度同步到 ai_collab 状态管理器
+
+2026-11-09 用户裁定：**不再使用 codex CLI**，执行面替换为本机已有执行器
+（如 Claude Code）。`shutil.which("codex")` 依赖已移除，执行器按
+EXECUTOR_CANDIDATES 解析；方法名 run_codex 保持兼容既有调用面。
 """
 
 from __future__ import annotations
@@ -36,6 +40,26 @@ Working rules:
 5. After all steps are done, set top status to Completed.
 
 Begin now and follow the file strictly."""
+
+
+# 2026-11-09 用户裁定：不再使用 codex CLI，执行面替换为本机已有执行器
+# （如 Claude Code）。候选按序取第一个 which 命中；codex 从此不在候选之列。
+EXECUTOR_CANDIDATES: tuple[str, ...] = ("claude",)
+
+
+def resolve_executor() -> tuple[str, str]:
+    """解析本机可用执行器，返回 (name, path)。
+
+    优先级按 EXECUTOR_CANDIDATES 顺序（当前仅 claude，即 Claude Code）。
+    未命中任何候选时抛 RuntimeError。
+    """
+    for name in EXECUTOR_CANDIDATES:
+        path = shutil.which(name)
+        if path:
+            return name, path
+    raise RuntimeError(
+        f"未找到可用执行器（候选: {', '.join(EXECUTOR_CANDIDATES)}），请安装其一并加入 PATH。"
+    )
 
 
 @dataclass
@@ -230,6 +254,19 @@ class CodexIntegration:
             warnings.warn(f"Exception during process termination: {e}", stacklevel=2)
             return False
 
+    @staticmethod
+    def _build_executor_cmd(executor_name: str, executor_bin: str, *, readonly: bool) -> list[str]:
+        """构造执行器命令行。
+
+        claude（Claude Code）：`claude -p <prompt> --permission-mode <mode>` 无头模式；
+        readonly→plan（只读规划），否则 acceptEdits（允许工作区编辑）。
+        sandbox 参数对 claude 不适用（原 codex --sandbox 语义由 permission-mode 承接）。
+        """
+        if executor_name == "claude":
+            mode = "plan" if readonly else "acceptEdits"
+            return [executor_bin, "-p", CODEX_PROMPT, "--permission-mode", mode]
+        raise RuntimeError(f"未支持的执行器: {executor_name}")
+
     def run_codex(
         self,
         readonly: bool = False,
@@ -237,34 +274,39 @@ class CodexIntegration:
         stale_timeout: int = 120,
         sandbox: str | None = None,
     ) -> CodexRunResult:
-        """调用 codex 执行并返回执行结果。"""
-        codex_bin = shutil.which("codex")
-        if not codex_bin:
-            raise RuntimeError("未找到 codex 命令，请先安装并加入 PATH。")
+        """调用执行器执行并返回执行结果。
+
+        2026-11-09 起执行器为 claude（Claude Code 无头模式）——用户裁定不再
+        使用 codex CLI；方法名保持 run_codex 以兼容既有调用面（cli codex-exec /
+        session_health）。sandbox 参数保留签名兼容，claude 执行器下改由
+        readonly 映射 --permission-mode（见 _build_executor_cmd）。
+        """
+        executor_name, executor_bin = resolve_executor()
         if not self.progress_file.exists():
             raise RuntimeError("未找到 .cc-claude-codex/codex-progress.md，请先执行 codex progress。")
         progress_info = self.validate_progress()
         if progress_info["total_steps"] <= 0:
             raise RuntimeError("进度文件未定义有效步骤，请先执行 codex progress --step <步骤内容>。")
 
-        run_sandbox = self._resolve_sandbox(sandbox=sandbox, readonly=readonly)
         self.logs_dir.mkdir(parents=True, exist_ok=True)
 
         ts = datetime.now().strftime("%Y%m%d-%H%M%S")
         log_file = self.logs_dir / f"codex-{ts}.log"
         out_file = self.logs_dir / f"codex-{ts}-output.md"
 
-        cmd = [codex_bin, "exec", "--sandbox", run_sandbox, "-o", str(out_file), CODEX_PROMPT]
+        cmd = self._build_executor_cmd(executor_name, executor_bin, readonly=readonly)
         start_time = time.time()
         exit_reason = "done"
         return_code = 0
 
-        with open(log_file, "w", encoding="utf-8") as lf:
+        # claude -p 把最终回答写 stdout → 直接落 out_file（对齐 _ensure_output_file
+        # 期望）；stderr（进度/告警）→ log_file。
+        with open(out_file, "w", encoding="utf-8") as of, open(log_file, "w", encoding="utf-8") as lf:
             proc = subprocess.Popen(  # noqa: S603
                 cmd,
                 cwd=str(self.workspace),
-                stdout=lf,
-                stderr=subprocess.STDOUT,
+                stdout=of,
+                stderr=lf,
                 text=True,
             )
 
@@ -288,7 +330,11 @@ class CodexIntegration:
                         exit_reason = f"hard_timeout({max_timeout}s)"
                         break
 
-                    current_size = log_file.stat().st_size
+                    # 活跃度看 log+out 双文件：claude -p 的回答流写 out_file，
+                    # 只盯 log_file 会在长思考期误判 stale。
+                    current_size = log_file.stat().st_size + (
+                        out_file.stat().st_size if out_file.exists() else 0
+                    )
                     if current_size > last_log_size:
                         last_log_size = current_size
                         last_activity = now
