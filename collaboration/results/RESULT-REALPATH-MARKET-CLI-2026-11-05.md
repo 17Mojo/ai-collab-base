@@ -70,8 +70,14 @@
   `enrich_task_with_notebooklm(mode="REAL", use_cli=True)` 真跑产出
   `notebooklm_context.technical_docs` 真内容。服务迁移注记：notebooklm.google.com
   现 301 → notebook.google.com（"Gemini Notebook"），旧域 batchexecute 仍应答
-  但同报 RPC 16。工具升级注记：0.5.25 → 0.16.2 可用（uv tool upgrade），
-  单变量原则下本批复测未升，留后续。
+  但同报 RPC 16。工具升级注记：0.5.25 → 0.16.2 已于〔11-09 08:27〕升级并
+  完成兼容复测——profile 存储同位加载、`login --check` ✓（16 notebooks）、
+  notebook list 同 JSON 形、query 契约逐键匹配、引擎 REAL enrichment 真跑
+  全绿（新字段 base_host/revision 缺省可容；notebooklm-mcp 服务端随升级
+  装上，旧缺 fastmcp 问题顺带消除）。**at（SNlM0e）时效注记**：at token 约
+  15 分钟窗口，过期同样报 RPC 16（与废 cookie 同形，鉴别法=复刻请求看
+  cookie 的 isSignedIn 判定），页面刷新取新 at 即愈；0.16.2 客户端带 at
+  自愈刷新，引擎长跑无虞。
 
 ### 1.4 codex_cli / codearts 服务商 —— 阻塞 ✗
 
