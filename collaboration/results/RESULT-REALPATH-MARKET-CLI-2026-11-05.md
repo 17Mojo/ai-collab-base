@@ -93,6 +93,20 @@
   回退映射**运行时实测通过**：`resolve_ack_prefix/resolve_run_hint` 对
   claude_code→C/C.RUN、codearts_agent→A/A.RUN、codex→O/O.RUN、未知→Z/Z.RUN
   全对（`ai_collab/role_prefix.py:52` FALLBACK_ACK_PREFIX 真跑）。
+- 〔2026-11-09 裁定+替换〕**用户裁定：不再使用 codex CLI，执行面替换为本机
+  已有执行器（Claude Code）**。本机实测 `claude` v2.1.302（/opt/homebrew/bin，
+  codex/codearts 二进制保持缺席、不再追装）。代码改造：`codex_integration.py`
+  执行器化——`EXECUTOR_CANDIDATES=("claude",)`（codex 退出候选，连探测都不
+  发生）、`run_codex` 改走 `claude -p --permission-mode` 无头模式
+  （readonly→plan / 否则 acceptEdits；stdout 直落 out_file，活跃度盯 log+out
+  双文件防长思考误判 stale），方法名保留兼容 cli codex-exec / session_health
+  调用面。回归锚：单测 12/12（新增 5 例，含「codex 不应被探测」断言）。
+  真实 smoke：`claude -p` 无头启动/flag 解析/网关连通全结构通（MCP 隔离
+  `--strict-mcp-config` 可绕开用户侧 MCP 挂起），但 MiniMax 网关
+  （ANTHROPIC_BASE_URL=api.minimaxi.com）回 **HTTP 429「已达到 Token Plan
+  用量上限」**——账号级配额耗尽，真实生成被卡（人工检查点：充值或换 key
+  后一条 `claude -p` 即可补实证，链路本身无欠账）。codearts 映射层维持
+  〔11-06〕已验结论。
 
 ---
 
@@ -149,7 +163,7 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
 | 共识 REAL（Ollama gemma4:31b-cloud） | **成立**（真文本 + mode_used=real + 缓存幂等） |
 | 共识失败静默假填充（名字带 REAL） | **实锤缺陷**（误导性遥测，记后续项） |
 | NotebookLM REAL | **成立**（〔11-09〕登录续期经 CDP 直提收口，真查询 + 引擎 enrichment 双真跑通，契约逐键匹配；§1.3） |
-| codex_cli / codearts 运行时 | **阻塞**（外部 CLI 未安装）→〔11-06〕映射层运行时已验，二进制仍缺（§1.4） |
+| codex_cli / codearts 运行时 | **已裁定**（〔11-09〕弃 codex CLI，执行面换 Claude Code 并落地执行器化；claude 真实 smoke 差 MiniMax 配额一条人工检查点；codearts 映射层已验、二进制维持缺席；§1.4） |
 | pack publish / install / upgrade | **成立**（31 单测 + 端到端真机链路全绿） |
 | 市场表版本模型 / 依赖持久化 / 校验口径 / 范围语法 | 4 项模块层真相对账（§2.3），CLI 层已适配或绕开，根治留后续 |
 
@@ -197,3 +211,8 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
    与引擎解析器逐键匹配，`enrich_task_with_notebooklm(mode="REAL", use_cli=True)`
    真跑产出真内容——NotebookLM 侧判档升「成立」。codex 半边仍待二进制安装
    （如实保持开放，装上后按同法补复测）。
+   〔2026-11-09 终局〕**codex 半边按用户裁定关闭**：不再使用 codex CLI，
+   执行面替换为本机已有 Claude Code 并完成执行器化改造（§1.4 注记：
+   EXECUTOR_CANDIDATES 只剩 claude、run_codex 走 `claude -p` 无头、单测 12/12）。
+   真实生成 smoke 受 MiniMax Token Plan 用量上限（429）阻塞——链路无欠账，
+   配额恢复后一条 `claude -p` 命令即可补实证。**item 6 整条销账**。

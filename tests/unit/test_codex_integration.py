@@ -1,6 +1,7 @@
 import json
+from pathlib import Path
 
-from ai_collab.codex_integration import CodexIntegration
+from ai_collab.codex_integration import CODEX_PROMPT, CodexIntegration, resolve_executor
 
 
 def _our_hook_entry(command: str, matcher: str = "") -> dict:
@@ -111,3 +112,84 @@ def test_ensure_output_file_writes_fallback(tmp_path):
     content = out_file.read_text(encoding="utf-8")
     assert "hard_timeout(10s)" in content
     assert "line-1" in content
+
+
+# ---------------------------------------------------------------------------
+# 执行器解析与 claude 无头命令（2026-11-09 弃用 codex CLI、换 Claude Code）
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_executor_prefers_claude(monkeypatch):
+    monkeypatch.setattr(
+        "ai_collab.codex_integration.shutil.which",
+        lambda name: "/opt/homebrew/bin/claude" if name == "claude" else None,
+    )
+    name, path = resolve_executor()
+    assert name == "claude"
+    assert path == "/opt/homebrew/bin/claude"
+
+
+def test_resolve_executor_never_consults_codex(monkeypatch):
+    """codex CLI 已弃用（2026-11-09 用户裁定）——连探测都不应发生。"""
+
+    def _which(name):
+        if name == "codex":
+            raise AssertionError("codex CLI 已弃用，不应再被探测")
+        return "/fake/claude" if name == "claude" else None
+
+    monkeypatch.setattr("ai_collab.codex_integration.shutil.which", _which)
+    assert resolve_executor() == ("claude", "/fake/claude")
+
+
+def test_resolve_executor_missing_raises_with_candidates(monkeypatch):
+    monkeypatch.setattr("ai_collab.codex_integration.shutil.which", lambda name: None)
+    try:
+        resolve_executor()
+    except RuntimeError as e:
+        assert "claude" in str(e)
+    else:
+        raise AssertionError("expected RuntimeError")
+
+
+def test_build_executor_cmd_claude_permission_modes():
+    cmd_ro = CodexIntegration._build_executor_cmd("claude", "/fake/claude", readonly=True)
+    cmd_rw = CodexIntegration._build_executor_cmd("claude", "/fake/claude", readonly=False)
+    assert cmd_ro[0] == cmd_rw[0] == "/fake/claude"
+    assert "-p" in cmd_ro and "-p" in cmd_rw
+    assert "plan" in cmd_ro
+    assert "acceptEdits" in cmd_rw
+    assert CODEX_PROMPT in cmd_ro and CODEX_PROMPT in cmd_rw
+
+
+def test_run_codex_invokes_claude_headless(tmp_path, monkeypatch):
+    integration = CodexIntegration(str(tmp_path))
+    integration.progress_file.parent.mkdir(parents=True, exist_ok=True)
+    integration.progress_file.write_text("- [ ] step-1\n", encoding="utf-8")
+    monkeypatch.setattr(
+        CodexIntegration, "validate_progress", lambda self: {"total_steps": 1}
+    )
+    monkeypatch.setattr(
+        "ai_collab.codex_integration.resolve_executor", lambda: ("claude", "/fake/claude")
+    )
+    captured: dict = {}
+
+    class _FakeProc:
+        returncode = 0
+
+        def wait(self, timeout=None):
+            return 0
+
+    def _fake_popen(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return _FakeProc()
+
+    monkeypatch.setattr("ai_collab.codex_integration.subprocess.Popen", _fake_popen)
+
+    result = integration.run_codex()
+
+    assert captured["cmd"][0] == "/fake/claude"
+    assert "-p" in captured["cmd"]
+    assert "--permission-mode" in captured["cmd"]
+    assert result.return_code == 0
+    assert result.exit_reason == "done"
+    assert Path(result.output_file).exists()
