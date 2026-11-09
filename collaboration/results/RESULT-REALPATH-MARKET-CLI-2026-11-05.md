@@ -105,8 +105,14 @@
   `--strict-mcp-config` 可绕开用户侧 MCP 挂起），但 MiniMax 网关
   （ANTHROPIC_BASE_URL=api.minimaxi.com）回 **HTTP 429「已达到 Token Plan
   用量上限」**——账号级配额耗尽，真实生成被卡（人工检查点：充值或换 key
-  后一条 `claude -p` 即可补实证，链路本身无欠账）。codearts 映射层维持
-  〔11-06〕已验结论。
+  后一条 `claude -p` 即可补实证，链路本身无欠账）。
+  〔2026-11-09 10:57 检查点解除〕配额恢复后复跑
+  `claude -p "只回复两个字母：OK" --strict-mcp-config --mcp-config '{"mcpServers":{}}'`
+  → **exit 0、回执 OK**——真实生成全链路（启动/flag/网关/生成）活证据落袋，
+  429 债清。注：workspace 未交互信任只忽略 settings.json 的 permissions.allow
+  条目、不阻塞无头执行（acceptEdits 写盘场景建议用户交互信任一次）；
+  `MiniMax-M3.1-Flash` 未识别警告仅是上下文窗口猜测，无碍执行。
+  codearts 映射层维持〔11-06〕已验结论。
 
 ---
 
@@ -214,5 +220,6 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
    〔2026-11-09 终局〕**codex 半边按用户裁定关闭**：不再使用 codex CLI，
    执行面替换为本机已有 Claude Code 并完成执行器化改造（§1.4 注记：
    EXECUTOR_CANDIDATES 只剩 claude、run_codex 走 `claude -p` 无头、单测 12/12）。
-   真实生成 smoke 受 MiniMax Token Plan 用量上限（429）阻塞——链路无欠账，
-   配额恢复后一条 `claude -p` 命令即可补实证。**item 6 整条销账**。
+   真实生成 smoke 曾受 MiniMax Token Plan 用量上限（429）阻塞——链路无欠账。
+   〔2026-11-09 10:57 活证据补齐〕配额恢复后复跑 `claude -p` **回执 OK
+   （exit 0）**，执行器真实生成链路终验通过。**item 6 整条销账（含活证据）**。
