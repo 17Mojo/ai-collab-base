@@ -4,6 +4,7 @@
 测试 Chrome Extension 通过 Backend API 生成 Studio 多模态产物
 """
 
+import os
 from pathlib import Path
 
 import pytest
@@ -26,7 +27,10 @@ except ImportError:
     SETTINGS_AVAILABLE = False
 
 NOTEBOOK_ID = "test-studio-integration-notebook"
-BACKEND_URL = "http://127.0.0.1:8000"
+# BASE_URL 可用环境变量覆盖：本机 8000 长期被外项目（ComfyUI）占用，
+# 固定端口会让这组测试永远 skip 或打错服务（N12）。
+# CI 与本地真跑时设 STUDIO_TEST_BASE_URL 指向本仓后端实际端口即可。
+BACKEND_URL = os.environ.get("STUDIO_TEST_BASE_URL", "http://127.0.0.1:8000")
 
 # Check if backend is reachable
 import socket
@@ -34,8 +38,12 @@ import urllib.request
 
 BACKEND_REACHABLE = False
 try:
-    # 既要能 TCP 连接，又要确认 8000 上跑的**是本仓后端**——不是端口上有个 HTTP 服务就算。
-    s = socket.create_connection(("127.0.0.1", 8000), timeout=0.5)
+    # 既要能 TCP 连接，又要确认端点上跑的**是本仓后端**——不是端口上有个 HTTP 服务就算。
+    from urllib.parse import urlparse
+
+    _parsed = urlparse(BACKEND_URL)
+    _host, _port = _parsed.hostname or "127.0.0.1", _parsed.port or 80
+    s = socket.create_connection((_host, _port), timeout=0.5)
     s.close()
     # 身份判据取本仓真实的响应体标识：
     #   - 路径探 `/health`（本仓 health.router 挂在无 prefix 的 `app.include_router`，
@@ -47,7 +55,7 @@ try:
     # `or r.status == 200` 又让**任何**占着 8000 的服务都算「后端可达」⇒
     # 8000 被别的项目占着时，4 条 Studio 测试会去打一个没有
     # `/api/notebooklm/*` 的应用，恒红 404 而不是跳过。
-    req = urllib.request.Request("http://127.0.0.1:8000/health")
+    req = urllib.request.Request(BACKEND_URL.rstrip("/") + "/health")
     with urllib.request.urlopen(req, timeout=1) as r:
         body = r.read().decode(errors="ignore")
         BACKEND_REACHABLE = "prompt-pack-api" in body
@@ -60,7 +68,11 @@ def client():
     """HTTP 客户端 fixture"""
     if not BACKEND_AVAILABLE:
         pytest.skip("httpx not installed")
-    return httpx.Client(base_url=BACKEND_URL, timeout=30.0)
+    # trust_env=False 必须显式关：httpx 默认吃 http_proxy/https_proxy 环境变量，
+    # localhost 请求会被发成代理 absolute-form（`POST http%3A//...`），路由 404——
+    # 表现为「同 client 首个请求 200、后续全 404」，实为客户端环境污染而非后端缺陷
+    # （2026-11-09 N12 真跑实锤，uvicorn 访问日志可见畸形请求行）。
+    return httpx.Client(base_url=BACKEND_URL, timeout=30.0, trust_env=False)
 
 
 @pytest.fixture
@@ -239,5 +251,20 @@ class TestStudioAPIEndpoints:
             # 再下载
             dl_response = client.get(f"/api/notebooklm/download/{artifact_id}")
             assert dl_response.status_code in (200, 302)
+        except httpx.ConnectError:
+            pytest.skip("Backend not running")
+
+    @pytest.mark.skipif(not BACKEND_AVAILABLE, reason="httpx not installed")
+    def test_studio_invalid_content_type_rejected(self, client):
+        """错误路径：非法 content_type 必须 400 拒绝（此前只验过 happy path）"""
+        try:
+            response = client.post(
+                "/api/notebooklm/generate",
+                json={"content_type": "not-a-real-type", "notebook_id": NOTEBOOK_ID},
+            )
+            assert response.status_code == 400
+            body = response.json()
+            # FastAPI HTTPException 的 detail 必须带回绝理由
+            assert "Invalid content_type" in str(body.get("detail", ""))
         except httpx.ConnectError:
             pytest.skip("Backend not running")

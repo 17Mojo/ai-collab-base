@@ -119,18 +119,20 @@
     {
       "id": "N12",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "Studio 4 条集成测试至今从未在本仓后端上真正执行过",
       "reader": "以为「4 条转绿/转跳过就等于测过了」的人",
       "where": [
-        "tests/integration/test_studio_integration.py:155-215",
-        "local-backend/app/api/notebooklm.py:324"
+        "tests/integration/test_studio_integration.py:179-268",
+        "local-backend/app/api/notebooklm.py:325",
+        ".github/workflows/test.yml (studio-api-integration job)"
       ],
       "detail": "N9 修好后这 4 条不再常红，但它们只是**正确地跳过**了。要真正跑到，需要本仓后端（Prompt Pack API）在 127.0.0.1:8000 起来，而该端口当前被另一个项目占用。也就是说 `/api/notebooklm/generate` 这条链路（含 audio/video/slides/batch 产物生成）**从未被端到端验证过**。",
       "impact": "无 CI 噪音，但存在未验证链路：Studio 产物生成的真实行为（返回结构、artifact_id 是否给出、错误路径）都是空白。",
       "fix": "起本仓后端到 8000（或让测试的 BASE_URL 可用环境变量覆盖，改指向本仓实际端口）后跑一次这 4 条，把真实结果补进台账。跑之前先确认 8000 没被占。",
       "found_at": "2026-11-03",
-      "evidence": "N9 修复后 pytest 输出 9 passed / 5 skipped，4 条 skip 理由均为「Backend not running on 127.0.0.1:8000」；本仓 health 路由为 /health，与测试原探的 /api/health 不符，说明这套测试从未针对本仓后端校准过"
+      "closed_at": "2026-11-09",
+      "evidence": "真跑收口（2026-11-09）：① STUDIO_TEST_BASE_URL 环境变量覆盖落地（BASE_URL 与 /health 身份探针同源），后端起 8123 真跑——test_studio_integration.py 15/15 全绿（含新增错误路径 test_studio_invalid_content_type_rejected 非法类型→400），tests/integration/ 全目录 130/130 零 skip；② 真跑首日即抓到 2 处假红并定罪：batch/download 的 404 是 httpx trust_env 默认吃环境代理、把 localhost 请求发成代理 absolute-form（uvicorn 访问日志见「POST http%3A//…」畸形请求行；trust_env=True→[200,404,404,404] / False→全 200 对照实锤），fixture 已改 trust_env=False 加固——后端 mock 链路本身无缺陷（generate 200+artifact_id 可下载 200、非法类型 400、返回结构逐字段实测）；③ CI 新增阻塞式 job studio-api-integration（起后端于 8123 + 真跑本文件，不带 continue-on-error），链路断了挡 PR。"
     },
     {
       "id": "N10",

@@ -184,3 +184,47 @@ jobs:
           for pack in packs/examples/*.json packs/templates/*.json; do
             python -c "import json; json.load(open('$pack'))" && echo "✅ $pack"
           done
+
+  studio-api-integration:
+    # N12 收口：Studio 端点测试对真后端（prompt-pack-api）真跑，不再静默 skip。
+    # 独立 job 且**不带** continue-on-error——generate/download 链路断了必须挡 PR。
+    # 端口用 8123（8000 常被开发机上的其他服务占用），
+    # 测试侧以 STUDIO_TEST_BASE_URL 指过来（tests/integration/test_studio_integration.py）。
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r local-backend/requirements.txt
+          pip install pytest
+
+      - name: Start local backend on 8123
+        # 后端 import ai_collab（pack.schema_validator），故 PYTHONPATH 指仓库根；
+        # uvicorn 需在 local-backend/ 下启动（模块路径 app.main:app）。
+        run: |
+          cd local-backend
+          PYTHONPATH="$GITHUB_WORKSPACE" nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8123 > /tmp/backend.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8123/health | grep -q prompt-pack-api; then
+              echo "✅ backend up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "❌ backend failed to start"
+          cat /tmp/backend.log
+          exit 1
+
+      - name: Run Studio integration tests against real backend
+        env:
+          STUDIO_TEST_BASE_URL: http://127.0.0.1:8123
+        run: |
+          python -m pytest tests/integration/test_studio_integration.py -v --tb=short
