@@ -52,6 +52,26 @@
   failed: Operation not permitted」→ GPU FATAL（seatbelt 继承，/tmp 新鲜
   profile 同死，用户 Finder 起的 Chrome 156 正常）——需用户在**自己的
   终端**跑一次 `nlm login`（官方流，rookiepy/CDP 续期），之后即可补真查询。
+- 〔2026-11-09 复测完成〕**REAL 全链路打通，认证卡点收口**。用户在自己终端
+  完成 `nlm login` 后登录态仍未落盘，逐层对账实锤三层：① 两次「登录成功」
+  提取的 42 cookie 被 Google 判 `isSignedIn:'false'`（signed_out_landing 页），
+  缺 `.google.com` 域 `__Secure-1PSIDTS/3PSIDTS`（TS 配套只有 .youtube.com
+  副本，典型「google.com 登出、YouTube 会话残留」形态），batchexecute 两域
+  一律 RPC error 16（UNAUTHENTICATED）；② nlm 0.5.25 提取保存链三处 bug：
+  `is_logged_in()` 只判「未跳 accounts」（假登录页也放行）、`FdrFJe` 正则
+  `(\d+)` 不匹配负数 session id、`extract_cookies_from_page` 抓错 tab（旧域
+  301 壳页仅 39B HTML）；③ 可靠通道 = 登录后残留的 managed Chrome CDP
+  （`chrome-port-map.json` :9223）直提：`get_page_cookies` 50 cookie（含
+  .google.com 双 TS）+ 真页面 767KB 抓 SNlM0e/FdrFJe/bl/email →
+  `AuthManager.save_profile(force=True)` 落盘 → `nlm login --check` ✓
+  （16 notebooks）。真查询复测：`nlm notebook query d2b04caa… "<q>"` 返回
+  契约 `{value:{answer,sources_used,conversation_id}}` 与引擎解析器逐键匹配
+  （answer 真实引用 PROTOCOL 源，sources_used=2）；引擎
+  `enrich_task_with_notebooklm(mode="REAL", use_cli=True)` 真跑产出
+  `notebooklm_context.technical_docs` 真内容。服务迁移注记：notebooklm.google.com
+  现 301 → notebook.google.com（"Gemini Notebook"），旧域 batchexecute 仍应答
+  但同报 RPC 16。工具升级注记：0.5.25 → 0.16.2 可用（uv tool upgrade），
+  单变量原则下本批复测未升，留后续。
 
 ### 1.4 codex_cli / codearts 服务商 —— 阻塞 ✗
 
@@ -122,7 +142,7 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
 |---|---|
 | 共识 REAL（Ollama gemma4:31b-cloud） | **成立**（真文本 + mode_used=real + 缓存幂等） |
 | 共识失败静默假填充（名字带 REAL） | **实锤缺陷**（误导性遥测，记后续项） |
-| NotebookLM REAL | **阻塞**（MCP 连接器/builtin 缺失）→〔11-06〕CLI 通路实测打通，仅剩认证续期人工检查点（§1.3） |
+| NotebookLM REAL | **成立**（〔11-09〕登录续期经 CDP 直提收口，真查询 + 引擎 enrichment 双真跑通，契约逐键匹配；§1.3） |
 | codex_cli / codearts 运行时 | **阻塞**（外部 CLI 未安装）→〔11-06〕映射层运行时已验，二进制仍缺（§1.4） |
 | pack publish / install / upgrade | **成立**（31 单测 + 端到端真机链路全绿） |
 | 市场表版本模型 / 依赖持久化 / 校验口径 / 范围语法 | 4 项模块层真相对账（§2.3），CLI 层已适配或绕开，根治留后续 |
@@ -166,3 +186,8 @@ $ python3 -S -m ai_collab.cli pack upgrade xiaohongshu-beauty-review
    ② `_query_notebooklm_via_cli` 代理只写大写 env，httpx 优先读小写被宿主
    沙箱代理劫走 → 大小写成对写。回归锚：bridge 测试 +2（含 NameError 黑盒
    回归）、dispatch 单测 +1（代理成对断言），60/60 + 集成 11/11 绿。
+   〔2026-11-09 收口〕**NotebookLM 半边 REAL 复测完成**：认证续期经 managed
+   Chrome CDP 直提收口（细节见 §1.3 注记），`nlm notebook query` 真查询契约
+   与引擎解析器逐键匹配，`enrich_task_with_notebooklm(mode="REAL", use_cli=True)`
+   真跑产出真内容——NotebookLM 侧判档升「成立」。codex 半边仍待二进制安装
+   （如实保持开放，装上后按同法补复测）。
