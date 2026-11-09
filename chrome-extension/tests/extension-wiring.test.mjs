@@ -784,6 +784,102 @@ test("N8：广播投递时 popup 要提示用户（不能让他以为只发了�
 });
 
 // ─────────────────────────────────────────────────────────────────────
+// 4a-2. Studio 状态区注入面（N20：后端回执/错误串不许当 HTML 解析）
+//
+// 信任边界与 N2 不同（数据来自 GENERATE_STUDIO_ARTIFACTS 后端回执与
+// 消息错误串，不来自 Pack 作者），但修法同款：DOM 构建 + textContent；
+// download_url 另加 ^https?:// 协议白名单——javascript: 伪协议是其中最实的一条。
+// ─────────────────────────────────────────────────────────────────────
+
+test("N20：Studio 回执字段含 HTML 时不得被解析", async () => {
+  const EVIL_TYPE = '<img src=x data-evil="1">播客';
+  const EVIL_MODE = '<i data-evil="1">异步</i>';
+  const dom = await loadPopupWithPacks([], async (msg) => {
+    if (msg?.type === "GENERATE_STUDIO_ARTIFACTS") {
+      return {
+        success: true,
+        artifacts: [{ success: true, content_type: EVIL_TYPE, mode: EVIL_MODE }],
+      };
+    }
+    return { success: true };
+  });
+  dom.window.document.getElementById("studio-audio").click();
+  dom.window.document.getElementById("generate-studio-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  const status = dom.window.document.getElementById("studio-status");
+  assert.equal(status.querySelector("img"), null, "content_type 里的 <img> 不许被解析成元素");
+  assert.equal(status.querySelector("i"), null, "mode 里的 <i> 不许被解析成元素");
+  assert.ok(
+    status.textContent.includes("<img"),
+    "回执字段只当纯文本显示（尖括号是字面量，不是标记）",
+  );
+});
+
+test("N20：download_url 非 http(s) 时不许进 href", async () => {
+  const dom = await loadPopupWithPacks([], async (msg) => {
+    if (msg?.type === "GENERATE_STUDIO_ARTIFACTS") {
+      return {
+        success: true,
+        artifacts: [
+          {
+            success: true,
+            content_type: "audio",
+            download_url: "javascript:alert(1)",
+          },
+          {
+            success: true,
+            content_type: "video",
+            download_url: "https://example.com/a.mp3",
+          },
+        ],
+      };
+    }
+    return { success: true };
+  });
+  dom.window.document.getElementById("studio-audio").click();
+  dom.window.document.getElementById("generate-studio-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+
+  const status = dom.window.document.getElementById("studio-status");
+  const links = status.querySelectorAll("a");
+  assert.equal(links.length, 1, "javascript: 伪协议不许变成链接，只有 https 那条可以");
+  assert.equal(
+    links[0].getAttribute("href"),
+    "https://example.com/a.mp3",
+    "白名单内的 URL 原样进 href",
+  );
+});
+
+test("N20：错误串（response.error / error.message）含 HTML 时不得被解析", async () => {
+  let call = 0;
+  const dom = await loadPopupWithPacks([], async (msg) => {
+    if (msg?.type === "GENERATE_STUDIO_ARTIFACTS") {
+      call += 1;
+      if (call === 1) {
+        return { success: false, error: '<img src=x data-evil="1">失败原因' };
+      }
+      throw new Error('<img src=x data-evil="2">通信崩了');
+    }
+    return { success: true };
+  });
+  const doc = dom.window.document;
+  doc.getElementById("studio-audio").click();
+
+  doc.getElementById("generate-studio-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+  let status = doc.getElementById("studio-status");
+  assert.equal(status.querySelector("img"), null, "response.error 里的 <img> 不许被解析成元素");
+  assert.ok(status.textContent.includes("生成失败"), "错误行还得显示出来");
+
+  doc.getElementById("generate-studio-btn").click();
+  await new Promise((r) => setTimeout(r, 0));
+  status = doc.getElementById("studio-status");
+  assert.equal(status.querySelector("img"), null, "error.message 里的 <img> 不许被解析成元素");
+  assert.ok(status.textContent.includes("通信错误"), "通信错误行还得显示出来");
+});
+
+// ─────────────────────────────────────────────────────────────────────
 // 4b. popup 执行产出展示（N13：产出此前被丢弃，用户拿不到 Pack 产物）
 // ─────────────────────────────────────────────────────────────────────
 

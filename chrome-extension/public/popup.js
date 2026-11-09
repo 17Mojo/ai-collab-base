@@ -382,19 +382,46 @@ function updateGenerateBtnState() {
 }
 
 /**
+ * 往 Studio 状态区放一条纯文本状态行（N20：一律不走 innerHTML）。
+ * @param {string} text
+ * @param {string} [cls] - artifact-item 的附加样式类（success/error）
+ */
+function setStudioStatusMessage(text, cls) {
+  studioStatusEl.textContent = '';
+  const item = document.createElement('div');
+  item.className = cls ? `artifact-item ${cls}` : 'artifact-item';
+  item.textContent = text;
+  studioStatusEl.appendChild(item);
+}
+
+/**
  * 显示 Studio 产物状态
+ *
+ * N20：artifacts 是 GENERATE_STUDIO_ARTIFACTS 的后端回执，字段
+ * （content_type/mode/download_url）不许当 HTML 解析——DOM 构建 + 文本节点。
+ * download_url 仅放行 ^https?:// 白名单，javascript: 等伪协议不进 href。
  * @param {object[]} artifacts
  */
 function displayStudioStatus(artifacts) {
-  studioStatusEl.innerHTML = artifacts.map(a => {
-    const cls = a.success ? 'success' : 'error';
+  studioStatusEl.textContent = '';
+  for (const a of Array.isArray(artifacts) ? artifacts : []) {
+    const item = document.createElement('div');
+    item.className = `artifact-item ${a.success ? 'success' : 'error'}`;
     const icon = a.success ? '✓' : '✗';
     const mode = a.mode ? ` [${a.mode}]` : '';
-    const detail = a.success && a.download_url
-      ? ` <a href="${a.download_url}" target="_blank" style="color:#4fc3f7">下载</a>`
-      : '';
-    return `<div class="artifact-item ${cls}">${icon} ${a.content_type}${mode}${detail}</div>`;
-  }).join('');
+    item.appendChild(document.createTextNode(`${icon} ${a.content_type}${mode}`));
+    if (a.success && typeof a.download_url === 'string' && /^https?:\/\//i.test(a.download_url)) {
+      item.appendChild(document.createTextNode(' '));
+      const link = document.createElement('a');
+      link.href = a.download_url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.style.color = '#4fc3f7';
+      link.textContent = '下载';
+      item.appendChild(link);
+    }
+    studioStatusEl.appendChild(item);
+  }
 }
 
 /**
@@ -407,7 +434,7 @@ async function generateStudioArtifacts() {
   const focusText = document.getElementById('studio-focus-text').value;
   generateStudioBtn.disabled = true;
   generateStudioBtn.textContent = '生成中...';
-  studioStatusEl.innerHTML = '<div class="artifact-item">正在生成，请稍候...</div>';
+  setStudioStatusMessage('正在生成，请稍候...');
 
   try {
     const response = await chrome.runtime.sendMessage({
@@ -420,10 +447,10 @@ async function generateStudioArtifacts() {
     if (response && response.success) {
       displayStudioStatus(response.artifacts);
     } else {
-      studioStatusEl.innerHTML = `<div class="artifact-item error">生成失败: ${response?.error || '未知错误'}</div>`;
+      setStudioStatusMessage(`生成失败: ${response?.error || '未知错误'}`, 'error');
     }
   } catch (error) {
-    studioStatusEl.innerHTML = `<div class="artifact-item error">通信错误: ${error.message}</div>`;
+    setStudioStatusMessage(`通信错误: ${error.message}`, 'error');
   } finally {
     generateStudioBtn.disabled = false;
     generateStudioBtn.textContent = '生成 Studio 产物';
