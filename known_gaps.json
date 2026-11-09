@@ -340,17 +340,21 @@
     {
       "id": "N20",
       "priority": "P3",
-      "status": "open",
+      "status": "closed",
       "title": "Studio 产物状态区有 HTML 注入面（数据源是后端回执，非 Pack）",
       "reader": "把 Studio 后端回执/错误串当可信数据渲染进 innerHTML 的人",
       "where": [
-        "chrome-extension/public/popup.js:388-426"
+        "chrome-extension/public/popup.js:385-425（setStudioStatusMessage + displayStudioStatus DOM 化）",
+        "chrome-extension/public/popup.js:437,450,453（loading/生成失败/通信错误三调用点）",
+        "chrome-extension/tests/extension-wiring.test.mjs（4a-2 节 N20 三条用例）",
+        "chrome-extension/tests/real-machine/mutation-check.mjs（N20 三条变异锚点）"
       ],
       "detail": "displayStudioStatus 用 innerHTML 拼 content_type/mode/download_url（download_url 直接进 href，未做协议白名单），两个错误分支把 response?.error / error.message 拼进 innerHTML。与 N2 同机械类，但信任边界不同：数据来自 GENERATE_STUDIO_ARTIFACTS 后端回执与扩展消息错误，不来自 Pack 作者——故从 N2 拆出独立条目，不混销。",
       "impact": "MV3 CSP（script-src 'self'）同样封脚本执行，只余标记注入/钓鱼 href 面；前提还得是后端或消息层先被污染——现实威胁低于 N2。download_url 放行 javascript: 伪协议是其中最实的一条。",
       "fix": "同 N2 改法（DOM 构建 + 文本 textContent）+ download_url 仅放行 ^https?://；或判可接受风险后 wontfix。收口时补变异锚，不修裸奔不留无锚修复。",
       "found_at": "2026-11-05",
-      "evidence": "N2 收口全扫 popup.js 的 innerHTML 面时发现：popup.js:389（artifacts 动态插值）/423/426（错误串插值）三处动态面，:410 为静态串无风险"
+      "closed_at": "2026-11-09",
+      "evidence": "按 N2 同款修法收口（2026-11-09）：① displayStudioStatus DOM 化——createElement + createTextNode 渲染 content_type/mode（文本节点，尖括号是字面量），download_url 仅放行 /^https?:\\/\\//i 白名单（javascript: 伪协议不进 href，白名单内 URL 原样进 href），顺带 rel=noopener；② 错误/loading 三调用点统一走 setStudioStatusMessage（item.textContent，零 innerHTML）；③ 测试 3 条（回执字段含 HTML 不解析、javascript: 不成链接 + https 白名单放行、response.error/error.message 含 HTML 不解析），32/32 接线 + 236/236 全量；④ mutation-check +3 锚点（回执渲染回 innerHTML→字段用例红、白名单失效→href 用例红、状态行回 innerHTML→错误串用例红）全被杀死，71/71 无存活。"
     }
   ]
 }

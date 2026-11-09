@@ -749,6 +749,34 @@ const MUTATIONS = [
     testFile: "extension-wiring.test.mjs",
     expectTest: "update 不播种",
   },
+  // ── N20：Studio 状态区注入面（2026-11-09）─────────────────────
+  {
+    name: "N20：回执字段渲染回退 innerHTML（标记注入复辟）",
+    why: "content_type/mode 是后端回执字段——回 innerHTML 就是给 popup 开标记注入面（N2 同机械类）",
+    target: "public/popup.js",
+    find: "    item.appendChild(document.createTextNode(`${icon} ${a.content_type}${mode}`));",
+    replace: "    item.innerHTML = `${icon} ${a.content_type}${mode}`;",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "Studio 回执字段含 HTML",
+  },
+  {
+    name: "N20：download_url 协议白名单失效（javascript: 进 href）",
+    why: "白名单失效后 javascript: 伪协议进 href——台账 N20 里最实的一条注入面",
+    target: "public/popup.js",
+    find: "/^https?:\\/\\//i.test(a.download_url)",
+    replace: "true",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "非 http(s) 时不许进 href",
+  },
+  {
+    name: "N20：状态行渲染回退 innerHTML（错误串注入复辟）",
+    why: "response.error / error.message 是消息层可控串——回 innerHTML 就是错误面注入复辟",
+    target: "public/popup.js",
+    find: "  item.textContent = text;",
+    replace: "  item.innerHTML = text;",
+    testFile: "extension-wiring.test.mjs",
+    expectTest: "错误串（response.error / error.message）含 HTML",
+  },
 ];
 
 /**
