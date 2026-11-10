@@ -70,11 +70,39 @@ jobs:
           fail_ci_if_error: false  # Codecov 不可用时不阻塞 CI
 
       - name: Run integration tests
-        # 已删除 || true：让集成测试失败真正报警
-        # 风险：当前 integration 测试若有问题会立刻显形，需要先跑一遍确认
+        # 2026-11-09 起为阻塞门禁（摘掉 continue-on-error）。
+        # 摘之前先补了真因：fastapi 未锁版本 → CI 解析到 starlette 1.x →
+        # TestClient 需要 httpx2，而 httpx2 不在依赖里 → test_api.py 收集即失败。
+        # 于是「集成测试红了」被 continue-on-error 吞成一个绿 step，持续多轮无人知晓。
+        # 补 httpx2 后本地实测 124 passed / 6 skipped，才敢把门拧上。
         run: |
           python -m pytest tests/integration/ -v --tb=short
-        continue-on-error: true  # 临时保留，避免新发现的失败阻塞其他 job
+
+  extension-static-checks:
+    # tests/e2e/ 是 chrome-extension 的静态结构守护（读文件 + 断言，不起服务、不依赖
+    # python 版本），此前只挂在 nightly.yml 里跑全量 ⇒ PR 阶段完全看不见。
+    # 代价已经付过一次：pack-storage-manager.js 在 5c4eabc 删除后，4 条断言在 main
+    # 上红了 6 天（2026-11-03 → 11-09）才被人工发现。
+    # 单次 job、不进 3.10/3.11/3.12 矩阵：静态检查跑三遍只烧时间，不增信息。
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e . 2>/dev/null || true
+
+      - name: Run e2e static checks
+        run: |
+          python -m pytest tests/e2e/ -v --tb=short
 
   performance-tests:
     # 复核发现 #2：tests/perf/ 此前不在 PR 门禁内，这类性能回归在 PR 阶段不可见。
