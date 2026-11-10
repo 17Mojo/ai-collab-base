@@ -1352,3 +1352,55 @@ test("N10：update 不播种——用户可能有意删光", async () => {
     "更新时绝不播种：用户可能有意删光默认 Pack，静默塞回去等于不尊重选择",
   );
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// N11：孤儿 pack_id 残留可见化（旧版 IMPORT_PACKS 的顶层 pack_id 僵尸数据）
+//
+// 收口「只认 metadata.pack_id」之后，历史残留会变成既不可见又不可清理的
+// 僵尸行。最小防护（台账裁定）：GET_ALL_PACKS 打 unrecognized:true +
+// popup 出可见警告——**数据保留，不静默删用户数据**。
+// ─────────────────────────────────────────────────────────────────────
+
+test("N11：GET_ALL_PACKS 给孤儿包打 unrecognized:true（且不静默删数据）", async () => {
+  const LEGACY = { pack_id: "legacy-1", pack_name: "旧格式包", workflow: { steps: [] } };
+  const NORMAL = {
+    metadata: { pack_id: "wiring-ok", pack_name: "正常包" },
+    workflow: { steps: [] },
+  };
+  const { send, store } = await loadServiceWorker([LEGACY, NORMAL]);
+
+  const res = await send({ type: "GET_ALL_PACKS" });
+
+  assert.equal(res.packs.length, 2, "不许静默删数据——两条都得回来");
+  const legacy = res.packs.find((p) => p.pack_id === "legacy-1");
+  const normal = res.packs.find((p) => p.metadata?.pack_id === "wiring-ok");
+  assert.ok(legacy, "孤儿包必须原样返回");
+  assert.equal(legacy.unrecognized, true, "孤儿包必须打 unrecognized:true");
+  assert.equal(normal.unrecognized, undefined, "正常包不许被打标");
+  assert.equal(store.packs.length, 2, "storage 原数据必须原样保留（不删用户数据）");
+});
+
+test("N11：popup 对孤儿包出可见警告（不伪装成正常 Pack）", async () => {
+  const LEGACY = { pack_id: "legacy-2", pack_name: "旧格式包" };
+  const NORMAL = {
+    metadata: { pack_id: "wiring-ok2", pack_name: "正常包" },
+    workflow: { steps: [] },
+  };
+  const dom = await loadPopupWithPacks([LEGACY, NORMAL]);
+  const list = dom.window.document.getElementById("packList");
+  const items = [...list.querySelectorAll(".pack-item")];
+  assert.equal(items.length, 2, "两条都渲染（数据保留，不静默删）");
+
+  const legacyRow = items.find((li) => li.dataset.unrecognized === "true");
+  assert.ok(legacyRow, "孤儿行必须带 data-unrecognized 标");
+  assert.match(
+    legacyRow.textContent,
+    /无法识别/,
+    `警告必须可见：${legacyRow.textContent}`,
+  );
+
+  const normalRow = items.find((li) => li.dataset.id === "wiring-ok2");
+  assert.ok(normalRow, "正常行照常渲染");
+  assert.equal(normalRow.dataset.unrecognized, undefined, "正常行不许带警告标");
+  assert.equal(normalRow.querySelector(".pack-warn"), null, "正常行不许有警告元素");
+});

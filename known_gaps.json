@@ -157,19 +157,22 @@
     {
       "id": "N11",
       "priority": "P3",
-      "status": "open",
+      "status": "closed",
       "title": "③ 收口后，storage 里的顶层 pack_id 历史包会变成删不掉的孤儿",
       "reader": "想知道「Pack ID 单轨收口」有没有副作用的人；以及将来决定要不要做一次性迁移的人",
       "where": [
-        "chrome-extension/src/background/service-worker.js:335",
-        "chrome-extension/src/background/service-worker.js:273-286",
-        "chrome-extension/public/popup.js:61"
+        "chrome-extension/src/background/service-worker.js:248-262（GET_ALL_PACKS 打 unrecognized:true）",
+        "chrome-extension/public/popup.js:67-95（loadPacks 孤儿行判定 + 可见警告）",
+        "chrome-extension/public/popup.html（.pack-warn 样式）",
+        "chrome-extension/tests/extension-wiring.test.mjs（N11 两条用例）",
+        "chrome-extension/tests/real-machine/mutation-check.mjs（N11 三条变异锚点）"
       ],
       "detail": "③ 把 Pack ID 判据收口成只认 metadata.pack_id 之后，若某用户 chrome.storage.local[\"packs\"] 里已有旧版 IMPORT_PACKS 放进来的顶层 pack_id 包，这些包会：popup 里 id 取到空串 ⇒ data-id=\"\" 不可点；DELETE_PACK 按 metadata.pack_id 匹配不到 ⇒ 删不掉。变成既不可见又不可清理的僵尸数据。",
       "impact": "功能无损（这些包本来就跑不了——pack-executor 的 loadPack 一直严格只认 metadata.pack_id），但会留下删不掉的残留。",
       "fix": "暂缓修。产生入口只有旧版 IMPORT_PACKS，CREATE_PACK 一直只写 metadata.*，窗口很窄。等真机上真出现再修；届时最小做法是 GET_ALL_PACKS 给这些包打 unrecognized:true + popup 显示一条可见警告，而不是静默删用户数据。",
       "found_at": "2026-11-03",
-      "evidence": "探针 /tmp/probe-dualtrack.mjs：顶层 pack_id 包被 IMPORT_PACKS 放行（收口前）但 replacePacks 装入 []、按 id 取不到；收口后 IMPORT_PACKS 直接拒绝，故只能是历史残留"
+      "closed_at": "2026-11-10",
+      "evidence": "🔧 裁定变更：原 fix 写「暂缓修，等真机上真出现再修」，2026-11-10 用户裁定改为「收掉 N11（台账清零）」——按原定最小做法提前落地，非真机触发。收口内容：① GET_ALL_PACKS 对缺 metadata.pack_id 的残留映射打 unrecognized:true（原 storage 数据不动，不静默删）；② popup loadPacks 判定 unrecognized=!id，孤儿行带 data-unrecognized 标 + .pack-warn 红字可见警告「无法识别（旧格式残留，缺 metadata.pack_id）：不可执行、不可删除，数据已保留」，名称回落到旧顶层 pack_id，正常行不打标；③ 测试 2 条（GET_ALL_PACKS 打标且不删数据、popup 警告可见且正常行隔离），34/34 接线 + 238/238 全量；④ mutation-check +3 锚点（摘打标 / 拆判定 / 摘警告文案）全被杀死，74/74 无存活。遗留：DELETE_PACK 仍匹配不到孤儿包，清理路径未提供——按「不静默删用户数据」原则保留数据，一次性迁移留待真机出现后另行裁定。"
     },
     {
       "id": "N1",
