@@ -20,6 +20,7 @@ pytest>=7.0.0
 pytest-asyncio>=0.21.0
 pytest-cov>=4.0.0
 pytest-timeout>=2.1.0  # for --timeout flag
+httpx2>=2.0.0  # starlette 1.x 的 TestClient 依赖；fastapi 未锁版本，CI 会解析到最新 starlette
 
 # ===== Development =====
 ruff>=0.1.0
