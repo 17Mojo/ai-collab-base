@@ -18,11 +18,21 @@
  *
  * 环境变量：
  *   PLATFORM   平台 id（默认 qianwen）
- *   CANDIDATES PRECHECK 模式下的候选 id，逗号分隔
+ *   CANDIDATES PRECHECK 模式下的候选 id，逗号分隔（默认 5 个活跃站）
  *   PROFILE    持久 profile 目录
  *   OUT / SHOT 回执与截图路径
  *   TOPIC / LEVEL   Pack 输入
  *   LOGIN_WAIT 等登录分钟数（默认 15）
+ *   ALLOW_FROZEN=1  仅在用户明确解冻后允许跑冻结平台（见 platform-freeze.mjs）
+ *   PACK_PATH  覆盖出厂 Pack 路径；A/B 对照时指向生成的变体（默认仍是出厂 Pack）
+ *   PACK_VARIANT 只写进回执的标签，便于区分 A/B 两轮，不改变执行逻辑
+ *
+ * ## 平台冻结守卫（2026-11-11）
+ *
+ * 用户红线「仅保留 qianwen、yuanbao、chatglm、yiyan、kimi，其他冻结不去碰」
+ * 由 `platform-freeze.mjs` 在 `launch()` 之前硬拦截：冻结站连浏览器都不启动。
+ * 预检虽然不发包，但会打开页面，所以 `CANDIDATES` 同样过闸。
+ * 守卫的放行结果写进回执 `platformPolicy`，便于从磁盘复核「谁解冻过」。
  */
 
 import { chromium } from "playwright";
@@ -34,10 +44,19 @@ import { fileURLToPath } from "node:url";
 import { clearSwCaches } from "./clear-sw-cache.mjs";
 import { overwriteNotice, precheckOutputPath } from "./evidence-paths.mjs";
 import { PLATFORMS, getPlatform } from "../platforms.mjs";
+import {
+  ACTIVE_PLATFORM_IDS,
+  assertCandidatesAllowed,
+  assertPlatformAllowed,
+  evaluatePlatformPolicy,
+} from "./platform-freeze.mjs";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const EXT = fileURLToPath(new URL("../../dist", import.meta.url));
-const PACK_PATH = `${REPO_ROOT}packs/examples/xiaohongshu_knowledge_creator.json`;
+const PACK_PATH =
+  process.env.PACK_PATH || `${REPO_ROOT}packs/examples/xiaohongshu_knowledge_creator.json`;
+const PACK_VARIANT = process.env.PACK_VARIANT || "as-is";
+const ALLOW_FROZEN = process.env.ALLOW_FROZEN === "1";
 const PROFILE =
   process.env.PROFILE ||
   // 🔧 2026-11-11：原默认值 `rm-l2-multi-profile` 从未被创建（磁盘上不存在），
@@ -48,7 +67,9 @@ const EVIDENCE_DIR = `${REPO_ROOT}collaboration/results/real-machine-runs/eviden
 const TODAY = new Date().toISOString().slice(0, 10);
 const PLATFORM = process.env.PLATFORM || "qianwen";
 const PRECHECK = process.env.PRECHECK === "1";
-const CANDIDATES = (process.env.CANDIDATES || "gemini,kimi,longcat,yiyan,yuanbao,chatglm")
+// 默认候选集直接由白名单派生，不在这里再抄一份平台清单——
+// 否则「白名单加了新站、这里漏了」又是一处静默漂移。
+const CANDIDATES = (process.env.CANDIDATES || ACTIVE_PLATFORM_IDS.join(","))
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
@@ -199,13 +220,26 @@ async function precheck(context) {
   if (notice) log("⚠️", notice, "—— 旧文件将被写入覆盖，若要保留请改用 OUT=...");
   writeFileSync(
     outPath,
-    JSON.stringify({ generatedAt: new Date().toISOString(), mode: "precheck", results }, null, 2),
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        mode: "precheck",
+        candidates: CANDIDATES,
+        platformPolicy: CANDIDATES.map((id) => ({
+          id,
+          ...evaluatePlatformPolicy(id, { allowFrozen: ALLOW_FROZEN }),
+        })),
+        results,
+      },
+      null,
+      2,
+    ),
   );
   log("预检结果已写:", outPath);
   return results;
 }
 
-async function runOne(context, extId, spec) {
+async function runOne(context, extId, spec, platformPolicy) {
   const page = await context.newPage();
   await page.goto(spec.url, { waitUntil: "domcontentloaded", timeout: 90000 });
   log(`${spec.name} 已打开；未登录请在窗口里扫码，最多等 ${LOGIN_WAIT} 分钟`);
@@ -317,6 +351,9 @@ async function runOne(context, extId, spec) {
     platform: spec.id,
     platformUrl: spec.url,
     packId: PACK_ID,
+    packPath: PACK_PATH,
+    packVariant: PACK_VARIANT,
+    platformPolicy: platformPolicy || null,
     input: { topic: TOPIC, target_audience_level: LEVEL },
     tabIdUsed: tabId,
     delivery: tabId === null ? "broadcast" : "precise",
@@ -341,14 +378,26 @@ async function runOne(context, extId, spec) {
 }
 
 async function main() {
+  // 冻结闸门必须在 launch() 之前：冻结站连浏览器都不启动，更不打开页面。
+  // 预检的 CANDIDATES 也过同一道闸（打开页面就算「碰」）。
+  if (PRECHECK) {
+    assertCandidatesAllowed(CANDIDATES, { allowFrozen: ALLOW_FROZEN });
+  } else {
+    assertPlatformAllowed(PLATFORM, { allowFrozen: ALLOW_FROZEN });
+  }
+
   const spec = getPlatform(PLATFORM);
   if (!spec) throw new Error(`未知平台 ${PLATFORM}；可选: ${PLATFORMS.map((p) => p.id).join(",")}`);
+  const policy = evaluatePlatformPolicy(PLATFORM, { allowFrozen: ALLOW_FROZEN });
+  if (!policy.active) {
+    log("⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行:", PLATFORM, "—— 请确认用户已明确解冻");
+  }
   const { context, extId, probe } = await launch();
   try {
     if (PRECHECK) {
       await precheck(context);
     } else {
-      await runOne(context, extId, spec);
+      await runOne(context, extId, spec, policy);
     }
   } finally {
     await context.close();

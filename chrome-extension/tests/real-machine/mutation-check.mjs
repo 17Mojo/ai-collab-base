@@ -1167,6 +1167,112 @@ const MUTATIONS = [
     testFile: "session-boundary.test.mjs",
     expectTest: "声明 fresh_session 的步骤，提示词引用的变量必须全部来自上游",
   },
+
+  // ── 只读探针门禁（N23 收口：把「声明」变成有门的事实）────────
+  {
+    name: "往只读探针里插一次真实 click",
+    why: "注释里的红线不会自己挡住新加的交互调用；若门禁是空跑，「探针全程只读」就退化成一句口头承诺",
+    target: "real-machine/new-session-probe.mjs",
+    find: "        await page.waitForTimeout(4000);",
+    replace:
+      "        await page.waitForTimeout(4000);\n        await page.locator(COMPOSER).first().click();",
+    testFile: "probe-readonly.test.mjs",
+    expectTest: "探测器里没有任何点击 / 输入 / 悬停 / 键盘调用",
+  },
+  {
+    name: "只读探针的回执谎报 redlines.clicks 为真",
+    why: "回执是审阅者判断「这次是不是只读」的唯一机器可读依据；把它改坏而门禁不红，等于降级不可见",
+    target: "real-machine/new-session-probe.mjs",
+    find: "      clicks: false, typing: false, sending: false, hover: false,",
+    replace: "      clicks: true, typing: false, sending: false, hover: false,",
+    testFile: "probe-readonly.test.mjs",
+    expectTest: "回执明写 readonly mode 与 redlines 全 false",
+  },
+
+  // ── 平台冻结守卫（用户 2026-11-11 红线的代码级落地）──────────
+  {
+    name: "把 deepseek 悄悄加进活跃白名单",
+    why: "白名单被放宽就等于替用户解冻；冻结平台会被真机驱动照跑，红线形同虚设",
+    target: "real-machine/platform-freeze.mjs",
+    find: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "qianwen",',
+    replace: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "deepseek",\n  "qianwen",',
+    testFile: "platform-freeze.test.mjs",
+    expectTest: "白名单恰好是 5 个活跃站",
+  },
+  {
+    name: "冻结平台不再被硬闸门拒绝（默认放行）",
+    why: "assertPlatformAllowed 一旦恒放行，PLATFORM=deepseek 就会真实发消息；这是最直接的越线",
+    target: "real-machine/platform-freeze.mjs",
+    find: "  if (!policy.allowed) {\n    throw new Error(",
+    replace: "  if (false) {\n    throw new Error(",
+    testFile: "platform-freeze.test.mjs",
+    expectTest: "冻结平台默认被硬闸门拒绝",
+  },
+  {
+    name: "候选集里的冻结站被静默跳过而不是整体拒绝",
+    why: "改成「跳过继续」后，预检回执看起来像只测了活跃站，掩盖了本轮其实想跑冻结站",
+    target: "real-machine/platform-freeze.mjs",
+    find: "  if (frozen.length > 0 && opts.allowFrozen !== true) {",
+    replace: "  if (false) {",
+    testFile: "platform-freeze.test.mjs",
+    expectTest: "候选集里混进一个冻结站，整个预检都拒绝",
+  },
+  {
+    name: "冻结闸门被挪到 launch() 之后",
+    why: "闸门晚于 launch 就等于先启动了浏览器、可能已打开页面才拦——「不去碰」已经破了",
+    target: "real-machine/l2-platform-auto.mjs",
+    find: "  if (PRECHECK) {\n    assertCandidatesAllowed(CANDIDATES, { allowFrozen: ALLOW_FROZEN });\n  } else {\n    assertPlatformAllowed(PLATFORM, { allowFrozen: ALLOW_FROZEN });\n  }\n\n  const spec = getPlatform(PLATFORM);",
+    replace: "  const spec = getPlatform(PLATFORM);",
+    testFile: "platform-freeze.test.mjs",
+    expectTest: "L2 真机驱动在 launch() 之前调用了冻结闸门",
+  },
+  {
+    name: "L2 回执不再记录平台放行策略",
+    why: "解冻过不留痕，「谁在什么时候解冻」就只能靠聊天记录，无法从磁盘复核",
+    target: "real-machine/l2-platform-auto.mjs",
+    find: "    platformPolicy: platformPolicy || null,",
+    replace: "    platformPolicy: null,",
+    testFile: "platform-freeze.test.mjs",
+    expectTest: "L2 驱动把放行策略与 Pack 变体写进回执",
+  },
+
+  // ── 会话墙 A/B 方案（判据不许被稀释）────────────────────────
+  {
+    name: "A/B 方案谎称已经执行过",
+    why: "status 改成已执行，就会有人把计划当成真机回执引用——这正是「没验证却写成验证过」的产生点",
+    target: "real-machine/session-wall-ab.mjs",
+    find: '    status: "plan-only / NOT-EXECUTED",',
+    replace: '    status: "executed",',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "方案默认标注「未执行」",
+  },
+  {
+    name: "A 组不再删掉 fresh_session（A/B 变成同一组）",
+    why: "对照组没去掉会话边界，A/B 就只差一个标签；「B 比 A 好」无从谈起",
+    target: "real-machine/session-wall-ab.mjs",
+    find: "  if (variant === \"no-boundary\") {\n    const strip = (o) => {",
+    replace: "  if (false) {\n    const strip = (o) => {",
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "A 组真的删掉了出厂 Pack 的 fresh_session",
+  },
+  {
+    name: "验收判据删掉「B 组必须真的重置成功」",
+    why: "去掉 available/messageCountAfter 判据后，B 组即使根本没开成新会话也能被算作「边界有效」",
+    target: "real-machine/session-wall-ab.mjs",
+    find: '        "B 组回执 sessionResets[0].available === true && messageCountAfter < messageCountBefore —— 否则 B 不能算「开了新会话」，这轮对照作废",',
+    replace: '        "B 组回执存在即可",',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "验收判据含「B 组必须真的重置成功」",
+  },
+  {
+    name: "归因边界删掉「不能说重置免费」",
+    why: "这条边界一删，方案就会滑向「重置零成本」——而 durationMs 实测非零，§14 已明确不许这么写",
+    target: "real-machine/session-wall-ab.mjs",
+    find: '      "也不能说「重置免费」——durationMs 非零，4 站实测 304–319ms，代码上界 8s。",',
+    replace: '      "重置开销可以忽略。",',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "归因边界明写「不能归因给重置」",
+  },
 ];
 
 /**
