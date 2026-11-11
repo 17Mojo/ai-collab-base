@@ -32,6 +32,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { clearSwCaches } from "./clear-sw-cache.mjs";
+import { overwriteNotice, precheckOutputPath } from "./evidence-paths.mjs";
 import { PLATFORMS, getPlatform } from "../platforms.mjs";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -185,8 +186,17 @@ async function precheck(context) {
     results.push(row);
     await page.close().catch(() => {});
   }
-  mkdirSync(dirname(OUT), { recursive: true });
-  const outPath = process.env.OUT || `${EVIDENCE_DIR}/L2-precheck-${TODAY}.json`;
+  // N22：文件名必须带候选集，否则「同日跑第二遍」会把上一次的预检证据
+  // 静默覆盖掉（2026-11-11 13:32 就这么把 5 站记录写成了单站）。
+  const outPath = precheckOutputPath({
+    evidenceDir: EVIDENCE_DIR,
+    date: TODAY,
+    candidates: CANDIDATES,
+    override: process.env.OUT,
+  });
+  mkdirSync(dirname(outPath), { recursive: true });
+  const notice = overwriteNotice(outPath);
+  if (notice) log("⚠️", notice, "—— 旧文件将被写入覆盖，若要保留请改用 OUT=...");
   writeFileSync(
     outPath,
     JSON.stringify({ generatedAt: new Date().toISOString(), mode: "precheck", results }, null, 2),
@@ -313,6 +323,11 @@ async function runOne(context, extId, spec) {
     exec: execRes,
   };
   mkdirSync(dirname(OUT), { recursive: true });
+  // L2 回执的默认名仍是 `L2-<platform>-auto-<date>.json`（同一天同一站
+  // 复跑会覆盖上一次）。既有的复盘习惯是用 OUT 显式加后缀（.fix1 / .full5），
+  // 所以这里不改命名，但**覆盖必须出声**——不然又是「静默丢证据」。
+  const l2Notice = overwriteNotice(OUT);
+  if (l2Notice) log("⚠️", l2Notice, "—— 同一站同日复跑请用 OUT=... 另存");
   writeFileSync(OUT, JSON.stringify(out, null, 2));
   log("回执已写:", OUT);
   const outputs = execRes?.result?.output || {};
