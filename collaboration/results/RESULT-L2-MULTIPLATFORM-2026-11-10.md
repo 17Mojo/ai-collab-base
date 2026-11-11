@@ -506,3 +506,101 @@ fix2 在 step_2 挂 723.9s（`4×180 + 3.9`，180s 同样确认生效），0 个
 - 截图只能看到最后一次问答（一条提问、一条回复，无重复气泡），**不能证明前面 7 步都没重复** —— 那要靠会话全文回读，而回读正是上次触发滑块的动作。
 
 ⇒ §12.5 第 1 项闭掉；第 2 项（用 deepseek / longcat 验证续等路径）仍挂着，等解冻。
+
+---
+
+## 13. Pack 重构：会话边界（`fresh_session`），解 step_8 尾部撞墙
+
+§9.4 把「deepseek / longcat 同卡 step_8」判成 **Pack 结构问题**——不是 adapter，也不是平台慢。这一节是它的修法。
+
+### 13.1 修的是哪个假设
+
+隔离实验（§9.4）已经把变量单独拎出来了：同一条 **2437 字**的 fusion 提示词发进**全新会话**，**21 秒答完、产出 1481 字**。
+
+⇒ 提示词不被任何一方拒绝，**「单会话串行跑完 8 步」才是变量**。到 step_8 时会话已累积 7 轮、约 5–6k 字，而 step_8 的提示词其实**把 6 个上游字段全内联了**——它根本不需要那段历史，却一直在为它付费。
+
+### 13.2 改法：把「要不要共用会话」变成 Pack 的显式声明
+
+| 层 | 改动 |
+|---|---|
+| Pack（数据） | `step_8_output` 新增 `"fresh_session": "prefer"` |
+| 执行器 | AI 步骤在发送**之前**，若声明了 `fresh_session` 就先发 `NEW_SESSION` 到同一个标签页 |
+| 内容脚本 | 新增 `NEW_SESSION`：先找 adapter 的 `newChat` 选择器，否则按文案兜底；点完**必须确认消息数下降**才算成功 |
+| 回执 | `sessionResets[]` 记录 `strategy / available / messageCountBefore / messageCountAfter` |
+
+两档语义，差别只在「开不成」时：
+
+- `true` / `"strict"`：**这一步失败**，一条提示词都不发。适合「上一步的上下文会污染这一步」的 Pack。
+- `"prefer"`：记一条 `available:false` 后**照常发送**，行为与修复前一致。
+
+**为什么出厂用 `prefer` 而不是 `strict`**：逐站探测发现 5 个活跃站里只有 chatglm / 文心有可识别的「新对话」入口。一律 strict 会让一个结构性优化，把**本来跑得通**的站点直接打成 7/8。
+
+### 13.3 「新对话」入口不是按钮（这一步踩了坑）
+
+第一版按 `button / a / [role=button]` 找，chatglm 上**恒为 0 命中**，于是 step_8 被判失败——拒绝把提示词发进旧会话（这个行为是对的），但事没办成。
+
+只读 DOM 探测（`dom-shape-probe`，`TEXTS='新对话'`）给出了真实结构：
+
+| 站 | 命中的元素 | 结论 |
+|---|---|---|
+| chatglm | `div.new-session.flex…el-tooltip__trigger > div.text`（挂在 `aside.aside-container`） | 已写入 `newChat` 选择器 |
+| 文心 | `div.new-dialog-container-plain > span.cos-line-clamp-1` | 已写入 `newChat` 选择器 |
+| 千问 | `div.flex…hover:bg-option`（纯 Tailwind，无稳定语义类名） | 兜底匹配不到 → 见 N23 |
+| 元宝 / Kimi | 页面上**没有**「新对话」三个字（leafHits=0） | 大概率图标按钮或别的措辞 → 见 N23 |
+
+同一份探测还抓到一个**危险诱饵**：chatglm 输入框旁边还有一处文本同为「新对话」的 `div.enter.is-main-chat`（祖先链 `input-box-container → input-wrap`）。所以兜底匹配加了 `form / [class*=input|editor|send|composer]` 祖先排除——点那个东西的后果不可预料。
+
+### 13.4 真机验证（两台，两个分支都走到了）
+
+| | chatglm | 千问 |
+|---|---|---|
+| 结果 | **8/8 success, completed** | **8/8 success, completed** |
+| `sessionResets` | `available: true`, `strategy: adapter-selector`, **12 → 0** | `available: false`, `strategy: none` |
+| step_8 | **75.0s** 通过，final_content 1287 字 | 46.3s 通过，final_content 1206 字 |
+| 总耗时 | 419.6s | 263.8s（12:41 那轮 257.7s，无回归） |
+| 回执 | `evidence/L2-chatglm-auto-2026-11-11.fresh-session2.json` | `evidence/L2-qianwen-auto-2026-11-11.fresh-session.json` |
+
+**能硬说的**：会话边界在 chatglm 上是**真的重置了**——不是「点了按钮」，是消息数 12 → 0；而千问上它**没办成、但没把站点弄坏**，降级事实落在回执里。
+
+**不能说的**：① chatglm 总耗时 419.6s 比不加边界那轮的 349.8s 更长，但差异主要在 step_2（28.7 → 70.2s）等平台抖动上，**不能归因给重置**，也**不能反过来说重置是免费的**；② 元宝 / Kimi / 文心**没有做端到端验证**（文心只有 DOM 选择器证据）；③ 真正撞墙的 deepseek / longcat 冻结中，**本次没有验证「加了会话边界就不撞了」**——这是这条修复最该被验的一条，也是最欠的一条。
+
+### 13.5 守护
+
+- `npm test` **282 / 282**（263 + 会话边界 8 + 证据路径 11；会话边界那 8 条覆盖 strict/prefer 两个分支与「自足性」检查）。
+- 结构自检：声明 `fresh_session` 的步骤，提示词里的每个 `{{var}}` 都必须来自上游产出——**自足是 fresh_session 成立的前提**，不自足时开新会话反而更糟。
+- 变异锚 +6（忽略 fresh_session / strict 失败后照发 / 广播放行 / 降级记成成功 / Pack 去掉声明 / 自足性放过未知变量），全量 **97/97 全杀死**，见 §13.6。
+
+### 13.6 全量变异检查暴露的两个自伤（都出在「守护自己」上）
+
+第一轮全量变异跑完，`prefer 降级被记成「成功开过新会话」` **存活**。按 §9.5 的老规矩先判「守护有洞」还是「锚点漂移」——这次是**两个都不是**，是第三类：**锚点本身是空变异**。顺着查下去还牵出一个真漏洞。
+
+**（1）锚是空的：`...result` 在后面会把强制值覆盖掉**
+
+```js
+record = { ...base, available: result.available !== false, ...result };
+```
+
+把 `available: result.available !== false` 改成 `available: true`——看起来是「降级记成成功」，但同一对象字面量里 `...result` 展开在**后面**，`result.available=false` 会把它重新盖回去。**行为一点没变，测试当然照常绿。** 这条锚等于什么都没验。
+
+修法：让强制值排在展开**之后**（`{ ...result, available: true }`）。改完立刻被杀死。
+
+> 这条值得单记：变异的判据不是「这行代码看着重要」，而是「改掉它，行为真的会不同」。§9.5 记的是锚点随实现漂移（find 找不到），这一条是**find 找得到、replace 也执行了，但语义等价**——比漂移更隐蔽，因为它不报错、不存活提示异常，只是悄悄不设防。
+
+**（2）真漏洞：自足性检查对交付的那个 Pack 从来没执行过**
+
+```js
+if (step.fresh_session === true) {   // ← 而出厂 Pack 声明的是 "prefer"
+```
+
+自足性检查（「开新会话 ⇒ 提示词必须自己带齐所有变量」）写的是 `=== true`，而出厂 Pack 用的是 `"prefer"`。**`"prefer"` 在 chatglm / 文心上一样会把历史清空**——也就是说，这条检查恰好对唯一真正会开新会话的那个 Pack 完全失效。
+
+改成判真值（`if (step.fresh_session)`）后，检查真的跑到了 `step_8_output` 上，并通过（6 个变量全部来自上游）。同时补两条锚证明它咬得住：删掉 Pack 的声明、把一个变量名改成没人产出的名字。
+
+**（3）连带发现：变异副本里那两条 Pack 测试恒红（ENOENT）**
+
+第一轮的失败清单里还混着 `真实 Pack 的 step_8_output 声明了 fresh_session=prefer` 与 `声明 fresh_session 的步骤，提示词引用的变量必须全部来自上游`——它们在**未变异**的副本里同样红。根因是 `PACK_PATH` 写死 `resolve(HERE, "../../packs/…")`：变异检查把 `tests/` 复制到 `<扩展根>/.mutation-tmp/tests/`，**深度多一层**，`../../packs` 就落到不存在的 `<扩展根>/packs`。
+
+后果不是「多两条红的」，而是**这两条守护在变异环境里从未被真正判定过**（永远红，永远和「被杀死」混在一起，无法区分）。修法是往上找而不是假设层级（`findUpwards`，最多 6 层）。修完副本里 8/8 全绿，对照组与变异组的差异才可信。
+
+**收口**：`npm test` 282/282 → 全量变异 **97/97 全杀死**。
+

@@ -388,15 +388,37 @@
     {
       "id": "N22",
       "priority": "P3",
-      "status": "open",
+      "status": "closed",
       "title": "预检回执的默认文件名按日期固定，同日复跑会静默覆盖当日的预检证据",
       "reader": "同一天跑第二次预检的人（例如只为复核某一个站点）；以及事后按证据目录复盘的人——会以为「当天的预检只跑了这一个站」，而原本的 5 站记录已经不在了",
       "where": [
-        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:189（outPath = OUT || `${EVIDENCE_DIR}/L2-precheck-${TODAY}.json`，不含 CANDIDATES / 时刻）"
+        "chrome-extension/tests/real-machine/evidence-paths.mjs（candidatesSlug / precheckOutputPath / overwriteNotice：路径推导与覆盖提示的唯一事实源）",
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:190-206（预检改用 precheckOutputPath + 覆盖前出声）",
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:322-330（L2 回执保留原名，但覆盖前出声并提示用 OUT 另存）"
       ],
       "detail": "文件名只带日期，不带候选集、不带时刻。2026-11-11 13:32 为复核 chatglm 单独跑了 CANDIDATES=chatglm 的预检，直接把 12:41 那轮 5 站预检的 L2-precheck-2026-11-11.json 覆盖成单站版本（11903 B → 2412 B）。",
       "impact": "当日预检证据静默消失，且**不报错、不警告**。若该文件尚未提交（本项目经常「先跑后提交」），就是又一起不可恢复的数据损失——本次能救回是因为它已在 52f551a 里。",
-      "fix": "默认文件名带上候选集或时刻（例如 `L2-precheck-<date>.<candidates>.json`，候选集超过 3 个时退化为 `<date>.<HHMM>Z`），或复用 OUT 环境变量强制显式指定；同时在覆盖已存在文件时打印一行「覆盖了 X → Y」。收口要求：补一条测试钉住「同日两次不同候选集的预检不得写到同一路径」。",
+      "fix": "默认文件名带上候选集或时刻（例如 `L2-precheck-<date>.<candidates>.json`，候选集超过 3 个时退化为 `<date>.<HHMM>Z`），或复用 OUT 环境变量强制显式指定；同时在覆盖已存在文件时打印一行「覆盖了 X → Y」。收口要求：补一条测试钉住「同日两次不同候选集的预检不得写到同一路径」。 ✅ 已收口（2026-11-11 14:5x）：① 路径推导与覆盖提示抽成 `tests/real-machine/evidence-paths.mjs`（纯函数，可单测）：`precheckOutputPath` 默认产出 `L2-precheck-<date>.<候选集 slug>.json`，slug 对**集合**归一（排序+去重）——`chatglm,kimi` 与 `kimi,chatglm` 同名，但 `chatglm` 与 `chatglm,kimi` 一定不同名；超过 8 项退化成「项数-短哈希」。② 覆盖已有文件时打印一行 `⚠️ 覆盖已有回执：<path>（原 N B）`——不存在则不吭声（不许出现「原 0 B」这种谎）。L2 回执的默认名**刻意不改**（复盘习惯是用 OUT 加 .fix1/.full5 后缀），但同样加覆盖提示。③ 守卫：`tests/real-machine/evidence-paths.test.mjs` 11 条，含用户点名的「同日两次不同候选集，不得写同一路径」；登记 4 条变异锚（路径退回只带日期 / 候选集不参与文件名 / 不排序 / 覆盖时不吭声），全部被杀死。④ 历史文件名（如 `L2-precheck-2026-11-11.json`）保持原样，不被重命名——RESULT 里对它们的引用继续有效。",
+      "found_at": "2026-11-11",
+      "closed_at": "2026-11-11",
+      "appended_evidence": [
+        "收口验证（2026-11-11 14:5x）：`npm test` 全绿；`evidence-paths.test.mjs` 11/11；全量变异检查含 N22 的 4 条锚全部被杀死。⚠️ 仍未验证的部分：新命名规则只做过单测与变异，**没有真机复跑一次预检**去确认落盘文件名确实带上了候选集（真机复跑要开浏览器，本轮优先把算力给了会话边界验证）——第一次真机预检时请顺手核一眼文件名。"
+      ]
+    },
+    {
+      "id": "N23",
+      "priority": "P2",
+      "status": "open",
+      "title": "会话边界（fresh_session）只在 chatglm / 文心上真生效；千问找不到入口、元宝与 Kimi 不用「新对话」措辞",
+      "reader": "给 Pack 声明了 fresh_session 并指望它解掉长会话撞墙的人——在千问/元宝/Kimi 上这条声明会**静默降级成「没做」**（回执里记 available:false，但 Pack 仍然跑完、输出看不出差别）；以及事后按回执复盘的人——只看 final_content 长度是看不出会话到底有没有重置的",
+      "where": [
+        "chrome-extension/src/content/content-script.js（NEW_SESSION_TEXTS / NEW_SESSION_CONTROL_SELECTOR / findNewSessionControl）",
+        "chrome-extension/src/platforms/chatglm-adapter.js（newChat: ['.new-session']，2026-11-11 真机 DOM 实证）",
+        "chrome-extension/src/platforms/yiyan-adapter.js（newChat: ['.new-dialog-container-plain', ...]，同上）"
+      ],
+      "detail": "2026-11-11 逐站只读 DOM 探测（dom-shape-probe，TEXTS='新对话'）结论：chatglm 命中 div.new-session（aside 下，非 button）；文心命中 div.new-dialog-container-plain；千问命中的是一个纯 Tailwind 类名的 div（span.truncate ← div.flex…hover:bg-option），没有任何稳定语义类名，当前兜底选择器（button / a / [role=button] / class 含 new-session|new-chat|new-dialog）**匹配不到它**；元宝与 Kimi 页面上根本没有「新对话」这三个字（leafHits=0），大概率是图标按钮或别的措辞。真机端到端验证：chatglm 重置成功（messageCountBefore 12 → After 0，strategy=adapter-selector，step_8 75.0s 通过）；千问 available=false、8/8 仍通过、总耗时 263.8s（与 12:41 那轮 257.7s 持平，无回归）。",
+      "impact": "① fresh_session 的收益目前只覆盖 2/5 个活跃站，deepseek/longcat（真正撞墙的两站）冻结中未验；② 降级是**可见但容易漏看**的：记录在 sessionResets 里，而复盘时通常只看 steps 的 success 与输出长度；③ 若有人把 fresh_session 写成 strict 再在千问/元宝/Kimi 上跑，会直接把这几个站打成 7/8——所以出厂 Pack 用的是 prefer。",
+      "fix": "两条路，任选其一或并用：① 给千问补一个**结构性**兜底——把文本精确匹配的范围扩到导航容器内（aside/nav/[class*=sidebar] 下的任意元素，命中后点它或最近的祖先），因为千问的入口没有语义类名，只能靠「位置 + 文案」定位；② 元宝/Kimi 换个措辞再探一次（新建聊天/新会话/加号图标），探到了就照 chatglm 的方式写进 newChat。收口要求：每站一次真机 L2，回执里 sessionResets[0].available 必须为 true，且 messageCountAfter < messageCountBefore。",
       "found_at": "2026-11-11"
     }
   ]
