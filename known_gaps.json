@@ -402,13 +402,14 @@
       "found_at": "2026-11-11",
       "closed_at": "2026-11-11",
       "appended_evidence": [
-        "收口验证（2026-11-11 14:5x）：`npm test` 全绿；`evidence-paths.test.mjs` 11/11；全量变异检查含 N22 的 4 条锚全部被杀死。⚠️ 仍未验证的部分：新命名规则只做过单测与变异，**没有真机复跑一次预检**去确认落盘文件名确实带上了候选集（真机复跑要开浏览器，本轮优先把算力给了会话边界验证）——第一次真机预检时请顺手核一眼文件名。"
+        "收口验证（2026-11-11 14:5x）：`npm test` 全绿；`evidence-paths.test.mjs` 11/11；全量变异检查含 N22 的 4 条锚全部被杀死。",
+        "真机复核（2026-11-11 17:40，闭环上面那条欠账）：连跑三次 PRECHECK —— ① `CANDIDATES=qianwen,yuanbao,chatglm,yiyan,kimi` 落盘 `L2-precheck-2026-11-11.chatglm-kimi-qianwen-yiyan-yuanbao.json`（11906 B，5 站，文件名确实带候选集 slug）；② 同日改成 `CANDIDATES=chatglm` 落盘 `L2-precheck-2026-11-11.chatglm.json`（2412 B，1 站）——**与 ① 不同路径**，① 内容未被覆盖；③ 同一候选集再跑一次，控制台打印 `⚠️ 覆盖已有回执：…（原 2412 B）`。历史旧名 `L2-precheck-2026-11-11.json` 仍为 11903 B、mtime 13:39 未变。三份文件按 results[].platform 回读分别是 5 站 / 1 站 / 5 站，磁盘真值一致。⇒ N22 的最后一层证据（真机落盘）已补齐，不再有未验证项。"
       ]
     },
     {
       "id": "N23",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "会话边界（fresh_session）只在 chatglm / 文心上真生效；千问找不到入口、元宝与 Kimi 不用「新对话」措辞",
       "reader": "给 Pack 声明了 fresh_session 并指望它解掉长会话撞墙的人——在千问/元宝/Kimi 上这条声明会**静默降级成「没做」**（回执里记 available:false，但 Pack 仍然跑完、输出看不出差别）；以及事后按回执复盘的人——只看 final_content 长度是看不出会话到底有没有重置的",
       "where": [
@@ -418,8 +419,34 @@
       ],
       "detail": "2026-11-11 逐站只读 DOM 探测（dom-shape-probe，TEXTS='新对话'）结论：chatglm 命中 div.new-session（aside 下，非 button）；文心命中 div.new-dialog-container-plain；千问命中的是一个纯 Tailwind 类名的 div（span.truncate ← div.flex…hover:bg-option），没有任何稳定语义类名，当前兜底选择器（button / a / [role=button] / class 含 new-session|new-chat|new-dialog）**匹配不到它**；元宝与 Kimi 页面上根本没有「新对话」这三个字（leafHits=0），大概率是图标按钮或别的措辞。真机端到端验证：chatglm 重置成功（messageCountBefore 12 → After 0，strategy=adapter-selector，step_8 75.0s 通过）；千问 available=false、8/8 仍通过、总耗时 263.8s（与 12:41 那轮 257.7s 持平，无回归）。",
       "impact": "① fresh_session 的收益目前只覆盖 2/5 个活跃站，deepseek/longcat（真正撞墙的两站）冻结中未验；② 降级是**可见但容易漏看**的：记录在 sessionResets 里，而复盘时通常只看 steps 的 success 与输出长度；③ 若有人把 fresh_session 写成 strict 再在千问/元宝/Kimi 上跑，会直接把这几个站打成 7/8——所以出厂 Pack 用的是 prefer。",
-      "fix": "两条路，任选其一或并用：① 给千问补一个**结构性**兜底——把文本精确匹配的范围扩到导航容器内（aside/nav/[class*=sidebar] 下的任意元素，命中后点它或最近的祖先），因为千问的入口没有语义类名，只能靠「位置 + 文案」定位；② 元宝/Kimi 换个措辞再探一次（新建聊天/新会话/加号图标），探到了就照 chatglm 的方式写进 newChat。收口要求：每站一次真机 L2，回执里 sessionResets[0].available 必须为 true，且 messageCountAfter < messageCountBefore。",
-      "found_at": "2026-11-11"
+      "fix": "两条路，任选其一或并用：① 给千问补一个**结构性**兜底——把文本精确匹配的范围扩到导航容器内（aside/nav/[class*=sidebar] 下的任意元素，命中后点它或最近的祖先），因为千问的入口没有语义类名，只能靠「位置 + 文案」定位；② 元宝/Kimi 换个措辞再探一次（新建聊天/新会话/加号图标），探到了就照 chatglm 的方式写进 newChat。收口要求：每站一次真机 L2，回执里 sessionResets[0].available 必须为 true，且 messageCountAfter < messageCountBefore。 ✅ 已收口（2026-11-11 18:0x）：写了可复用的**只读**探测器 `tests/real-machine/new-session-probe.mjs`（不点击/不发送/不绕验证码），先抽样 Kimi 人工核验、再批量探 5 站，全部按真实结构落选择器——元宝 `div.yb-new-chat-entry__item[aria-label=新建对话]`、Kimi `a.new-chat-btn[data-testid=sidebar-new-chat]`、千问 `div[data-session-switch-target=new-chat]`。千问那条整条祖先链挂在 `pointer-events-none opacity-0` 的 hover-reveal 层里，可见性判据必然拒绝它 ⇒ 新增窄口径的 `HIDDEN_SEMANTIC_SELECTORS` 第三层兜底，靠「消息数下降」做行为确认（判不出来就如实失败）。Kimi 的入口是 `<a href>`，点击期间用捕获阶段 `preventDefault` 拦掉默认跳转，避免整页导航把内容脚本连同 sendResponse 一起销毁。DOM 逻辑抽成可注入模块 `src/content/new-session-control.js`，jsdom 里把 5 站真实结构各摆一遍（10 条测试），生产 SELECTORS 直接被测试引用，10 条变异锚全部被杀死。",
+      "found_at": "2026-11-11",
+      "closed_at": "2026-11-11",
+      "appended_evidence": [
+        "收口验证（真机 L2，5/5 活跃站 `available:true` 且 messageCountAfter < Before）：chatglm `available:true / adapter-selector / 12→0`（14:57 那轮）；千问 `hidden-semantic / 12→0 / durationMs 319`、8/8、244.2s；元宝 `adapter-selector / 12→0 / 312ms`、8/8、103.6s；Kimi `adapter-selector / 6→0 / 304ms`、8/8、120.7s；文心 `adapter-selector / 6→0 / 318ms`、8/8、90.5s（修复 N24 后的复跑）。回执见 evidence/L2-*-2026-11-11.n23*.json。⇒ 出厂 Pack 仍是 prefer，但现在 5 站都真的开得成新会话，降级分支只在站点改 DOM 时才会走。",
+        "仍未验证：① 真正撞墙的 deepseek / longcat 冻结中，「加了会话边界就不撞了」这条**没验**——5 站验证的是「重置真的做到了」，不是「重置解掉了撞墙」；② 文心首轮 `.n23.json` 因 N24 的 DOM 漂移失败，修复后的证据是 `.n23-fix.json`；③ chatglm 的 durationMs 未测（那一轮跑在加计时字段之前），其余 4 站实测 304–319ms。"
+      ]
+    },
+    {
+      "id": "N24",
+      "priority": "P1",
+      "status": "closed",
+      "title": "文心新 UI 落地页的 messageList 基准跨选择器跳变，AI 答完仍判超时（243.6s）",
+      "reader": "按回执复盘的人——只看错误文案会以为是「平台慢/要登录」；以及给站点补兜底选择器的人——findElements 是「按优先级取第一个有命中的选择器」，加一条看似无害的兜底就能把基准换到完全不相干的一组元素上",
+      "where": [
+        "chrome-extension/src/platforms/yiyan-adapter.js（messageList：删除 `[class*=\"message\"]` / `[class*=\"response\"]` / `.chat-item` 三条兜底）",
+        "chrome-extension/tests/message-list-contract.test.mjs（4 条守护）",
+        "evidence/L2-yiyan-auto-2026-11-11.n23.json（失败现场）、.n23-fix.json（修复后）"
+      ],
+      "detail": "2026-11-11 18:04 文心 L2 在 step_2 失败：243.6s ≈ 4×60+3.6（1 次等待 + 3 次续等，N21 的正常行为，**不是重发**），错误 `Response timeout`；但截图里 AI 明明答了「普通AI等你一步步下指令…」。只读探测（点开已有会话、不发消息）给出根因：文心新 UI 落地页上 `div.answer-container=0` / `div.ai-entry=0`，而 `[class*=\"message\"]=8` 全是「通知中心」元素；发送前 baselineCount 因此取到 8。回答落地后 `div.answer-container=1`，findElements 改取第一条选择器返回 1 ⇒ `countGrew = 1 > 8` 恒 false ⇒ 永远判超时。会话页（/search/<id>）上 `div.answer-container=1` 且打字指示器全 0，说明答案容器本身没漂移，坏的是**恒命中的兜底选择器**。",
+      "impact": "单次 L2 白等 4 个超时窗口后整包失败；现象长得像「平台变慢/没登录」，不会报任何选择器错误。若当时把锅记到平台侧，这条会一直潜伏。",
+      "fix": "删掉这三条兜底，只留 `div.answer-container` / `div.ai-entry`——宁可发送前 0 命中（响亮地超时），也不要一个会跳组的假基准。新增 `tests/message-list-contract.test.mjs` 4 条：落地页基准必须为 0、回答后 0→1、已有会话 1→2、取回正文来自答案容器而非通知中心；登记 1 条变异锚（把 `[class*=message]` 塞回去）并被杀死。真机复跑：`L2-yiyan-auto-2026-11-11.n23-fix.json` 8/8、90.5s、`sessionResets[0]` 也随带验到 available:true。",
+      "found_at": "2026-11-11",
+      "closed_at": "2026-11-11",
+      "appended_evidence": [
+        "修复前后同站同 Pack 对照：失败轮 1/2 步、243.6s；修复轮 8/8 步、90.5s。两轮回执与截图均已落盘，不是引用记忆。",
+        "只读诊断产物：`/tmp/yiyan-open-probe.json`（会话页答案祖先链）与 `new-session-probe-2026-11-11.chatglm-kimi-qianwen-yiyan-yuanbao.json`（落地页 messageListHits）；诊断过程中只点开已有历史会话、未发送任何消息、未绕过验证码。"
+      ]
     }
   ]
 }

@@ -604,3 +604,187 @@ if (step.fresh_session === true) {   // ← 而出厂 Pack 声明的是 "prefer"
 
 **收口**：`npm test` 282/282 → 全量变异 **97/97 全杀死**。
 
+
+---
+
+## 14. 「整包变慢 69.8s」能不能归因给会话重置
+
+§13.4 留了一句悬置结论：chatglm 加了会话边界那轮 419.6s，比不加边界那轮 349.8s 更长，
+「不能归因给重置，也不能反过来说重置免费」。这一节把它拆成**能硬说的**和**仍然只能量上界的**两部分。
+
+### 14.1 先钉死代码路径：重置只可能出现在 step_8
+
+`pack-executor.js` 里 `_resetSession` 只有**一个**调用点：
+
+```js
+// :809-810，_executeAIStep 内、发送之前
+if (step.fresh_session) {
+  await this._resetSession(execution, step);
+}
+```
+
+交付的 Pack 里声明了 `fresh_session` 的步骤用机器数过，**只有 `step_8_output` 一个**。
+
+⇒ **step_1 ~ step_7 的执行路径里不可能包含任何重置动作**。这不是假设，是调用图。
+所以这 7 步的耗时差异，无论多大，都**与重置无关**。
+
+### 14.2 再把两轮的分步耗时摊开（都取自磁盘回执，不是回忆）
+
+对照组 B = `L2-chatglm-auto-2026-11-11.resume-verify.json`（13:32，8/8，349.8s）；
+边界组 D = `L2-chatglm-auto-2026-11-11.fresh-session2.json`（14:57，8/8，419.6s，
+`sessionResets[0]: available:true / adapter-selector / 12 → 0`）。
+
+| 步 | B | D | Δ（D−B） |
+|---|---:|---:|---:|
+| step_1_topic | 0.0 | 0.0 | +0.0 |
+| step_2_hook | 28.7 | 70.2 | **+41.5** |
+| step_3_explain | 50.7 | 58.7 | +8.0 |
+| step_4_scene | 47.7 | 45.7 | −2.0 |
+| step_5_boundary | 32.2 | 34.2 | +2.0 |
+| step_6_takeaway | 40.7 | 47.2 | +6.5 |
+| step_7_visual | 59.2 | 88.7 | **+29.5** |
+| **step_1~7 小计** | **259.2** | **344.7** | **+85.5** |
+| step_8_output | 90.7 | 75.0 | **−15.7** |
+| **整包** | **349.8** | **419.6** | **+69.8** |
+
+`+85.5 + (−15.7) = +69.8`，账对得上。
+
+### 14.3 能硬说的三条
+
+1. **整包多出来的 69.8s，全部来自 step_1~7（+85.5s），step_8 反而少用了 15.7s。**
+2. 由 §14.1 的代码路径，step_1~7 不含重置 ⇒ **「重置拖慢了整包」这句不成立**，可以撤回悬置状态、直接判否。
+3. 变慢集中在 step_2（+41.5s）与 step_7（+29.5s），这两步都是普通 AI 问答、两轮提示词完全相同 ⇒ 只能是平台侧抖动／模型负载，不是本轮改动。
+
+### 14.4 仍然不能说的（别把「判否」滑成「免费」）
+
+- step_8 的 75.0s 里**同时**含「重置耗时 + AI 回答耗时」。两轮 AI 回答波动本身就远大于 15.7s，
+  所以 **不能反过来说「重置免费」或「重置反而更快」**。
+- 旧回执里没有重置耗时的独立字段，这两轮**量不到**它的固定开销，只能给代码上界：
+  `waitForSessionReset` 每 300ms 轮询、超时 8000ms ⇒ 最坏 8s，典型几百毫秒到 1 秒。
+- 只有**同一站、同一时刻、A/B 交替多轮**才能把重置的固定开销从抖动里分离出来；
+  本轮没有做（每轮真机 L2 要 4–7 分钟，且会消耗账号额度）。
+
+⇒ 修法不是「再跑一轮猜」，而是**让这个数自己出现在回执里**：`NEW_SESSION` 现在返回
+`durationMs`（找入口 + 点击 + 等消息数下降的耗时），经 `sessionResets[]` 一路透到
+`EXECUTE_PACK` 回执；单测 + 变异锚钉住它不会被悄悄丢掉。下一轮真机就能直接读，
+不必再从整包差值里反推。实测数字见 §14.5。
+
+### 14.5 重置耗时：现在有实测数了，不必再猜
+
+`NEW_SESSION` 现在返回 `durationMs`（找入口 + 点击 + 等消息数下降），
+经 `sessionResets[]` 透到 `EXECUTE_PACK` 回执。本轮 4 站真机实测：
+
+| 站 | strategy | Before → After | durationMs | step_8 | 整包 |
+|---|---|---|---:|---:|---:|
+| 千问 | `hidden-semantic` | 12 → 0 | **319** | 15.1s | 244.2s |
+| 元宝 | `adapter-selector` | 12 → 0 | **312** | 21.0s | 103.6s |
+| Kimi | `adapter-selector` | 6 → 0 | **304** | 16.7s | 120.7s |
+| 文心 | `adapter-selector` | 6 → 0 | **318** | 16.0s | 90.5s |
+
+⇒ **重置的固定开销是 0.3 秒量级**，比 AI 单步回答（10–90s）小两个数量级。
+这就把 §14.4 的悬置彻底收窄了：
+
+- 「重置拖慢了整包」：**判否**（§14.1 的代码路径 + §14.2 的分步账 + 这里的 0.3s 实测，三条独立证据同向）。
+- 「重置免费」：**仍不能这么写**——它有非零开销（304–319ms），且上限由代码给出（8s 判据超时）；
+  只是这个开销被 AI 回答耗时的波动**完全淹没**，从整包差值里分离不出来。
+- 只有 chatglm 那一轮的 `durationMs` 没测到（那轮跑在加计时字段之前）。
+  但 4 站同构实现给出的 0.3s 量级，足以否定「+69.8s 是重置造成的」这种量级完全对不上的归因。
+
+**没有做 A/B 交替多轮**：那需要再烧 4 × 8 步的账号额度，而 `durationMs` 已经把
+要分离的那个量直接测出来了——再跑 A/B 是重复造尺子，不是补证据。
+
+---
+
+## 15. N23 收口：5 个活跃站的会话边界都真的生效了
+
+### 15.1 不再猜结构：先抽样、人工核验、再批量推导
+
+新增 `tests/real-machine/new-session-probe.mjs` —— **只读**探测器，
+脚本级保证：不 click、不 type、不 send、不 hover、不绕验证码 / 滑块 / 登录墙，
+不导入 Pack、不发 EXECUTE_PACK。采集文案命中、语义类名命中、带标签控件、
+祖先链、computed style、rect、以及 adapter `messageList` 在真机上的命中数。
+
+先只探 Kimi 一站做抽样，人工核验结构（`a.new-chat-btn[data-testid=sidebar-new-chat]`），
+再批量探 5 站。产物：`evidence/new-session-probe-2026-11-11.chatglm-kimi-qianwen-yiyan-yuanbao.json`。
+
+| 站 | 只读探测拿到的真实结构 | 落地方式 |
+|---|---|---|
+| chatglm | `div.new-session`（aside 下，非 button） | 已有 `newChat` |
+| 文心 | `div.new-dialog-container-plain > span`「新对话」 | 已有 `newChat` |
+| 千问 | `div[data-session-switch-target="new-chat"]`，祖先链含 `pointer-events-none opacity-0` 的 `div.newChatReveal-*` | **第三层 `hidden-semantic` 兜底**（qianwen 适配器里刻意不写 `newChat`，留注释说明原因） |
+| 元宝 | `div.yb-new-chat-entry__item[role=button][aria-label=新建对话]` | 新增 `newChat` |
+| Kimi | `div.sidebar-new-chat > a.new-chat-btn[data-testid=sidebar-new-chat]`，`href="/?chat_enter_method=new_chat"`；另有 `a.logo[aria-label=新建会话]` | 新增 `newChat` |
+
+两个结构坑：
+
+1. **千问的入口是「不可见」的**：整条祖先链在 hover-reveal 层里，`isElementRendered`
+   必然拒绝。新增窄口径的第三层兜底，只对「属性值直接声明 new-chat 语义」的元素放行；
+   程序化 `el.click()` 不受 `pointer-events:none` 影响，而**到底有没有重置仍由消息数下降判定**——
+   安全边界是行为判据，不是可见性。
+2. **Kimi 的入口是 `<a href>`**：直接 `.click()` 可能整页导航，内容脚本随文档销毁，
+   `sendResponse` 永远发不出去，后台只会看到一次莫名的「开新会话失败」。
+   点击期间挂捕获阶段 `preventDefault`，拦掉浏览器默认跳转但不拦站点自己的 click 处理器。
+
+### 15.2 真机 L2：5/5 都 `available:true` 且消息数下降
+
+| 站 | 回执 | 结果 | strategy | Before → After | durationMs | step_8 | 整包 |
+|---|---|---|---|---|---:|---:|---:|
+| chatglm | `.fresh-session2.json` | 8/8 | `adapter-selector` | 12 → 0 | 未测（该轮早于计时字段） | 75.0s | 419.6s |
+| 千问 | `.n23.json` | 8/8 | `hidden-semantic` | 12 → 0 | 319 | 15.1s | 244.2s |
+| 元宝 | `.n23.json` | 8/8 | `adapter-selector` | 12 → 0 | 312 | 21.0s | 103.6s |
+| Kimi | `.n23.json` | 8/8 | `adapter-selector` | 6 → 0 | 304 | 16.7s | 120.7s |
+| 文心 | `.n23-fix.json` | 8/8 | `adapter-selector` | 6 → 0 | 318 | 16.0s | 90.5s |
+
+⇒ N23 原定的收口判据（每站一次真机 L2、`sessionResets[0].available === true`
+且 `messageCountAfter < messageCountBefore`）**全部满足**，台账 N23 → closed。
+出厂 Pack 仍是 `prefer`，但现在 5 站都真的开得成新会话，降级分支只在站点改 DOM 时才会走。
+
+**仍未验证**：真正撞墙的 deepseek / longcat 冻结中。这 5 站验的是
+「重置真的做到了」，**不是**「重置解掉了长会话撞墙」——后者仍欠一次解冻后的对照。
+
+### 15.3 守护从「真机 4–7 分钟」下沉到「秒级」
+
+把 DOM 逻辑从 content-script 抽成可注入模块 `src/content/new-session-control.js`
+（`document` / `findVisibleElement` / `isElementRendered` / `findElements` 全部注入），
+于是 `tests/new-session-control.test.mjs` 能在 jsdom 里把 5 站真实结构各摆一遍：
+三层兜底、`<a>` 导航拦截、输入区诱饵排除、`durationMs`、prefer/strict 两档、
+点了没生效不许假装成功、空会话直接放行。测试**直接引用生产 SELECTORS**，
+所以「把适配器选择器改坏」也会立刻变红；10 条变异锚全杀死。
+
+顺带修了变异运行器的一个可用性问题：加 `MUTATION_TESTFILE=xxx` 只跑某个测试文件
+对应的锚，改完一处守护可以秒级预检，不必每次都跑十几分钟的全量。
+
+---
+
+## 16. 顺带抓到的 N24：文心新 UI 的「假基准」
+
+首轮 `.n23.json` 里文心在 **step_2** 就失败（1/2 步、243.6s、`Response timeout`），
+与会话边界无关（step_2 没有 `fresh_session`），但截图里 AI 明明答完了。
+
+`243.6 ≈ 4×60 + 3.6` 起初像重发指纹，核对代码后确认是
+**1 次等待 + 3 次续等**——N21 的正常行为，截图也只有一条提问气泡，没有重复发送。
+
+真正根因是 `findElements` 的「按优先级取**第一个有命中**的选择器」：
+
+| 时刻 | `div.answer-container` | `[class*="message"]` | findElements 实际返回 |
+|---|---:|---:|---|
+| 发送前（落地页） | 0 | **8**（全是通知中心元素） | **8** |
+| 回答落地后 | **1** | 8 | **1**（改取第一条选择器） |
+
+⇒ `countGrew = 1 > 8` 恒 false ⇒ 明明答完还一直判超时。
+只读诊断（点开已有历史会话、未发送任何消息）：会话页 `/search/<id>` 上
+`div.answer-container = 1`、打字指示器全 0、答案正文挂在
+`.cosd-markdown-content > .marklang > p.marklang-paragraph` ⇒ **答案容器没漂移，坏的是恒命中的兜底**。
+
+修法：删掉 `[class*="message"]` / `[class*="response"]` / `.chat-item` 三条兜底，
+只留 `div.answer-container` / `div.ai-entry`。宁可发送前 0 命中（响亮地超时），
+也不要一个会跳组的假基准。
+
+| | 修复前 `.n23.json` | 修复后 `.n23-fix.json` |
+|---|---|---|
+| 结果 | failed，1/2 步 | completed，8/8 |
+| 耗时 | 243.6s | 90.5s |
+| `sessionResets` | `[]`（根本没跑到 step_8） | `available:true / 6→0 / 318ms` |
+
+守护：`tests/message-list-contract.test.mjs` 4 条（基准必须为 0 / 0→1 / 1→2 /
+正文来自答案容器而非通知中心）+ 1 条变异锚（把 `[class*=message]` 塞回去）。台账 N24 → closed。
