@@ -63,6 +63,13 @@ import { findElement, findElements, findVisibleElement, injectTextSmart, delay }
  * 以当前渲染代码实际写出来的类名为准。
  */
 const SELECTORS = {
+  // 「新对话」入口**刻意不在这里声明 newChat**：2026-11-11 只读探测实证，
+  // 真身是 div[data-session-switch-target="new-chat"]（文本「新对话」），
+  // 但整条祖先链挂在 div.newChatReveal-* 下的一层
+  // `pointer-events-none opacity-0` hover-reveal 面板里，findVisibleElement
+  // 会正确判为不可见 ⇒ 写成 newChat 也永远命中不了。
+  // 改由 content-script.js 的 HIDDEN_SEMANTIC_SELECTORS 兜底点击，
+  // 并用「消息数下降」做行为确认。这里留注释是为了别再有人把它写回 newChat。
   // 输入框：千问用的是 **Slate** 富文本编辑器（实测属性 data-slate-editor="true"
   // + contenteditable="true" + data-placeholder="向千问提问"）。
   // 精确的 Slate 标记放前面，免得命中页面上别处的 contenteditable 区域；

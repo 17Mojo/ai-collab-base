@@ -8,6 +8,18 @@ import { findElement, findElements, findVisibleElement, injectTextSmart, delay }
 
 /** Kimi 平台选择器配置 */
 const SELECTORS = {
+  // 2026-11-11 只读 DOM 探测实证（new-session-probe，www.kimi.com）：
+  //   div.sidebar-new-chat > a.new-chat-btn[data-testid="sidebar-new-chat"]
+  //     href="/?chat_enter_method=new_chat"，rendered=true，cursor=pointer；
+  //   a.logo[aria-label="新建会话"] 同 href，位于左上角。
+  // Kimi 页面里**没有「新对话」三个字**（leafHits=0），文案兜底本来也够不着。
+  // 两个入口都是 <a>：content-script 的 clickNewSessionControl 会在点击期间
+  // 拦掉默认跳转，避免整页导航把内容脚本连同 sendResponse 一起销毁。
+  newChat: [
+    'a.new-chat-btn[data-testid="sidebar-new-chat"]',
+    'a.logo[aria-label="新建会话"]',
+    "div.sidebar-new-chat",
+  ],
   chatInput: ['div.chat-input-editor', 'div[contenteditable="true"]', "textarea"],
   sendButton: [
     'button[type="submit"]',

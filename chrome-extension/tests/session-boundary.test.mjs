@@ -216,6 +216,37 @@ test("prefer：开不成也照常发送，但回执里必须留下 available:fal
   assert.equal(resets[0].stepId, "step_ai");
 });
 
+test("NEW_SESSION 上报的 durationMs 原样进回执（重置开销可复核）", async () => {
+  const { send } = await loadServiceWorker([makePack("prefer")], {
+    tabsSendMessageResponse: (tabId, msg) => {
+      if (msg.type === "NEW_SESSION") {
+        return {
+          success: true,
+          result: {
+            available: true,
+            strategy: "adapter-selector",
+            messageCountBefore: 12,
+            messageCountAfter: 0,
+            durationMs: 1234,
+          },
+        };
+      }
+      return undefined;
+    },
+  });
+  const response = await send({
+    type: "EXECUTE_PACK",
+    packId: "session-boundary",
+    input: {},
+    tabId: 42,
+  });
+  assert.equal(
+    response?.result?.sessionResets?.[0]?.durationMs,
+    1234,
+    "重置耗时必须能从内容脚本一路透到 EXECUTE_PACK 回执——否则整包变快/变慢永远只能猜",
+  );
+});
+
 test("prefer：开成功时回执记录 available:true 与所用策略", async () => {
   const { send, tabMessages } = await loadServiceWorker([
     makePack("prefer"),

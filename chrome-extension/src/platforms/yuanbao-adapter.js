@@ -8,6 +8,12 @@ import { findElement, findElements, findVisibleElement, injectTextSmart, delay }
 
 /** 腾讯元宝选择器配置 */
 const SELECTORS = {
+  // 2026-11-11 只读 DOM 探测实证（new-session-probe，yuanbao.tencent.com）：
+  //   div.yb-new-chat-entry__item[role="button"][aria-label="新建对话"][tabindex="0"]
+  //   rect 14,62 232×32，rendered=true，pointerEvents=auto，cursor=pointer。
+  // 元宝**不用「新对话」这个措辞**，用的是「新建对话」——第一版只按标签找
+  // button 时它是 div，所以恒 0 命中。外层 .yb-new-chat-entry 作回退。
+  newChat: [".yb-new-chat-entry__item", ".yb-new-chat-entry"],
   chatInput: [
     "div.ql-editor",
     'div[contenteditable="true"]',
