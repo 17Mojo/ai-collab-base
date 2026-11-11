@@ -37,23 +37,20 @@ const SELECTORS = {
     // 发送后「最新一条」可能是用户自己刚发出去的 prompt，会被当成 AI 正文静默回填。
     "div.answer-container",
     "div.ai-entry",
-    '[class*="message"]',
-    // 2026-10-25 真机实测**删除**了 '[class*="chat"]'。
+    // 🔧 2026-11-11 18:0x：删掉 `[class*="message"]` / `[class*="response"]` /
+    // `.chat-item` 三条兜底。它们在文心**新 UI** 上会恒命中 8 个「通知中心」
+    // 元素（只读探测实证：message-center-container / message-panel-container-wrapper…），
+    // 而 `div.answer-container` 在**发送前**为 0。
     //
-    // 实测（真机落地页，无会话）：`[class*="chat"]` 命中 37 个元素，
-    // 逐个看下来**全是应用外壳**，没有一条是消息气泡：
-    //   body.cos-chat / _chat-container_ / _chat-container-body_ /
-    //   history-chat-* / _chat-aside-header-* / _chat-top-bar-*
+    // 于是 findElements（按优先级取第一个有命中的选择器）在发送前返回 8（通知中心），
+    // 回答落地后却改取 `div.answer-container` 返回 1 ⇒ countGrew = 1 > 8 恒 false
+    // ⇒ 明明答完了还判 Response timeout，续等 4 个窗口共 243.6s 才失败。
+    // 这不是「选择器没命中」，是**基准与回答取自两组不同的元素**。
     //
-    // 为什么这会坏：findElements 是「按优先级取**第一个有命中**的选择器」，
-    // 而 '[class*="message"]' 在落地页一个都不命中 ⇒ 直接落到 '[class*="chat"]'
-    // ⇒ 真机上消息数恒为 37。waitForResponseGeneric 拿这个数做「发送前后比较」，
-    // 于是要么把导航元素当成 AI 回复返回（静默错数据），要么等不到变化而超时。
-    //
-    // 真实气泡的类名必须在**已登录会话**里确认（未登录时看不到消息气泡）。
-    // 在那之前宁可返回 0（失败会响亮地超时），也不要返回一个错数字。
-    '[class*="response"]',
-    ".chat-item",
+    // 宁可 0 命中（响亮地超时），也不要一个会跳变的假基准。
+    // 真实气泡类名已在**已登录会话**里核过：/search/<id> 页上
+    // div.answer-container = 1、div.ai-entry = 1，答案正文挂在
+    // .cosd-markdown-content > .marklang > p.marklang-paragraph。
   ],
   // 正文链路：div.answer-container → div.ai-entry → div.cosd-markdown-content
   //            → div.marklang → p.marklang-paragraph
