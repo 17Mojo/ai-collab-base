@@ -1,0 +1,157 @@
+=== 变异检查（76 条）===
+
+✓ 把「计数增长」从 > 改成 >=（判定报告位）
+    被 生成中解除但计数没涨 杀死
+✓ 把「计数增长」从 > 改成 >=（重放放行位）
+    被 生成中解除但计数没涨 杀死
+✓ 把「不在生成中」这个条件去掉
+    被 计数涨了但 isTyping 恒为 true 杀死
+✓ 基准不再取生产启动那一刻的计数
+    被 基准取生产启动那一刻的计数 杀死
+✓ 生产取到的正文非空判定恒为真
+    被 productionContentNonEmpty 揪出抽取断链 杀死
+✓ 证据文件不再脱敏
+    被 证据文件里正文被脱敏 杀死
+✓ 证据文件谎称脚本发过消息
+    被 证据文件里正文被脱敏 杀死
+✓ 一致位恒为真
+    被 生产结果与时间线重放不一致时 杀死
+✓ --i-will-send 闸门失效
+    被 --i-will-send 会打开发送闸门 杀死
+✓ 「命中元素必须无文本」这条硬伤判定阈值收紧到永不触发
+    被 命中界面外壳（Yiyan 的 _chat-container_） 杀死
+✓ 去掉「空闲即不忙」这条硬伤判定
+    被 空闲页上 isTyping 为 true 杀死
+✓ class 属性重新开始做长随机串脱敏
+    被 class 属性不做长随机串脱敏 杀死
+✓ 邮箱规则失效
+    被 邮箱被替换 杀死
+✓ 把千问的消息选择器退回宽松的 [class*="message"]
+    被 消息数只算答案卡 杀死
+✓ 把千问的正文选择器退回只取第一段
+    被 答案正文取整个 markdown 容器 杀死
+✓ 把千问的发送按钮选择器退回依赖本地化文案
+    被 发送按钮靠稳定属性命中 杀死
+✓ 把千问的「停止回答」选择器改坏
+    被 识别停止回答按钮 杀死
+✓ 把千问的「接收中卡片」选择器改坏
+    被 只有接收中卡片 杀死
+✓ 把千问正文的「先看元素自身」这一步去掉
+    被 markdown 容器与答案卡是同一个元素时也能取到完整正文 杀死
+✓ 把内容脚本的 SEND_TO_AI 分支删掉
+    被 Pack 的 AI 步骤发的那条消息 杀死
+✓ 把内容脚本的 SEND_TO_AI 改成不注入文本
+    被 提示词进了输入框 杀死
+✓ 执行器不再从 storage 同步 Pack
+    被 storage 里的 Pack 要能被执行器找到并执行 杀死
+✓ popup 又用回不存在的 pack.id
+    被 popup 渲染出来的 data-id 杀死
+✓ 导入 Pack 的 ID 判据退回双轨
+    被 只带顶层 pack_id 的 Pack 必须被拒，且报错指出缺 metadata.pack_id 杀死
+✓ public 下的脚本里写坏一个语法
+    被 public/ 下的脚本必须语法正确 杀死
+✓ AI 步骤退回广播（不再定向到标签页）
+    被 AI 步骤要发到指定标签页 杀死
+✓ 后台不再把目标标签页传给执行器
+    被 后台要把目标标签页一路传到 AI 步骤 杀死
+✓ popup 不再把当前标签页告诉后台
+    被 popup 要把用户当前所在的标签页告诉后台 杀死
+✓ popup 不再打开 Pack 编辑器
+    被 popup 必须有「导入 Pack」的入口 杀死
+✓ getURL 退回嵌套布局
+    被 代码里 getURL 指到的页面，在构建产物里必须真的存在 杀死
+✓ 把交付给外部用户的冒烟 Pack 的提示词改掉
+    被 交付给外部用户的那个冒烟 Pack 杀死
+✓ D5 解包退回（定向标签页路径返回整个信封）
+    被 _executeAIStep 解包回复内容，output 全为文本且无 [object Object] 杀死
+✓ D5 解包退回（广播路径返回整个信封）
+    被 没有目标标签页时才广播，并且要标明是广播 杀死
+✓ 碎片/空内容判定失效（恒可用）
+    被 AI 步骤取回流式开头碎片时，整个 Pack 必须失败 杀死
+✓ 空内容也判完成
+    被 空内容永不判完成（防把流式开头当回复） 杀死
+✓ 稳定窗口失效（内容一出现就算完成）
+    被 内容还在变化时不判完成 杀死
+✓ 千问生成中状态行选择器被删（努力工作中不被认出）
+    被 生成中状态行（data-status=working）也判定 isTyping() 杀死
+✓ adapter-utils 抽取契约收紧失效（恢复全卡回退）
+    被 extractMessageContent 同样不许回退整卡文本 杀死
+✓ adapter-utils 自身匹配被删（容器=正文同体丢段落）
+    被 extractMessageContent 先看元素自身再查后代 杀死
+✓ 千问 _extractContent 契约收紧失效（恢复全卡回退）
+    被 选择器未命中时不许回退整卡文本（状态条不许混进正文） 杀死
+✓ 碎片阈值回退（50→20）
+    被 污染 ack 混入状态条文本也不许冒充正文 杀死
+✓ 稳定窗回退（8s→4s）
+    被 默认稳定窗是 8 秒：5 秒定格不算完成，8 秒才算（防思考停顿误判） 杀死
+✓ popup 产出渲染被删（N13 复发：只报状态丢产出）
+    被 popup 执行成功必须展示产出 杀死
+✓ 产出渲染回退 innerHTML（模型文本注入面）
+    被 产出文本必须走 textContent 杀死
+✓ 复制按钮丢字段（复制不到全文）
+    被 产出复制按钮把该字段全文放进剪贴板 杀死
+✓ 导出 JSON 丢产出（导出空对象）
+    被 导出 JSON 按钮产出全量产出 JSON 杀死
+✓ generic 等待回退旧判据（太早成功复辟）
+    被 内容没稳住不许返回 杀死
+✓ 基类委托被改空（钩子全文丢失）
+    被 基类 waitForResponse 必须走 _extractContent 钩子取全文 杀死
+✓ 抽取钩子优先级丢失（兜底吞掉子类抽取）
+    被 基类 waitForResponse 必须走 _extractContent 钩子取全文 杀死
+✓ l2-model 重放回退旧口径（重放与生产分叉）
+    被 内容持续在变的流式时间线不许判成功 杀死
+✓ Kimi 生成中状态行选择器被删
+    被 Kimi：segment-generate-tip 生成中状态行 杀死
+✓ Kimi 通用加载组件被误收进 typingIndicator
+    被 core-spiral-loading（历史/文件卡复用，无 role=status）不许算生成中 杀死
+✓ ChatGLM 停止按钮选择器丢掉 button 标签限定
+    被 div.sensitive[ga-data=stop]（内容安全敏感态）不许算生成中 杀死
+✓ ChatGLM 停止回答按钮选择器被删
+    被 ChatGLM：button ga-data=stop 停止回答按钮 杀死
+✓ 文心 thinking-loading 自定义元素选择器被删
+    被 文心：thinking-loading 自定义元素 杀死
+✓ 文心 停止回答按钮选择器被删
+    被 文心：停止回答按钮（answer-generate-state-button 杀死
+✓ LongCat 停止生成按钮选择器被删
+    被 LongCat：stop-generate 停止生成按钮 杀死
+✓ LongCat reason-title 排除决策被撤销
+    被 思考完成后的 reason-title（文案变『已深度思考』）不许算生成中 杀死
+✓ 元宝 data-conv-outputting 状态属性选择器被删
+    被 元宝：data-conv-outputting 状态属性 杀死
+✓ N3：必填空串/纯空白检查被删
+    被 _executeStep 拒绝 required_fields 缺失 杀死
+✓ N4：模板变量值序列化被绕过
+    被 _buildPrompt 对对象值 JSON 序列化 杀死
+✓ N2：输入字段名改回 innerHTML 拼接
+    被 N2：输入字段名含 HTML 时不得被解析 杀死
+✓ N2：pack 列表 name 改回 innerHTML 拼接
+    被 N2：pack 列表 杀死
+✓ N8：广播标记谎报为 precise
+    被 没有目标标签页时才广播 杀死
+✓ N8：popup 广播提示被摘除
+    被 N8：广播投递时 popup 要提示 杀死
+✓ N10：首装播种调用被摘除
+    被 首次安装且 storage 为空时播种默认 Pack 杀死
+✓ N10：空仓判定被拆掉（已有 Pack 也被覆盖）
+    被 已有 Pack 时不许被默认 Pack 覆盖 杀死
+✓ N10：update 也播种（用户删光被静默塞回）
+    被 update 不播种 杀死
+✓ N20：回执字段渲染回退 innerHTML（标记注入复辟）
+    被 Studio 回执字段含 HTML 杀死
+✓ N20：download_url 协议白名单失效（javascript: 进 href）
+    被 非 http(s) 时不许进 href 杀死
+✓ N20：状态行渲染回退 innerHTML（错误串注入复辟）
+    被 错误串（response.error / error.message）含 HTML 杀死
+✓ N11：GET_ALL_PACKS 打标被摘（孤儿包伪装正常）
+    被 GET_ALL_PACKS 给孤儿包打 unrecognized:true 杀死
+✓ N11：popup 孤儿判定被拆（警告永不出现）
+    被 popup 对孤儿包出可见警告 杀死
+✓ N11：popup 警告文案被摘（可见警告变哑巴）
+    被 popup 对孤儿包出可见警告 杀死
+✓ 把元宝的消息选择器退回 0 命中的旧三件套
+    被 元宝消息气泡能被数出来 杀死
+✓ 把智谱的消息选择器退回 0 命中的旧三件套
+    被 智谱消息气泡能被数出来 杀死
+
+全部 76 条变异都被杀死。
+EXIT_CODE=0

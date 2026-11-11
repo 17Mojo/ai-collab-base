@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "before": [
+    {
+      "text": "点点",
+      "x": 130,
+      "y": 282
+    },
+    {
+      "text": "和点点的日常对话",
+      "x": 130,
+      "y": 328
+    }
+  ],
+  "after": [
+    {
+      "text": "和点点的日常对话",
+      "x": 130,
+      "y": 282
+    }
+  ],
+  "probe": {
+    "url": "https://dots.ai/chat/home/CHAT_4688263047748169728",
+    "hasMark": true,
+    "hasPrompt": true,
+    "aiCount": 1,
+    "userCount": 1
+  },
+  "confirmed": true
+}

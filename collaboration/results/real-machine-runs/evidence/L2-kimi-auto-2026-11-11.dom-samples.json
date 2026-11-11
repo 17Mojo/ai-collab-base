@@ -1,0 +1,1116 @@
+{
+  "platform": "kimi",
+  "samples": [
+    {
+      "t": 3,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 2008,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 4013,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 6017,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 8021,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 10025,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 12027,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 14033,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 16035,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 18039,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 20041,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 22044,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 24048,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 26052,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 28056,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 30062,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 32067,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 34070,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 36075,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 38078,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 3,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 40082,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 3,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 42086,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 3,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 44089,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 46098,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 48103,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 50112,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 52118,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 54126,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 56133,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 58136,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 60142,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "chat-input-editor",
+          "chat-input-editor-content",
+          "kimi-scroll-fade__scroll",
+          "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+          "chat-input"
+        ]
+      ],
+      "url": "https://www.kimi.com/"
+    },
+    {
+      "t": 62191,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "",
+          "",
+          "light"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 64196,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 66200,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 68206,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 70210,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 72216,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 74223,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 76230,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 78238,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 80246,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 82250,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 84257,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 86261,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    },
+    {
+      "t": 88266,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 2,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [
+        [
+          "user-content__text",
+          "user-content",
+          "toolcall-rollup__part toolcall-rollup__flat",
+          "toolcall-rollup",
+          "segment-content-box",
+          "segment-content",
+          "segment-container"
+        ]
+      ],
+      "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home"
+    }
+  ]
+}

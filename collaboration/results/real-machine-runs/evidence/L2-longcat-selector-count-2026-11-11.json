@@ -1,0 +1,732 @@
+{
+  "url": "https://longcat.chat/c/bbb29159-64fd-4fc7-8539-dc92d497011c",
+  "title": "LongCat AI",
+  "totalElements": 669,
+  "anchors": [
+    {
+      "needle": "AI 智能体不是更聪明的聊天机器人",
+      "found": true,
+      "hits": 57,
+      "leafHits": 5,
+      "candidates": [
+        {
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "chain": [
+            {
+              "tag": "p",
+              "cls": "",
+              "textLen": 45,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "mt-markdown-body result-streaming",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "md-show-container markdown text-wrap",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-assistant-message",
+              "textLen": 55,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-main",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "head-content",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-wrapper",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-message",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-messge-view",
+              "textLen": 55,
+              "childCount": 2
+            }
+          ]
+        },
+        {
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "chain": [
+            {
+              "tag": "p",
+              "cls": "",
+              "textLen": 45,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "mt-markdown-body result-streaming",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "md-show-container markdown text-wrap",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-assistant-message",
+              "textLen": 55,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-main",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "head-content",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-wrapper",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-message",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-messge-view",
+              "textLen": 55,
+              "childCount": 2
+            }
+          ]
+        },
+        {
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "chain": [
+            {
+              "tag": "p",
+              "cls": "",
+              "textLen": 45,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "mt-markdown-body result-streaming",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "md-show-container markdown text-wrap",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-assistant-message",
+              "textLen": 55,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-main",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "head-content",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-wrapper",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-message",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-messge-view",
+              "textLen": 55,
+              "childCount": 2
+            }
+          ]
+        },
+        {
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "chain": [
+            {
+              "tag": "p",
+              "cls": "",
+              "textLen": 45,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "mt-markdown-body result-streaming",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "md-show-container markdown text-wrap",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-assistant-message",
+              "textLen": 55,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-main",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "head-content",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-wrapper",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-message",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-messge-view",
+              "textLen": 55,
+              "childCount": 2
+            }
+          ]
+        },
+        {
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "chain": [
+            {
+              "tag": "p",
+              "cls": "",
+              "textLen": 45,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "mt-markdown-body result-streaming",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "md-show-container markdown text-wrap",
+              "textLen": 45,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-assistant-message",
+              "textLen": 55,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-main",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "head-content",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-wrapper",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "assistant-message",
+              "textLen": 55,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "v-chat-messge-view",
+              "textLen": 55,
+              "childCount": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "cls": "v-message-list",
+      "count": 1,
+      "avgTextLen": 1085,
+      "maxTextLen": 1085,
+      "maxChildren": 14,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "user-message",
+      "count": 14,
+      "avgTextLen": 112,
+      "maxTextLen": 112,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-user-message",
+      "count": 7,
+      "avgTextLen": 112,
+      "maxTextLen": 112,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-messge-view",
+      "count": 14,
+      "avgTextLen": 78,
+      "maxTextLen": 112,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conversation-list webkit-scrollbar webkit-scrollbar-hide",
+      "count": 1,
+      "avgTextLen": 62,
+      "maxTextLen": 62,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "md-show-container markdown text-wrap",
+      "count": 5,
+      "avgTextLen": 45,
+      "maxTextLen": 45,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "mt-markdown-body result-streaming",
+      "count": 5,
+      "avgTextLen": 45,
+      "maxTextLen": 45,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "assistant-message",
+      "count": 7,
+      "avgTextLen": 43,
+      "maxTextLen": 55,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-assistant-message",
+      "count": 7,
+      "avgTextLen": 43,
+      "maxTextLen": 55,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-footer-tip",
+      "count": 1,
+      "avgTextLen": 32,
+      "maxTextLen": 32,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conv-item item active",
+      "count": 1,
+      "avgTextLen": 30,
+      "maxTextLen": 30,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conv-item-content",
+      "count": 3,
+      "avgTextLen": 20,
+      "maxTextLen": 30,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-input chatInput",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-wrap",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-footer",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "width-adapt v-chat-multimodal",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 8,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conv-title-wrap",
+      "count": 3,
+      "avgTextLen": 15,
+      "maxTextLen": 15,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conv-title",
+      "count": 3,
+      "avgTextLen": 15,
+      "maxTextLen": 15,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "mtd-tooltip conv-item-tooltip mtd-popper mtd-popper-show-arrow",
+      "count": 1,
+      "avgTextLen": 15,
+      "maxTextLen": 15,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conv-item-content-text webkit-scrollbar",
+      "count": 1,
+      "avgTextLen": 15,
+      "maxTextLen": 15,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conv-item item",
+      "count": 2,
+      "avgTextLen": 15,
+      "maxTextLen": 15,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-footer-checkbox",
+      "count": 1,
+      "avgTextLen": 10,
+      "maxTextLen": 10,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-footer-checkbox",
+      "count": 1,
+      "avgTextLen": 10,
+      "maxTextLen": 10,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-footer-checkbox-separator",
+      "count": 1,
+      "avgTextLen": 8,
+      "maxTextLen": 8,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conv-item-operate",
+      "count": 3,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "background-mp conver-operate-dropdown-box",
+      "count": 3,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "tiptap ProseMirror",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-multi-modal",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    }
+  ],
+  "customTags": [],
+  "selectorCounts": {
+    ".assistant-message": {
+      "count": 7,
+      "visible": 7,
+      "samples": [
+        {
+          "cls": "assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 14 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 13 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message",
+          "textLen": 13,
+          "textPreview": "服务出错啦，请稍后再试试。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message",
+          "textLen": 13,
+          "textPreview": "服务出错啦，请稍后再试试。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 14 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 14 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 15 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    },
+    ".v-chat-assistant-message": {
+      "count": 7,
+      "visible": 7,
+      "samples": [
+        {
+          "cls": "v-chat-assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 14 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 3,
+          "visible": true
+        },
+        {
+          "cls": "v-chat-assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 13 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 3,
+          "visible": true
+        },
+        {
+          "cls": "v-chat-assistant-message",
+          "textLen": 13,
+          "textPreview": "服务出错啦，请稍后再试试。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "v-chat-assistant-message",
+          "textLen": 13,
+          "textPreview": "服务出错啦，请稍后再试试。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "v-chat-assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 14 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 3,
+          "visible": true
+        },
+        {
+          "cls": "v-chat-assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 14 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 3,
+          "visible": true
+        },
+        {
+          "cls": "v-chat-assistant-message",
+          "textLen": 55,
+          "textPreview": "已搜到 15 个网页AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 3,
+          "visible": true
+        }
+      ]
+    },
+    ".md-show-container": {
+      "count": 5,
+      "visible": 5,
+      "samples": [
+        {
+          "cls": "md-show-container markdown text-wrap",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "md-show-container markdown text-wrap",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "md-show-container markdown text-wrap",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "md-show-container markdown text-wrap",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "md-show-container markdown text-wrap",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    },
+    ".mt-markdown-body": {
+      "count": 5,
+      "visible": 5,
+      "samples": [
+        {
+          "cls": "mt-markdown-body result-streaming",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "mt-markdown-body result-streaming",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "mt-markdown-body result-streaming",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "mt-markdown-body result-streaming",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "mt-markdown-body result-streaming",
+          "textLen": 45,
+          "textPreview": "AI 智能体不是更聪明的聊天机器人，而是能自己拆解任务、调用工具、把事真正做完的数字员工。",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    }
+  },
+  "sentinel": "\u0000no-child-match\u0000"
+}

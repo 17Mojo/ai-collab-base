@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-11-10T11:14:36.431Z",
+  "mode": "precheck",
+  "results": [
+    {
+      "platform": "qianwen",
+      "url": "https://www.qianwen.com/",
+      "finalUrl": "https://www.qianwen.com/chat/workbench",
+      "title": "千问-阿里 AI 助手",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false
+    },
+    {
+      "platform": "gemini",
+      "url": "https://gemini.google.com/",
+      "finalUrl": "https://gemini.google.com/app",
+      "title": "Google Gemini",
+      "composerVisible": true,
+      "composerCount": 2,
+      "looksLikeLogin": false
+    },
+    {
+      "platform": "kimi",
+      "url": "https://www.kimi.com/",
+      "finalUrl": "https://www.kimi.com/",
+      "title": "Kimi AI 官网：K3.1 Pro 上线，编程与智能体任务全面升级",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false
+    },
+    {
+      "platform": "longcat",
+      "url": "https://longcat.chat/",
+      "finalUrl": "https://longcat.chat/",
+      "title": "LongCat AI",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false
+    },
+    {
+      "platform": "yiyan",
+      "url": "https://yiyan.baidu.com/",
+      "finalUrl": "https://wenxin.baidu.com/?enter_type=yiyan_site",
+      "title": "百度文心助手 - 办公学习一站解决",
+      "composerVisible": true,
+      "composerCount": 2,
+      "looksLikeLogin": false
+    },
+    {
+      "platform": "yuanbao",
+      "url": "https://yuanbao.tencent.com/",
+      "finalUrl": "https://yuanbao.tencent.com/chat/naQivTmsDa",
+      "title": "元宝-腾讯旗下全能AI助手",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false
+    },
+    {
+      "platform": "chatglm",
+      "url": "https://chatglm.cn/",
+      "finalUrl": "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+      "title": "智谱清言",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false
+    }
+  ]
+}

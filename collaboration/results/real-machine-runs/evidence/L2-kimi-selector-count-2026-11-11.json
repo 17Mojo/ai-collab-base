@@ -1,0 +1,469 @@
+{
+  "url": "https://www.kimi.com/chat/1a1c7589-5aa2-8dd8-8000-09074d08590c?chat_enter_method=home",
+  "title": "AI智能体一句 - Kimi",
+  "totalElements": 1851,
+  "anchors": [
+    {
+      "needle": "别把 Agent 当成更聪明的聊天框",
+      "found": true,
+      "hits": 24,
+      "leafHits": 1,
+      "candidates": [
+        {
+          "textPreview": "别把 Agent 当成更聪明的聊天框，它是把目标拆成动作、调用工具并检查结果的一段闭环程序。",
+          "chain": [
+            {
+              "tag": "div",
+              "cls": "paragraph",
+              "textLen": 46,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "markdown",
+              "textLen": 46,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "markdown-container",
+              "textLen": 46,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "toolcall-rollup__part toolcall-rollup__flat",
+              "textLen": 46,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "toolcall-rollup",
+              "textLen": 274,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "segment-content-box",
+              "textLen": 274,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "segment-content",
+              "textLen": 274,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "segment-container",
+              "textLen": 274,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "segment segment-assistant",
+              "textLen": 274,
+              "childCount": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "cls": "chat-page chat",
+      "count": 1,
+      "avgTextLen": 2393,
+      "maxTextLen": 2393,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-detail-content",
+      "count": 1,
+      "avgTextLen": 2393,
+      "maxTextLen": 2393,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-detail-main",
+      "count": 1,
+      "avgTextLen": 2393,
+      "maxTextLen": 2393,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-content-container",
+      "count": 1,
+      "avgTextLen": 2255,
+      "maxTextLen": 2255,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-content-list",
+      "count": 1,
+      "avgTextLen": 2255,
+      "maxTextLen": 2255,
+      "maxChildren": 6,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "sidebar-new-chat",
+      "count": 1,
+      "avgTextLen": 1529,
+      "maxTextLen": 1529,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-content-item chat-content-item-assistant",
+      "count": 3,
+      "avgTextLen": 516,
+      "maxTextLen": 863,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "markdown-container toolcall-content-text",
+      "count": 3,
+      "avgTextLen": 453,
+      "maxTextLen": 806,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "markdown",
+      "count": 6,
+      "avgTextLen": 246,
+      "maxTextLen": 806,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-content-item chat-content-item-user",
+      "count": 3,
+      "avgTextLen": 185,
+      "maxTextLen": 260,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-action",
+      "count": 1,
+      "avgTextLen": 73,
+      "maxTextLen": 73,
+      "maxChildren": 5,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-editor-wrap",
+      "count": 1,
+      "avgTextLen": 46,
+      "maxTextLen": 46,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-editor",
+      "count": 1,
+      "avgTextLen": 46,
+      "maxTextLen": 46,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-editor-content",
+      "count": 1,
+      "avgTextLen": 46,
+      "maxTextLen": 46,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "markdown-container",
+      "count": 3,
+      "avgTextLen": 39,
+      "maxTextLen": 46,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-bottom",
+      "count": 1,
+      "avgTextLen": 13,
+      "maxTextLen": 13,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-editor-input-wrap",
+      "count": 1,
+      "avgTextLen": 8,
+      "maxTextLen": 8,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input",
+      "count": 1,
+      "avgTextLen": 8,
+      "maxTextLen": 8,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "kimi-scroll-fade kimi-scroll-fade--vertical kimi-scroll-fade--mask chat-input-editor-container",
+      "count": 1,
+      "avgTextLen": 8,
+      "maxTextLen": 8,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-editor-content",
+      "count": 1,
+      "avgTextLen": 8,
+      "maxTextLen": 8,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-placeholder",
+      "count": 1,
+      "avgTextLen": 8,
+      "maxTextLen": 8,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-header",
+      "count": 1,
+      "avgTextLen": 7,
+      "maxTextLen": 7,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-editor-action",
+      "count": 1,
+      "avgTextLen": 5,
+      "maxTextLen": 5,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-header-actions desktop-no-drag",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-notifications",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-status-row",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-prepend",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-inline-prepend is-empty",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-editor",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-editor-wrap__menu-anchor",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "message-list-container top",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "message-list",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "ysf-chat-layer",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    }
+  ],
+  "customTags": [],
+  "selectorCounts": {
+    ".chat-content-item": {
+      "count": 6,
+      "samples": [
+        {
+          "cls": "chat-content-item chat-content-item-user",
+          "textLen": 260,
+          "kids": 1
+        },
+        {
+          "cls": "chat-content-item chat-content-item-assistant",
+          "textLen": 863,
+          "kids": 1
+        },
+        {
+          "cls": "chat-content-item chat-content-item-user",
+          "textLen": 148,
+          "kids": 1
+        },
+        {
+          "cls": "chat-content-item chat-content-item-assistant",
+          "textLen": 274,
+          "kids": 1
+        }
+      ]
+    },
+    ".chat-content-item-assistant": {
+      "count": 3,
+      "samples": [
+        {
+          "cls": "chat-content-item chat-content-item-assistant",
+          "textLen": 863,
+          "kids": 1
+        },
+        {
+          "cls": "chat-content-item chat-content-item-assistant",
+          "textLen": 274,
+          "kids": 1
+        },
+        {
+          "cls": "chat-content-item chat-content-item-assistant",
+          "textLen": 410,
+          "kids": 1
+        }
+      ]
+    },
+    ".chat-content-item-user": {
+      "count": 3,
+      "samples": [
+        {
+          "cls": "chat-content-item chat-content-item-user",
+          "textLen": 260,
+          "kids": 1
+        },
+        {
+          "cls": "chat-content-item chat-content-item-user",
+          "textLen": 148,
+          "kids": 1
+        },
+        {
+          "cls": "chat-content-item chat-content-item-user",
+          "textLen": 148,
+          "kids": 1
+        }
+      ]
+    },
+    ".chat-content-list": {
+      "count": 1,
+      "samples": [
+        {
+          "cls": "chat-content-list",
+          "textLen": 2255,
+          "kids": 6
+        }
+      ]
+    },
+    ".markdown": {
+      "count": 6,
+      "samples": [
+        {
+          "cls": "markdown",
+          "textLen": 806,
+          "kids": 1
+        },
+        {
+          "cls": "markdown",
+          "textLen": 33,
+          "kids": 1
+        },
+        {
+          "cls": "markdown",
+          "textLen": 204,
+          "kids": 1
+        },
+        {
+          "cls": "markdown",
+          "textLen": 46,
+          "kids": 1
+        }
+      ]
+    },
+    ".markdown-container": {
+      "count": 6,
+      "samples": [
+        {
+          "cls": "markdown-container toolcall-content-text",
+          "textLen": 806,
+          "kids": 1
+        },
+        {
+          "cls": "markdown-container",
+          "textLen": 33,
+          "kids": 1
+        },
+        {
+          "cls": "markdown-container toolcall-content-text",
+          "textLen": 204,
+          "kids": 1
+        },
+        {
+          "cls": "markdown-container",
+          "textLen": 46,
+          "kids": 1
+        }
+      ]
+    }
+  },
+  "sentinel": "\u0000no-child-match\u0000"
+}

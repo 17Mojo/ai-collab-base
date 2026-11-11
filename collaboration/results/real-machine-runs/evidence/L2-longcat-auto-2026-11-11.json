@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-11-10T22:23:18.378Z",
+  "platform": "longcat",
+  "platformUrl": "https://longcat.chat/",
+  "packId": "xiaohongshu-knowledge-creator",
+  "input": {
+    "topic": "AI 智能体（Agent）到底是什么",
+    "target_audience_level": "普通上班族"
+  },
+  "tabIdUsed": 1785646698,
+  "delivery": "precise",
+  "exec": {
+    "success": false,
+    "error": "Step step_2_hook failed: 标签页 1785646698没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。",
+    "result": {
+      "packId": "xiaohongshu-knowledge-creator",
+      "input": {
+        "topic": "AI 智能体（Agent）到底是什么",
+        "target_audience_level": "普通上班族"
+      },
+      "runtime_overrides": {},
+      "targetTabId": 1785646698,
+      "startTime": 1794349154672,
+      "status": "failed",
+      "steps": [
+        {
+          "id": "step_1_topic",
+          "name": "选题确认",
+          "type": "local",
+          "startTime": 1794349154672,
+          "success": true,
+          "output": {
+            "topic": "AI 智能体（Agent）到底是什么",
+            "target_audience_level": "普通上班族"
+          },
+          "error": null,
+          "delivery": null,
+          "endTime": 1794349154672,
+          "duration": 0
+        },
+        {
+          "id": "step_2_hook",
+          "name": "结论提炼",
+          "type": "analysis",
+          "startTime": 1794349154672,
+          "success": false,
+          "output": null,
+          "error": "标签页 1785646698没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。",
+          "delivery": "precise",
+          "endTime": 1794349398374,
+          "duration": 243702
+        }
+      ],
+      "output": {
+        "topic_info": {
+          "topic": "AI 智能体（Agent）到底是什么",
+          "target_audience_level": "普通上班族"
+        }
+      },
+      "errors": [
+        {
+          "message": "Step step_2_hook failed: 标签页 1785646698没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。",
+          "timestamp": 1794349398374
+        }
+      ],
+      "extractedData": {},
+      "stepIndex": {},
+      "endTime": 1794349398374,
+      "duration": 243702
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "url": "https://dots.ai/chat/home/new",
+  "title": "点点",
+  "totalElements": 132,
+  "anchors": [],
+  "groups": [],
+  "customTags": [],
+  "selectorCounts": {
+    ".assistant-message-item": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    ".user-message-item": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    }
+  },
+  "sentinel": "\u0000no-child-match\u0000"
+}

@@ -1,0 +1,95 @@
+{
+  "rows": [
+    {
+      "tag": "div",
+      "cls": "group relative flex h-[44px] cursor-pointer items-center justify-between rounded-[14px] px",
+      "left": 10,
+      "top": 260,
+      "w": 239,
+      "h": 44,
+      "kids": 2,
+      "html": "<div class=\"group relative flex h-[44px] cursor-pointer items-center justify-between rounded-[14px] px-3 transition-all duration-200 hover:bg-[#f3f3f3]\"><div class=\"min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text\">点点</div><div class=\"flex shrink-0 items-center gap-1 transition-opacity duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100\"><button type=\"button\" class=\"flex"
+    },
+    {
+      "tag": "div",
+      "cls": "min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text",
+      "left": 22,
+      "top": 272,
+      "w": 155,
+      "h": 20,
+      "kids": 0,
+      "html": "<div class=\"min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text\">点点</div>"
+    },
+    {
+      "tag": "div",
+      "cls": "group relative flex h-[44px] cursor-pointer items-center justify-between rounded-[14px] px",
+      "left": 10,
+      "top": 306,
+      "w": 239,
+      "h": 44,
+      "kids": 2,
+      "html": "<div class=\"group relative flex h-[44px] cursor-pointer items-center justify-between rounded-[14px] px-3 transition-all duration-200 hover:bg-[#f3f3f3]\"><div class=\"min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text\">点点</div><div class=\"flex shrink-0 items-center gap-1 transition-opacity duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100\"><button type=\"button\" class=\"flex"
+    },
+    {
+      "tag": "div",
+      "cls": "min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text",
+      "left": 22,
+      "top": 318,
+      "w": 155,
+      "h": 20,
+      "kids": 0,
+      "html": "<div class=\"min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text\">点点</div>"
+    },
+    {
+      "tag": "div",
+      "cls": "group relative flex h-[44px] cursor-pointer items-center justify-between rounded-[14px] px",
+      "left": 10,
+      "top": 352,
+      "w": 239,
+      "h": 44,
+      "kids": 2,
+      "html": "<div class=\"group relative flex h-[44px] cursor-pointer items-center justify-between rounded-[14px] px-3 transition-all duration-200 hover:bg-[#f3f3f3]\"><div class=\"min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text\">点点</div><div class=\"flex shrink-0 items-center gap-1 transition-opacity duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100\"><button type=\"button\" class=\"flex"
+    },
+    {
+      "tag": "div",
+      "cls": "min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text",
+      "left": 22,
+      "top": 364,
+      "w": 155,
+      "h": 20,
+      "kids": 0,
+      "html": "<div class=\"min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text\">点点</div>"
+    }
+  ],
+  "afterHover": {
+    "found": true,
+    "cls": "group relative flex h-[44px] cursor-pointer items-center justify-between rounded",
+    "html": "<div class=\"group relative flex h-[44px] cursor-pointer items-center justify-between rounded-[14px] px-3 transition-all duration-200 hover:bg-[#f3f3f3]\"><div class=\"min-w-0 flex-1 truncate pr-2 text-[15px] font-normal leading-5 text-dd-text\">点点</div><div class=\"flex shrink-0 items-center gap-1 transition-opacity duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100\"><button type=\"button\" class=\"flex h-7 w-7 items-center justify-center rounded-lg text-dd-text-tertiary transition-colors hover:bg-black/[0.04] hover:text-dd-text focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#141414]/15\" title=\"编辑对话\" aria-label=\"编辑对话：点点\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" aria-hidden=\"true\"><path d=\"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"></path><path d=\"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z\"></path></svg></button><button type=\"button\" class=\"flex h-7 w-7 items-center justify-center rou",
+    "buttons": [
+      {
+        "tag": "button",
+        "cls": "flex h-7 w-7 items-center justify-center rounded-lg text-dd-text-terti",
+        "aria": "编辑对话：点点",
+        "title": "编辑对话"
+      },
+      {
+        "tag": "svg",
+        "cls": "",
+        "aria": "",
+        "title": ""
+      },
+      {
+        "tag": "button",
+        "cls": "flex h-7 w-7 items-center justify-center rounded-lg text-dd-text-terti",
+        "aria": "删除对话：点点",
+        "title": "删除对话"
+      },
+      {
+        "tag": "svg",
+        "cls": "",
+        "aria": "",
+        "title": ""
+      }
+    ]
+  }
+}

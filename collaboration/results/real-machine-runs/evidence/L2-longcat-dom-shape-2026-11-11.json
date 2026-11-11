@@ -1,0 +1,169 @@
+{
+  "url": "https://longcat.chat/",
+  "title": "LongCat AI",
+  "totalElements": 279,
+  "anchors": [
+    {
+      "needle": "真正替你干活的不只是那个只会聊天的模型",
+      "found": false,
+      "hits": 0,
+      "leafHits": 0,
+      "candidates": []
+    },
+    {
+      "needle": "你要写一条小红书",
+      "found": false,
+      "hits": 0,
+      "leafHits": 0,
+      "candidates": []
+    }
+  ],
+  "groups": [
+    {
+      "cls": "v-chat-home",
+      "count": 1,
+      "avgTextLen": 79,
+      "maxTextLen": 79,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-home-content",
+      "count": 1,
+      "avgTextLen": 34,
+      "maxTextLen": 34,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-home-footer",
+      "count": 1,
+      "avgTextLen": 32,
+      "maxTextLen": 32,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-footer-tip",
+      "count": 1,
+      "avgTextLen": 32,
+      "maxTextLen": 32,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-container",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-input chatInput",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-wrap",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-footer",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "width-adapt v-chat-multimodal",
+      "count": 1,
+      "avgTextLen": 20,
+      "maxTextLen": 20,
+      "maxChildren": 8,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-welcome-container",
+      "count": 1,
+      "avgTextLen": 14,
+      "maxTextLen": 14,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-home-welcome-pc",
+      "count": 1,
+      "avgTextLen": 14,
+      "maxTextLen": 14,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-home-title user-select-none",
+      "count": 1,
+      "avgTextLen": 14,
+      "maxTextLen": 14,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-home-header",
+      "count": 1,
+      "avgTextLen": 12,
+      "maxTextLen": 12,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conversation-list webkit-scrollbar webkit-scrollbar-hide",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 0,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "tiptap ProseMirror",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-multi-modal",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "v-chat-voice-call",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "background-mp chat-voice-call-button",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    }
+  ],
+  "customTags": [],
+  "sentinel": "\u0000no-child-match\u0000"
+}

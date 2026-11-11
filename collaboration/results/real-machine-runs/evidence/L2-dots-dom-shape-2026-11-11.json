@@ -1,0 +1,224 @@
+{
+  "url": "https://dots.ai/chat/home/CHAT_54c918a4bc933401458d18bf15db70427a4403e89b6f20119e81b25ad1b37815",
+  "title": "点点",
+  "totalElements": 543,
+  "anchors": [],
+  "groups": [
+    {
+      "cls": "message-card_long-rich-text py-7 flex flex-col gap-6.5 w-full bg-white shadow-[0_0_10px_0_rgba(0,0,0,0.04)] overflow-hid",
+      "count": 5,
+      "avgTextLen": 879,
+      "maxTextLen": 1134,
+      "maxChildren": 6,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "assistant-message-item bubbleForAssistant bubble-enter flex flex-col items-start gap-1",
+      "count": 12,
+      "avgTextLen": 405,
+      "maxTextLen": 1134,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "prose-dd",
+      "count": 12,
+      "avgTextLen": 366,
+      "maxTextLen": 954,
+      "maxChildren": 20,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "user-message-item bubble-enter flex flex-col items-end gap-1",
+      "count": 8,
+      "avgTextLen": 217,
+      "maxTextLen": 1102,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "assistant-message-card relative",
+      "count": 7,
+      "avgTextLen": 66,
+      "maxTextLen": 89,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "user-message-card relative",
+      "count": 5,
+      "avgTextLen": 15,
+      "maxTextLen": 28,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    }
+  ],
+  "customTags": [],
+  "selectorCounts": {
+    "[class*=\"message\"]": {
+      "count": 37,
+      "visible": 37,
+      "samples": [
+        {
+          "cls": "user-message-item bubble-enter flex flex-col items-end gap-1",
+          "textLen": 7,
+          "textPreview": "这个模型怎么用",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "user-message-card relative",
+          "textLen": 7,
+          "textPreview": "这个模型怎么用",
+          "kids": 2,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message-item bubbleForAssistant bubble-enter flex flex-col items-start gap-1",
+          "textLen": 78,
+          "textPreview": "Ideogram 4 是一个非常强大的文生图模型，尤其适合做需要精准文字和排版的设计。你分享的笔记里提到的方法，其实是它",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message-card relative",
+          "textLen": 78,
+          "textPreview": "Ideogram 4 是一个非常强大的文生图模型，尤其适合做需要精准文字和排版的设计。你分享的笔记里提到的方法，其实是它",
+          "kids": 2,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message-item bubbleForAssistant bubble-enter flex flex-col items-start gap-1",
+          "textLen": 832,
+          "textPreview": "Ideogram 4 上手指南\nIdeogram 4 在设计圈很火，主要是因为它解决了传统 AI 绘画两大难题：文字写不",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "message-card_long-rich-text py-7 flex flex-col gap-6.5 w-full bg-white shadow-[0_0_10px_0_rgba(0,0,0",
+          "textLen": 832,
+          "textPreview": "Ideogram 4 上手指南\nIdeogram 4 在设计圈很火，主要是因为它解决了传统 AI 绘画两大难题：文字写不",
+          "kids": 6,
+          "visible": true
+        },
+        {
+          "cls": "user-message-item bubble-enter flex flex-col items-end gap-1",
+          "textLen": 28,
+          "textPreview": "Ideogram 4 在macOS上部署并跑通官方工作流",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "user-message-card relative",
+          "textLen": 28,
+          "textPreview": "Ideogram 4 在macOS上部署并跑通官方工作流",
+          "kids": 2,
+          "visible": true
+        }
+      ]
+    },
+    "[class*=\"msg\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    "[class*=\"chat\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    "[class*=\"bubble\"]": {
+      "count": 20,
+      "visible": 20,
+      "samples": [
+        {
+          "cls": "user-message-item bubble-enter flex flex-col items-end gap-1",
+          "textLen": 7,
+          "textPreview": "这个模型怎么用",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message-item bubbleForAssistant bubble-enter flex flex-col items-start gap-1",
+          "textLen": 78,
+          "textPreview": "Ideogram 4 是一个非常强大的文生图模型，尤其适合做需要精准文字和排版的设计。你分享的笔记里提到的方法，其实是它",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message-item bubbleForAssistant bubble-enter flex flex-col items-start gap-1",
+          "textLen": 832,
+          "textPreview": "Ideogram 4 上手指南\nIdeogram 4 在设计圈很火，主要是因为它解决了传统 AI 绘画两大难题：文字写不",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "user-message-item bubble-enter flex flex-col items-end gap-1",
+          "textLen": 28,
+          "textPreview": "Ideogram 4 在macOS上部署并跑通官方工作流",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message-item bubbleForAssistant bubble-enter flex flex-col items-start gap-1",
+          "textLen": 89,
+          "textPreview": "没问题，想在 Mac 上把 Ideogram 4 跑起来，确实需要一点小技巧。好消息是，ComfyUI 原生支持它。我帮",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "assistant-message-item bubbleForAssistant bubble-enter flex flex-col items-start gap-1",
+          "textLen": 1134,
+          "textPreview": "Ideogram 4 on macOS：部署与工作流指南\n在 Mac 上部署 Ideogram 4，最核心的挑战是找到正",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "user-message-item bubble-enter flex flex-col items-end gap-1",
+          "textLen": 133,
+          "textPreview": "Z-Image-Turbo LoRA模型训练Z-Image-Turbo LoRA模型训练\n耗时4200s倾心制作，手把手",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "user-message-item bubble-enter flex flex-col items-end gap-1",
+          "textLen": 21,
+          "textPreview": "按时间戳将视频中lora训练方法梳理成摘要",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    },
+    "[class*=\"markdown\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    "[class*=\"answer\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    "[class*=\"response\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    "[class*=\"conv\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    "[class*=\"loading\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    },
+    "[class*=\"stream\"]": {
+      "count": 0,
+      "visible": 0,
+      "samples": []
+    }
+  },
+  "sentinel": "\u0000no-child-match\u0000"
+}

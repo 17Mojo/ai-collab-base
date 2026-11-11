@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-11-11T02:27:07.120Z",
+  "mode": "login-helper",
+  "waitMinutes": 25,
+  "profile": "/Users/raymondna/Library/Application Support/rm-dots-test-profile",
+  "results": [
+    {
+      "platform": "dots",
+      "state": {
+        "url": "https://dots.ai/chat/home/new",
+        "composerVisible": true,
+        "hints": [],
+        "title": "点点"
+      },
+      "loggedIn": true,
+      "why": "输入框可见 + 无登录提示 + 非认证路径",
+      "checkedAt": "2026-11-11T02:27:07.048Z"
+    }
+  ]
+}

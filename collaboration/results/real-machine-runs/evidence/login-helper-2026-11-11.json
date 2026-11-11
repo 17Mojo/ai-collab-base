@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-11-10T22:12:00.802Z",
+  "mode": "login-helper",
+  "waitMinutes": 8,
+  "profile": "/Users/raymondna/Library/Application Support/rm-qianwen-l2-profile",
+  "results": [
+    {
+      "platform": "deepseek",
+      "state": {
+        "url": "https://chat.deepseek.com/",
+        "composerVisible": true,
+        "hints": [],
+        "title": "DeepSeek - 探索未至之境"
+      },
+      "loggedIn": true,
+      "why": "输入框可见 + 无登录提示 + 非认证路径",
+      "checkedAt": "2026-11-10T22:12:00.679Z"
+    },
+    {
+      "platform": "longcat",
+      "state": {
+        "url": "https://longcat.chat/",
+        "composerVisible": true,
+        "hints": [],
+        "title": "LongCat AI"
+      },
+      "loggedIn": true,
+      "why": "输入框可见 + 无登录提示 + 非认证路径",
+      "checkedAt": "2026-11-10T22:12:00.752Z"
+    }
+  ]
+}

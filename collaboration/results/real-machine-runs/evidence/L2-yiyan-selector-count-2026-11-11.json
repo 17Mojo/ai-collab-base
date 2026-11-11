@@ -1,0 +1,538 @@
+{
+  "url": "https://wenxin.baidu.com/search/5938685377180287790?enter_type=yiyan_site",
+  "title": "百度文心助手 - 办公学习一站解决",
+  "totalElements": 643,
+  "anchors": [
+    {
+      "needle": "它不需要你把每一步操作都讲清楚",
+      "found": true,
+      "hits": 31,
+      "leafHits": 1,
+      "candidates": [
+        {
+          "textPreview": "它不需要你把每一步操作都讲清楚，就能自主推进拿到你要的最终结果。",
+          "chain": [
+            {
+              "tag": "p",
+              "cls": "marklang-paragraph",
+              "textLen": 32,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "marklang",
+              "textLen": 32,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "cosd-markdown-content",
+              "textLen": 32,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "cosd-markdown",
+              "textLen": 32,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ai-entry-block ai-markdown",
+              "textLen": 32,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ai-entry",
+              "textLen": 32,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "answer-container cs-enable-selection no-half-blue-link _container_ea7rh_1 _answer-history_fl9x2_25",
+              "textLen": 32,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 32,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "cos-swiper-item cs-history-answer",
+              "textLen": 32,
+              "childCount": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "cls": "_chat-container_*",
+      "count": 1,
+      "avgTextLen": 21253,
+      "maxTextLen": 21253,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-container-body_*",
+      "count": 1,
+      "avgTextLen": 21253,
+      "maxTextLen": 21253,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-container-wrapper_*",
+      "count": 1,
+      "avgTextLen": 18285,
+      "maxTextLen": 18285,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-container-pc_* _new-home-long_* _new-page-update_* new-liuhe-layout has-top-bar-overlap capsule-inside-active new-",
+      "count": 1,
+      "avgTextLen": 18285,
+      "maxTextLen": 18285,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-container-main-wrapper_*",
+      "count": 1,
+      "avgTextLen": 17874,
+      "maxTextLen": 17874,
+      "maxChildren": 4,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-container-main_*",
+      "count": 1,
+      "avgTextLen": 14124,
+      "maxTextLen": 14124,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-container-main-area_* chat-container-main-area",
+      "count": 1,
+      "avgTextLen": 14124,
+      "maxTextLen": 14124,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-container-main-stream_*",
+      "count": 1,
+      "avgTextLen": 14124,
+      "maxTextLen": 14124,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-body-container_* _scroll-container_*",
+      "count": 1,
+      "avgTextLen": 14124,
+      "maxTextLen": 14124,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conversation-flow-content _scroll-content_*",
+      "count": 1,
+      "avgTextLen": 14124,
+      "maxTextLen": 14124,
+      "maxChildren": 8,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-qa-container _history-hidden_* cs-rank-container last-history",
+      "count": 1,
+      "avgTextLen": 3045,
+      "maxTextLen": 3045,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-aside-container is-new-aside-sample new-aside-container",
+      "count": 1,
+      "avgTextLen": 2800,
+      "maxTextLen": 2800,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+      "count": 1,
+      "avgTextLen": 2800,
+      "maxTextLen": 2800,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+      "count": 1,
+      "avgTextLen": 2800,
+      "maxTextLen": 2800,
+      "maxChildren": 5,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-bottom-wrapper_* new-input-box",
+      "count": 1,
+      "avgTextLen": 1100,
+      "maxTextLen": 1100,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-bottom_*",
+      "count": 1,
+      "avgTextLen": 1100,
+      "maxTextLen": 1100,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-input-box-pc",
+      "count": 1,
+      "avgTextLen": 1100,
+      "maxTextLen": 1100,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-left-bar chat-aside-bottom",
+      "count": 1,
+      "avgTextLen": 916,
+      "maxTextLen": 916,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-qa-container _history-hidden_* cs-rank-container",
+      "count": 3,
+      "avgTextLen": 911,
+      "maxTextLen": 928,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-top-bar-new_* _has-overlap_* _chat-top-bar-upgrade_* _chat-top-bar-task_* new-task-hover-plain-active _chat-top-ba",
+      "count": 1,
+      "avgTextLen": 755,
+      "maxTextLen": 755,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-top-tab-list_*",
+      "count": 1,
+      "avgTextLen": 755,
+      "maxTextLen": 755,
+      "maxChildren": 5,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "aside-scroll-container chat-aside-scroll",
+      "count": 1,
+      "avgTextLen": 714,
+      "maxTextLen": 714,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-aside-scroll-content",
+      "count": 1,
+      "avgTextLen": 714,
+      "maxTextLen": 714,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "history-chat",
+      "count": 1,
+      "avgTextLen": 714,
+      "maxTextLen": 714,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conversation-flow-answer-container _answer-container_*",
+      "count": 4,
+      "avgTextLen": 583,
+      "maxTextLen": 2183,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "history-answer-box",
+      "count": 4,
+      "avgTextLen": 583,
+      "maxTextLen": 2183,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "history-chat-gird",
+      "count": 1,
+      "avgTextLen": 292,
+      "maxTextLen": 292,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "history-chat-list-container",
+      "count": 1,
+      "avgTextLen": 292,
+      "maxTextLen": 292,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-history-list history-chat-list",
+      "count": 1,
+      "avgTextLen": 292,
+      "maxTextLen": 292,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-history-time-item chat-aside-new-item",
+      "count": 1,
+      "avgTextLen": 292,
+      "maxTextLen": 292,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-side-list-item chat-side-list-item-sample no-hover selected",
+      "count": 1,
+      "avgTextLen": 292,
+      "maxTextLen": 292,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "ci-root ci-ai-search ci-position-top ci-close-panel ci-capsule-inside ci-mode-select result-chat-input",
+      "count": 1,
+      "avgTextLen": 282,
+      "maxTextLen": 282,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-aside-user-mask",
+      "count": 1,
+      "avgTextLen": 124,
+      "maxTextLen": 124,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "conversation-flow-question-container _question-container_*",
+      "count": 4,
+      "avgTextLen": 112,
+      "maxTextLen": 112,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "cs-question-bubble cs-bubble",
+      "count": 4,
+      "avgTextLen": 112,
+      "maxTextLen": 112,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-aside-user-menu",
+      "count": 1,
+      "avgTextLen": 54,
+      "maxTextLen": 54,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "chat-aside-user-menu-content",
+      "count": 1,
+      "avgTextLen": 54,
+      "maxTextLen": 54,
+      "maxChildren": 3,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_chat-search-history-answer_* chat-search-history-answer",
+      "count": 4,
+      "avgTextLen": 45,
+      "maxTextLen": 66,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "_answer-layout_* cs-swiper-layout-answer",
+      "count": 4,
+      "avgTextLen": 45,
+      "maxTextLen": 66,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "cos-swiper history-answer-swiper",
+      "count": 4,
+      "avgTextLen": 45,
+      "maxTextLen": 66,
+      "maxChildren": 2,
+      "sampleTag": "div"
+    }
+  ],
+  "customTags": [
+    {
+      "tag": "chat-share-popup",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0
+    },
+    {
+      "tag": "chat-toast",
+      "count": 1,
+      "avgTextLen": 0,
+      "maxTextLen": 0
+    }
+  ],
+  "selectorCounts": {
+    "div.answer-container": {
+      "count": 4,
+      "samples": [
+        {
+          "cls": "answer-container\n                cs-enable-selection\n                no-half-blue-link\n             ",
+          "textLen": 66,
+          "kids": 3
+        },
+        {
+          "cls": "answer-container\n                cs-enable-selection\n                no-half-blue-link\n             ",
+          "textLen": 44,
+          "kids": 3
+        },
+        {
+          "cls": "answer-container\n                cs-enable-selection\n                no-half-blue-link\n             ",
+          "textLen": 38,
+          "kids": 3
+        },
+        {
+          "cls": "answer-container\n                cs-enable-selection\n                no-half-blue-link\n             ",
+          "textLen": 32,
+          "kids": 3
+        }
+      ]
+    },
+    "div.ai-entry": {
+      "count": 4,
+      "samples": [
+        {
+          "cls": "ai-entry",
+          "textLen": 66,
+          "kids": 1
+        },
+        {
+          "cls": "ai-entry",
+          "textLen": 44,
+          "kids": 1
+        },
+        {
+          "cls": "ai-entry",
+          "textLen": 38,
+          "kids": 1
+        },
+        {
+          "cls": "ai-entry",
+          "textLen": 32,
+          "kids": 1
+        }
+      ]
+    },
+    "div.cs-question-bubble": {
+      "count": 4,
+      "samples": [
+        {
+          "cls": "cs-question-bubble cs-bubble ",
+          "textLen": 112,
+          "kids": 2
+        },
+        {
+          "cls": "cs-question-bubble cs-bubble ",
+          "textLen": 112,
+          "kids": 2
+        },
+        {
+          "cls": "cs-question-bubble cs-bubble ",
+          "textLen": 112,
+          "kids": 2
+        },
+        {
+          "cls": "cs-question-bubble cs-bubble ",
+          "textLen": 112,
+          "kids": 2
+        }
+      ]
+    },
+    "div.cos-swiper-item.cs-history-answer": {
+      "count": 4,
+      "samples": [
+        {
+          "cls": "cos-swiper-item cs-history-answer",
+          "textLen": 66,
+          "kids": 1
+        },
+        {
+          "cls": "cos-swiper-item cs-history-answer",
+          "textLen": 44,
+          "kids": 1
+        },
+        {
+          "cls": "cos-swiper-item cs-history-answer",
+          "textLen": 38,
+          "kids": 1
+        },
+        {
+          "cls": "cos-swiper-item cs-history-answer",
+          "textLen": 32,
+          "kids": 1
+        }
+      ]
+    },
+    "[class*=\"answer\"]": {
+      "count": 45,
+      "samples": [
+        {
+          "cls": "cs-answer-hover-menu-container _menu_1fov1_1",
+          "textLen": 0,
+          "kids": 2
+        },
+        {
+          "cls": "conversation-flow-answer-container _answer-container_1ozo5_22",
+          "textLen": 66,
+          "kids": 1
+        },
+        {
+          "cls": "history-answer-box\n            \n            \n            ",
+          "textLen": 66,
+          "kids": 2
+        },
+        {
+          "cls": "\n                _chat-search-history-answer_fl9x2_53\n                chat-search-history-answer\n   ",
+          "textLen": 66,
+          "kids": 2
+        }
+      ]
+    }
+  },
+  "sentinel": "\u0000no-child-match\u0000"
+}

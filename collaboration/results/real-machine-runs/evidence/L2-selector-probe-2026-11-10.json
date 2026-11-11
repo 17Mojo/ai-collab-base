@@ -1,0 +1,178 @@
+{
+  "generatedAt": "2026-11-10T11:24:21.198Z",
+  "mode": "precheck",
+  "results": [
+    {
+      "platform": "yuanbao",
+      "url": "https://yuanbao.tencent.com/",
+      "finalUrl": "https://yuanbao.tencent.com/chat/naQivTmsDa",
+      "title": "元宝-腾讯旗下全能AI助手",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 9,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "",
+            "len": 301,
+            "attrs": [
+              "id=__next"
+            ]
+          },
+          {
+            "cls": "",
+            "len": 301,
+            "attrs": [
+              "id=app"
+            ]
+          },
+          {
+            "cls": "yb-layout agent-layout layout-pc yb-layout--pc-container",
+            "len": 301,
+            "attrs": [
+              "class=yb-layout agent-layout layout-pc yb-layo"
+            ]
+          },
+          {
+            "cls": "yb-nav yb-nav-common yb-nav--pc-ctx yb-nav--push yb-nav--open",
+            "len": 114,
+            "attrs": [
+              "class=yb-nav yb-nav-common yb-nav--pc-ctx yb-n"
+            ]
+          },
+          {
+            "cls": "yb-nav__content-wrapper",
+            "len": 114,
+            "attrs": [
+              "class=yb-nav__content-wrapper",
+              "style=width: 254px;"
+            ]
+          },
+          {
+            "cls": "yb-nav__content",
+            "len": 100,
+            "attrs": [
+              "class=yb-nav__content"
+            ]
+          },
+          {
+            "cls": "yb-recent-conv-list yb-recent-conv-list--new-framework",
+            "len": 83,
+            "attrs": [
+              "class=yb-recent-conv-list yb-recent-conv-list-"
+            ]
+          },
+          {
+            "cls": "yb-layout__content agent-layout__content",
+            "len": 164,
+            "attrs": [
+              "class=yb-layout__content agent-layout__content"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "platform": "chatglm",
+      "url": "https://chatglm.cn/",
+      "finalUrl": "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+      "title": "智谱清言",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 6,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "",
+            "len": 462,
+            "attrs": [
+              "id=app",
+              "data-v-app="
+            ]
+          },
+          {
+            "cls": "pr",
+            "len": 462,
+            "attrs": [
+              "id=app",
+              "class=pr",
+              "style=background: var(--bg_white_1,#ffffff); -"
+            ]
+          },
+          {
+            "cls": "el-container",
+            "len": 462,
+            "attrs": [
+              "data-v-558896c4=",
+              "class=el-container"
+            ]
+          },
+          {
+            "cls": "aside-subjects",
+            "len": 166,
+            "attrs": [
+              "data-v-9c1dfd20=",
+              "data-v-b3fbe0ce=",
+              "class=aside-subjects"
+            ]
+          },
+          {
+            "cls": "subjects limitation",
+            "len": 163,
+            "attrs": [
+              "data-v-9c1dfd20=",
+              "class=subjects limitation",
+              "infinite-scroll-distance=100",
+              "infinite-scroll-disabled=false"
+            ]
+          },
+          {
+            "cls": "history-list",
+            "len": 127,
+            "attrs": [
+              "data-v-1bf1dca2=",
+              "data-v-9c1dfd20=",
+              "class=history-list",
+              "id=aside-history-list"
+            ]
+          },
+          {
+            "cls": "list",
+            "len": 123,
+            "attrs": [
+              "data-v-62925bb2=",
+              "data-v-1bf1dca2=",
+              "class=list"
+            ]
+          },
+          {
+            "cls": "history-item el-tooltip__trigger el-tooltip__trigger",
+            "len": 123,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=history-item el-tooltip__trigger el-tool"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

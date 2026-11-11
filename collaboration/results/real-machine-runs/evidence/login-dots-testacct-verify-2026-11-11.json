@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-11-11T02:29:45.613Z",
+  "mode": "login-helper",
+  "waitMinutes": 2,
+  "profile": "/Users/raymondna/Library/Application Support/rm-dots-test-profile",
+  "results": [
+    {
+      "platform": "dots",
+      "state": {
+        "url": "https://dots.ai/chat/home/new",
+        "composerVisible": true,
+        "hints": [],
+        "title": "点点",
+        "account": {
+          "userIds": {
+            "auth_user_id": "194813500431245312"
+          },
+          "userId": "194813500431245312",
+          "asideText": ""
+        }
+      },
+      "loggedIn": true,
+      "why": "输入框可见 + 无登录提示 + 非认证路径",
+      "accountUnverified": false,
+      "checkedAt": "2026-11-11T02:29:45.542Z"
+    }
+  ]
+}

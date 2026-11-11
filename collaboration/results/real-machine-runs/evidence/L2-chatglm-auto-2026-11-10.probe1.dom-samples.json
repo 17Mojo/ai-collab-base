@@ -1,0 +1,1120 @@
+{
+  "platform": "chatglm",
+  "samples": [
+    {
+      "t": 32,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 0,
+        ".conversation": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 0
+      },
+      "chains": [],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh"
+    },
+    {
+      "t": 2084,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 0,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 4105,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 6136,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 8163,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 10195,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 12218,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 14249,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 16284,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 18313,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 20340,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 22384,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 24410,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 26454,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 28485,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 1,
+        ".conversation-item": 1,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 3
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 30520,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 32568,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "title",
+          "history-item selected el-tooltip__trigger el-tooltip__trigger",
+          "list",
+          "history-list",
+          "subjects limitation",
+          "aside-subjects",
+          "el-aside aside-container scroll-display-none"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 34606,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 36643,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 38683,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 40727,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 42756,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 44801,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 46838,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 48886,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 50915,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 52954,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 54981,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 57016,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 59052,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 61100,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 1,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 4
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 63140,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 65169,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 2,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 67199,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 69234,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 71275,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 73320,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 75357,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 77403,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 79437,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 81465,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 83494,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 85526,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 87550,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    },
+    {
+      "t": 89582,
+      "counts": {
+        "[data-conv-speaker]": 0,
+        ".hyc-content-md-done": 0,
+        ".answer-content-wrap": 3,
+        ".conversation-item": 2,
+        ".conversation": 2,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        "[class*=\"answer\"]": 7
+      },
+      "chains": [
+        [
+          "",
+          "fs14 flex1 ft_grey3 question-txt dots wrap pr dot-5-line",
+          "pr question-text-style",
+          "pr width_full",
+          "conversation question pr flex flex-x-start flex-y-start",
+          "item conversation-item",
+          "detail chatScrollContainer conversation-list"
+        ]
+      ],
+      "url": "https://chatglm.cn/main/alltoolsdetail?lang=zh&cid=6af30c944a6cd9f20dd6b0b6"
+    }
+  ]
+}
