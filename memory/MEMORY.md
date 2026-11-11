@@ -14,7 +14,7 @@
 - [历史 Prompt Pack 是空壳（2026-11-03 考古结论）](project_pack_shell_empty.md) — 【2026-11-03 考古结论，随后已改观】当时 16 个历史包共 62 个 AI 步骤、0 个有 prompt_template，Chrome 侧空串直送 AI。现状：阶段一补了 xiaohongshu_knowledge_creator.json（7 条 prompt_template），阶段三把 15 个空壳移入 packs/templates/，packs/examples/ 只剩 2 个能跑的包。要点：能过校验 ≠ 能跑出产物
 - [Python 侧与 Chrome 侧的协议取值域互不相交（2026-11-03 审计根因）](project_protocol_layer_mismatch.md) — 校验器/Schema 白名单只认 local/analysis/generation/validation/fusion/tracking，Chrome 执行器只认 local/ai，交集只有 local；external-user-smoke.json 唯一 ERROR 是 Invalid step type: ai；统一路线属产品取舍待用户拍板
 - [Chrome 扩展真机验证只能由用户在真实 Chrome 完成](project_real_chrome_verification.md) — 2026-11-02 实测——IDE 内置 browser 工具只能开 URL、不能读页/点击/加载扩展，故永远无 [Prompt Pack] 日志，不能用于 L2；本机 9222 端口虽监听但 /json 返回 404，无法接管外部 Chrome；L2 的「人点发送」必须用户本人在真实 Chrome 完成
-- [产品路线 A/B 决策门禁（真机 3 平台回归 + 第一个外部用户）](project_route_decision.md) — AI Collaboration System 路线拍板（路线 A Prompt Pack 面向创作者 vs 路线 B Agent 协作控制面产品化）唯一缺失的真证是「真机 3 平台回归 + 第一个外部用户」；截至 2026-10-27 材料侧已全部备齐（排演 W-D1 + 会话手册 + L2 观测器），缺的只是「人」与「一次真机发送」
+- [产品路线 A/B 决策门禁（真机 3 平台回归 + 第一个外部用户）](project_route_decision.md) — 产品路线 A/B 决策门禁。🔧 2026-11-11 12:18 用户裁定：**平台范围收缩为 5 个**——只保留 qianwen / yuanbao / chatglm / yiyan / kimi，其余（deepseek / longcat / gemini / chatgpt / claude / dots）全部暂时冻结不去碰；此裁定推翻 06:10 的「只推 deepseek 和 longcat」。13:02 活跃 5 站同日完整回归（RMR-2026-11-11-03）8/8 全 pass。⇒ **活跃 5/5 全 pass，但分母仍记 10，5/10 不因裁定上升**；冻结项仍记 fail / not-run，不得算作已验证。⚠️ 冻结 ≠ 缺陷修好：step_8 长会话尾部撞墙属 Pack 结构假设问题，在活跃站依然潜伏。dots 记 not-run、不计入分母，立项亦冻结。⚠️ 本文件今日内容曾因误改镜像被覆盖，已按会话原文复原；07:50 节前半段原文不可恢复，详见文内重建声明。
 - [任务契约 change_id 白名单与非法值的修正方式](project_task_change_id_whitelist.md) — ai_collab 任务契约校验器对 change_id 只认 bugfix/no-spec、legacy/task-contract-migration 或 openspec 真实变更；工单写 feature/no-spec 会被 tasks update 拒收（invalid=[change_id]），需用 --change-id 修正并留痕
 - [仓库跟踪了残缺 node_modules，worktree 与 npm 都会被误导](project_worktree_node_modules_trap.md) — git 跟踪的 node_modules 只有约 129 个文件（约 5.3MB），完整依赖约 71MB/2600 文件；worktree add 会检出这份假依赖，npm 误判已装，npm run build 报一堆与真实原因无关的错
 
@@ -44,11 +44,13 @@
 - [service worker 里没有 window——页面侧函数不能直接调](feedback_service_worker_no_window.md) — MV3 的 service worker 里 typeof window === "undefined"，后台调页面侧的 adapter.detect() 会抛 ReferenceError 并挂掉整个 onMessage 处理器⇒永远不 sendResponse⇒扩展在任何站点上都拿不到适配器且不报错
 - [排查受阻时先穷尽自判手段，只留一次人证动作](feedback_single_user_action_debugging.md) — 用户反馈「还是没有」时不要继续盲改、也不要反复让其回报中间态日志；先做一次可判定的二分判定并穷尽 Agent 侧可自动核验的环节，把不可替代的人证动作收敛成一次并写清成功标志
 - [前端不该是第二个判定方——「什么算 Pack」只能有一处说了算](feedback_single_validation_authority.md) — 导入界面比后台更严（前端只认 {packs:[...]}、后台两种形状都收）⇒ 照指南导入单个 Pack 文件直接报「文件格式错误」；前端多一道闸 = 两个判定方 = 迟早漂移
+- [项目体检测试失败诊断流程](feedback_test_failure_diagnosis_flow.md) — 2026-11-09 项目体检中发现的测试失败诊断与修复模式——测试断言未对齐新架构、工作区未提交改动导致测试失败
 - [测试门禁分层原则（硬门禁对齐真证，软警告用于理想规范）](feedback_test_gate_design.md) — 设计测试门禁时，硬门禁只放基线项，"应当有"特性降级为软警告；测试不应造假以通过门禁
 - [工具校验器报错不等于文件有错——用权威解析器复核后再动手](feedback_validator_false_positive.md) — 编辑器/内置校验器对 YAML 等结构化文件报错可能系工具自身故障；先用权威解析器（如 Python yaml.safe_load）复核，勿因误报改动本已正确的文件
 - [同步类改动须同时验「静态接线」与「行为级加载」，并做漂移注入闭环](feedback_verification_static_vs_behavioral.md) — 配置/记忆同步类交付的验证形态：静态 grep 接线 ≠ 行为级生效；漂移须同时验证「能检测」与「能修复」；验证脚本要可复用
 - [引用文件路径与编号前必须先在仓库里核对存在性](feedback_verify_before_citing_paths.md) — 写手册/清单时凭印象写出的文件路径、脚本名、缺口编号在仓库中查无此物；动手落盘前先 Glob/Grep 核对真实路径与编号口径，并写明「不存在」而非假装有
 - [改动先核磁盘真证再宣布（用户不认口头承诺）](feedback_verify_disk_before_claim.md) — 用户要求"先核磁盘——你说的改动我要看到才认"；改完必须核实际文件内容与所在分支，成本估算要实测不要拍脑袋
+- [工作区清理与提交策略](feedback_workspace_cleanup_strategy.md) — 2026-11-09 项目体检中的工作区清理模式——未跟踪目录加入 gitignore、Conventional Commits 提交、提交前验证
 - [重活校验跑在独立 worktree，不碰用户工作区](feedback_worktree_isolation.md) — 用户工作区有未提交改动时，全套校验/构建/大 diff 必须放 git worktree 里做；结论必须标注基线 commit（HEAD 还是 main），差异大时以目标分支为准重查
 
 ## Reference

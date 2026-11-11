@@ -1,6 +1,6 @@
 {
   "source": "/Users/raymondna/.codeartsdoer/memory/-Users-raymondna-Documents-AI-collab-ai-collab-base",
-  "generated_at": "2026-11-04T00:57:29.205082+00:00",
+  "generated_at": "2026-11-11T05:09:26.125223+00:00",
   "files": [
     "MEMORY.md",
     "feedback_ack_cli_generated.md",
@@ -29,11 +29,13 @@
     "feedback_service_worker_no_window.md",
     "feedback_single_user_action_debugging.md",
     "feedback_single_validation_authority.md",
+    "feedback_test_failure_diagnosis_flow.md",
     "feedback_test_gate_design.md",
     "feedback_validator_false_positive.md",
     "feedback_verification_static_vs_behavioral.md",
     "feedback_verify_before_citing_paths.md",
     "feedback_verify_disk_before_claim.md",
+    "feedback_workspace_cleanup_strategy.md",
     "feedback_worktree_isolation.md",
     "project.md",
     "project_claude_code_model_window.md",
@@ -54,5 +56,5 @@
     "reference_local_llm_endpoint.md",
     "user.md"
   ],
-  "count": 51
+  "count": 53
 }
