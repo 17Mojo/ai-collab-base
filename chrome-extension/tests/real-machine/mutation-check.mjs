@@ -1031,6 +1031,15 @@ const MUTATIONS = [
     expectTest: "prefer：开不成也照常发送，但回执里必须留下 available:false",
   },
   {
+    name: "执行器丢掉 NEW_SESSION 上报的明细（durationMs 到不了回执）",
+    why: "把 ...result 展开删掉，回执里就只剩后台自己编的字段——重置耗时、所用策略、前后消息数全部消失，归因又变回猜",
+    target: "src/background/pack-executor.js",
+    find: "        ...result,\n      };",
+    replace: "      };",
+    testFile: "session-boundary.test.mjs",
+    expectTest: "NEW_SESSION 上报的 durationMs 原样进回执（重置开销可复核）",
+  },
+  {
     name: "交付的 Pack 悄悄去掉 fresh_session 声明",
     why: "删掉声明不会报错、不会报警，只是 step_8 又变回「背着前 7 轮上下文」——撞墙会以「平台慢」的样子回来",
     target: "packs/examples/xiaohongshu_knowledge_creator.json",
@@ -1038,6 +1047,114 @@ const MUTATIONS = [
     replace: "",
     testFile: "session-boundary.test.mjs",
     expectTest: "真实 Pack 的 step_8_output 声明了 fresh_session=prefer",
+  },
+  // ── 「新对话」入口（N23：5 站覆盖 + 重置耗时）────────────────────
+  //
+  // 这些变异打的是 src/content/new-session-control.js 与生产 adapter，
+  // 对应 tests/new-session-control.test.mjs。-tests 直接引用生产 SELECTORS，
+  // 所以「把适配器选择器改坏」也会立刻变红，不必等真机 L2。
+  {
+    name: "删掉「新建会话」文案（Kimi 的 a.logo 立刻够不着）",
+    why: "Kimi 页面里没有「新对话」三个字，只有「新建会话」；删掉这个文案，没声明 newChat 的站点就全部降级",
+    target: "src/content/new-session-control.js",
+    find: '  "新建会话", //',
+    replace: "  //",
+    testFile: "new-session-control.test.mjs",
+    expectTest: "没有 adapter 声明时，「新建会话」文案也要能兜住 Kimi 的 a.logo",
+  },
+  {
+    name: "隐藏语义兜底被清空（千问永远开不成新会话）",
+    why: "千问的入口整条祖先链是 opacity-0 的 hover-reveal 层，可见性判据永远拒绝它；清空这层兜底就退回 available:false",
+    target: "src/content/new-session-control.js",
+    find:
+      'export const HIDDEN_SEMANTIC_SELECTORS = [\n  \'[data-session-switch-target="new-chat"]\',\n  \'[data-testid="sidebar-new-chat"]\',\n];',
+    replace: "export const HIDDEN_SEMANTIC_SELECTORS = [];",
+    testFile: "new-session-control.test.mjs",
+    expectTest: "千问：入口藏在 opacity-0/pointer-events-none 的 hover-reveal 层里，靠语义属性兜底",
+  },
+  {
+    name: "Kimi 的 <a> 不再拦默认跳转（整页导航把内容脚本带走）",
+    why: "sendResponse 随文档销毁，后台只会看到一次莫名的「开新会话失败」，而真机上很难和「入口没找到」区分开",
+    target: "src/content/new-session-control.js",
+    find: '  if (isAnchor) document.addEventListener("click", blockNavigation, true);',
+    replace: '  if (false) document.addEventListener("click", blockNavigation, true);',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "Kimi：a.new-chat-btn 是 <a>，点击时默认跳转必须被拦掉",
+  },
+  {
+    name: "输入区同名诱饵不再排除（点到发送区旁边那个）",
+    why: "chatglm 输入框旁还有一处文本同为「新对话」的元素，点它的后果不可预料",
+    target: "src/content/new-session-control.js",
+    find: "    if (el.closest(COMPOSER_ZONE_SELECTOR)) continue; // 发送区旁边的同名元素不认",
+    replace: "    // 输入区排除被删掉了",
+    testFile: "new-session-control.test.mjs",
+    expectTest: "输入区里的同名诱饵不认",
+  },
+  {
+    name: "回执不再记 durationMs（重置开销又变成猜）",
+    why: "整包变快/变慢无法归因给重置，正是因为它的固定开销混在 AI 回答耗时里，回执里看不见",
+    target: "src/content/new-session-control.js",
+    find: "  const finish = (result) => ({ ...result, durationMs: Date.now() - startedAt });",
+    replace: "  const finish = (result) => ({ ...result });",
+    testFile: "new-session-control.test.mjs",
+    expectTest: "chatglm：div.new-session 不是 button，仍被 adapter-selector 命中并真的清空 12→0",
+  },
+  {
+    name: "点了没生效也报成功（不假装重置这条被拆）",
+    why: "最坏的一种谎：消息数没下降，回执却说 available:true，Pack 照样把提示词发进旧会话",
+    target: "src/content/new-session-control.js",
+    find: '  } catch (error) {\n    return refuse(error.message, "click-no-effect", error.code);',
+    replace:
+      '  } catch (error) {\n    return finish({ available: true, strategy: found.how, messageCountBefore: before, messageCountAfter: before });',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "点了没生效：消息数没下降就不能算成功",
+  },
+  {
+    name: "chatglm 的 newChat 选择器被改坏",
+    why: "adapter 选择器是精度最高的一层，改坏了就只剩文案兜底，站点改文案时双重失效",
+    target: "src/platforms/chatglm-adapter.js",
+    find: '  newChat: [".new-session"],',
+    replace: '  newChat: [".nonexistent-chatglm"],',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "chatglm：div.new-session 不是 button，仍被 adapter-selector 命中并真的清空 12→0",
+  },
+  {
+    name: "元宝的 newChat 选择器被改坏",
+    why: "元宝用的是 .yb-new-chat-entry__item 且措辞为「新建对话」，第一版完全够不着",
+    target: "src/platforms/yuanbao-adapter.js",
+    find: '  newChat: [".yb-new-chat-entry__item", ".yb-new-chat-entry"],',
+    replace: '  newChat: [".nonexistent-yuanbao"],',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "元宝：div.yb-new-chat-entry__item 用「新建对话」措辞，仍走 adapter-selector",
+  },
+  {
+    name: "Kimi 的 newChat 选择器被改坏",
+    why: "Kimi 没有「新对话」文案，选择器一坏就没有其它层能救",
+    target: "src/platforms/kimi-adapter.js",
+    find: "    'a.new-chat-btn[data-testid=\"sidebar-new-chat\"]',",
+    replace: "    'a.nonexistent-kimi',",
+    testFile: "new-session-control.test.mjs",
+    expectTest: "Kimi：a.new-chat-btn 是 <a>，点击时默认跳转必须被拦掉",
+  },
+  {
+    name: "文心把恒命中的 [class*=message] 兜底塞回 messageList",
+    why: "新 UI 落地页上这 8 个是通知中心，不是气泡：发送前基准取 8、回答落地后改取 div.answer-container 得 1，countGrew = 1 > 8 恒 false ⇒ 明明答完还判超时，续等 4 个窗口共 243.6s",
+    target: "src/platforms/yiyan-adapter.js",
+    find:
+      "    // .cosd-markdown-content > .marklang > p.marklang-paragraph。\n  ],",
+    replace:
+      "    // .cosd-markdown-content > .marklang > p.marklang-paragraph。\n    '[class*=\"message\"]',\n  ],",
+    testFile: "message-list-contract.test.mjs",
+    expectTest: "文心落地页：通知中心恒在 8 个，但发送前的气泡基准必须是 0",
+  },
+  {
+    name: "文心的 newChat 选择器被改坏",
+    why: "这条此前只有静态 DOM 证据，没有任何一层能发现选择器漂移",
+    target: "src/platforms/yiyan-adapter.js",
+    find: '  newChat: [".new-dialog-container-plain", ".new-dialog-container"],',
+    replace: '  newChat: [".nonexistent-yiyan"],',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "文心：div.new-dialog-container-plain 走 adapter-selector",
   },
   {
     name: "自足性检查放过一个上游没产出的变量",
@@ -1083,7 +1200,20 @@ function runTests(testFileAbs, cwd) {
  * @returns {number} 退出码
  */
 function main() {
-  console.log(`=== 变异检查（${MUTATIONS.length} 条）===\n`);
+  // 只跑某个测试文件对应的锚：改完一处守护后先做秒级预检，
+  // 不必把 100+ 条全量变异（十几分钟）跑完才发现「锚是空的」。
+  // 用法：MUTATION_TESTFILE=new-session-control.test.mjs node ...
+  const onlyTestFile = process.env.MUTATION_TESTFILE || "";
+  const mutations = onlyTestFile
+    ? MUTATIONS.filter((m) => m.testFile === onlyTestFile)
+    : MUTATIONS;
+  if (onlyTestFile && mutations.length === 0) {
+    console.error(`没有锚指向 ${onlyTestFile}`);
+    return 1;
+  }
+  console.log(
+    `=== 变异检查（${mutations.length} 条${onlyTestFile ? ` / 仅 ${onlyTestFile}` : " / 全量"}）===\n`,
+  );
 
   // 1) 造一份临时副本：变异全部发生在副本上，工作区一个字节都不动
   rmSync(TMP_ROOT, { recursive: true, force: true });
@@ -1128,7 +1258,7 @@ function main() {
 
   const survivors = [];
   try {
-    for (const m of MUTATIONS) {
+    for (const m of mutations) {
       // target 以 "src/" 或 "public/" 开头 ⇒ 打生产代码（相对扩展根）；
       // target 指向扩展根下的单个文件（如 static-assets.cjs）或 "packs/" ⇒ 也是生产代码；
       // 否则打 tests/ 下的文件（相对 tests/ 根）
@@ -1179,7 +1309,7 @@ function main() {
     for (const s of survivors) console.error(`  - ${s.name}`);
     return 1;
   }
-  console.log(`全部 ${MUTATIONS.length} 条变异都被杀死。`);
+  console.log(`全部 ${mutations.length} 条变异都被杀死。`);
   return 0;
 }
 
