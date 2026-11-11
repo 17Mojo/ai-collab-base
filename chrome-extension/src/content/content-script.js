@@ -15,6 +15,11 @@
 
 // 等待策略：内容稳定性判据（防「太早成功」）
 import { sampleWaitState } from "../utils/wait-policy.js";
+// 失败语义：超时必须「续等」而不是重发（台账 N21）
+import {
+  RESPONSE_TIMEOUT_CODE,
+  resolveInitialCount,
+} from "../utils/retry-policy.js";
 
 import { SELECTORS as CLAUDE_SELECTORS } from "../platforms/claude-adapter.js";
 import { SELECTORS as CHATGPT_SELECTORS } from "../platforms/chatgpt-adapter.js";
@@ -131,6 +136,35 @@ async function initialize() {
 }
 
 /**
+ * 失败回话的统一信封
+ *
+ * ## 为什么要带上 code 与 baselineCount
+ *
+ * 只回 `{success:false, error}` 的话，后台只能靠**文案**猜这是哪一类失败。
+ * 而失败语义决定后台能不能重试：超时重试 = 重发 = 会话里多一条重复提问。
+ *
+ * 所以把语义随信封一起带出去：
+ *   - `code`：`RESPONSE_TIMEOUT` 时后台改「续等」，不再重发；
+ *   - `baselineCount`：发送前的消息条数，续等时按它算 `countGrew`。
+ *
+ * 两者都可能在错误对象上不存在（例如早就失败的注入环节），
+ * 此时如实回 null，让后台按「可重试」处理——不知道就别乱猜成超时。
+ *
+ * @param {Error & {code?: string, baselineCount?: number}} error
+ * @returns {{success: false, error: string, code: string|null, baselineCount: number|null}}
+ */
+function failureEnvelope(error) {
+  return {
+    success: false,
+    error: error?.message || String(error),
+    code: error?.code || null,
+    baselineCount: Number.isInteger(error?.baselineCount)
+      ? error.baselineCount
+      : null,
+  };
+}
+
+/**
  * 设置事件监听器
  */
 function setupEventListeners() {
@@ -158,11 +192,16 @@ function setupEventListeners() {
         break;
 
       case "WAIT_FOR_RESPONSE":
-        handleWaitForResponse(message.timeout)
+        // 🔧 2026-11-11（N21）：续等。后台在 AI 步骤超时后**不再重发**，
+        // 而是让页面继续盯同一个会话——所以这里必须能把「发送前的基准条数」
+        // 传回去。不传就等于重新快照，countGrew 会恒为 false
+        // （见 retry-policy.resolveInitialCount 的注释）。
+        handleWaitForResponse(
+          message.timeout ?? PLATFORM_RESPONSE_TIMEOUT[currentPlatformId],
+          message.baselineCount,
+        )
           .then((result) => sendResponse({ success: true, result }))
-          .catch((error) =>
-            sendResponse({ success: false, error: error.message }),
-          );
+          .catch((error) => sendResponse(failureEnvelope(error)));
         return true;
 
       // Pack 执行链路的最后一环：后台 pack-executor 的 AI 步骤发的是
@@ -185,9 +224,7 @@ function setupEventListeners() {
           message.config?.timeout ?? PLATFORM_RESPONSE_TIMEOUT[currentPlatformId],
         )
           .then((result) => sendResponse({ success: true, result }))
-          .catch((error) =>
-            sendResponse({ success: false, error: error.message }),
-          );
+          .catch((error) => sendResponse(failureEnvelope(error)));
         return true;
     }
   });
@@ -284,9 +321,25 @@ async function handleSendToAI(prompt, timeout = 60000) {
     throw new Error("SEND_TO_AI requires a non-empty prompt");
   }
 
+  // 发送**之前**数一次消息条数。这个数就是本次发送的「基准」：
+  // 超时后后台改「续等」时要用它算 countGrew，不能重新数——否则
+  // 「回复在超时之后、续等开始之前刚落地」这种情况会让 countGrew 恒 false，
+  // 续等白等满一整个超时窗口。见 retry-policy.resolveInitialCount。
+  const baselineCount = findElements(currentConfig.messageList).length;
+
   await handleInjectText(prompt);
   await handleClickSend();
-  return await handleWaitForResponse(timeout);
+
+  try {
+    return await handleWaitForResponse(timeout, baselineCount);
+  } catch (error) {
+    // 超时不是「没发出去」，是「发出去了没等到」。把基准条数挂上去，
+    // 好让后台选择「续等」而不是「重发」（N21）。
+    if (error?.code === RESPONSE_TIMEOUT_CODE) {
+      error.baselineCount = baselineCount;
+    }
+    throw error;
+  }
 }
 
 /**
@@ -322,12 +375,19 @@ function isTyping() {
  * 取回的全是流式开头碎片（'收到，'）——见 wait-policy.js 顶部。
  * `isTyping()` 仍保留为**继续等**的信号：指示器认得准的平台
  * 在思考暂停期不会被稳定性判据误放行。
+ *
+ * @param {number} [timeout=60000] - 等多久算超时（毫秒）
+ * @param {number} [baselineCount] - 发送前的消息条数。给了就必须用它，
+ *   **不许重新快照**（那是续等路径，见 retry-policy.resolveInitialCount）
  */
-async function handleWaitForResponse(timeout = 60000) {
+async function handleWaitForResponse(timeout = 60000, baselineCount) {
   if (!currentConfig) throw new Error("No adapter available");
 
   const startTime = Date.now();
-  const initialCount = findElements(currentConfig.messageList).length;
+  const initialCount = resolveInitialCount(
+    findElements(currentConfig.messageList).length,
+    baselineCount,
+  );
   let lastContent = null;
   let lastChangeAt = null;
 
@@ -335,7 +395,10 @@ async function handleWaitForResponse(timeout = 60000) {
     const interval = setInterval(() => {
       if (Date.now() - startTime > timeout) {
         clearInterval(interval);
-        reject(new Error("Response timeout"));
+        // 带错误码：后台据此判「续等」而不是「重发」（N21）
+        const error = new Error("Response timeout");
+        error.code = RESPONSE_TIMEOUT_CODE;
+        reject(error);
         return;
       }
 

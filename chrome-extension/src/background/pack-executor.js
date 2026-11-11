@@ -7,6 +7,10 @@ import {
   MIN_AI_CONTENT_LENGTH_DEFAULT,
   isUsableAIContent,
 } from "../utils/wait-policy.js";
+import {
+  FAILURE_STRATEGY,
+  failureStrategy,
+} from "../utils/retry-policy.js";
 
 /**
  * Runtime Override 白名单 (prompt-pack-runtime-style Requirement 2)
@@ -59,10 +63,17 @@ function assertAIStepSucceeded(response, targetTabId) {
     targetTabId === null || targetTabId === undefined
       ? "页面"
       : `标签页 ${targetTabId}`;
-  throw new Error(
+  const error = new Error(
     `${where}没能完成这次发送：${response.error || "未知原因"}。` +
       "如果那个网站要求先登录，请先在页面上登录再重试。",
   );
+  // 把失败语义随错误一起带上去。文案只是给人看的，**分流要看 code**
+  // （N21）：超时若被当成「可重试」，重试就会把同一句话再发一遍。
+  if (response.code) error.code = response.code;
+  if (Number.isInteger(response.baselineCount)) {
+    error.baselineCount = response.baselineCount;
+  }
+  throw error;
 }
 
 /**
@@ -637,13 +648,42 @@ class PackExecutor {
     } catch (error) {
       stepResult.error = error.message;
 
-      // 重试逻辑
-      if (step.retry !== false) {
+      // ── 重试前的语义分流（N21 的根治）─────────────────────────────
+      //
+      // 改之前这里是一段**不看错误语义**的重试：失败就再跑一遍这一步。
+      // 对 AI 步骤来说「再跑一遍」= 把同一句提示词**再发一次**。
+      //
+      // 而超时的语义是「**已经发出去了**，只是没等到回复」，不是「没发出去」。
+      // 于是重试把超时放大成：会话里多一条重复提问、AI 再答一遍、烧双倍额度。
+      // 2026-11-11 chatglm 的耗时指纹就是这么读出来的——step_2 用了 170.7s
+      // （≈60+60+50.7）、step_7 用了 151.3s（≈60+60+31.3），errors 却是空的，
+      // 说明中途至少重发过一次，只是重发后碰巧等到了回复。
+      //
+      // 现在：超时走「续等」——让页面盯着同一个会话继续等，**不重发**。
+      const strategy = failureStrategy(error);
+      const resumeOnly = strategy === FAILURE_STRATEGY.RESUME_WAIT;
+      const retryable =
+        strategy !== FAILURE_STRATEGY.FAIL && step.retry !== false;
+
+      if (resumeOnly && execution.targetTabId == null) {
+        // 广播投递：不知道该让哪一个页面续等。
+        // 宁可失败，也不重发——重发是**确定的**副作用，等不到只是慢。
+        stepResult.error =
+          `${error.message}（超时后不重发：重发会在会话里留下重复提问。` +
+          "本次是广播投递，后台不知道该让哪一个页面续等——" +
+          "请让扩展精确投递到目标标签页后重试。）";
+      } else if (retryable) {
         const retries = step.retries || this.options.maxRetries;
         for (let i = 0; i < retries; i++) {
           try {
             await this._delay(this.options.retryDelay);
-            stepResult.output = await this._executeStepByType(step, execution);
+            stepResult.output = resumeOnly
+              ? await this._resumeWaitForResponse(
+                  step,
+                  execution,
+                  error.baselineCount,
+                )
+              : await this._executeStepByType(step, execution);
             stepResult.success = true;
             stepResult.error = null;
             break;
@@ -790,6 +830,62 @@ class PackExecutor {
     assertAIStepSucceeded(response, null);
     const content = response?.result?.content ?? "";
     assertUsableAIContent(content, step, null);
+    return content;
+  }
+
+  /**
+   * 续等：不重发，让页面继续盯着**同一个**会话等回复（N21）。
+   *
+   * ## 和 `_executeAIStep` 的区别只有一个动作
+   *
+   * `_executeAIStep` 是先注入、再点发送、再等——三步。续等**不碰前两步**，
+   * 只让内容脚本把「等」继续下去。这一字之差就是会话里有没有重复提问。
+   *
+   * ## 为什么要带 `baselineCount`
+   *
+   * 页面判完成用的 `countGrew` 是 `currentCount > initialCount`。
+   * 续等如果让页面重新数一次 `initialCount`，而回复恰好在「超时」与
+   * 「续等开始」之间落地，就会变成「拿已经含回复的条数当基准」⇒
+   * `countGrew` 恒 false ⇒ 白等满一整个超时窗口。
+   * 所以必须把**发送前**那个数带回去（见 retry-policy.resolveInitialCount）。
+   *
+   * @param {Object} step - 步骤定义（读 `config.timeout`，不设则内容脚本按站点例外表回落）
+   * @param {Object} execution - 执行上下文（读 `targetTabId`）
+   * @param {number|undefined} baselineCount - 发送前的消息条数
+   * @returns {Promise<string>} 取回的正文
+   * @throws {Error} 没有目标标签页 / 没有基准条数 / 续等又超时
+   */
+  async _resumeWaitForResponse(step, execution, baselineCount) {
+    const targetTabId = execution.targetTabId;
+    if (targetTabId === null || targetTabId === undefined) {
+      // 调用方已经拦过这种情况，这里再兜一次：静默退化成「重新数」是最坏的
+      const error = new Error(
+        "无法续等：本次是广播投递，不知道该让哪一个页面继续等。",
+      );
+      error.code = "RESUME_WAIT_NO_TARGET";
+      throw error;
+    }
+    if (!Number.isInteger(baselineCount) || baselineCount < 0) {
+      // 没有基准条数就续等 = 重新快照 = countGrew 恒 false = 白等。
+      // 与其假装在等，不如如实报出来（调用方据此判失败）。
+      const error = new Error(
+        "无法续等：内容脚本没有报告发送前的消息条数（baselineCount），" +
+          "重新数会把已经落地的回复算进基准，导致永远等不到完成。",
+      );
+      error.code = "RESUME_WAIT_NO_BASELINE";
+      throw error;
+    }
+
+    const response = await chrome.tabs.sendMessage(targetTabId, {
+      type: "WAIT_FOR_RESPONSE",
+      // 不传 timeout 时内容脚本按 PLATFORM_RESPONSE_TIMEOUT 回落，
+      // 与第一次发送用的是同一个上限——不用在这里复制一份站点表。
+      timeout: step?.config?.timeout,
+      baselineCount,
+    });
+    assertAIStepSucceeded(response, targetTabId);
+    const content = response?.result?.content ?? "";
+    assertUsableAIContent(content, step, targetTabId);
     return content;
   }
 

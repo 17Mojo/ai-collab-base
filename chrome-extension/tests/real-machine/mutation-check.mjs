@@ -873,6 +873,75 @@ const MUTATIONS = [
     testFile: "real-machine/multi-platform-selector.test.mjs",
     expectTest: "LongCat 取到正文而不是「已搜到 N 个网页」状态行",
   },
+
+  // ── 超时语义分流（台账 N21）────────────────────────────────
+  //
+  // 「超时」和「没发出去」在形状上一模一样，都是一次 throw。旧代码不看语义
+  // 就重试 ⇒ 重试把同一句提示词**再发一遍** ⇒ 会话里多一条重复提问。
+  // 下面每条变异都还原成这个缺陷的某一个侧面。
+  {
+    name: "超时被判回可重试（N21 原样复活）",
+    why: "判回 RETRY 就会重发同一句提示词——会话里多一条重复提问、AI 再答一遍。旧代码正是这样",
+    target: "src/utils/retry-policy.js",
+    find: "if (error.code === RESPONSE_TIMEOUT_CODE) return FAILURE_STRATEGY.RESUME_WAIT;",
+    replace: "if (error.code === RESPONSE_TIMEOUT_CODE) return FAILURE_STRATEGY.RETRY;",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "错误码是 RESPONSE_TIMEOUT ⇒ 只能续等，不能重发",
+  },
+  {
+    name: "执行器不认分流结果，一律重跑这一步",
+    why: "这就是修复前的样子：resumeOnly 恒 false ⇒ 超时也走「再跑一遍」= 再发一遍",
+    target: "src/background/pack-executor.js",
+    find: "const resumeOnly = strategy === FAILURE_STRATEGY.RESUME_WAIT;",
+    replace: "const resumeOnly = false;",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "超时后 SEND_TO_AI 只发一次，随后是带 baselineCount 的续等",
+  },
+  {
+    name: "续等重新数基准条数",
+    why: "回复若在「超时」与「续等开始」之间落地，重新数会把它算进基准 ⇒ countGrew 恒 false ⇒ 白等满一个超时窗口",
+    target: "src/utils/retry-policy.js",
+    find: "if (Number.isInteger(baselineCount) && baselineCount >= 0) return baselineCount;",
+    replace: "if (false) return baselineCount;",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "续等要用发送前的基准条数，不许重新数",
+  },
+  {
+    name: "续等的消息里丢掉 baselineCount",
+    why: "页面收不到基准就只能就地数，等于上一条变异——但从消息协议这一端断了",
+    target: "src/background/pack-executor.js",
+    find: "      timeout: step?.config?.timeout,\n      baselineCount,\n",
+    replace: "      timeout: step?.config?.timeout,\n",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "超时后 SEND_TO_AI 只发一次，随后是带 baselineCount 的续等",
+  },
+  {
+    name: "文案兜底退化成子串包含",
+    why: "includes(\"Response timeout\") 会把「Response timeout 之后我换了选择器」也判成超时 ⇒ 明明没发出去却不重试，白等一整个窗口",
+    target: "src/utils/retry-policy.js",
+    find: "if (LEGACY_TIMEOUT_RE.test(msg)) return FAILURE_STRATEGY.RESUME_WAIT;",
+    replace: "if (msg.includes(\"Response timeout\")) return FAILURE_STRATEGY.RESUME_WAIT;",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "文案里只是**提到**超时，不算超时（不许用子串包含误判）",
+  },
+  {
+    name: "为了修超时把重试整个关掉",
+    why: "输入框没找到这类「没送出去」的失败重试是安全的；关掉重试是过度修正，会把可恢复的失败变成硬失败",
+    target: "src/background/pack-executor.js",
+    find: "        strategy !== FAILURE_STRATEGY.FAIL && step.retry !== false;",
+    replace: "        strategy !== FAILURE_STRATEGY.FAIL && false;",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "非超时的失败照样重试（别为了修超时把重试一起废了）",
+  },
+  {
+    name: "广播投递超时也放行重发",
+    why: "广播时不知道该让哪个页面续等；放行重发就是「多发一遍」的确定副作用",
+    target: "src/background/pack-executor.js",
+    find: "if (resumeOnly && execution.targetTabId == null) {",
+    replace: "if (false) {",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "广播投递遇到超时：宁可失败也不重发",
+  },
 ];
 
 /**

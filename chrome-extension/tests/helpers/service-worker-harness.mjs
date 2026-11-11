@@ -25,10 +25,17 @@ let swImportCounter = 0;
  *
  * @param {Object[]} packs - 放进 chrome.storage.local["packs"] 的 Pack
  * @param {Object} [options]
- * @param {any} [options.tabsSendMessageResponse] - 内容脚本对 SEND_TO_AI 的回话
- *   （默认 `{success: true, result: {content: ECHO_CONTENT}}`）。
+ * @param {any} [options.tabsSendMessageResponse] - 内容脚本对 `chrome.tabs.sendMessage`
+ *   的回话。可以是**对象**（所有调用回同一份），也可以是**函数**
+ *   `(tabId, msg) => 回话 | Promise<回话>`（按消息类型分别回话——
+ *   验证「超时后改续等、不重发」这类多步链路时必须要后者）。
+ *   默认 `{success: true, result: {content: ECHO_CONTENT}}`。
  *   传 `{success: false, error: "..."}` 可以模拟「内容脚本报告失败」。
- * @returns {Promise<{listener: Function, send: Function, sendAs: Function, store: Object, tabMessages: Array}>}
+ * @param {any} [options.runtimeSendMessageResponse] - 对
+ *   `chrome.runtime.sendMessage`（**广播**投递，即没有目标标签页时）的回话。
+ *   形状同上，默认 `undefined`（等于「没人接这条消息」）。
+ * @returns {Promise<{listener: Function, send: Function, sendAs: Function,
+ *   store: Object, tabMessages: Array, runtimeMessages: Array, fireInstalled: Function}>}
  */
 
 /**
@@ -43,10 +50,17 @@ export async function loadServiceWorker(packs, options = {}) {
   const listeners = [];
   const installedListeners = [];
   const tabMessages = [];
+  const runtimeMessages = [];
 
   globalThis.chrome = {
     runtime: {
-      sendMessage: async () => undefined,
+      sendMessage: async (msg) => {
+        runtimeMessages.push(msg);
+        const respond = options.runtimeSendMessageResponse;
+        const reply =
+          typeof respond === "function" ? await respond(msg) : respond;
+        return reply;
+      },
       onInstalled: { addListener: (fn) => installedListeners.push(fn) },
       onMessage: {
         addListener: (fn) => listeners.push(fn),
@@ -65,10 +79,10 @@ export async function loadServiceWorker(packs, options = {}) {
       onUpdated: { addListener: () => {} },
       sendMessage: async (tabId, msg) => {
         tabMessages.push({ tabId, msg });
-        return options.tabsSendMessageResponse ?? {
-          success: true,
-          result: { content: ECHO_CONTENT },
-        };
+        const respond = options.tabsSendMessageResponse;
+        const reply =
+          typeof respond === "function" ? await respond(tabId, msg) : respond;
+        return reply ?? { success: true, result: { content: ECHO_CONTENT } };
       },
     },
   };
@@ -147,5 +161,13 @@ export async function loadServiceWorker(packs, options = {}) {
     await new Promise((r) => setTimeout(r, 0));
   };
 
-  return { listener, send, sendAs, store, tabMessages, fireInstalled };
+  return {
+    listener,
+    send,
+    sendAs,
+    store,
+    tabMessages,
+    runtimeMessages,
+    fireInstalled,
+  };
 }
