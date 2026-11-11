@@ -891,6 +891,9 @@ if (step.fresh_session) {
 
 **(c) A/B 可执行方案** `tests/real-machine/session-wall-ab.mjs`：
 产出 `evidence/session-wall-ab-plan-2026-11-11.json`，`status = "plan-only / NOT-EXECUTED"`。
+⚠️ 第一版这里有个**自己写下的不准确表述**（见 §18.2）：当时计划里的
+`PACK_PATH` 是 `<variant-pack.json>` 占位符、变体文件从未落盘，
+所以「4 条命令已备好」并不成立；§18.2 已修复并加守护。
 
 - 变体：`A-control`（递归删掉 `fresh_session`，复现长会话撞墙）/ `B-boundary`（出厂 Pack，`prefer`）。
   出厂声明实际在 `workflow.steps[7]`，所以用**递归删键**而不是写死容器路径；
@@ -944,7 +947,7 @@ if (step.fresh_session) {
 | 冻结守卫运行时冒烟 | deepseek / longcat / gemini 全部被拦；活跃站放行；`ALLOW_FROZEN=1` 留痕 `unfrozenBy` | 纯函数调用，**未启动浏览器** |
 | `dist` | **无需重建** | 本轮 `git status` 未触及 `src/`，只改 `tests/`、报告、台账、evidence |
 | 台账 | 25 条：closed 23 / wontfix 1 / **open 1（N25）** | `known_gaps.json`，`json.load` 校验通过 |
-| Git | 本地提交，**`origin/main` 仍落后、未推送** | 无 push 授权 |
+| Git | 本地提交，**`origin/main` 仍落后、未推送**（这是 2026-11-11 19:0x 的快照；用户随后明确授权 push，已于 §18.1 推送完毕，`origin/main == HEAD`） | 当时的口径，后续已变更 |
 
 **本轮明确没做的事**（避免「干了很多活」被读成「都验完了」）：
 - 没有运行 deepseek / longcat，A/B 命题**仍未验**（N25 open）；
@@ -952,3 +955,132 @@ if (step.fresh_session) {
 - 没有改 `src/`、没有重建 `dist`、没有推送远端；
 - 没有把 `/tmp` 诊断产物篡改后落盘（sha256 前后一致）；
 - 没有把 419.6s 那轮回执回填 `durationMs`。
+
+---
+
+## 18. 后续步骤处置（2026-11-11 19:5x）：授权分批、准备与验证分开
+
+用户把上一轮最终回复里的三条「后续步骤」贴回来要求推进。**这三条本身是清单，不是授权指令**——
+第 1 条要在冻结站真实发消息、第 2 条要写远端，都需要明确下令，不能从复述里推断。
+因此先做只读核查 + 用两个明确选项请用户裁定，得到：
+**「只做本地准备（不跑真机）」+「现在推送」**。
+
+### 18.1 push：8 个提交已推送
+
+顺序是刻意的：本地准备会产生**新变更**，而授权范围是「8 个提交」，
+所以先按原样推、再动本地，避免把未审阅的新文件混进已授权范围。
+
+| 项 | 值 |
+|---|---|
+| push 前 | 工作区干净，`origin/main` 落后 **8** 个提交 |
+| 命令 | `git push origin main` |
+| 结果 | `d7ea0bc..e3ea159  main -> main`，`Total 88 (delta 51)` |
+| push 后 | `git rev-list --left-right --count origin/main...HEAD` = `0  0`；`origin/main == HEAD == e3ea159` |
+
+### 18.2 一次自我纠错：「4 条命令已备好」不成立
+
+上一轮最终回复里写过「计划里 4 条命令、5 条判据已备好」。核磁盘发现：
+
+| 核查项 | 事实 |
+|---|---|
+| `plan.commands` | 4 条里全是 `PACK_PATH=<variant-pack.json>` —— **占位符** |
+| 变体 Pack 文件 | 从未生成；`evidence/` 下只有计划 JSON，`packs/examples/` 只有出厂 3 个文件 |
+| 结论 | 命令**不能原样执行**，原表述不准确 |
+
+根因是第一版 `buildAbPlan()` 只产出命令模板，`derivePackVariant()` 是纯内存函数，
+两者之间没有「落盘」这一步。修复：
+
+- `emitVariantPacks()` 纯本地生成 A/B 两个变体，落盘前**硬性自检**：
+  `metadata.pack_id` 必须为 `xiaohongshu-knowledge-creator`（`EXECUTE_PACK` 用固定 PACK_ID）、
+  步数必须 8、A 无 `fresh_session`、B 保留 `prefer`、A/B 除这一字段外逐字节一致；
+  任何一条不满足就抛错、不写文件。
+- 命令改用 `variantPackPath()` 产出的**真实绝对路径**，计划里带 sha256 且明写
+  `imported: false / executed: false`，避免被误读成回执。
+- 产物：`ab-pack-2026-11-11.no-boundary.json`（`89b197cf…`）、
+  `ab-pack-2026-11-11.with-boundary.json`（`0e1b4b98…`）。
+
+顺带补上两条第一版漏掉的执行约束：
+
+1. **4 轮必须串行**：两轮都用 `mergeStrategy=overwrite` 导入**同一个 pack_id**，
+   并行会互相覆盖 storage 里的 Pack。
+2. **预检也要显式解冻**：`PRECHECK=1` 会 `page.goto` 打开冻结站页面，
+   本身受 `assertCandidatesAllowed` 拦截，必须带 `ALLOW_FROZEN=1` 与显式 `CANDIDATES`。
+   计划里现在共 5 条可执行命令（1 条预检 + 4 轮 L2）另加 1 行注释。
+
+守护：`session-wall-ab.test.mjs` 9 → **15 条**（新增占位符回潮、绝对路径、
+A/B 各用各的文件、预检解冻、串行约束、落盘自检、坏契约拒绝）；
+变异锚 4 → **8 条**（其中「占位符回潮」「自检被放开」两条锚分别咬住这次的具体缺口）。
+
+**两次「守护自己写宽了」的小修**（都记在这里备查）：
+- 「方案脚本不得出现 EXECUTE_PACK」原本全文匹配，把我新加的**说明性注释**误判成越线；
+  改为只扫剥离注释后的可执行代码（与 `probe-readonly.test.mjs` 同口径）。
+- 「自检被放开」第一次变异存活：测试只断言 `checks` 的值，而删掉 `throw` 后值照样算得对；
+  改为喂**合法 JSON 但契约被改坏**的 Pack（`pack_id` 改名 / 只剩 7 步），并合并重复的两道检查，
+  锚才咬住。合并时还修了「缺步时 `'fresh_session' in undefined` 抛 TypeError 盖住真因」。
+
+### 18.3 dist 一致性：成立（解冻前置条件之一）
+
+| 项 | 值 |
+|---|---|
+| 命令 / 退出码 | `npm run build` / `0`（192ms） |
+| `content-script.js` | build 前后 sha256 均为 `0e842dc2…` ⇒ **IDENTICAL** |
+| `service-worker.js` | build 前后 sha256 均为 `108055dc…` ⇒ **IDENTICAL** |
+| 关键字 | CS：`hidden-semantic`×2 / `durationMs`×1 / `data-session-switch-target`×3 / `yb-new-chat-entry__item`×3 / `sidebar-new-chat`×5；SW：`sessionResets`×7 / `fresh_session`×8 / `FRESH_SESSION_UNSUPPORTED`×2 |
+| `durationMs` 在 SW 里 0 次 | 正常：它由 CS 计算、经 `record = {...base, available: ..., ...result}` 透传；已核 `...result` 仍在（3 处），计时字段不会丢 |
+| 工作区 | `dist/` 未被 git 跟踪，build 未弄脏工作区 |
+
+证据：`evidence/dist-build-2026-11-11.log`、`evidence/dist-consistency-2026-11-11.json`。
+
+### 18.4 解冻前置条件：4 条里仍只满足 1 条
+
+| 条件 | 状态 |
+|---|---|
+| 用户明确解冻指令（点名平台 + 范围） | ❌ **未满足**：本轮授权明确写的是「只做本地准备」，没有解冻 |
+| 两站登录态可用 | ❌ **未满足**：deepseek 从未被预检过；longcat 只有 2026-11-10 旧快照（`composer=true`），不是当前态。预检本身也要解冻（§18.2） |
+| dist 与源码一致 | ✅ **已满足**（§18.3） |
+| 32 步额度确认 | ❌ **未核**：账号侧信息，我无法判定，需用户确认 |
+
+⇒ **A/B 命题仍未验**，N25 保持 `open`，`plan.status` 仍是 `plan-only / NOT-EXECUTED`。
+本轮没有启动浏览器、没有导入 Pack、没有发送任何消息、没有打开任何冻结站页面。
+§14.4 的「不能归因给重置 / 不能说重置免费」继续有效。
+
+### 18.5 门禁状态（本轮局部准备）
+
+| 门禁 | 结果 |
+|---|---|
+| `git push` | ✅ `0  0`，`origin/main == HEAD == e3ea159` |
+| `node --check` | ✅ 3 个改动 `.mjs` 全通过 |
+| 全量 `npm test` | ✅ **325 / 325 pass, 0 fail**（319 → +6） |
+| 全量变异检查 | ✅ **124 / 124 全杀死, 0 存活, EXIT=0**；日志 `evidence/mutation-check-2026-11-11.full-124.log` |
+| 局部变异 `MUTATION_TESTFILE=session-wall-ab.test.mjs` | ✅ **8/8 全杀死**（在最终磁盘状态上又复跑一遍，见下） |
+| `session-wall-ab.test.mjs` 单测 | ✅ **15/15**（最终磁盘状态复跑） |
+| `npm run build` | ✅ 退出码 0，产物 hash 前后一致 |
+| 变体 Pack 落盘自检 | ✅ 6 项全通过，sha256 与计划内一致 |
+| 真机 A/B | ❌ **未执行**（无解冻授权），见 §18.4 / §18.6 |
+
+**一处时序要如实交代**：全量变异在启动时复制的是当时的 `tests/` 快照；
+运行期间我微调了 `session-wall-ab.mjs` 里一行**说明文字**（额度条件加「当前未满足/未核」）
+并重新生成了计划 JSON。该行不参与任何变异锚的 `find`，也不影响测试断言，
+但仍按 disk-truth 口径在**最终磁盘状态**上补跑了 `session-wall-ab.test.mjs`
+单测（15/15）与局部变异（8/8），结论与全量一致。
+
+### 18.6 本轮没做、也不该做的事
+
+- 没有解冻、没有跑 A/B、没有打开冻结站页面；
+- 没有把本地准备产生的新变更推送远端（push 授权范围就是那 8 个提交，已用尽）；
+- 没有改 `src/`、没有把 `dist/` 纳入版本控制；
+- 没有把计划文件冒充真机回执（status 与 `imported/executed` 三个字段都明写 false）；
+- 没有对**本轮新变更**执行 `git commit` / `git push`：push 授权范围就是那 8 个提交，已用尽；
+  新变更留在工作区待审阅（见 §18.7）。全量 `npm test`（325/325）与全量变异（124/124）
+  **已补跑并通过**，见 §18.5。
+
+### 18.7 本轮新变更留在工作区（未提交、未推送）
+
+| 类型 | 文件 |
+|---|---|
+| 修改 | `tests/real-machine/session-wall-ab.mjs`、`tests/session-wall-ab.test.mjs`、`tests/real-machine/mutation-check.mjs`、`RESULT-L2-MULTIPLATFORM-2026-11-10.md`、`known_gaps.json`、`evidence/session-wall-ab-plan-2026-11-11.json` |
+| 新增 | `evidence/ab-pack-2026-11-11.no-boundary.json`、`evidence/ab-pack-2026-11-11.with-boundary.json`、`evidence/dist-consistency-2026-11-11.json`、`evidence/dist-build-2026-11-11.log`、`evidence/mutation-check-2026-11-11.full-124.log` |
+
+理由：用户本轮授权的是「推送 8 个提交」+「只做本地准备」，没有授权提交或推送新变更。
+先推后改，新东西不混进已授权范围；留在工作区便于逐项审阅，
+下一次授权时再决定提交与推送。

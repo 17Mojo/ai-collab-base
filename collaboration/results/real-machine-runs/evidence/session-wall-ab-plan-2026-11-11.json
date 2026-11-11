@@ -1,17 +1,17 @@
 {
   "status": "plan-only / NOT-EXECUTED",
   "proposition": "fresh_session 会话边界能解掉 deepseek / longcat 的 step_8 长会话撞墙",
-  "generatedAt": "2026-11-11T10:59:28.386Z",
+  "generatedAt": "2026-11-11T12:18:07.800Z",
   "whyNotRunNow": [
     "用户 2026-11-11 红线：仅保留 qianwen / yuanbao / chatglm / yiyan / kimi，其他冻结不去碰。",
     "platform-freeze.mjs 已把这条红线落成代码级闸门；ALLOW_FROZEN=1 只有用户明确解冻后才可以加。",
     "本轮活跃 5 站只验到「重置真的做到了」（N23），没有碰过真正撞墙的两个站。"
   ],
   "unfreezeConditions": [
-    "用户给出明确的解冻指令（点名平台 + 允许范围）。",
-    "两站登录态可用（PRECHECK=1 先看 composerVisible / looksLikeLogin，不发包）。",
-    "dist 产物与源码一致（npm run build 后核关键字，G1–G10 口径）。",
-    "确认账号额度：2 站 × 2 变体 × 8 步 = 32 步真实发送。"
+    "用户给出明确的解冻指令（点名平台 + 允许范围）。**当前未满足**：用户只授权了本地准备与 push，没有解冻。",
+    "两站登录态可用：PRECHECK=1 且 ALLOW_FROZEN=1、显式 CANDIDATES=deepseek,longcat；deepseek 此前从未被预检过，longcat 只有 2026-11-10 的旧快照，都不是当前态。**当前未满足**。",
+    "dist 产物与源码一致（npm run build 后比对 hash 与关键字，G1–G10 口径）。本轮本地准备会核，结果写进 RESULT。",
+    "确认账号额度：2 站 × 2 变体 × 8 步 = 32 步真实发送 + 1 轮预检。**当前未满足/未核**：账号侧信息，我无法核，需用户确认。"
   ],
   "activePlatforms": [
     "qianwen",
@@ -76,12 +76,34 @@
       "out": "L2-longcat-auto-2026-11-11.ab-with-boundary.json"
     }
   ],
+  "variantPacks": [
+    {
+      "variant": "no-boundary",
+      "path": "/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-11.no-boundary.json",
+      "sha256": "89b197cf99f2fcac835bc78269f89315a9740bfe57222da207d5851796692d03",
+      "imported": false,
+      "executed": false
+    },
+    {
+      "variant": "with-boundary",
+      "path": "/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-11.with-boundary.json",
+      "sha256": "0e1b4b9816545e52e74abaee117d96fba3b449cfa5a71c5370a0e22b2516f46f",
+      "imported": false,
+      "executed": false
+    }
+  ],
+  "executionOrder": [
+    "4 条命令必须**串行**，禁止并行：两轮都用 mergeStrategy=overwrite 导入同一个 pack_id，并行会互相覆盖 storage 里的 Pack。",
+    "每轮结束后先核回执（8/8 + sessionResets），再跑下一轮；B 组若 available:false 这轮作废，不要直接拿去判定。",
+    "预检登录态也要显式解冻：PRECHECK=1 会打开冻结站页面，本身受 assertCandidatesAllowed 拦截，必须带 ALLOW_FROZEN=1 与显式 CANDIDATES。"
+  ],
   "commands": [
-    "# 解冻后由人逐条执行（本脚本不代跑）：",
-    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
-    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs",
-    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
-    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs"
+    "# 解冻后由人逐条执行（本脚本不代跑）；先预检，再串行跑 4 轮：",
+    "CANDIDATES=deepseek,longcat PRECHECK=1 ALLOW_FROZEN=1 OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-11.deepseek-longcat.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-11.no-boundary.json OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-11.with-boundary.json OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-11.no-boundary.json OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-11.with-boundary.json OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs"
   ],
   "acceptance": {
     "packCompleted": "exec.success === true && exec.result.status === completed && 8/8 steps success",

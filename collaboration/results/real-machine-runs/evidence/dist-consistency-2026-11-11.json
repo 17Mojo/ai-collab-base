@@ -1,0 +1,16 @@
+{
+  "builtAt": "2026-11-11",
+  "buildCommand": "npm run build",
+  "buildExit": 0,
+  "files": {
+    "content-script.js": {
+      "sha256Before": "0e842dc2c5e1f15c7c67ccc051b9f446174d6dce2746e37fd30833d131b10efc",
+      "sha256After": "0e842dc2c5e1f15c7c67ccc051b9f446174d6dce2746e37fd30833d131b10efc"
+    },
+    "service-worker.js": {
+      "sha256Before": "108055dc455ca6cf36d43a41d61d15635d7ac0849309f2f9d348068ecfa83a65",
+      "sha256After": "108055dc455ca6cf36d43a41d61d15635d7ac0849309f2f9d348068ecfa83a65"
+    }
+  },
+  "verdict": "IDENTICAL — dist 与源码一致"
+}

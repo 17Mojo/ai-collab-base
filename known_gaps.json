@@ -472,7 +472,11 @@
       "closed_at": null,
       "appended_evidence": [
         "本轮未运行 deepseek / longcat：无浏览器启动、无 Pack 导入、无消息发送；evidence 下只有计划文件（status=plan-only / NOT-EXECUTED），不是真机回执。",
-        "chatglm 补测轮（evidence/L2-chatglm-auto-2026-11-11.n23.json）仍是活跃站，8/8、durationMs=311ms；这轮验的是新代码无回归 + 计时字段可用，不是 A/B。"
+        "chatglm 补测轮（evidence/L2-chatglm-auto-2026-11-11.n23.json）仍是活跃站，8/8、durationMs=311ms；这轮验的是新代码无回归 + 计时字段可用，不是 A/B。",
+        "2026-11-11 19:5x 用户裁定：只授权「本地准备（不跑真机）」+「推送 8 个提交」，**没有解冻**。push 已完成：d7ea0bc..e3ea159，origin/main == HEAD（0/0）。",
+        "自纠：上一轮回复称『4 条命令已备好』不成立——plan.commands 里 PACK_PATH 是 <variant-pack.json> 占位符、两个变体 Pack 从未落盘。已修：emitVariantPacks() 纯本地生成带硬性自检的 A/B 变体（ab-pack-2026-11-11.no-boundary.json / .with-boundary.json），命令改用真实绝对路径并带 sha256，计划明写 imported/executed=false；补「4 轮必须串行」「预检也要 ALLOW_FROZEN=1」两条约束。守护：session-wall-ab.test.mjs 15/15、局部变异 8/8，RESULT §18.2。",
+        "dist 一致性已核：npm run build 退出码 0，content-script.js / service-worker.js build 前后 sha256 均 IDENTICAL；证据 evidence/dist-consistency-2026-11-11.json。",
+        "解冻前置 4 条仍只满足 1 条（dist）：无明确解冻指令、两站登录态未核（deepseek 从未预检、longcat 只有 11-10 旧快照）、32 步额度未确认。⇒ 命题仍未验，N25 保持 open。"
       ]
     }
   ]

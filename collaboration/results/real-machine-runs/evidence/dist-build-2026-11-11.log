@@ -1,0 +1,39 @@
+
+> build
+> node build.js
+
+=== Chrome Extension Build ===
+
+[1/5] Cleaned output directories
+
+[2/5] Building Content Script (IIFE)...
+vite v6.4.3 building for production...
+transforming...
+✓ 18 modules transformed.
+rendering chunks...
+computing gzip size...
+.vite-tmp/cs/content-script.js  54.71 kB │ gzip: 17.70 kB │ map: 156.49 kB
+✓ built in 149ms
+  ✅ Content Script built
+
+[3/5] Building Service Worker (ESM)...
+vite v6.4.3 building for production...
+transforming...
+✓ 20 modules transformed.
+rendering chunks...
+computing gzip size...
+.vite-tmp/sw/service-worker.js  133.73 kB │ gzip: 35.24 kB │ map: 258.29 kB
+✓ built in 192ms
+  ✅ Service Worker built
+
+[4/5] Merging build outputs...
+  ✅ Content Script merged
+  ✅ Service Worker merged
+
+[5/5] Copying static assets...
+  ✅ Static assets copied (8 files, 3 icons)
+  ✅ Static assets copied
+
+=== Build Complete ===
+Output directory: dist/
+Load in Chrome: chrome://extensions → Developer mode → Load unpacked → select dist/

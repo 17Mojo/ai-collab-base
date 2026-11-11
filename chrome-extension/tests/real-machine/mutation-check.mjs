@@ -1273,6 +1273,44 @@ const MUTATIONS = [
     testFile: "session-wall-ab.test.mjs",
     expectTest: "归因边界明写「不能归因给重置」",
   },
+
+  // ── 「命令可原样执行」：防第一版 PACK_PATH 占位符缺陷回潮 ────────
+  {
+    name: "计划命令退回 PACK_PATH=<variant-pack.json> 占位符",
+    why: "2026-11-11 实锤：第一版 4 条命令看着齐备，实际是占位符，两个变体文件从未生成，根本跑不了；这条锚守的就是这个具体缺口",
+    target: "real-machine/session-wall-ab.mjs",
+    find: "          `PACK_PATH=${variantPackPath(r.variant, opts.outDir || EVIDENCE_DIR, opts.date || TODAY)} ` +",
+    replace: '          `PACK_PATH=<variant-pack.json> ` +',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "计划命令里不许再出现 <...> 占位符",
+  },
+  {
+    name: "变体自检被整体放开（契约漂移也照写文件）",
+    why: "自检一去掉，pack_id 被改坏或步数不对的 Pack 会被静默生成，A/B 两轮导入后 EXECUTE_PACK 直接找不到包。第一版锚把 expectTest 指向「生成两个文件」，那条测试在自检被删后照样绿（checks 仍会算出正确值），所以变异存活；必须指向「契约变化必须拒绝」",
+    target: "real-machine/session-wall-ab.mjs",
+    find: '    if (actual !== want) throw new Error(`变体自检失败：${k} = ${actual}，期望 ${want}`);',
+    replace: "    // 自检被拿掉",
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "emitVariantPacks 遇到出厂 Pack 契约变化必须拒绝",
+  },
+  {
+    name: "删掉「4 轮必须串行」的执行约束",
+    why: "两轮都用 overwrite 导入同一 pack_id，并行会互相覆盖 storage 里的 Pack；约束一删，方案给出的命令就是错的",
+    target: "real-machine/session-wall-ab.mjs",
+    find: '      "4 条命令必须**串行**，禁止并行：两轮都用 mergeStrategy=overwrite 导入同一个 pack_id，并行会互相覆盖 storage 里的 Pack。",',
+    replace: '      "4 条命令随便跑。",',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "执行顺序写明 4 轮必须串行",
+  },
+  {
+    name: "预检命令不再显式解冻冻结站",
+    why: "预检会打开 deepseek/longcat 页面，漏掉 ALLOW_FROZEN 与显式 CANDIDATES 就会被守卫拦，或反过来变成无授权访问",
+    target: "real-machine/session-wall-ab.mjs",
+    find: "      `CANDIDATES=deepseek,longcat PRECHECK=1 ALLOW_FROZEN=1 ` +",
+    replace: "      `CANDIDATES=deepseek,longcat PRECHECK=1 ` +",
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "预检命令也要显式解冻",
+  },
 ];
 
 /**
