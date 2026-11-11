@@ -1,0 +1,92 @@
+{
+  "generatedAt": "2026-11-11T09:40:53.064Z",
+  "mode": "precheck",
+  "results": [
+    {
+      "platform": "chatglm",
+      "url": "https://chatglm.cn/",
+      "finalUrl": "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+      "title": "智谱清言",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 6,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "history-item el-tooltip__trigger el-tooltip__trigger",
+            "len": 123,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=history-item el-tooltip__trigger el-tool"
+            ]
+          },
+          {
+            "cls": "title",
+            "len": 112,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=title"
+            ]
+          },
+          {
+            "cls": "history-item el-tooltip__trigger el-tooltip__trigger",
+            "len": 61,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=history-item el-tooltip__trigger el-tool"
+            ]
+          },
+          {
+            "cls": "title",
+            "len": 50,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=title"
+            ]
+          },
+          {
+            "cls": "history-item el-tooltip__trigger el-tooltip__trigger",
+            "len": 127,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=history-item el-tooltip__trigger el-tool"
+            ]
+          },
+          {
+            "cls": "title",
+            "len": 116,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=title"
+            ]
+          },
+          {
+            "cls": "history-item el-tooltip__trigger el-tooltip__trigger",
+            "len": 125,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=history-item el-tooltip__trigger el-tool"
+            ]
+          },
+          {
+            "cls": "title",
+            "len": 114,
+            "attrs": [
+              "data-v-43de6035=",
+              "class=title"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

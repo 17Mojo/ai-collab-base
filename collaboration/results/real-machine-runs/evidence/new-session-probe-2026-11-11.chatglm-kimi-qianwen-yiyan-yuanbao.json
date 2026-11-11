@@ -1,0 +1,1661 @@
+{
+  "generatedAt": "2026-11-11T09:42:21.686Z",
+  "mode": "readonly-dom-probe",
+  "redlines": {
+    "clicks": false,
+    "typing": false,
+    "sending": false,
+    "hover": false,
+    "captchaBypass": false,
+    "packImported": false
+  },
+  "needles": [
+    "新对话",
+    "新建对话",
+    "新的对话",
+    "开始新对话",
+    "发起新对话",
+    "开启新对话",
+    "新建聊天",
+    "新建会话",
+    "新会话",
+    "新建",
+    "清空上下文",
+    "清空会话",
+    "New chat",
+    "New Chat",
+    "New conversation"
+  ],
+  "classRe": "new[-_]?chat|new[-_]?session|new[-_]?dialog|newChat|create[-_]?conv|sidebar-new",
+  "platforms": [
+    {
+      "platform": "qianwen",
+      "url": "https://www.qianwen.com/",
+      "finalUrl": "https://www.qianwen.com/chat/workbench",
+      "title": "千问-阿里 AI 助手",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": null,
+      "bodyTextLen": 779,
+      "textHits": [
+        {
+          "needle": "新对话",
+          "tag": "span",
+          "cls": "truncate font-400",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新对话",
+          "innerText": "新对话",
+          "rendered": false,
+          "rect": {
+            "x": 46,
+            "y": 124,
+            "w": 42,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "none",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "flex h-full gap-0.5",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "h-9 px-3",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "flex shrink-0 select-none flex-col overflow-hidden mb-0.5",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "newChatReveal-OikAdB newChatRevealFlat-hnO8At",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col pointer-events-none opacity-0",
+              "textLen": 214
+            }
+          ],
+          "outerHTML": "<span class=\"truncate font-400\">新对话</span>"
+        }
+      ],
+      "classHits": [
+        {
+          "tag": "symbol",
+          "cls": "[object SVGAnimatedString]",
+          "id": "qwpcicon-newDialogue",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "css": {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "svg",
+              "cls": "[object SVGAnimatedString]",
+              "textLen": 0
+            },
+            {
+              "tag": "body",
+              "cls": "",
+              "textLen": 3682
+            },
+            {
+              "tag": "html",
+              "cls": "qwen-root",
+              "textLen": 254832
+            }
+          ],
+          "outerHTML": "<symbol id=\"qwpcicon-newDialogue\" viewBox=\"0 0 1024 1024\"><path d=\"M156.16 188.16C137.28 206.784 128 229.44 128 256v640l200.512-150.4c8.576-6.4 18.176-9.6 28.8-9.6H800c26.496 0 49.152-9.344 67.84-28.16 18.816-18.688 28.16-41.344 28.16-67.84V480h64V640c0 44.16-15.616 81.92-46.848 113.152a154.176 154.176 0 0 1-113.152 46.848H362.688L140.8 966.4a44.736 44.736 0 0 1-50.24 4.48A44.736 44.736 0 0 1 64 9"
+        },
+        {
+          "tag": "div",
+          "cls": "newChatReveal-OikAdB newChatRevealFlat-hnO8At",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "新对话",
+          "rendered": false,
+          "rect": {
+            "x": 0,
+            "y": 104,
+            "w": 256,
+            "h": 50
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "none",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col pointer-events-none opacity-0",
+              "textLen": 214
+            },
+            {
+              "tag": "div",
+              "cls": "relative grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden",
+              "textLen": 621
+            },
+            {
+              "tag": "div",
+              "cls": "flex min-h-0 flex-1 flex-col",
+              "textLen": 631
+            },
+            {
+              "tag": "div",
+              "cls": "relative flex min-h-0 flex-1 flex-col",
+              "textLen": 631
+            },
+            {
+              "tag": "div",
+              "cls": "flex h-full min-w-64 shrink-0 flex-col overflow-hidden whitespace-nowrap bg-pc-sidebar",
+              "textLen": 631
+            },
+            {
+              "tag": "div",
+              "cls": "w-[16rem] absolute inset-y-0 right-0",
+              "textLen": 631
+            }
+          ],
+          "outerHTML": "<div class=\"newChatReveal-OikAdB newChatRevealFlat-hnO8At\"><div class=\"flex shrink-0 select-none flex-col overflow-hidden mb-0.5\"><div class=\"h-9 px-3\"><div class=\"flex h-full gap-0.5\"><div data-session-switch-target=\"new-chat\" class=\"flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer\"><span data-role="
+        }
+      ],
+      "labeledControls": [
+        {
+          "tag": "button",
+          "cls": "taskHeaderAction-hxI_PC",
+          "id": "",
+          "ariaLabel": "新建任务",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 214,
+            "y": 404,
+            "w": 24,
+            "h": 24
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "button",
+            "cls": "taskHeaderAction-hxI_PC",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "taskHeader-kzmcKu",
+              "textLen": 2
+            },
+            {
+              "tag": "section",
+              "cls": "taskSection-ZqdnlS",
+              "textLen": 383
+            },
+            {
+              "tag": "div",
+              "cls": "sidebarListArea-qQeh_L",
+              "textLen": 404
+            },
+            {
+              "tag": "div",
+              "cls": "sidebarBody-eUITx1",
+              "textLen": 407
+            },
+            {
+              "tag": "div",
+              "cls": "col-start-1 row-start-1 min-h-0 min-w-0 ",
+              "textLen": 407
+            },
+            {
+              "tag": "div",
+              "cls": "relative grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden",
+              "textLen": 621
+            }
+          ],
+          "outerHTML": "<button type=\"button\" class=\"taskHeaderAction-hxI_PC\" aria-label=\"新建任务\"><span data-role=\"icon\" data-render-as=\"svg\" data-icon-type=\"qwpcicon-add\" class=\"size-3.5\" style=\"display: inline-flex; justify-content: center; align-items: center; text-align: center;\"><svg viewBox=\"0 0 1024 1024\" width=\"100%\" height=\"100%\" style=\"fill: currentcolor; overflow: hidden; cursor: pointer;\"><use xlink:href=\"#qwpc"
+        }
+      ],
+      "novelPhrases": [
+        "新对话",
+        "对话分组",
+        "新分组",
+        "新定时任务",
+        "最近对话",
+        "新任务"
+      ]
+    },
+    {
+      "platform": "yuanbao",
+      "url": "https://yuanbao.tencent.com/",
+      "finalUrl": "https://yuanbao.tencent.com/chat/naQivTmsDa",
+      "title": "元宝-腾讯旗下全能AI助手",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": null,
+      "bodyTextLen": 354,
+      "textHits": [
+        {
+          "needle": "新建对话",
+          "tag": "div",
+          "cls": "yb-new-chat-entry__item",
+          "id": "",
+          "ariaLabel": "新建对话",
+          "title": "",
+          "testid": "",
+          "role": "button",
+          "ownText": "",
+          "innerText": "新建对话",
+          "rendered": true,
+          "rect": {
+            "x": 14,
+            "y": 62,
+            "w": 232,
+            "h": 32
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "div",
+            "cls": "yb-new-chat-entry__item",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "yb-new-chat-entry",
+              "textLen": 4
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content",
+              "textLen": 124
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content-wrapper",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav yb-nav-common yb-nav--pc-ctx yb-nav--push yb-nav--open",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-layout agent-layout layout-pc yb-layout--pc-container",
+              "textLen": 328
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 328
+            }
+          ],
+          "outerHTML": "<div class=\"yb-new-chat-entry__item\" aria-label=\"新建对话\" role=\"button\" tabindex=\"0\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" fill=\"none\" aria-hidden=\"true\" focusable=\"false\" class=\"yb-new-chat-entry__icon\"><g><path d=\" M24.000499999999988 4.900000000000091 C13.285499999999956 4.900000000000091 4.400499999999965 13.350000000000136 4.400499999999965 24 C4.400499999999965 28.039999999999964 5.68"
+        },
+        {
+          "needle": "新建对话",
+          "tag": "p",
+          "cls": "",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新建对话",
+          "innerText": "新建对话",
+          "rendered": true,
+          "rect": {
+            "x": 48,
+            "y": 68,
+            "w": 190,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "div",
+            "cls": "yb-new-chat-entry__item",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "yb-new-chat-entry__item",
+              "textLen": 4
+            },
+            {
+              "tag": "div",
+              "cls": "yb-new-chat-entry",
+              "textLen": 4
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content",
+              "textLen": 124
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content-wrapper",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav yb-nav-common yb-nav--pc-ctx yb-nav--push yb-nav--open",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-layout agent-layout layout-pc yb-layout--pc-container",
+              "textLen": 328
+            }
+          ],
+          "outerHTML": "<p>新建对话</p>"
+        }
+      ],
+      "classHits": [
+        {
+          "tag": "div",
+          "cls": "yb-new-chat-entry",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "新建对话",
+          "rendered": true,
+          "rect": {
+            "x": 14,
+            "y": 62,
+            "w": 232,
+            "h": 32
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "yb-nav__content",
+              "textLen": 124
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content-wrapper",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav yb-nav-common yb-nav--pc-ctx yb-nav--push yb-nav--open",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-layout agent-layout layout-pc yb-layout--pc-container",
+              "textLen": 328
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 328
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 328
+            }
+          ],
+          "outerHTML": "<div class=\"yb-new-chat-entry\"><div class=\"yb-new-chat-entry__item\" aria-label=\"新建对话\" role=\"button\" tabindex=\"0\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" fill=\"none\" aria-hidden=\"true\" focusable=\"false\" class=\"yb-new-chat-entry__icon\"><g><path d=\" M24.000499999999988 4.900000000000091 C13.285499999999956 4.900000000000091 4.400499999999965 13.350000000000136 4.400499999999965 24 C4.40049999"
+        },
+        {
+          "tag": "div",
+          "cls": "yb-new-chat-entry__item",
+          "id": "",
+          "ariaLabel": "新建对话",
+          "title": "",
+          "testid": "",
+          "role": "button",
+          "ownText": "",
+          "innerText": "新建对话",
+          "rendered": true,
+          "rect": {
+            "x": 14,
+            "y": 62,
+            "w": 232,
+            "h": 32
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "div",
+            "cls": "yb-new-chat-entry__item",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "yb-new-chat-entry",
+              "textLen": 4
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content",
+              "textLen": 124
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content-wrapper",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav yb-nav-common yb-nav--pc-ctx yb-nav--push yb-nav--open",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-layout agent-layout layout-pc yb-layout--pc-container",
+              "textLen": 328
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 328
+            }
+          ],
+          "outerHTML": "<div class=\"yb-new-chat-entry__item\" aria-label=\"新建对话\" role=\"button\" tabindex=\"0\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" fill=\"none\" aria-hidden=\"true\" focusable=\"false\" class=\"yb-new-chat-entry__icon\"><g><path d=\" M24.000499999999988 4.900000000000091 C13.285499999999956 4.900000000000091 4.400499999999965 13.350000000000136 4.400499999999965 24 C4.400499999999965 28.039999999999964 5.68"
+        }
+      ],
+      "labeledControls": [
+        {
+          "tag": "div",
+          "cls": "yb-new-chat-entry__item",
+          "id": "",
+          "ariaLabel": "新建对话",
+          "title": "",
+          "testid": "",
+          "role": "button",
+          "ownText": "",
+          "innerText": "新建对话",
+          "rendered": true,
+          "rect": {
+            "x": 14,
+            "y": 62,
+            "w": 232,
+            "h": 32
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "div",
+            "cls": "yb-new-chat-entry__item",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "yb-new-chat-entry",
+              "textLen": 4
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content",
+              "textLen": 124
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav__content-wrapper",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-nav yb-nav-common yb-nav--pc-ctx yb-nav--push yb-nav--open",
+              "textLen": 138
+            },
+            {
+              "tag": "div",
+              "cls": "yb-layout agent-layout layout-pc yb-layout--pc-container",
+              "textLen": 328
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 328
+            }
+          ],
+          "outerHTML": "<div class=\"yb-new-chat-entry__item\" aria-label=\"新建对话\" role=\"button\" tabindex=\"0\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" fill=\"none\" aria-hidden=\"true\" focusable=\"false\" class=\"yb-new-chat-entry__icon\"><g><path d=\" M24.000499999999988 4.900000000000091 C13.285499999999956 4.900000000000091 4.400499999999965 13.350000000000136 4.400499999999965 24 C4.400499999999965 28.039999999999964 5.68"
+        }
+      ],
+      "novelPhrases": [
+        "新建对话"
+      ]
+    },
+    {
+      "platform": "chatglm",
+      "url": "https://chatglm.cn/",
+      "finalUrl": "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+      "title": "智谱清言",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": [
+        ".new-session"
+      ],
+      "bodyTextLen": 828,
+      "textHits": [
+        {
+          "needle": "新对话",
+          "tag": "div",
+          "cls": "text",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新对话",
+          "innerText": "新对话",
+          "rendered": true,
+          "rect": {
+            "x": 49,
+            "y": 64,
+            "w": 42,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-session flex flex-x-start flex-y-center el-tooltip__trigger el-tooltip__trigger",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "aside-subjects",
+              "textLen": 820
+            },
+            {
+              "tag": "aside",
+              "cls": "el-aside aside-container scroll-display-none",
+              "textLen": 852
+            },
+            {
+              "tag": "section",
+              "cls": "el-container",
+              "textLen": 1137
+            },
+            {
+              "tag": "div",
+              "cls": "pr",
+              "textLen": 1137
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 1137
+            }
+          ],
+          "outerHTML": "<div data-v-c991c402=\"\" class=\"text\">新对话</div>"
+        },
+        {
+          "needle": "新对话",
+          "tag": "span",
+          "cls": "enter-icon-text",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新对话",
+          "innerText": "新对话",
+          "rendered": false,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "css": {
+            "display": "none",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "enter-icon-container flex flex-y-center flex-x-center empty el-tooltip__trigger el-tooltip__trigger",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "enter is-main-chat",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "options-container flex flex-y-center",
+              "textLen": 18
+            },
+            {
+              "tag": "div",
+              "cls": "input-box-container flex flex-x-between",
+              "textLen": 18
+            },
+            {
+              "tag": "div",
+              "cls": "input-wrap flex flex-col",
+              "textLen": 24
+            },
+            {
+              "tag": "div",
+              "cls": "input-box noTopBorder",
+              "textLen": 24
+            }
+          ],
+          "outerHTML": "<span data-v-5d0a1b25=\"\" class=\"enter-icon-text\" style=\"display: none;\">新对话</span>"
+        }
+      ],
+      "classHits": [
+        {
+          "tag": "div",
+          "cls": "new-session flex flex-x-start flex-y-center el-tooltip__trigger el-tooltip__trigger",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "新对话",
+          "rendered": true,
+          "rect": {
+            "x": 12,
+            "y": 54,
+            "w": 235,
+            "h": 40
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "aside-subjects",
+              "textLen": 820
+            },
+            {
+              "tag": "aside",
+              "cls": "el-aside aside-container scroll-display-none",
+              "textLen": 852
+            },
+            {
+              "tag": "section",
+              "cls": "el-container",
+              "textLen": 1137
+            },
+            {
+              "tag": "div",
+              "cls": "pr",
+              "textLen": 1137
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 1137
+            },
+            {
+              "tag": "body",
+              "cls": "",
+              "textLen": 1598
+            }
+          ],
+          "outerHTML": "<div data-v-c991c402=\"\" class=\"new-session flex flex-x-start flex-y-center el-tooltip__trigger el-tooltip__trigger\"><svg data-v-c991c402=\"\" xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" fill=\"none\" viewBox=\"0 0 20 20\" class=\"icon\"><path fill=\"currentColor\" d=\"M9.904 2v-.937zm8.03 7.958h.937zm-.995 3.84.819.456zm.05.372.66-.665zm.642.638.66-.666zm-7.729 3.108v.938zM1.875 9.958H.938zM9"
+        }
+      ],
+      "labeledControls": [],
+      "novelPhrases": [
+        "新对话",
+        "最近对话",
+        "删除对话",
+        "ChatGLM",
+        "最新旗舰模型上线",
+        "下载最新Mac应用"
+      ]
+    },
+    {
+      "platform": "yiyan",
+      "url": "https://yiyan.baidu.com/",
+      "finalUrl": "https://wenxin.baidu.com/?enter_type=yiyan_site",
+      "title": "百度文心助手 - 办公学习一站解决",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": [
+        ".new-dialog-container-plain",
+        ".new-dialog-container"
+      ],
+      "bodyTextLen": 970,
+      "textHits": [
+        {
+          "needle": "新对话",
+          "tag": "span",
+          "cls": "cos-line-clamp-1",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新对话",
+          "innerText": "新对话",
+          "rendered": true,
+          "rect": {
+            "x": 41,
+            "y": 77,
+            "w": 42,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-dialog-container-plain",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 4746
+            }
+          ],
+          "outerHTML": "<span class=\"cos-line-clamp-1\">新对话</span>"
+        }
+      ],
+      "classHits": [
+        {
+          "tag": "div",
+          "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "aside-new-dialog-box",
+          "role": "",
+          "ownText": "",
+          "innerText": " 新对话 ",
+          "rendered": true,
+          "rect": {
+            "x": 8,
+            "y": 69,
+            "w": 224,
+            "h": 36
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside-container is-new-aside-sample new-aside-container ",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-container-body_10y6s_1",
+              "textLen": 8381
+            },
+            {
+              "tag": "div",
+              "cls": " _chat-container_10y6s_1 ",
+              "textLen": 8381
+            }
+          ],
+          "outerHTML": "<div class=\"_btn-box_tnqjy_104 _selected_tnqjy_183\" data-testid=\"aside-new-dialog-box\"> <div class=\"new-dialog-container _chat-aside-header-new-dialog_tnqjy_38\"> <div class=\"new-dialog-container-plain\"> <i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i> <span class=\"cos-line-clamp-1\">新对话</span> </div><!--20--> </div><!--19--> <span class=\"cos-tooltip\"><!--23--> <div data-"
+        },
+        {
+          "tag": "div",
+          "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": " 新对话 ",
+          "rendered": true,
+          "rect": {
+            "x": 17,
+            "y": 77,
+            "w": 185,
+            "h": 20
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside-container is-new-aside-sample new-aside-container ",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-container-body_10y6s_1",
+              "textLen": 8381
+            }
+          ],
+          "outerHTML": "<div class=\"new-dialog-container _chat-aside-header-new-dialog_tnqjy_38\"> <div class=\"new-dialog-container-plain\"> <i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i> <span class=\"cos-line-clamp-1\">新对话</span> </div><!--20--> </div>"
+        },
+        {
+          "tag": "div",
+          "cls": "new-dialog-container-plain",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": " 新对话 ",
+          "rendered": true,
+          "rect": {
+            "x": 17,
+            "y": 77,
+            "w": 66,
+            "h": 20
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside-container is-new-aside-sample new-aside-container ",
+              "textLen": 4746
+            }
+          ],
+          "outerHTML": "<div class=\"new-dialog-container-plain\"> <i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i> <span class=\"cos-line-clamp-1\">新对话</span> </div>"
+        },
+        {
+          "tag": "i",
+          "cls": "cos-icon cos-icon-new-dialog new-dialog-container-plain-icon",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 17,
+            "y": 77,
+            "w": 18,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-dialog-container-plain",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 4746
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 4746
+            }
+          ],
+          "outerHTML": "<i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i>"
+        }
+      ],
+      "labeledControls": [],
+      "novelPhrases": [
+        "新对话",
+        "新工作任务",
+        "对话历史",
+        "对话",
+        "全新上线任务模式"
+      ]
+    },
+    {
+      "platform": "kimi",
+      "url": "https://www.kimi.com/",
+      "finalUrl": "https://www.kimi.com/",
+      "title": "Kimi AI 官网：K3.1 Pro 上线，编程与智能体任务全面升级",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": null,
+      "bodyTextLen": 873,
+      "textHits": [
+        {
+          "needle": "新建会话",
+          "tag": "a",
+          "cls": "logo",
+          "id": "",
+          "ariaLabel": "新建会话",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 14,
+            "y": 15,
+            "w": 32,
+            "h": 32
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "a",
+            "cls": "logo",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "sidebar-header",
+              "textLen": 3598
+            },
+            {
+              "tag": "aside",
+              "cls": "sidebar next-sidebar",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-shell sidebar-shell--interactive",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-slot sidebar-slot--interactive not-mobile is-mobile-collapsed",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "app has-sidebar sidebar-interactive enable-layout-animation",
+              "textLen": 31843
+            },
+            {
+              "tag": "div",
+              "cls": "n-config-provider",
+              "textLen": 31843
+            }
+          ],
+          "outerHTML": "<a class=\"logo\" aria-label=\"新建会话\" data-v-c55c0390=\"\" href=\"/?chat_enter_method=new_chat\"><!--[--><!--]--></a>"
+        }
+      ],
+      "classHits": [
+        {
+          "tag": "div",
+          "cls": "sidebar-new-chat",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "#NewChatAnimatedIcon-svg-rs-ew8n6j-p1{transform-box:view-box;transform-origin:0 ",
+          "rendered": true,
+          "rect": {
+            "x": 0,
+            "y": 56,
+            "w": 240,
+            "h": 47
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "aside",
+              "cls": "sidebar next-sidebar",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-shell sidebar-shell--interactive",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-slot sidebar-slot--interactive not-mobile is-mobile-collapsed",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "app has-sidebar sidebar-interactive enable-layout-animation",
+              "textLen": 31843
+            },
+            {
+              "tag": "div",
+              "cls": "n-config-provider",
+              "textLen": 31843
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 31843
+            }
+          ],
+          "outerHTML": "<div class=\"sidebar-new-chat\" data-v-c55c0390=\"\"><a class=\"new-chat-btn\" data-testid=\"sidebar-new-chat\" data-v-c55c0390=\"\" href=\"/?chat_enter_method=new_chat\"><!--[--><span data-animation-icon-wrapper=\"true\" data-animation-phase=\"idle\" class=\"new-chat-btn__content\" data-v-c55c0390=\"\"><!--[--><div class=\"action-label\" data-v-c55c0390=\"\"><span class=\"new-icon-wrapper\" aria-hidden=\"true\" data-v-c55c0"
+        },
+        {
+          "tag": "a",
+          "cls": "new-chat-btn",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "sidebar-new-chat",
+          "role": "",
+          "ownText": "",
+          "innerText": "#NewChatAnimatedIcon-svg-rs-ew8n6j-p1{transform-box:view-box;transform-origin:0 ",
+          "rendered": true,
+          "rect": {
+            "x": 8,
+            "y": 62,
+            "w": 224,
+            "h": 41
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "a",
+            "cls": "new-chat-btn",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "sidebar-new-chat",
+              "textLen": 1529
+            },
+            {
+              "tag": "aside",
+              "cls": "sidebar next-sidebar",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-shell sidebar-shell--interactive",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-slot sidebar-slot--interactive not-mobile is-mobile-collapsed",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "app has-sidebar sidebar-interactive enable-layout-animation",
+              "textLen": 31843
+            },
+            {
+              "tag": "div",
+              "cls": "n-config-provider",
+              "textLen": 31843
+            }
+          ],
+          "outerHTML": "<a class=\"new-chat-btn\" data-testid=\"sidebar-new-chat\" data-v-c55c0390=\"\" href=\"/?chat_enter_method=new_chat\"><!--[--><span data-animation-icon-wrapper=\"true\" data-animation-phase=\"idle\" class=\"new-chat-btn__content\" data-v-c55c0390=\"\"><!--[--><div class=\"action-label\" data-v-c55c0390=\"\"><span class=\"new-icon-wrapper\" aria-hidden=\"true\" data-v-c55c0390=\"\"><svg xmlns=\"http://www.w3.org/2000/svg\" wi"
+        },
+        {
+          "tag": "span",
+          "cls": "new-chat-btn__content",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "#NewChatAnimatedIcon-svg-rs-ew8n6j-p1{transform-box:view-box;transform-origin:0 ",
+          "rendered": true,
+          "rect": {
+            "x": 9,
+            "y": 63,
+            "w": 223,
+            "h": 40
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "a",
+            "cls": "new-chat-btn",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "a",
+              "cls": "new-chat-btn",
+              "textLen": 1529
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-new-chat",
+              "textLen": 1529
+            },
+            {
+              "tag": "aside",
+              "cls": "sidebar next-sidebar",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-shell sidebar-shell--interactive",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-slot sidebar-slot--interactive not-mobile is-mobile-collapsed",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "app has-sidebar sidebar-interactive enable-layout-animation",
+              "textLen": 31843
+            }
+          ],
+          "outerHTML": "<span data-animation-icon-wrapper=\"true\" data-animation-phase=\"idle\" class=\"new-chat-btn__content\" data-v-c55c0390=\"\"><!--[--><div class=\"action-label\" data-v-c55c0390=\"\"><span class=\"new-icon-wrapper\" aria-hidden=\"true\" data-v-c55c0390=\"\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" class=\"NewChatAnimatedIcon-svg new-icon\" data-animation-icon=\"true\" data-anim"
+        },
+        {
+          "tag": "path",
+          "cls": "[object SVGAnimatedString]",
+          "id": "NewChatAnimatedIcon-svg-rs-ew8n6j-p0",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 18,
+            "y": 75,
+            "w": 15,
+            "h": 15
+          },
+          "css": {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "a",
+            "cls": "new-chat-btn",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "svg",
+              "cls": "[object SVGAnimatedString]",
+              "textLen": 1520
+            },
+            {
+              "tag": "span",
+              "cls": "new-icon-wrapper",
+              "textLen": 1520
+            },
+            {
+              "tag": "div",
+              "cls": "action-label",
+              "textLen": 1525
+            },
+            {
+              "tag": "span",
+              "cls": "new-chat-btn__content",
+              "textLen": 1529
+            },
+            {
+              "tag": "a",
+              "cls": "new-chat-btn",
+              "textLen": 1529
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-new-chat",
+              "textLen": 1529
+            }
+          ],
+          "outerHTML": "<path id=\"NewChatAnimatedIcon-svg-rs-ew8n6j-p0\" d=\"M 0 -9.9 C -5.468 -9.9 -9.9 -5.468 -9.9 0 C -9.9 1.923 -9.351 3.719 -8.402 5.239 C -8.402 5.239 -9.483 7.821 -9.483 7.821 C -9.896 8.809 -9.171 9.9 -8.099 9.9 C -8.099 9.9 0 9.9 0 9.9 C 5.468 9.9 9.9 5.468 9.9 0 C 9.9 -5.468 5.468 -9.9 0 -9.9 Z M -8.1 0 C -8.1 -4.474 -4.474 -8.1 0 -8.1 C 4.473 -8.1 8.1 -4.474 8.1 0 C 8.1 4.473 4.473 8.1 -0.001 8.1"
+        },
+        {
+          "tag": "path",
+          "cls": "[object SVGAnimatedString]",
+          "id": "NewChatAnimatedIcon-svg-rs-ew8n6j-p1",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 23,
+            "y": 80,
+            "w": 5,
+            "h": 5
+          },
+          "css": {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "a",
+            "cls": "new-chat-btn",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "svg",
+              "cls": "[object SVGAnimatedString]",
+              "textLen": 1520
+            },
+            {
+              "tag": "span",
+              "cls": "new-icon-wrapper",
+              "textLen": 1520
+            },
+            {
+              "tag": "div",
+              "cls": "action-label",
+              "textLen": 1525
+            },
+            {
+              "tag": "span",
+              "cls": "new-chat-btn__content",
+              "textLen": 1529
+            },
+            {
+              "tag": "a",
+              "cls": "new-chat-btn",
+              "textLen": 1529
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-new-chat",
+              "textLen": 1529
+            }
+          ],
+          "outerHTML": "<path id=\"NewChatAnimatedIcon-svg-rs-ew8n6j-p1\" d=\"M 3.6 0.5 L -2.6 0.5 M 0.5 -2.573 L 0.5 3.573\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" style=\"transform-box:view-box;transform-origin:0 0;transform:translate(47.91667%,47.91667%);\"></path>"
+        },
+        {
+          "tag": "button",
+          "cls": "next-sidebar-project-list__create",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "sidebar-new-project",
+          "role": "",
+          "ownText": "",
+          "innerText": "#NewProjectAnimatedIcon-svg-rs-bjn8zu-p1{transform-box:view-box;transform-origin",
+          "rendered": true,
+          "rect": {
+            "x": 8,
+            "y": 417,
+            "w": 209,
+            "h": 36
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "button",
+            "cls": "next-sidebar-project-list__create",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "next-sidebar-project-list",
+              "textLen": 1169
+            },
+            {
+              "tag": "div",
+              "cls": "next-sidebar-section__content",
+              "textLen": 1169
+            },
+            {
+              "tag": "div",
+              "cls": "next-sidebar-collapse",
+              "textLen": 1169
+            },
+            {
+              "tag": "div",
+              "cls": "slot-container",
+              "textLen": 1169
+            },
+            {
+              "tag": "div",
+              "cls": "resize-container",
+              "textLen": 1169
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 1169
+            }
+          ],
+          "outerHTML": "<button data-v-4175bc95=\"\" type=\"button\" class=\"next-sidebar-project-list__create\" data-testid=\"sidebar-new-project\"><span data-v-4175bc95=\"\" data-animation-icon-wrapper=\"true\" data-animation-phase=\"idle\" class=\"next-sidebar-project-list__create-content\"><svg data-v-4175bc95=\"\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" class=\"NewProjectAnimatedIcon-svg next-side"
+        }
+      ],
+      "labeledControls": [
+        {
+          "tag": "a",
+          "cls": "logo",
+          "id": "",
+          "ariaLabel": "新建会话",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 14,
+            "y": 15,
+            "w": 32,
+            "h": 32
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": {
+            "tag": "a",
+            "cls": "logo",
+            "rendered": true
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "sidebar-header",
+              "textLen": 3598
+            },
+            {
+              "tag": "aside",
+              "cls": "sidebar next-sidebar",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-shell sidebar-shell--interactive",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "sidebar-slot sidebar-slot--interactive not-mobile is-mobile-collapsed",
+              "textLen": 18395
+            },
+            {
+              "tag": "div",
+              "cls": "app has-sidebar sidebar-interactive enable-layout-animation",
+              "textLen": 31843
+            },
+            {
+              "tag": "div",
+              "cls": "n-config-provider",
+              "textLen": 31843
+            }
+          ],
+          "outerHTML": "<a class=\"logo\" aria-label=\"新建会话\" data-v-c55c0390=\"\" href=\"/?chat_enter_method=new_chat\"><!--[--><!--]--></a>"
+        }
+      ],
+      "novelPhrases": [
+        "新建项目",
+        "对话",
+        "未命名会话"
+      ]
+    }
+  ]
+}
