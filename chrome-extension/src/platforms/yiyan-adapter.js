@@ -8,6 +8,10 @@ import { findElement, findElements, findVisibleElement, injectTextSmart, delay }
 
 /** 文心一言选择器配置 */
 const SELECTORS = {
+  // 2026-11-11 只读 DOM 探测实证（/tmp/newchat-yiyan.json，yiyan.baidu.com）：
+  //   div.new-dialog-container-plain > span.cos-line-clamp-1（文本「新对话」）
+  // 外层容器带构建哈希类名，内层这个是稳定的语义类名，优先用内层。
+  newChat: [".new-dialog-container-plain", ".new-dialog-container"],
   chatInput: [
     "textarea.ci-textarea",
     "textarea",

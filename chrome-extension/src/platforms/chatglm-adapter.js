@@ -8,6 +8,13 @@ import { findElement, findElements, findVisibleElement, injectTextSmart, delay }
 
 /** 智谱清言选择器配置 */
 const SELECTORS = {
+  // 2026-11-11 只读 DOM 探测实证（/tmp/newchat-probe.json，chatglm.cn）：
+  // 「新对话」不是一个按钮，而是
+  //   div.new-session.flex…el-tooltip__trigger > div.text
+  // 挂在 aside.aside-container 下。它不是 button/a/[role=button]，
+  // 所以纯标签匹配永远找不到它——Pack 的 fresh_session 因此在 13:40 那轮
+  // 直接把 step_8 判失败（拒绝把提示词发进旧会话，是对的行为，但没办成事）。
+  newChat: [".new-session"],
   chatInput: ['div[contenteditable="true"]', "textarea", '[role="textbox"]'],
   sendButton: [
     'button[type="submit"]',

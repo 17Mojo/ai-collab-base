@@ -173,6 +173,7 @@
         "description": "整合所有内容生成最终图文",
         "input_fields": ["hook_statement", "explanation_text", "use_cases", "boundary_notes", "takeaway_content", "visual_content"],
         "output_field": "final_content",
+        "fresh_session": "prefer",
         "prompt_template": "把以下内容整合成一条完整的小红书笔记正文：\n开头：{{hook_statement}}\n解释：{{explanation_text}}\n场景：{{use_cases}}\n边界：{{boundary_notes}}\n可带走：{{takeaway_content}}\n图片文案：{{visual_content}}\n要求：顺序自然、语气统一，不重复，最后加一句互动引导。只输出整合后的笔记。",
         "config": {
           "format": "小红书笔记格式",

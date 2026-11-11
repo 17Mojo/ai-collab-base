@@ -942,6 +942,114 @@ const MUTATIONS = [
     testFile: "retry-semantics.test.mjs",
     expectTest: "广播投递遇到超时：宁可失败也不重发",
   },
+
+  // ── 证据路径（台账 N22）────────────────────────────────────
+  //
+  // 2026-11-11 13:32：预检默认文件名只带日期，同日跑第二遍把 5 站记录
+  // 静默覆盖成单站。下面每条变异都还原成「又埋一次 N22」的某个侧面。
+  {
+    name: "预检路径退回只带日期（N22 原样复活）",
+    why: "只带日期 ⇒ 同日不同候选集写到同一路径 ⇒ 后跑的静默覆盖先跑的",
+    target: "real-machine/evidence-paths.mjs",
+    find: "  return `${evidenceDir}/L2-precheck-${date}.${candidatesSlug(candidates)}.json`;",
+    replace: "  return `${evidenceDir}/L2-precheck-${date}.json`;",
+    testFile: "real-machine/evidence-paths.test.mjs",
+    expectTest: "同日两次不同候选集，不得写同一路径",
+  },
+  {
+    name: "候选集不参与文件名",
+    why: "slug 恒为空串 ⇒ 路径里少一段，同样撞成同一个文件名",
+    target: "real-machine/evidence-paths.mjs",
+    find: '  if (list.length <= MAX_SLUG_ITEMS) return list.join("-");',
+    replace: '  if (list.length <= MAX_SLUG_ITEMS) return "";',
+    testFile: "real-machine/evidence-paths.test.mjs",
+    expectTest: "任意两个不同候选集，路径都必须不同（穷举三个真实组合）",
+  },
+  {
+    name: "候选集不排序（同一组因顺序分成两份文件）",
+    why: "不排序的话 chatglm,kimi 与 kimi,chatglm 会算出两个名字，证据目录里堆两份内容一样的文件",
+    target: "real-machine/evidence-paths.mjs",
+    find: "  ].sort();",
+    replace: "  ];",
+    testFile: "real-machine/evidence-paths.test.mjs",
+    expectTest: "同一组候选集换个顺序，得到同一个路径",
+  },
+  {
+    name: "覆盖已有回执时不吭声",
+    why: "这就是 N22 的原始形态——覆盖发生了但没有任何提示，只有事后翻证据才发现少了东西",
+    target: "real-machine/evidence-paths.mjs",
+    find: "  if (!info) return null;\n  return `覆盖已有回执：${path}（原 ${info.size} B）`;",
+    replace: "  if (!info) return null;\n  return null;",
+    testFile: "real-machine/evidence-paths.test.mjs",
+    expectTest: "文件存在时提示里带路径与原大小",
+  },
+
+  // ── Pack 的会话边界（step_8 尾部撞墙的结构修复）────────────
+  //
+  // deepseek / longcat 在第 8 轮撞墙；同一条 fusion 提示词在全新会话里
+  // 21s 就通过 ⇒ 「单会话串行跑完 8 步」是变量。下面每条变异都还原成
+  // 「会话边界没生效」的某个侧面。
+  {
+    name: "执行器忽略 fresh_session（会话边界形同虚设）",
+    why: "不看这个声明就等于仍然串在一个会话里跑——长会话继续累积，step_8 继续撞墙，而且现象仍像「平台慢」",
+    target: "src/background/pack-executor.js",
+    find: "if (step.fresh_session) {",
+    replace: "if (false) {",
+    testFile: "session-boundary.test.mjs",
+    expectTest: "声明 fresh_session ⇒ 先开新会话，再发提示词（同一标签页）",
+  },
+  {
+    name: "strict 模式下开新会话失败照旧把提示词发出去",
+    why: "这是最坏的退让：发进旧会话的后果是静默的——答案照样生成，只是又背上全部历史、又在同一位置撞墙",
+    target: "src/background/pack-executor.js",
+    find: "if (response && response.success === false) {",
+    replace: "if (false) {",
+    testFile: "session-boundary.test.mjs",
+    expectTest: "strict：开新会话失败 ⇒ 一条提示词都不许发，Pack 必须失败",
+  },
+  {
+    name: "广播投递也放行 fresh_session",
+    why: "广播时不知道该操作哪个页面；放行就等于向不特定的页面碰运气开新会话",
+    target: "src/background/pack-executor.js",
+    find: "    const base = { stepId: step.id, mode };\n\n    if (targetTabId === null || targetTabId === undefined) {",
+    replace: "    const base = { stepId: step.id, mode };\n\n    if (false) {",
+    testFile: "session-boundary.test.mjs",
+    expectTest: "广播投递声明 fresh_session ⇒ 明确失败，且不发提示词",
+  },
+  {
+    name: "prefer 降级被记成「成功开过新会话」",
+    why: "把 available 恒记为 true 之后，「开了新会话」与「没开成」在回执上长得一模一样——那就又变成一句无法核验的声明（千问 2026-11-11 实测就是 available:false 这条路）",
+    // 2026-11-11 修正：最初写的是 `available: result.available !== false` →
+    // `available: true`，但那条**是空变异**——同一对象字面量里紧跟 `...result`，
+    // 展开在后面会把 available 又覆盖回去，行为一点没变，所以测试照常绿。
+    // 要真把它改坏，得让强制值**排在展开之后**。
+    find:
+      "        available: result.available !== false,\n        ...result,",
+    replace: "        ...result,\n        available: true,",
+    target: "src/background/pack-executor.js",
+    testFile: "session-boundary.test.mjs",
+    expectTest: "prefer：开不成也照常发送，但回执里必须留下 available:false",
+  },
+  {
+    name: "交付的 Pack 悄悄去掉 fresh_session 声明",
+    why: "删掉声明不会报错、不会报警，只是 step_8 又变回「背着前 7 轮上下文」——撞墙会以「平台慢」的样子回来",
+    target: "packs/examples/xiaohongshu_knowledge_creator.json",
+    find: '        "fresh_session": "prefer",\n',
+    replace: "",
+    testFile: "session-boundary.test.mjs",
+    expectTest: "真实 Pack 的 step_8_output 声明了 fresh_session=prefer",
+  },
+  {
+    name: "自足性检查放过一个上游没产出的变量",
+    why: "把 {{boundary_notes}} 改成一个没人产出的名字，等于提示词不再自足；开新会话后那个位置会是空的——但答案照样生成，现象只是「内容缺一块」",
+    // 必须挑 step_8 提示词里**独有**的片段：replace 只替换首次出现，
+    // 若命中 step_7（没声明 fresh_session），自足性检查根本不会看它。
+    target: "packs/examples/xiaohongshu_knowledge_creator.json",
+    find: "边界：{{boundary_notes}}",
+    replace: "边界：{{boundary_notes_v2}}",
+    testFile: "session-boundary.test.mjs",
+    expectTest: "声明 fresh_session 的步骤，提示词引用的变量必须全部来自上游",
+  },
 ];
 
 /**

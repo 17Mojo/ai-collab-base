@@ -39,6 +39,7 @@ import {
   findVisibleElement,
   injectTextSmart,
   extractMessageContent,
+  isElementRendered,
 } from "../platforms/adapter-utils.js";
 
 // ============================================================================
@@ -191,6 +192,21 @@ function setupEventListeners() {
         sendResponse(state);
         break;
 
+      // 🔧 2026-11-11（Pack 会话边界）：开一个新会话。
+      //
+      // 为什么需要：deepseek / longcat 的 step_8（fusion）在同一会话里跑到第 8 轮
+      // 时撞墙——deepseek 是答案超出 4×180s 窗口，longcat 直接报「服务出错」。
+      // 隔离实验把那条 2437 字的 fusion 提示词原样发进**全新会话**：21 秒答完、
+      // 产出 1481 字。⇒ 提示词本身没问题，**长会话才是变量**。
+      //
+      // 所以 Pack 需要一个显式的「会话边界」：某些步骤自足（所需字段全在
+      // 提示词里内联），就不该继续背着前面 7 轮的上下文。
+      case "NEW_SESSION":
+        handleNewSession(message.strict === true)
+          .then((result) => sendResponse({ success: true, result }))
+          .catch((error) => sendResponse(failureEnvelope(error)));
+        return true;
+
       case "WAIT_FOR_RESPONSE":
         // 🔧 2026-11-11（N21）：续等。后台在 AI 步骤超时后**不再重发**，
         // 而是让页面继续盯同一个会话——所以这里必须能把「发送前的基准条数」
@@ -290,6 +306,193 @@ async function handleClickSend() {
         bubbles: true,
       }),
     );
+  }
+}
+
+/**
+ * 「新对话」入口的文案候选。
+ *
+ * 用文案而不是 per-adapter 选择器，是有取舍的：
+ *   - 选择器精确，但 5 个活跃站 + 4 个冻结站都要各写一份，而且**每一份都无法
+ *     在没有真机的情况下验证**——写了也是猜的；
+ *   - 文案匹配跨站通用，一次覆盖全部站点，代价是站点改文案就失效。
+ *
+ * 所以做成「两层」：adapter 真声明了 `newChat` 选择器就优先用它（精度），
+ * 没有才落到文案匹配（覆盖）。失效时**必须失败**而不是悄悄继续——
+ * 见 handleNewSession 的错误分支。
+ */
+const NEW_SESSION_TEXTS = [
+  "新对话",
+  "新建对话",
+  "新的对话",
+  "开始新对话",
+  "新建聊天",
+  "新会话",
+  "New chat",
+  "New Chat",
+];
+
+/**
+ * 找「新对话」控件时要看的标签。
+ *
+ * 为什么不止 `button`：2026-11-11 只读探测实测，两个站的入口都**不是按钮**——
+ *   chatglm: `div.new-session.flex…`（挂在 aside 下）
+ *   文心:    `div.new-dialog-container-plain`
+ * 只按标签找（button / a / [role=button]）在这两个站上恒为 0 命中，
+ * 于是「开新会话」永远失败、step_8 直接被判不合格。
+ */
+const NEW_SESSION_CONTROL_SELECTOR = [
+  "button",
+  '[role="button"]',
+  "a",
+  '[class*="new-session"]',
+  '[class*="new-chat"]',
+  '[class*="newChat"]',
+  '[class*="new-dialog"]',
+].join(", ");
+
+/**
+ * 落在输入/发送区里的元素一律不认。
+ *
+ * 实测证据（/tmp/newchat-probe.json，chatglm）：同一个「新对话」文案在
+ * 输入框附近还有一个 `div.enter.is-main-chat`（祖先链是
+ * input-box-container → input-wrap → …）。它长得像入口、位置却在发送区旁边，
+ * 点它的后果不可预料。所以按祖先类名把它排除掉。
+ */
+const COMPOSER_ZONE_SELECTOR = [
+  "form",
+  '[class*="input"]',
+  '[class*="editor"]',
+  '[class*="send"]',
+  '[class*="composer"]',
+].join(", ");
+
+/**
+ * 找「新对话」控件。
+ * @returns {{el: Element, how: "adapter-selector"|"text-match"}|null}
+ */
+function findNewSessionControl() {
+  if (currentConfig?.newChat) {
+    const el = findVisibleElement(currentConfig.newChat);
+    if (el) return { el, how: "adapter-selector" };
+  }
+
+  const wanted = new Set(NEW_SESSION_TEXTS);
+  for (const el of document.querySelectorAll(NEW_SESSION_CONTROL_SELECTOR)) {
+    if (!isElementRendered(el)) continue;
+    if (el.closest(COMPOSER_ZONE_SELECTOR)) continue; // 发送区旁边的同名元素不认
+    const candidates = [
+      (el.textContent || "").trim(),
+      (el.getAttribute("aria-label") || "").trim(),
+      (el.getAttribute("title") || "").trim(),
+    ];
+    if (candidates.some((t) => t && wanted.has(t))) {
+      return { el, how: "text-match" };
+    }
+  }
+  return null;
+}
+
+/**
+ * 等会话真的被清空。
+ *
+ * **点到了 ≠ 重置了**：按钮可能禁用、可能被遮挡、可能只滚回顶部。
+ * 判据用「消息数下降」——新会话要么 0 条，要么只有一条欢迎语，
+ * 两种情况都严格小于「重置前」的条数。
+ *
+ * @param {number} beforeCount
+ * @param {number} [timeout=8000]
+ * @returns {Promise<number>} 重置后的消息数
+ */
+async function waitForSessionReset(beforeCount, timeout = 8000) {
+  const deadline = Date.now() + timeout;
+  let last = beforeCount;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    last = findElements(currentConfig.messageList).length;
+    if (last < beforeCount) return last;
+  }
+  const error = new Error(
+    `点了「新对话」但消息数没有下降（${beforeCount} → ${last}），` +
+      "无法确认会话已重置。",
+  );
+  error.code = "NEW_SESSION_NOT_CONFIRMED";
+  throw error;
+}
+
+/**
+ * 开一个新会话（Pack 的「会话边界」，由步骤的 `fresh_session` 触发）。
+ *
+ * ## 两档语义
+ *
+ * `strict` 由调用方（后台）给，来自步骤的 `fresh_session` 取值：
+ *   - strict（`true` / `"strict"`）：开不成 ⇒ **抛错**，后台据此判这一步失败，
+ *     一条提示词都不会发出去。适合「上一轮的上下文会污染这一步」的 Pack。
+ *   - 非 strict（`"prefer"`）：开不成 ⇒ 回 `available:false` + 原因，
+ *     后台记进回执后**照常发送**，行为与修复前一致。
+ *
+ * 为什么非 strict 不能直接抛错：2026-11-11 实测，5 个活跃站里只有 chatglm
+ * 与文心能识别出「新对话」入口，千问是纯 Tailwind 类名、元宝/Kimi 不用这个
+ * 措辞。一律 strict 会让一个结构性优化把**本来跑得通**的站点打成 7/8。
+ * 但降级必须可见——`available:false` 会随回执落盘。
+ *
+ * @param {boolean} [strict=false]
+ * @returns {Promise<{available: boolean, strategy: string, messageCountBefore: number,
+ *   messageCountAfter?: number, reason?: string}>}
+ * @throws {Error} strict 模式下找不到入口 / 点了没生效
+ */
+async function handleNewSession(strict = false) {
+  if (!currentConfig) throw new Error("No adapter available");
+
+  const before = findElements(currentConfig.messageList).length;
+
+  /** strict 就抛，不 strict 就如实回报「没办成」 */
+  const refuse = (reason, strategy, code) => {
+    if (strict) {
+      const error = new Error(reason);
+      error.code = code;
+      throw error;
+    }
+    return {
+      available: false,
+      strategy,
+      reason,
+      messageCountBefore: before,
+      messageCountAfter: before,
+    };
+  };
+
+  if (before === 0) {
+    // 本来就是空会话，没什么可重置的——这一步不该判失败
+    return {
+      available: true,
+      strategy: "already-empty",
+      messageCountBefore: 0,
+      messageCountAfter: 0,
+    };
+  }
+
+  const found = findNewSessionControl();
+  if (!found) {
+    return refuse(
+      "找不到「新对话」入口：adapter 没有声明 newChat 选择器，" +
+        `页面上也没有文案为 ${NEW_SESSION_TEXTS.slice(0, 4).join(" / ")} 等的可见控件。`,
+      "none",
+      "NEW_SESSION_CONTROL_NOT_FOUND",
+    );
+  }
+
+  found.el.click();
+  try {
+    const after = await waitForSessionReset(before);
+    return {
+      available: true,
+      strategy: found.how,
+      messageCountBefore: before,
+      messageCountAfter: after,
+    };
+  } catch (error) {
+    return refuse(error.message, "click-no-effect", error.code);
   }
 }
 

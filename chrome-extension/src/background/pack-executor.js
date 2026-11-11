@@ -411,6 +411,10 @@ class PackExecutor {
       output: {},
       errors: [],
       extractedData: {}, // 存储正则提取的数据
+      // 会话边界的实际执行情况（fresh_session）。回执里必须看得见
+      // 「这一步到底有没有真的开成新会话」——否则「开了新会话」就是一句
+      // 无法核验的声明。
+      sessionResets: [],
       stepIndex: new Map(), // 步骤 ID 到索引的映射
     };
 
@@ -791,6 +795,21 @@ class PackExecutor {
     // 所以：**已知目标标签页时一律用 `chrome.tabs.sendMessage` 精确投递**；
     // 不知道目标标签页时才退回广播，并在结果里标明是广播。
     const targetTabId = execution.targetTabId;
+
+    // ── 会话边界（Pack 声明的 fresh_session）────────────────────────
+    //
+    // deepseek / longcat 的 step_8 在同一会话里跑到第 8 轮时撞墙：deepseek
+    // 答案超出 4×180s 窗口，longcat 直接报「服务出错」。隔离实验把那条
+    // 2437 字的 fusion 提示词原样发进**全新会话** —— 21 秒答完、1481 字。
+    // ⇒ 提示词没问题，**长会话是变量**。
+    //
+    // 所以「这一步该不该继续背着前面几轮的上下文」变成 Pack 的显式声明，
+    // 而不是执行器的默认假设。默认不开——共用会话对某些 Pack 是有意义的
+    // （例如「把上面那版再改短一点」），只有自足的步骤才该声明。
+    if (step.fresh_session) {
+      await this._resetSession(execution, step);
+    }
+
     if (targetTabId !== null && targetTabId !== undefined) {
       let response;
       try {
@@ -831,6 +850,102 @@ class PackExecutor {
     const content = response?.result?.content ?? "";
     assertUsableAIContent(content, step, null);
     return content;
+  }
+
+  /**
+   * 开新会话（Pack 步骤声明 `fresh_session` 时，在发送**之前**调用）。
+   *
+   * ## 两档语义，差别只在「开不成」时怎么办
+   *
+   * | 取值 | 开不成时 | 给谁用 |
+   * |---|---|---|
+   * | `true` / `"strict"` | **这一步直接失败**，一条提示词都不发 | 真的必须隔离会话的 Pack（例如前一步的上下文会污染后一步） |
+   * | `"prefer"` | 记一条 `available:false` 后**照常发送**（行为与修复前一致） | 想拿收益但不愿为此让站点跑不通的 Pack |
+   *
+   * 为什么要有 `prefer`：2026-11-11 实测发现 5 个活跃站里只有
+   * chatglm（`div.new-session`）与文心（`div.new-dialog-container-plain`）
+   * 有可识别的「新对话」入口；千问是纯 Tailwind 类名，元宝/Kimi 压根不用
+   * 这个措辞。若一律 strict，一个结构性优化会直接把这几个**本来跑得通**的
+   * 站点打成 7/8。宁可降级也要降级得**可见**：`sessionResets` 会随回执落盘。
+   *
+   * @param {Object} execution
+   * @param {Object} step
+   * @returns {Promise<void>} 结果写进 `execution.sessionResets`
+   * @throws {Error} strict 模式下没开成
+   */
+  async _resetSession(execution, step) {
+    const mode =
+      step.fresh_session === "prefer" ? "prefer" : "strict";
+    const targetTabId = execution.targetTabId;
+    const base = { stepId: step.id, mode };
+
+    if (targetTabId === null || targetTabId === undefined) {
+      const reason =
+        "本次是广播投递，后台不知道该让哪一个页面开新会话。请让扩展精确投递到目标标签页。";
+      if (mode === "strict") {
+        const error = new Error(`步骤 ${step.id} 声明了 fresh_session，但${reason}`);
+        error.code = "FRESH_SESSION_UNSUPPORTED";
+        throw error;
+      }
+      this._recordSessionReset(execution, {
+        ...base,
+        available: false,
+        strategy: "unsupported-broadcast",
+        reason,
+      });
+      return;
+    }
+
+    let record;
+    try {
+      const response = await chrome.tabs.sendMessage(targetTabId, {
+        type: "NEW_SESSION",
+        strict: mode === "strict",
+      });
+      if (response && response.success === false) {
+        const error = new Error(
+          `标签页 ${targetTabId} 开新会话失败：${response.error || "未知原因"}。`,
+        );
+        if (response.code) error.code = response.code;
+        throw error;
+      }
+      const result = response?.result ?? {};
+      record = {
+        ...base,
+        available: result.available !== false,
+        ...result,
+      };
+    } catch (error) {
+      if (mode === "strict") {
+        const wrapped = new Error(
+          `${error.message}这一步声明了 fresh_session —— 宁可不发，也不把提示词发进旧会话。`,
+        );
+        if (error.code) wrapped.code = error.code;
+        throw wrapped;
+      }
+      record = { ...base, available: false, strategy: "failed", reason: error.message };
+    }
+
+    this._recordSessionReset(execution, record);
+  }
+
+  /**
+   * 会话边界的结果落进 `execution.sessionResets`（回执里可见）。
+   * 降级时必须出声——否则「开了新会话」与「没开成」在证据上长得一样。
+   *
+   * @param {Object} execution
+   * @param {Object} record
+   */
+  _recordSessionReset(execution, record) {
+    if (!Array.isArray(execution.sessionResets)) execution.sessionResets = [];
+    execution.sessionResets.push(record);
+    if (!record.available) {
+      console.warn(
+        `[pack-executor] 步骤 ${record.stepId} 未能开新会话` +
+          `（${record.reason || record.strategy || "未知原因"}）——` +
+          `按 fresh_session="${record.mode}" 继续，行为与修复前一致。`,
+      );
+    }
   }
 
   /**

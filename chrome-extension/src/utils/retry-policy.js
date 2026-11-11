@@ -41,6 +41,17 @@ export const FAILURE_STRATEGY = {
 export const RESPONSE_TIMEOUT_CODE = "RESPONSE_TIMEOUT";
 
 /**
+ * 重试也不会好的失败：配置错了、前置条件不满足。
+ * 重试它们只是把同一个错误再打印一遍，白等 retryDelay。
+ */
+const NON_RETRYABLE_CODES = new Set([
+  // 步骤声明的必填字段缺失（残句出城，重试还是残句）
+  "MISSING_REQUIRED_FIELDS",
+  // 步骤要求开新会话，但本次是广播投递——不知道该操作哪个页面
+  "FRESH_SESSION_UNSUPPORTED",
+]);
+
+/**
  * 老路径的文案兜底：形如 `"千问: Response timeout"` 或 `"Response timeout"`。
  * 用 `$` 锚尾，且要求前面是开头或 `": "`，避免子串误伤。
  */
@@ -59,7 +70,7 @@ export function failureStrategy(error) {
   if (error.code === RESPONSE_TIMEOUT_CODE) return FAILURE_STRATEGY.RESUME_WAIT;
 
   // 2. 确定性的配置类失败：重试只是白等
-  if (error.code === "MISSING_REQUIRED_FIELDS") return FAILURE_STRATEGY.FAIL;
+  if (NON_RETRYABLE_CODES.has(error.code)) return FAILURE_STRATEGY.FAIL;
 
   // 3. 老路径兜底（没有错误码，只有文案）
   const msg = typeof error.message === "string" ? error.message : "";
