@@ -680,6 +680,7 @@ if (step.fresh_session) {
 | 元宝 | `adapter-selector` | 12 → 0 | **312** | 21.0s | 103.6s |
 | Kimi | `adapter-selector` | 6 → 0 | **304** | 16.7s | 120.7s |
 | 文心 | `adapter-selector` | 6 → 0 | **318** | 16.0s | 90.5s |
+| chatglm（§17.2 补测） | `adapter-selector` | 12 → 0 | **311** | 117.5s | 380.1s |
 
 ⇒ **重置的固定开销是 0.3 秒量级**，比 AI 单步回答（10–90s）小两个数量级。
 这就把 §14.4 的悬置彻底收窄了：
@@ -687,8 +688,9 @@ if (step.fresh_session) {
 - 「重置拖慢了整包」：**判否**（§14.1 的代码路径 + §14.2 的分步账 + 这里的 0.3s 实测，三条独立证据同向）。
 - 「重置免费」：**仍不能这么写**——它有非零开销（304–319ms），且上限由代码给出（8s 判据超时）；
   只是这个开销被 AI 回答耗时的波动**完全淹没**，从整包差值里分离不出来。
-- 只有 chatglm 那一轮的 `durationMs` 没测到（那轮跑在加计时字段之前）。
-  但 4 站同构实现给出的 0.3s 量级，足以否定「+69.8s 是重置造成的」这种量级完全对不上的归因。
+- chatglm 在**这一轮**（419.6s 那次）的 `durationMs` 没测到——它跑在加计时字段之前。
+  这条挂账已在 §17.2 用**新的一轮真机 L2** 补测闭环（311ms），没有回填、没有改写历史回执。
+  5 站同构实现给出的 0.3s 量级，足以否定「+69.8s 是重置造成的」这种量级完全对不上的归因。
 
 **没有做 A/B 交替多轮**：那需要再烧 4 × 8 步的账号额度，而 `durationMs` 已经把
 要分离的那个量直接测出来了——再跑 A/B 是重复造尺子，不是补证据。
@@ -729,7 +731,7 @@ if (step.fresh_session) {
 
 | 站 | 回执 | 结果 | strategy | Before → After | durationMs | step_8 | 整包 |
 |---|---|---|---|---|---:|---:|---:|
-| chatglm | `.fresh-session2.json` | 8/8 | `adapter-selector` | 12 → 0 | 未测（该轮早于计时字段） | 75.0s | 419.6s |
+| chatglm | `.fresh-session2.json` | 8/8 | `adapter-selector` | 12 → 0 | 未测（该轮早于计时字段；§17.2 已另跑一轮补测到 311ms） | 75.0s | 419.6s |
 | 千问 | `.n23.json` | 8/8 | `hidden-semantic` | 12 → 0 | 319 | 15.1s | 244.2s |
 | 元宝 | `.n23.json` | 8/8 | `adapter-selector` | 12 → 0 | 312 | 21.0s | 103.6s |
 | Kimi | `.n23.json` | 8/8 | `adapter-selector` | 6 → 0 | 304 | 16.7s | 120.7s |
@@ -741,6 +743,8 @@ if (step.fresh_session) {
 
 **仍未验证**：真正撞墙的 deepseek / longcat 冻结中。这 5 站验的是
 「重置真的做到了」，**不是**「重置解掉了长会话撞墙」——后者仍欠一次解冻后的对照。
+（本轮已把这条从「报告里的一句话」升级为代码级冻结守卫 + A/B 判据，见 §17.4 / 台账 N25；
+**守卫不等于验证**，命题本身依旧未验。）
 
 ### 15.3 守护从「真机 4–7 分钟」下沉到「秒级」
 
@@ -788,3 +792,163 @@ if (step.fresh_session) {
 
 守护：`tests/message-list-contract.test.mjs` 4 条（基准必须为 0 / 0→1 / 1→2 /
 正文来自答案容器而非通知中心）+ 1 条变异锚（把 `[class*=message]` 塞回去）。台账 N24 → closed。
+
+---
+
+## 17. 「处理 仍未验证」：三条挂账的逐条裁定（2026-11-11）
+
+§15.2 / §16 收口时留了三条**明确写了「没验」**的账。本轮不把它们当成
+「open 0 就没事了」，而是逐条给出机器可复核的结果。先说结论：
+
+| # | 挂账 | 本轮结果 | 判据落在哪 |
+|---|---|---|---|
+| ① | deepseek / longcat 冻结中，「加了会话边界就不撞了」没验 | **仍未验**，且**本轮不许验**；已落成代码级冻结守卫 + A/B 可执行方案（默认 NOT-EXECUTED） | §17.4、台账 N25（open） |
+| ② | chatglm 那轮 `durationMs` 未测 | **已补测闭环**：新跑一轮真机 L2，311ms、8/8、12→0 | §17.2、回执 `.n23.json` |
+| ③ | 探针「全程只读」只有注释声明、诊断证据在 `/tmp` | **已闭环**：静态门禁 + 变异锚 + 证据原样落盘 | §17.3 |
+
+⚠️ 口径：① 的守卫与方案**不是验证**。写清楚「怎么验、为什么现在不能验」
+不等于「验过了」。台账为此新增 N25 并保持 `open`，不因为本轮干了很多活
+就把 `open` 数改回 0。
+
+### 17.1 为什么先核磁盘再动手
+
+上一轮的结论是会话记忆，本轮开头先按 disk-truth 对账：后台 chatglm L2
+（`lMf5aa`，10:34:20 触发 / 10:40:40 落盘）实际已完成；`git status` 显示
+头部是 5 个**本地**提交、领先 `origin/main` 5 个、未推送；两份 `/tmp` 诊断
+产物都还在。所有下面的数字都从回执与代码读出来，不是回忆。
+
+### 17.2 ②：chatglm 的 `durationMs` 补测闭环
+
+后台任务跑的是加了计时字段之后的**新代码**，所以顺带验了「新代码在 chatglm 上无回归」。
+回执 `evidence/L2-chatglm-auto-2026-11-11.n23.json`（+ 同名截图）：
+
+| 字段 | 值 |
+|---|---|
+| `exec.success` / `result.status` | `true` / `completed` |
+| steps | **8/8 success** |
+| `sessionResets[0]` | `step_8_output` / `prefer` / `available:true` / `adapter-selector` / **12 → 0** / **durationMs 311** |
+| 分步耗时和 / `result.duration` | 380146ms ≈ 380.1s（step_8 = 117504ms ≈ 117.5s） |
+| 日志时间 | 10:34:20 触发 → 10:40:40 落盘（≈380s，与分步账吻合） |
+
+⇒ 5 站重置耗时现在是完整的一组：**304 / 311 / 312 / 318 / 319ms**，
+都落在 §14.5 的 0.3s 量级里。§14.5 与 §15.2 表格已就地补注；
+419.6s 那轮 `.fresh-session2.json` 仍如实标注「未测」，**没有回填、没有改写历史回执**。
+
+同时保留 §14.4 的两条边界，不因为多了一个数字就松口：
+- 「重置拖慢了整包」仍**判否**（重置只在 step_8，§14.1 代码路径 + §14.2 分步账）；
+- 「重置免费」仍**不能写**（311ms 非零，代码上界 8s，只是被 AI 回答波动淹没）；
+- chatglm 那轮 419.6s vs 349.8s 的差异主要在 step_2 抖动（28.7→70.2s），
+  既不能归因给重置，也不能反过来当作「重置无代价」的证据。
+
+### 17.3 ③：探针「只读」从声明变成门禁，诊断证据落盘
+
+**(a) 静态门禁** `tests/probe-readonly.test.mjs`（4 条）。它扫描的是
+`new-session-probe.mjs` **剥离注释后的实际代码**——注释里写红线，谁加一行
+`click()` 注释不会变、单测不会红，而「只读」已经不成立。四条判据：
+
+1. 无任何 `click / dblclick / type / fill / press / hover / focus / check / selectOption / keyboard / mouse` 调用；
+2. 不出现 `EXECUTE_PACK / SEND_TO_AI / WAIT_FOR_RESPONSE / IMPORT_PACKS / NEW_SESSION / runtime.sendMessage / tabs.sendMessage`；
+3. Playwright 侧只许调用白名单（`goto / evaluate / waitForTimeout / title / isVisible / count / newPage / close / url / locator`）；
+   —— 这一条第一版写成「扫描所有 `.method()`」，把 `.toISOString()` 误报了，
+   已收窄为只管 `page.* / context.*` 交互面；
+4. 回执必须明写 `mode: "readonly-dom-probe"` 且 `redlines` 六个 flag 全 `false`。
+
+**(b) 变异锚**（`mutation-check.mjs`，`MUTATION_TESTFILE=probe-readonly.test.mjs` 秒级预检）：
+「往探测器中插一次真实 `page.locator(COMPOSER).first().click()`」与「把 `redlines.clicks` 谎报为 `true`」
+两条都被对应测试杀死 ⇒ 门禁不是空跑。
+
+**(c) 证据落盘**：`/tmp` 是临时目录，引用它等于证据随时会消失。两份诊断产物
+经 `sha256` 校验后**原样复制**（不改写内容）到 `evidence/`：
+
+| 新文件 | 内容 | sha256（前后一致） |
+|---|---|---|
+| `new-session-probe-2026-11-11.yiyan-pre-fix.json` | 修复前落地页：`div.answer-container=0` / `div.ai-entry=0` / `[class*="message"]=8` 全是通知中心 | `0f3929c5…f3` |
+| `yiyan-session-page-diagnostic-2026-11-11.json` | 会话页 `/search/<id>`：`div.answer-container=1`、答案挂 `.cosd-markdown-content > .marklang > p.marklang-paragraph` | `6f18ec78…7b` |
+
+台账 N24 里那条旧的 `/tmp` 诊断引用已换成上面两个可复核路径，
+`where` 也补了这两份证据。**诊断过程中只点开已有历史会话、未发送任何消息、
+未绕过验证码**——这一句现在是「探测器门禁 + 落盘原始产物」两层可查，不只是声明。
+
+### 17.4 ①：冻结项 —— 守卫 + A/B 方案，但**不执行**
+
+用户 2026-11-11 红线：「仅保留 qianwen、yuanbao、chatglm、yiyan、kimi，
+其他都暂时冻结不去碰。」此前它只写在报告里，而 `l2-platform-auto.mjs`
+只要给 `PLATFORM=deepseek` 就会照跑：启动浏览器 → 打开站点 → 导入 Pack → 真实发消息。
+一次手滑的环境变量就能破线。
+
+**(a) 代码级冻结守卫** `tests/real-machine/platform-freeze.mjs`：
+- `ACTIVE_PLATFORM_IDS` 是白名单**唯一事实源**（5 站），不在表内一律视为冻结
+  （包括还不认识的新 id，不搞「默认放行」）；
+- `assertPlatformAllowed()` / `assertCandidatesAllowed()` 硬闸门：冻结站直接抛错，
+  候选集里混进一个冻结站就**整体拒绝**，不做「跳过继续」的半吊子放行；
+- 唯一解冻开关 `ALLOW_FROZEN=1`，放行时返回 `unfrozenBy`，由调用方写进回执
+  `platformPolicy` ⇒ 「谁在什么时候解冻过」能从磁盘复核，不靠聊天记录。
+
+**(b) 接线** `l2-platform-auto.mjs`：闸门放在 **`launch()` 之前**
+（冻结站连浏览器都不启动）；PRECHECK 的 `CANDIDATES` 同样过闸（打开页面也算「碰」）；
+`CANDIDATES` 默认值改为由白名单派生，消除第二处硬编码漂移；
+新增 `PACK_PATH` / `PACK_VARIANT`，原行为不变（默认仍是出厂 Pack、`as-is`）。
+
+**(c) A/B 可执行方案** `tests/real-machine/session-wall-ab.mjs`：
+产出 `evidence/session-wall-ab-plan-2026-11-11.json`，`status = "plan-only / NOT-EXECUTED"`。
+
+- 变体：`A-control`（递归删掉 `fresh_session`，复现长会话撞墙）/ `B-boundary`（出厂 Pack，`prefer`）。
+  出厂声明实际在 `workflow.steps[7]`，所以用**递归删键**而不是写死容器路径；
+  测试里断言 A/B **只差这一个变量**，其余字段逐字节一致。
+- 矩阵：deepseek / longcat × 2 变体 = 4 组，2 站 × 2 变体 × 8 步 = 32 步真实发送（额度已写明）。
+- 5 条验收判据，其中最要紧的两条：B 组必须验到
+  `sessionResets[0].available === true && messageCountAfter < messageCountBefore`
+  （否则「根本没开成新会话」，这轮对照作废）；判定规则是
+  **只有「A 撞墙且 B 通过」才支持命题**——「A/B 都通过」说明本轮墙不存在、
+  不能归功边界，「A/B 都撞墙」说明边界无效、另找根因。
+- 4 条归因边界：不能归因给重置（§14 已判否）、不能说重置免费（durationMs 非零）、
+  B 单轮通过 ≠ 边界有效（N21 续等 / N24 假基准是同期混杂变量，须两轮同时固定）、
+  chatglm step_2 抖动的旧账不许翻案。
+
+**(d) 为什么本轮不跑**：解冻条件写进计划——用户**明确解冻指令**（点名平台与范围）、
+两站登录态可用、dist 与源码一致、账号额度确认。四条都不满足（第一条就没有），
+所以脚本只写计划，不启动浏览器、不导入 Pack、不发消息；evidence 下**没有**
+任何冒充真机回执的 A/B 产物。台账 N25 登记为 `open`（P2），不因本轮做完守卫就关账。
+
+### 17.5 守护与红线
+
+- 新增测试 22 条：`probe-readonly.test.mjs` 4、`platform-freeze.test.mjs` 9、
+  `session-wall-ab.test.mjs` 9；`npm test` **319/319** 全绿（297 → 319）。
+- 新增变异锚 11 条（只读门禁 2 / 冻结守卫 5 / A/B 判据 4），并各按
+  `MUTATION_TESTFILE` 做过秒级预检；其中「L2 回执不再记录平台放行策略」
+  第一次**存活**——因为测试只断言 `platformPolicy:` 存在，而预检回执里也有同名字段，
+  改坏 L2 回执照样匹配。已把断言收窄为「必须绑定运行时策略变量 `platformPolicy || null`」
+  后复检杀死。这是本轮第二个「守护自己写宽了」的实例，记在这里备查。
+- 冻结平台**未运行**：无浏览器启动、无 Pack 导入、无消息发送。
+- 探针**未发送**；诊断证据原样落盘、sha256 可核。
+- 本轮所有提交均为**本地**，`origin/main` 仍落后；**未推送**（无 push 授权）。
+- 未擅自 `git commit` 之外的远端动作，未删除任何站点数据。
+
+### 17.6 一次自我纠错：数字以磁盘为准
+
+写 §17.2 时把分步耗时和手算成了 `381146ms ≈ 381.1s`。交付前用机器重读回执，
+`result.duration = 380146ms`、分步数组求和同为 `380146`（≈380.1s），与日志的
+≈380s 也对得上 ⇒ **原数字错了 1 秒**。已把 RESULT（§14.5 表格、§17.2 表格）、
+`known_gaps.json` N23、工作日志三处一并回溯改为磁盘真值，并在 §17.2 表格里
+把字段名补成「分步耗时和 / `result.duration`」，让复核者能直接对上回执。
+这是本轮第二次「先核磁盘再落笔」的实例（第一次是开头的 git / 回执对账）。
+
+### 17.7 门禁状态（机器执行判定）
+
+| 门禁 | 结果 | 证据 |
+|---|---|---|
+| `npm test` | **319 / 319 pass, 0 fail** | 全量单测，本轮 297 → 319（+22） |
+| 全量变异检查 | **120 / 120 全杀死, 0 存活**, `EXIT=0` | `CODEBUDDY_SAFE_DELETE_ENABLED=0 node tests/real-machine/mutation-check.mjs`（109 → 120，+11 锚）；日志 `evidence/mutation-check-2026-11-11.full-120.log` |
+| 局部变异预检（秒级） | 只读门禁 2/2、冻结守卫 5/5、A/B 判据 4/4 | `MUTATION_TESTFILE=<file>` 三轮 |
+| `node --check` | 8 个新增/修改 `.mjs` 全 OK | 语法检查 |
+| 冻结守卫运行时冒烟 | deepseek / longcat / gemini 全部被拦；活跃站放行；`ALLOW_FROZEN=1` 留痕 `unfrozenBy` | 纯函数调用，**未启动浏览器** |
+| `dist` | **无需重建** | 本轮 `git status` 未触及 `src/`，只改 `tests/`、报告、台账、evidence |
+| 台账 | 25 条：closed 23 / wontfix 1 / **open 1（N25）** | `known_gaps.json`，`json.load` 校验通过 |
+| Git | 本地提交，**`origin/main` 仍落后、未推送** | 无 push 授权 |
+
+**本轮明确没做的事**（避免「干了很多活」被读成「都验完了」）：
+- 没有运行 deepseek / longcat，A/B 命题**仍未验**（N25 open）；
+- 没有做「有/无边界」的交替多轮 A/B，§14.4 的边界继续有效；
+- 没有改 `src/`、没有重建 `dist`、没有推送远端；
+- 没有把 `/tmp` 诊断产物篡改后落盘（sha256 前后一致）；
+- 没有把 419.6s 那轮回执回填 `durationMs`。

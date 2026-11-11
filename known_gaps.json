@@ -424,7 +424,8 @@
       "closed_at": "2026-11-11",
       "appended_evidence": [
         "收口验证（真机 L2，5/5 活跃站 `available:true` 且 messageCountAfter < Before）：chatglm `available:true / adapter-selector / 12→0`（14:57 那轮）；千问 `hidden-semantic / 12→0 / durationMs 319`、8/8、244.2s；元宝 `adapter-selector / 12→0 / 312ms`、8/8、103.6s；Kimi `adapter-selector / 6→0 / 304ms`、8/8、120.7s；文心 `adapter-selector / 6→0 / 318ms`、8/8、90.5s（修复 N24 后的复跑）。回执见 evidence/L2-*-2026-11-11.n23*.json。⇒ 出厂 Pack 仍是 prefer，但现在 5 站都真的开得成新会话，降级分支只在站点改 DOM 时才会走。",
-        "仍未验证：① 真正撞墙的 deepseek / longcat 冻结中，「加了会话边界就不撞了」这条**没验**——5 站验证的是「重置真的做到了」，不是「重置解掉了撞墙」；② 文心首轮 `.n23.json` 因 N24 的 DOM 漂移失败，修复后的证据是 `.n23-fix.json`；③ chatglm 的 durationMs 未测（那一轮跑在加计时字段之前），其余 4 站实测 304–319ms。"
+        "仍未验证（2026-11-11 收口时的口径，逐条复核后）：① 真正撞墙的 deepseek / longcat 冻结中，「加了会话边界就不撞了」这条**没验**——5 站验证的是「重置真的做到了」，不是「重置解掉了撞墙」；已写成 A/B 方案 + 代码级冻结守卫，见 N25；② 文心首轮 `.n23.json` 因 N24 的 DOM 漂移失败，修复后的证据是 `.n23-fix.json`；③ chatglm 的 durationMs 原未测 —— **已补测闭环**（见本条下一条追加证据，311ms）。",
+        "补测闭环（2026-11-11 10:34–10:40 真机 L2）：chatglm 在加了计时字段后的新代码上重跑，回执 evidence/L2-chatglm-auto-2026-11-11.n23.json —— 8/8 步 success、status=completed、sessionResets[0] = {stepId:step_8_output, mode:prefer, available:true, strategy:adapter-selector, messageCountBefore:12, messageCountAfter:0, durationMs:311}。分步耗时和 380146ms（≈380.1s），与日志 10:34:20 触发 / 10:40:40 落盘吻合。⇒ 原先「chatglm 的 durationMs 未测」这条挂账已清；5 站实测现为 304–319ms（chatglm 311ms 落入同一量级）。"
       ]
     },
     {
@@ -436,7 +437,9 @@
       "where": [
         "chrome-extension/src/platforms/yiyan-adapter.js（messageList：删除 `[class*=\"message\"]` / `[class*=\"response\"]` / `.chat-item` 三条兜底）",
         "chrome-extension/tests/message-list-contract.test.mjs（4 条守护）",
-        "evidence/L2-yiyan-auto-2026-11-11.n23.json（失败现场）、.n23-fix.json（修复后）"
+        "evidence/L2-yiyan-auto-2026-11-11.n23.json（失败现场）、.n23-fix.json（修复后）",
+        "evidence/new-session-probe-2026-11-11.yiyan-pre-fix.json（修复前落地页 messageListHits）",
+        "evidence/yiyan-session-page-diagnostic-2026-11-11.json（会话页答案祖先链）"
       ],
       "detail": "2026-11-11 18:04 文心 L2 在 step_2 失败：243.6s ≈ 4×60+3.6（1 次等待 + 3 次续等，N21 的正常行为，**不是重发**），错误 `Response timeout`；但截图里 AI 明明答了「普通AI等你一步步下指令…」。只读探测（点开已有会话、不发消息）给出根因：文心新 UI 落地页上 `div.answer-container=0` / `div.ai-entry=0`，而 `[class*=\"message\"]=8` 全是「通知中心」元素；发送前 baselineCount 因此取到 8。回答落地后 `div.answer-container=1`，findElements 改取第一条选择器返回 1 ⇒ `countGrew = 1 > 8` 恒 false ⇒ 永远判超时。会话页（/search/<id>）上 `div.answer-container=1` 且打字指示器全 0，说明答案容器本身没漂移，坏的是**恒命中的兜底选择器**。",
       "impact": "单次 L2 白等 4 个超时窗口后整包失败；现象长得像「平台变慢/没登录」，不会报任何选择器错误。若当时把锅记到平台侧，这条会一直潜伏。",
@@ -445,7 +448,31 @@
       "closed_at": "2026-11-11",
       "appended_evidence": [
         "修复前后同站同 Pack 对照：失败轮 1/2 步、243.6s；修复轮 8/8 步、90.5s。两轮回执与截图均已落盘，不是引用记忆。",
-        "只读诊断产物：`/tmp/yiyan-open-probe.json`（会话页答案祖先链）与 `new-session-probe-2026-11-11.chatglm-kimi-qianwen-yiyan-yuanbao.json`（落地页 messageListHits）；诊断过程中只点开已有历史会话、未发送任何消息、未绕过验证码。"
+        "只读诊断产物已落盘（原 /tmp 临时文件已 sha256 校验后原样复制，不再依赖临时目录）：`evidence/new-session-probe-2026-11-11.yiyan-pre-fix.json`（修复前落地页：div.answer-container=0 / div.ai-entry=0 / [class*=\"message\"]=8 全是通知中心）、`evidence/yiyan-session-page-diagnostic-2026-11-11.json`（会话页 /search/<id>：div.answer-container=1、答案挂 .cosd-markdown-content > .marklang > p.marklang-paragraph）、以及 `new-session-probe-2026-11-11.chatglm-kimi-qianwen-yiyan-yuanbao.json`（5 站批量只读探测）。诊断过程中只点开已有历史会话、未发送任何消息、未绕过验证码。",
+        "只读性门禁：`tests/probe-readonly.test.mjs` 4 条（静态扫描剥离注释后的实际代码，禁止 click/type/fill/press/hover、禁止 EXECUTE_PACK 等消息类型、Playwright 侧调用白名单、回执 redlines 全 false）+ 2 条变异锚（插一次真实 click / 谎报 clicks:true），均被杀死。「探针全程只读」从注释声明变成有门禁的事实。"
+      ]
+    },
+    {
+      "id": "N25",
+      "priority": "P2",
+      "status": "open",
+      "title": "「会话边界解掉了 longcat / deepseek 的 step_8 长会话撞墙」没有 A/B 对照，冻结中不可验",
+      "reader": "想据 N23 的 5 站成功就宣布「撞墙问题已解决」的人——5 站验证的是「重置真的做到了」，不是「重置解掉了撞墙」；以及解冻后要跑对照的人——没有判据就会把「B 组单轮跑通」误当成因果证据，而同期还有 N21 续等、N24 假基准两个混杂变量。",
+      "where": [
+        "chrome-extension/tests/real-machine/session-wall-ab.mjs（A/B 方案与判据，默认只出计划、不跑真机）",
+        "chrome-extension/tests/real-machine/platform-freeze.mjs（白名单唯一事实源 + 硬闸门）",
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs（launch 前拦截 + 回执留痕 + PACK_VARIANT）",
+        "chrome-extension/tests/platform-freeze.test.mjs（9 条守护）、tests/session-wall-ab.test.mjs（9 条守护）",
+        "evidence/session-wall-ab-plan-2026-11-11.json（status=plan-only / NOT-EXECUTED）"
+      ],
+      "detail": "RESULT §9.4 把 deepseek / longcat 的 step_8 失败从「平台慢」改判成「Pack 尾部撞墙」，这两站才是命题的原始观察对象。用户 2026-11-11 红线把它们冻结（仅保留 qianwen / yuanbao / chatglm / yiyan / kimi），因此本轮只能在活跃 5 站验「重置真的做到了」（N23 closed），**不能**外推成「撞墙已被解掉」。冻结此前只是报告里的一句话，环境变量给 PLATFORM=deepseek 仍会照跑；现已落成代码级闸门：不在白名单即抛错，连浏览器都不启动，预检候选集同样过闸。",
+      "impact": "① 若把 N23 当因果证据，会在交付口径里凭空多一条未经验证的结论；② 冻结若无代码守卫，一次手滑的环境变量就会在冻结站真实发消息、消耗账号额度；③ 解冻后若无 A/B 判据，B 组单轮成功无法与 N21/N24 的同期修复分离，归因会失真。",
+      "fix": "已做（本轮，不触碰冻结站）：① `platform-freeze.mjs` 白名单 + 硬闸门，唯一解冻开关 ALLOW_FROZEN=1，放行结果写进回执 platformPolicy 留痕；② l2-platform-auto.mjs 在 launch() 前拦截、CANDIDATES 改为由白名单派生、加 PACK_PATH / PACK_VARIANT 便于 A/B 且原行为不变；③ `session-wall-ab.mjs` 产出 2 站 × 2 变体（A 去掉 fresh_session / B 保留 prefer）的机器可读计划，含 5 条验收判据与 4 条归因边界，**默认 NOT-EXECUTED、不启动浏览器**；④ 18 条新测试 + 9 条新变异锚守护守卫接线与判据不被稀释。**待做（需用户明确解冻）**：按计划的 4 条命令跑 A/B，B 组须验到 sessionResets[0].available===true 且 messageCountAfter<Before；只有「A 撞墙且 B 通过」才支持命题，「A/B 都通过」说明本轮墙不存在、不能归功边界，「A/B 都撞墙」说明边界无效需另找根因。",
+      "found_at": "2026-11-11",
+      "closed_at": null,
+      "appended_evidence": [
+        "本轮未运行 deepseek / longcat：无浏览器启动、无 Pack 导入、无消息发送；evidence 下只有计划文件（status=plan-only / NOT-EXECUTED），不是真机回执。",
+        "chatglm 补测轮（evidence/L2-chatglm-auto-2026-11-11.n23.json）仍是活跃站，8/8、durationMs=311ms；这轮验的是新代码无回归 + 计时字段可用，不是 A/B。"
       ]
     }
   ]
