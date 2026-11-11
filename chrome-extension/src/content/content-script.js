@@ -68,6 +68,41 @@ const PLATFORM_CONFIGS = {
   "chat.deepseek.com": DEEPSEEK_SELECTORS,
 };
 
+/**
+ * 平台等待上限覆盖（毫秒）。key 与 {@link PLATFORM_CONFIGS} 一致（hostname）。
+ *
+ * ## 为什么需要这张表（2026-11-11 实测，RMR-2026-11-11-01）
+ *
+ * `adapter.getConfig().timeouts.response` 是一个**从未被接入**的配置：
+ * 内容脚本只取 adapter 的 SELECTORS（见上面的 PLATFORM_CONFIGS 注释），
+ * 拿不到 timeouts；而 `message.config` 传的是 **Pack 步骤的 config**
+ * （min_output_length 那些），也没有 timeout 字段。
+ *
+ * 后果：全部平台一律吃 `handleSendToAI` 的 60s 默认值。deepseek / longcat
+ * 在带深度思考 / 联网搜索时单步响应会突破 60s，被判超时后
+ * pack-executor 重试 3 次 ⇒ 4×60s+3×1s ≈ 244s 全灭——而截图上 AI 回复
+ * 其实早已生成完毕。deepseek 的 step_4 耗时 72.6s（= 60s 超时 + 12s 重试成功）
+ * 就是这条路径留下的指纹。
+ *
+ * ## 这张表是技术债，不是终态
+ *
+ * 正确做法是让 adapter 的 timeouts 真正流过边界（adapter 导出 TIMEOUTS 常量、
+ * 内容脚本 import），保持「单一事实源」。当前只列**例外站点**以缩小改动面，
+ * 其余平台仍走 60s 默认值。收口时删掉本表。
+ */
+const PLATFORM_RESPONSE_TIMEOUT = {
+  "chat.deepseek.com": 180000,
+  "longcat.chat": 180000,
+  "longcat.ai": 180000,
+  // 2026-11-11 12:41 活跃 5 站回归（RMR-2026-11-11-03）：chatglm 走默认 60s 时，
+  // step_2 用了 170.7s、step_7 用了 151.3s，且 errors 为空、字段全非空。
+  // 形状 170.7≈60+60+50.7 / 151.3≈60+60+31.3 ⇒ 中途至少重发过 1 次
+  // （N21：重发会污染会话、不报错、只在时长上留指纹）。
+  // 抬到 180s 是为了让答案在一次尝试里等到稳定，从源头减少重发。
+  // ⚠️ 该值**尚未实测验证**：改完后 chatglm 已对本 profile 弹滑块验证，无法复跑。
+  "chatglm.cn": 180000,
+};
+
 // ============================================================================
 // Content Script 主逻辑
 // ============================================================================
@@ -137,7 +172,18 @@ function setupEventListeners() {
       //
       // 这条分支是 Pack 能不能真正跑通的关键，不是可选的增强。
       case "SEND_TO_AI":
-        handleSendToAI(message.prompt, message.config?.timeout)
+        // 🔧 2026-11-11：等待上限的正确来源是 PLATFORM_RESPONSE_TIMEOUT（见其注释）。
+        // 踩过两次才定位（两次都被实测打回：244s 一秒没变）：
+        //   1. `message.config?.timeout` —— message.config 是 **Pack 步骤的 config**，
+        //      装 min_output_length / example_hooks，没有 timeout 字段；
+        //   2. `message.config?.timeouts?.response` —— 同样落空；
+        //   3. `currentConfig?.timeouts?.response` —— currentConfig 是
+        //      PLATFORM_CONFIGS[hostname] = adapter 的 **SELECTORS**，也不含 timeouts。
+        // 优先级：Pack 步骤级显式覆盖（config.timeout）> 站点例外表 > 60s 默认。
+        handleSendToAI(
+          message.prompt,
+          message.config?.timeout ?? PLATFORM_RESPONSE_TIMEOUT[currentPlatformId],
+        )
           .then((result) => sendResponse({ success: true, result }))
           .catch((error) =>
             sendResponse({ success: false, error: error.message }),

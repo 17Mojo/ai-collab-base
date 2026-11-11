@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-05",
+  "updated_at": "2026-11-11",
   "purpose": "已确认但本次未修的缺陷台账。宁可写下来也不要留在某人脑子里——下一个人接手时不必重新考古一遍。",
   "conventions": {
     "id": "N1、N2……递增，永不复用。关闭后把 status 改 closed 并保留条目与结论，不要删。",
@@ -358,6 +358,27 @@
       "found_at": "2026-11-05",
       "closed_at": "2026-11-09",
       "evidence": "按 N2 同款修法收口（2026-11-09）：① displayStudioStatus DOM 化——createElement + createTextNode 渲染 content_type/mode（文本节点，尖括号是字面量），download_url 仅放行 /^https?:\\/\\//i 白名单（javascript: 伪协议不进 href，白名单内 URL 原样进 href），顺带 rel=noopener；② 错误/loading 三调用点统一走 setStudioStatusMessage（item.textContent，零 innerHTML）；③ 测试 3 条（回执字段含 HTML 不解析、javascript: 不成链接 + https 白名单放行、response.error/error.message 含 HTML 不解析），32/32 接线 + 236/236 全量；④ mutation-check +3 锚点（回执渲染回 innerHTML→字段用例红、白名单失效→href 用例红、状态行回 innerHTML→错误串用例红）全被杀死，71/71 无存活。"
+    },
+    {
+      "id": "N21",
+      "priority": "P1",
+      "status": "open",
+      "title": "AI 步骤超时重试会重发同一条提示词：污染用户会话，且上下文越拖越长反过来加重超时",
+      "reader": "在慢站（deepseek / longcat 这类会排队、会默认开深度思考或联网搜索的站）跑 8 步 Pack 的用户——对话框里凭空多出重复提示词，且越跑越慢；以及事后按 RMR 复盘的人——只看到「Response timeout」时，很容易把重试放大误判成「平台慢」",
+      "where": [
+        "chrome-extension/src/background/pack-executor.js:640-654（重试循环：失败后直接再调 _executeStepByType）",
+        "chrome-extension/src/background/pack-executor.js:761,786（_executeAIStep 每次调用都发 SEND_TO_AI ⇒ 每次都重新注入文本并点发送）",
+        "chrome-extension/src/content/content-script.js:153-159（WAIT_FOR_RESPONSE 这条分支已存在，但重试路径没用它；且它没有 baselineCount 入参）"
+      ],
+      "detail": "重试只按「抛没抛错」分类，不看错误语义。Response timeout 的实际含义是「这次发送的答案没能在窗口内稳定下来」，此时页面上往往还在生成——deepseek fix3 的 step_8 在总超时 724s 后仍然把完整长文生成出来了（evidence/L2-deepseek-auto-2026-11-11.fix3.png 可证）。但重试把它当成「可能没发出去」，于是重新注入 + 点发送 ⇒ 单个 step_8 最多注入 4 条相同提示词。2026-11-11 07:05 deepseek fix3 的耗时可反推这一语义：step_4 = 191.9s ≈ 180 + 1(retryDelay) + 10.9，step_6 = 389.8s ≈ 180 + 1 + 180 + 1 + 27.8，形状只能是「前一次 180s 超时 → 后一次靠重发在 10.9s / 27.8s 内成功」。",
+      "impact": "① 用户会话被塞进重复提示词（按 8 步 Pack 的失败分布推导为 12 次发送，其中 step_8 占 4 次；该数字是推导值，未逐条截图核验）；② 每次重发都让该会话上下文更长，而 step_8 正是「吞下 6 个字段」的最重一步，上下文增长与生成耗时正相关（机制推断，未做对照实测）；③ 4 次发送在 720s 窗口里各自重启生成，等于用四个 180s 窗口换四个「都不够」；④ 复盘时这条自伤极易被记成「平台慢」，从而把责任推给平台、错过修点。",
+      "fix": "重试前按错误语义分流：Response timeout ⇒ 走 WAIT_FOR_RESPONSE 续等（须给 handleWaitForResponse 加 baselineCount，用首次发送前的消息计数当基线；否则续等会因 countGrew 恒 false 必然再挂一次）；只有「注入 / 点击 / 投递」类失败才允许重发。收口要求：真机复跑一次 deepseek 或 longcat 取证，不能只靠单测；并补变异锚——把分流改回「一律重发」时，指定那条测试必须变红。",
+      "found_at": "2026-11-11",
+      "evidence": "⚠️ 2026-11-11 13:02 本字段原文在追加新样本时被误清空 —— 脚本用 Array.isArray(n.evidence) 判断失败后直接置为空数组再 push，原值（非数组类型）被覆盖。磁盘无备份、git 无该版本（本文件当日改动未提交），**原文不可恢复**。等效信息仍在 detail / impact / where 与 RESULT §9 中，请以那几处为准；本次新增观测已单独放入 appended_evidence，不与原文混写。",
+      "appended_evidence": [
+        "2026-11-11 12:41-12:59 活跃 5 站完整回归（RMR-2026-11-11-03）出现**非例外表站点**的新样本：chatglm 未登记在 PLATFORM_RESPONSE_TIMEOUT（走默认 60s），但 step_2=170.7s、step_7=151.3s 且 errors 为空。170.7≈60+60+50.7 / 151.3≈60+60+31.3 ⇒ 形状符合 3 次尝试、2 次重发。其余 4 站所有 step 均 <60s。⇒ 本条不局限于 deepseek/longcat：**任何默认 60s 的站，只要答案生成超过 60s 就会触发重发，而且不报错、不进 errors，只在时长上留指纹。** 未观测证实：回读会话时 chatglm 触发滑块验证，按红线不绕，故重发未确认。",
+        "缓解措施（2026-11-11 13:1x，非根治）：把 chatglm.cn 加入 PLATFORM_RESPONSE_TIMEOUT = 180000，让答案在一次尝试内等到稳定，从源头减少重发。同时新增守卫测试 tests/real-machine/timeout-override-table.test.mjs（3 条），钉住「表里的 key 必须是 PLATFORM_CONFIGS 里真实存在的 hostname」——因为查表失败会静默回落到 60s，键拼错等于配了白配；已用变异验证（把 chatglm.cn 改成 www.chatglm.cn ⇒ 2 条测试变红）。⚠️ **该 180s 值尚未实测验证**：改完后 chatglm 已对本 profile 弹滑块验证，无法复跑；下次 chatglm 可访问时须复核 step 耗时是否降回单次尝试区间（<60s 或 60~80s 一次到位）。本条 N21 仍 open —— 超时是缓解，根治仍需「重试前按错误语义分流」。"
+      ]
     }
   ]
 }
