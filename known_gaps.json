@@ -362,23 +362,42 @@
     {
       "id": "N21",
       "priority": "P1",
-      "status": "open",
+      "status": "closed",
       "title": "AI 步骤超时重试会重发同一条提示词：污染用户会话，且上下文越拖越长反过来加重超时",
       "reader": "在慢站（deepseek / longcat 这类会排队、会默认开深度思考或联网搜索的站）跑 8 步 Pack 的用户——对话框里凭空多出重复提示词，且越跑越慢；以及事后按 RMR 复盘的人——只看到「Response timeout」时，很容易把重试放大误判成「平台慢」",
       "where": [
-        "chrome-extension/src/background/pack-executor.js:640-654（重试循环：失败后直接再调 _executeStepByType）",
-        "chrome-extension/src/background/pack-executor.js:761,786（_executeAIStep 每次调用都发 SEND_TO_AI ⇒ 每次都重新注入文本并点发送）",
-        "chrome-extension/src/content/content-script.js:153-159（WAIT_FOR_RESPONSE 这条分支已存在，但重试路径没用它；且它没有 baselineCount 入参）"
+        "chrome-extension/src/background/pack-executor.js:663-693（catch 里的语义分流：failureStrategy 决定 resumeOnly / retryable；广播投递超时时宁可失败也不重发）",
+        "chrome-extension/src/background/pack-executor.js:858-897（_resumeWaitForResponse：只发 WAIT_FOR_RESPONSE，不注入、不点发送）",
+        "chrome-extension/src/utils/retry-policy.js（failureStrategy / resolveInitialCount：分流规则与基准条数口径的唯一事实源）",
+        "chrome-extension/src/content/content-script.js:194-203（WAIT_FOR_RESPONSE 接受 baselineCount 并按站点例外表回落超时）",
+        "chrome-extension/src/content/content-script.js:328,383（handleSendToAI 在发送前记基准；handleWaitForResponse 超时带 RESPONSE_TIMEOUT_CODE）"
       ],
       "detail": "重试只按「抛没抛错」分类，不看错误语义。Response timeout 的实际含义是「这次发送的答案没能在窗口内稳定下来」，此时页面上往往还在生成——deepseek fix3 的 step_8 在总超时 724s 后仍然把完整长文生成出来了（evidence/L2-deepseek-auto-2026-11-11.fix3.png 可证）。但重试把它当成「可能没发出去」，于是重新注入 + 点发送 ⇒ 单个 step_8 最多注入 4 条相同提示词。2026-11-11 07:05 deepseek fix3 的耗时可反推这一语义：step_4 = 191.9s ≈ 180 + 1(retryDelay) + 10.9，step_6 = 389.8s ≈ 180 + 1 + 180 + 1 + 27.8，形状只能是「前一次 180s 超时 → 后一次靠重发在 10.9s / 27.8s 内成功」。",
       "impact": "① 用户会话被塞进重复提示词（按 8 步 Pack 的失败分布推导为 12 次发送，其中 step_8 占 4 次；该数字是推导值，未逐条截图核验）；② 每次重发都让该会话上下文更长，而 step_8 正是「吞下 6 个字段」的最重一步，上下文增长与生成耗时正相关（机制推断，未做对照实测）；③ 4 次发送在 720s 窗口里各自重启生成，等于用四个 180s 窗口换四个「都不够」；④ 复盘时这条自伤极易被记成「平台慢」，从而把责任推给平台、错过修点。",
-      "fix": "重试前按错误语义分流：Response timeout ⇒ 走 WAIT_FOR_RESPONSE 续等（须给 handleWaitForResponse 加 baselineCount，用首次发送前的消息计数当基线；否则续等会因 countGrew 恒 false 必然再挂一次）；只有「注入 / 点击 / 投递」类失败才允许重发。收口要求：真机复跑一次 deepseek 或 longcat 取证，不能只靠单测；并补变异锚——把分流改回「一律重发」时，指定那条测试必须变红。",
+      "fix": "重试前按错误语义分流：Response timeout ⇒ 走 WAIT_FOR_RESPONSE 续等（须给 handleWaitForResponse 加 baselineCount，用首次发送前的消息计数当基线；否则续等会因 countGrew 恒 false 必然再挂一次）；只有「注入 / 点击 / 投递」类失败才允许重发。收口要求：真机复跑一次 deepseek 或 longcat 取证，不能只靠单测；并补变异锚——把分流改回「一律重发」时，指定那条测试必须变红。 ✅ 已收口（2026-11-11 13:25）：① 新增 `src/utils/retry-policy.js` —— `failureStrategy()` 按**语义**分流（错误码优先，老路径无码时只认以 `Response timeout` 结尾的整串文案，拒绝子串包含误判）；`resolveInitialCount()` 钉住「续等必须沿用发送前的基准条数」。② `pack-executor` 的 catch 改为：超时 ⇒ `_resumeWaitForResponse()` 只发 WAIT_FOR_RESPONSE （不注入、不点发送），其它失败照旧重试；广播投递（无 targetTabId）遇超时直接失败并在文案里写明「不重发」。③ 内容脚本把 `code` 与 `baselineCount` 随失败信封一起带出去（`failureEnvelope`），`handleSendToAI` 在发送前记录基准，`handleWaitForResponse(timeout, baselineCount)` 收下基准。④ 守卫：新增 `tests/retry-semantics.test.mjs`（7 条），并登记 7 条变异锚——把分流改回「一律重发」、续等重新数基准、消息里丢掉 baselineCount、文案兜底退化成 includes、为修超时把重试整关、广播超时放行重发，任一条都必须让指定测试变红。⑤ 验证：`npm test` 263/263 pass；变异检查全部被杀死。⚠️ 剩余未验：真机复跑取证（deepseek / longcat / chatglm）尚未做——chatglm 被滑块验证挡住，deepseek / longcat 已冻结不碰。故本条按「代码与单测层收口」关闭，真机复核作为独立待办挂在 RESULT §11。",
       "found_at": "2026-11-11",
       "evidence": "⚠️ 2026-11-11 13:02 本字段原文在追加新样本时被误清空 —— 脚本用 Array.isArray(n.evidence) 判断失败后直接置为空数组再 push，原值（非数组类型）被覆盖。磁盘无备份、git 无该版本（本文件当日改动未提交），**原文不可恢复**。等效信息仍在 detail / impact / where 与 RESULT §9 中，请以那几处为准；本次新增观测已单独放入 appended_evidence，不与原文混写。",
       "appended_evidence": [
         "2026-11-11 12:41-12:59 活跃 5 站完整回归（RMR-2026-11-11-03）出现**非例外表站点**的新样本：chatglm 未登记在 PLATFORM_RESPONSE_TIMEOUT（走默认 60s），但 step_2=170.7s、step_7=151.3s 且 errors 为空。170.7≈60+60+50.7 / 151.3≈60+60+31.3 ⇒ 形状符合 3 次尝试、2 次重发。其余 4 站所有 step 均 <60s。⇒ 本条不局限于 deepseek/longcat：**任何默认 60s 的站，只要答案生成超过 60s 就会触发重发，而且不报错、不进 errors，只在时长上留指纹。** 未观测证实：回读会话时 chatglm 触发滑块验证，按红线不绕，故重发未确认。",
-        "缓解措施（2026-11-11 13:1x，非根治）：把 chatglm.cn 加入 PLATFORM_RESPONSE_TIMEOUT = 180000，让答案在一次尝试内等到稳定，从源头减少重发。同时新增守卫测试 tests/real-machine/timeout-override-table.test.mjs（3 条），钉住「表里的 key 必须是 PLATFORM_CONFIGS 里真实存在的 hostname」——因为查表失败会静默回落到 60s，键拼错等于配了白配；已用变异验证（把 chatglm.cn 改成 www.chatglm.cn ⇒ 2 条测试变红）。⚠️ **该 180s 值尚未实测验证**：改完后 chatglm 已对本 profile 弹滑块验证，无法复跑；下次 chatglm 可访问时须复核 step 耗时是否降回单次尝试区间（<60s 或 60~80s 一次到位）。本条 N21 仍 open —— 超时是缓解，根治仍需「重试前按错误语义分流」。"
-      ]
+        "缓解措施（2026-11-11 13:1x，非根治）：把 chatglm.cn 加入 PLATFORM_RESPONSE_TIMEOUT = 180000，让答案在一次尝试内等到稳定，从源头减少重发。同时新增守卫测试 tests/real-machine/timeout-override-table.test.mjs（3 条），钉住「表里的 key 必须是 PLATFORM_CONFIGS 里真实存在的 hostname」——因为查表失败会静默回落到 60s，键拼错等于配了白配；已用变异验证（把 chatglm.cn 改成 www.chatglm.cn ⇒ 2 条测试变红）。⚠️ **该 180s 值尚未实测验证**：改完后 chatglm 已对本 profile 弹滑块验证，无法复跑；下次 chatglm 可访问时须复核 step 耗时是否降回单次尝试区间（<60s 或 60~80s 一次到位）。本条 N21 仍 open —— 超时是缓解，根治仍需「重试前按错误语义分流」。",
+        "根治收口（2026-11-11 13:25）：N21 的修法与限制如上。⚠️ 未做真机取证这件事必须写清——本条关闭的依据是「代码语义 + 单测 + 变异」三件事，**不含**真机复跑。chatglm 自 2026-11-11 13:0x 起对本 profile 弹滑块验证（按红线不绕），deepseek / longcat 已于 12:18 随平台范围收缩冻结。⇒ 关闭口径：「重发缺陷在代码层已消除，且被 7 条变异锚钉住」；不成立的引申：「已在真机上观察到不再重发」。",
+        "chatglm 180s 复核（2026-11-11 13:32:28–13:38:18，L2-chatglm-auto-2026-11-11.resume-verify.json）：预检 composerVisible=true / looksLikeLogin=false，**滑块验证已解除**，故补跑了此前挂账的那次验证。结果 8/8 步 success、7 个产出字段全非空、errors 为空、status=completed。各步耗时 step_2=28.7s / step_3=50.7s / step_4=47.7s / step_5=32.2s / step_6=40.7s / step_7=59.2s / step_8=90.7s，总计 349.8s（同站 12:41 那轮是 495.4s）。⇒ ① **没有任何一步触到 180s**，`60+60+X` 的重发指纹消失，最长步 90.7s；② step_8 的 90.7s **大于旧的 60s 默认值**——旧配置下这一步必然触发 60s 超时，所以 180s 这个改动对本站是**有实际作用的**，不是安慰剂；③ 但**续等路径在真机上仍未被走到**（没有超时就没有续等），N21 的重发修复依旧只有单测+变异两层证据；④ 两轮之间单步耗时差异较大（step_2 从 170.7s 到 28.7s），会话初始状态与模型负载都变了，**不能把「变快」单独归因给 180s**——可归因的是「没有一步撞上限」与「step_8 超 60s」这两条硬事实。"
+      ],
+      "closed_at": "2026-11-11"
+    },
+    {
+      "id": "N22",
+      "priority": "P3",
+      "status": "open",
+      "title": "预检回执的默认文件名按日期固定，同日复跑会静默覆盖当日的预检证据",
+      "reader": "同一天跑第二次预检的人（例如只为复核某一个站点）；以及事后按证据目录复盘的人——会以为「当天的预检只跑了这一个站」，而原本的 5 站记录已经不在了",
+      "where": [
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:189（outPath = OUT || `${EVIDENCE_DIR}/L2-precheck-${TODAY}.json`，不含 CANDIDATES / 时刻）"
+      ],
+      "detail": "文件名只带日期，不带候选集、不带时刻。2026-11-11 13:32 为复核 chatglm 单独跑了 CANDIDATES=chatglm 的预检，直接把 12:41 那轮 5 站预检的 L2-precheck-2026-11-11.json 覆盖成单站版本（11903 B → 2412 B）。",
+      "impact": "当日预检证据静默消失，且**不报错、不警告**。若该文件尚未提交（本项目经常「先跑后提交」），就是又一起不可恢复的数据损失——本次能救回是因为它已在 52f551a 里。",
+      "fix": "默认文件名带上候选集或时刻（例如 `L2-precheck-<date>.<candidates>.json`，候选集超过 3 个时退化为 `<date>.<HHMM>Z`），或复用 OUT 环境变量强制显式指定；同时在覆盖已存在文件时打印一行「覆盖了 X → Y」。收口要求：补一条测试钉住「同日两次不同候选集的预检不得写到同一路径」。",
+      "found_at": "2026-11-11"
     }
   ]
 }
