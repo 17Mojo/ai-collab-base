@@ -1,0 +1,173 @@
+{
+  "url": "https://wenxin.baidu.com/search/2921645265653664491?enter_type=yiyan_site",
+  "title": "百度文心助手 - 办公学习一站解决",
+  "bodyLen": 1234,
+  "chains": [
+    {
+      "needle": "普通AI",
+      "chain": [
+        {
+          "tag": "p",
+          "cls": "marklang-paragraph",
+          "textLen": 36,
+          "outer": "<div class=\"marklang\"> <p class=\"marklang-paragraph\">普通AI等你一步步下指令，AI智能体却能自己定目标、拆步骤把整件事做完。</p> <hr> <p class=\"marklang-paragraph\">需要我顺着这个反常识点，给你补出‌<strong>3个普通人一看就懂的生活化类比</strong>‌吗？</p> </div>"
+        },
+        {
+          "tag": "div",
+          "cls": "marklang",
+          "textLen": 73
+        },
+        {
+          "tag": "div",
+          "cls": "cosd-markdown-content ",
+          "textLen": 73
+        },
+        {
+          "tag": "div",
+          "cls": "cosd-markdown ",
+          "textLen": 73
+        },
+        {
+          "tag": "div",
+          "cls": "ai-entry-block ai-markdown",
+          "textLen": 73
+        },
+        {
+          "tag": "div",
+          "cls": "ai-entry",
+          "textLen": 73
+        },
+        {
+          "tag": "div",
+          "cls": "answer-container cs-enable-selection no-half-blue-link _container_ea7rh_1 _answer-history_fl9x2_25 ",
+          "textLen": 73
+        },
+        {
+          "tag": "div",
+          "cls": "",
+          "textLen": 73
+        },
+        {
+          "tag": "div",
+          "cls": "cos-swiper-item cs-history-answer",
+          "textLen": 73
+        }
+      ]
+    },
+    {
+      "needle": "反常识",
+      "chain": [
+        {
+          "tag": "span",
+          "cls": "history-item-text ",
+          "textLen": 112,
+          "outer": "<span class=\"_copy_1wztz_24\"> <!--197--> <span class=\"history-item-text \"> 你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。 </span><!--198--> <!--199--> </span>"
+        },
+        {
+          "tag": "span",
+          "cls": "_copy_1wztz_24",
+          "textLen": 112
+        },
+        {
+          "tag": "div",
+          "cls": "_track_1wztz_16",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": "history-item-content-left _viewport_1wztz_1 _overflow_1wztz_7",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": "history-item-content",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": "chat-side-list-item chat-side-list-item-sample no-hover selected",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": " ",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": " chat-history-time-item chat-aside-new-item",
+          "textLen": 3211
+        },
+        {
+          "tag": "div",
+          "cls": "chat-history-list history-chat-list",
+          "textLen": 3211
+        }
+      ]
+    },
+    {
+      "needle": "小红书知识图文",
+      "chain": [
+        {
+          "tag": "span",
+          "cls": "history-item-text ",
+          "textLen": 112,
+          "outer": "<span class=\"_copy_1wztz_24\"> <!--197--> <span class=\"history-item-text \"> 你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。 </span><!--198--> <!--199--> </span>"
+        },
+        {
+          "tag": "span",
+          "cls": "_copy_1wztz_24",
+          "textLen": 112
+        },
+        {
+          "tag": "div",
+          "cls": "_track_1wztz_16",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": "history-item-content-left _viewport_1wztz_1 _overflow_1wztz_7",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": "history-item-content",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": "chat-side-list-item chat-side-list-item-sample no-hover selected",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": " ",
+          "textLen": 292
+        },
+        {
+          "tag": "div",
+          "cls": " chat-history-time-item chat-aside-new-item",
+          "textLen": 3211
+        },
+        {
+          "tag": "div",
+          "cls": "chat-history-list history-chat-list",
+          "textLen": 3211
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "div.answer-container": 1,
+    "div.ai-entry": 1,
+    "[class*='answer']": 12,
+    "[class*='message']": 8,
+    "[class*='response']": 0,
+    ".chat-item": 0,
+    "[class*='bubble']": 1,
+    "[class*='content']": 26,
+    "[data-module]": 2,
+    "[class*='markdown']": 3
+  },
+  "bodyPreview": "新对话\n新工作任务\n定时任务\n技能广场\n知识库\n收藏夹\n对话历史\n你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。\n你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。\n你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。\n你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。\n你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。\n你要写一条小红书知识图文的开头。主题：AI 智能体（Agent）到底是什么。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂"
+}

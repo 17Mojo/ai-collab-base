@@ -1,0 +1,390 @@
+{
+  "generatedAt": "2026-11-11T10:06:14.003Z",
+  "mode": "readonly-dom-probe",
+  "redlines": {
+    "clicks": false,
+    "typing": false,
+    "sending": false,
+    "hover": false,
+    "captchaBypass": false,
+    "packImported": false
+  },
+  "needles": [
+    "新对话",
+    "新建对话",
+    "新的对话",
+    "开始新对话",
+    "发起新对话",
+    "开启新对话",
+    "新建聊天",
+    "新建会话",
+    "新会话",
+    "新建",
+    "清空上下文",
+    "清空会话",
+    "New chat",
+    "New Chat",
+    "New conversation"
+  ],
+  "classRe": "new[-_]?chat|new[-_]?session|new[-_]?dialog|newChat|create[-_]?conv|sidebar-new",
+  "platforms": [
+    {
+      "platform": "yiyan",
+      "url": "https://yiyan.baidu.com/",
+      "finalUrl": "https://wenxin.baidu.com/?enter_type=yiyan_site",
+      "title": "百度文心助手 - 办公学习一站解决",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": [
+        ".new-dialog-container-plain",
+        ".new-dialog-container"
+      ],
+      "adapterMessageList": [
+        "div.answer-container",
+        "div.ai-entry",
+        "[class*=\"message\"]",
+        "[class*=\"response\"]",
+        ".chat-item"
+      ],
+      "bodyTextLen": 1093,
+      "messageListHits": [
+        {
+          "sel": "div.answer-container",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": "div.ai-entry",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": "[class*=\"message\"]",
+          "count": 8,
+          "samples": [
+            "<div class=\"message-center-container _message-center_3ihji_1 _tab-item_62twd_12 \"> <div class=\"message-center-icon\"> 通知 <!--72--> </div> <div class=\"message-panel-container-wrapper message-panel-hover-plain\"></div> <div class=\"message-center-push-container\"></",
+            "<div class=\"message-center-icon\"> 通知 <!--72--> </div>"
+          ]
+        },
+        {
+          "sel": "[class*=\"response\"]",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": ".chat-item",
+          "count": 0,
+          "samples": []
+        }
+      ],
+      "answerChain": null,
+      "textHits": [
+        {
+          "needle": "新对话",
+          "tag": "span",
+          "cls": "cos-line-clamp-1",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新对话",
+          "innerText": "新对话",
+          "rendered": true,
+          "rect": {
+            "x": 41,
+            "y": 77,
+            "w": 42,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-dialog-container-plain",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 5719
+            }
+          ],
+          "outerHTML": "<span class=\"cos-line-clamp-1\">新对话</span>"
+        }
+      ],
+      "classHits": [
+        {
+          "tag": "div",
+          "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "aside-new-dialog-box",
+          "role": "",
+          "ownText": "",
+          "innerText": " 新对话 ",
+          "rendered": true,
+          "rect": {
+            "x": 8,
+            "y": 69,
+            "w": 224,
+            "h": 36
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside-container is-new-aside-sample new-aside-container ",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-container-body_10y6s_1",
+              "textLen": 9355
+            },
+            {
+              "tag": "div",
+              "cls": " _chat-container_10y6s_1 ",
+              "textLen": 9355
+            }
+          ],
+          "outerHTML": "<div class=\"_btn-box_tnqjy_104 _selected_tnqjy_183\" data-testid=\"aside-new-dialog-box\"> <div class=\"new-dialog-container _chat-aside-header-new-dialog_tnqjy_38\"> <div class=\"new-dialog-container-plain\"> <i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i> <span class=\"cos-line-clamp-1\">新对话</span> </div><!--20--> </div><!--19--> <span class=\"cos-tooltip\"><!--23--> <div data-"
+        },
+        {
+          "tag": "div",
+          "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": " 新对话 ",
+          "rendered": true,
+          "rect": {
+            "x": 17,
+            "y": 77,
+            "w": 185,
+            "h": 20
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside-container is-new-aside-sample new-aside-container ",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-container-body_10y6s_1",
+              "textLen": 9355
+            }
+          ],
+          "outerHTML": "<div class=\"new-dialog-container _chat-aside-header-new-dialog_tnqjy_38\"> <div class=\"new-dialog-container-plain\"> <i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i> <span class=\"cos-line-clamp-1\">新对话</span> </div><!--20--> </div>"
+        },
+        {
+          "tag": "div",
+          "cls": "new-dialog-container-plain",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": " 新对话 ",
+          "rendered": true,
+          "rect": {
+            "x": 17,
+            "y": 77,
+            "w": 66,
+            "h": 20
+          },
+          "css": {
+            "display": "flex",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside-container is-new-aside-sample new-aside-container ",
+              "textLen": 5719
+            }
+          ],
+          "outerHTML": "<div class=\"new-dialog-container-plain\"> <i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i> <span class=\"cos-line-clamp-1\">新对话</span> </div>"
+        },
+        {
+          "tag": "i",
+          "cls": "cos-icon cos-icon-new-dialog new-dialog-container-plain-icon",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 17,
+            "y": 77,
+            "w": 18,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-dialog-container-plain",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "new-dialog-container _chat-aside-header-new-dialog_tnqjy_38",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_btn-box_tnqjy_104 _selected_tnqjy_183",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_chat-aside-header_tnqjy_1 _chat-aside-header-exp_tnqjy_8",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": " chat-aside pinned-mode chat-aside-exp new-task-ui-active chat-aside",
+              "textLen": 5719
+            },
+            {
+              "tag": "div",
+              "cls": "chat-aside-wrapper pinned-aside-wrapper new-task-ui-wrapper new-task-hover-plain-active",
+              "textLen": 5719
+            }
+          ],
+          "outerHTML": "<i class=\"cos-icon cos-icon-new-dialog new-dialog-container-plain-icon\"></i>"
+        }
+      ],
+      "labeledControls": [],
+      "novelPhrases": [
+        "新对话",
+        "新工作任务",
+        "对话历史",
+        "对话"
+      ]
+    }
+  ]
+}

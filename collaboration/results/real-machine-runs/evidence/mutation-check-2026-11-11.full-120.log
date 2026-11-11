@@ -1,0 +1,244 @@
+=== 变异检查（120 条 / 全量）===
+
+✓ 把「计数增长」从 > 改成 >=（判定报告位）
+    被 生成中解除但计数没涨 杀死
+✓ 把「计数增长」从 > 改成 >=（重放放行位）
+    被 生成中解除但计数没涨 杀死
+✓ 把「不在生成中」这个条件去掉
+    被 计数涨了但 isTyping 恒为 true 杀死
+✓ 基准不再取生产启动那一刻的计数
+    被 基准取生产启动那一刻的计数 杀死
+✓ 生产取到的正文非空判定恒为真
+    被 productionContentNonEmpty 揪出抽取断链 杀死
+✓ 证据文件不再脱敏
+    被 证据文件里正文被脱敏 杀死
+✓ 证据文件谎称脚本发过消息
+    被 证据文件里正文被脱敏 杀死
+✓ 一致位恒为真
+    被 生产结果与时间线重放不一致时 杀死
+✓ --i-will-send 闸门失效
+    被 --i-will-send 会打开发送闸门 杀死
+✓ 「命中元素必须无文本」这条硬伤判定阈值收紧到永不触发
+    被 命中界面外壳（Yiyan 的 _chat-container_） 杀死
+✓ 去掉「空闲即不忙」这条硬伤判定
+    被 空闲页上 isTyping 为 true 杀死
+✓ class 属性重新开始做长随机串脱敏
+    被 class 属性不做长随机串脱敏 杀死
+✓ 邮箱规则失效
+    被 邮箱被替换 杀死
+✓ 把千问的消息选择器退回宽松的 [class*="message"]
+    被 消息数只算答案卡 杀死
+✓ 把千问的正文选择器退回只取第一段
+    被 答案正文取整个 markdown 容器 杀死
+✓ 把千问的发送按钮选择器退回依赖本地化文案
+    被 发送按钮靠稳定属性命中 杀死
+✓ 把千问的「停止回答」选择器改坏
+    被 识别停止回答按钮 杀死
+✓ 把千问的「接收中卡片」选择器改坏
+    被 只有接收中卡片 杀死
+✓ 把千问正文的「先看元素自身」这一步去掉
+    被 markdown 容器与答案卡是同一个元素时也能取到完整正文 杀死
+✓ 把内容脚本的 SEND_TO_AI 分支删掉
+    被 Pack 的 AI 步骤发的那条消息 杀死
+✓ 把内容脚本的 SEND_TO_AI 改成不注入文本
+    被 提示词进了输入框 杀死
+✓ 执行器不再从 storage 同步 Pack
+    被 storage 里的 Pack 要能被执行器找到并执行 杀死
+✓ popup 又用回不存在的 pack.id
+    被 popup 渲染出来的 data-id 杀死
+✓ 导入 Pack 的 ID 判据退回双轨
+    被 只带顶层 pack_id 的 Pack 必须被拒，且报错指出缺 metadata.pack_id 杀死
+✓ public 下的脚本里写坏一个语法
+    被 public/ 下的脚本必须语法正确 杀死
+✓ AI 步骤退回广播（不再定向到标签页）
+    被 AI 步骤要发到指定标签页 杀死
+✓ 后台不再把目标标签页传给执行器
+    被 后台要把目标标签页一路传到 AI 步骤 杀死
+✓ popup 不再把当前标签页告诉后台
+    被 popup 要把用户当前所在的标签页告诉后台 杀死
+✓ popup 不再打开 Pack 编辑器
+    被 popup 必须有「导入 Pack」的入口 杀死
+✓ getURL 退回嵌套布局
+    被 代码里 getURL 指到的页面，在构建产物里必须真的存在 杀死
+✓ 把交付给外部用户的冒烟 Pack 的提示词改掉
+    被 交付给外部用户的那个冒烟 Pack 杀死
+✓ D5 解包退回（定向标签页路径返回整个信封）
+    被 _executeAIStep 解包回复内容，output 全为文本且无 [object Object] 杀死
+✓ D5 解包退回（广播路径返回整个信封）
+    被 没有目标标签页时才广播，并且要标明是广播 杀死
+✓ 碎片/空内容判定失效（恒可用）
+    被 AI 步骤取回流式开头碎片时，整个 Pack 必须失败 杀死
+✓ 空内容也判完成
+    被 空内容永不判完成（防把流式开头当回复） 杀死
+✓ 稳定窗口失效（内容一出现就算完成）
+    被 内容还在变化时不判完成 杀死
+✓ 千问生成中状态行选择器被删（努力工作中不被认出）
+    被 生成中状态行（data-status=working）也判定 isTyping() 杀死
+✓ adapter-utils 抽取契约收紧失效（恢复全卡回退）
+    被 extractMessageContent 同样不许回退整卡文本 杀死
+✓ adapter-utils 自身匹配被删（容器=正文同体丢段落）
+    被 extractMessageContent 先看元素自身再查后代 杀死
+✓ 千问 _extractContent 契约收紧失效（恢复全卡回退）
+    被 选择器未命中时不许回退整卡文本（状态条不许混进正文） 杀死
+✓ 碎片阈值回退（50→20）
+    被 污染 ack 混入状态条文本也不许冒充正文 杀死
+✓ 稳定窗回退（8s→4s）
+    被 默认稳定窗是 8 秒：5 秒定格不算完成，8 秒才算（防思考停顿误判） 杀死
+✓ popup 产出渲染被删（N13 复发：只报状态丢产出）
+    被 popup 执行成功必须展示产出 杀死
+✓ 产出渲染回退 innerHTML（模型文本注入面）
+    被 产出文本必须走 textContent 杀死
+✓ 复制按钮丢字段（复制不到全文）
+    被 产出复制按钮把该字段全文放进剪贴板 杀死
+✓ 导出 JSON 丢产出（导出空对象）
+    被 导出 JSON 按钮产出全量产出 JSON 杀死
+✓ generic 等待回退旧判据（太早成功复辟）
+    被 内容没稳住不许返回 杀死
+✓ 基类委托被改空（钩子全文丢失）
+    被 基类 waitForResponse 必须走 _extractContent 钩子取全文 杀死
+✓ 抽取钩子优先级丢失（兜底吞掉子类抽取）
+    被 基类 waitForResponse 必须走 _extractContent 钩子取全文 杀死
+✓ l2-model 重放回退旧口径（重放与生产分叉）
+    被 内容持续在变的流式时间线不许判成功 杀死
+✓ Kimi 生成中状态行选择器被删
+    被 Kimi：segment-generate-tip 生成中状态行 杀死
+✓ Kimi 通用加载组件被误收进 typingIndicator
+    被 core-spiral-loading（历史/文件卡复用，无 role=status）不许算生成中 杀死
+✓ ChatGLM 停止按钮选择器丢掉 button 标签限定
+    被 div.sensitive[ga-data=stop]（内容安全敏感态）不许算生成中 杀死
+✓ ChatGLM 停止回答按钮选择器被删
+    被 ChatGLM：button ga-data=stop 停止回答按钮 杀死
+✓ 文心 thinking-loading 自定义元素选择器被删
+    被 文心：thinking-loading 自定义元素 杀死
+✓ 文心 停止回答按钮选择器被删
+    被 文心：停止回答按钮（answer-generate-state-button 杀死
+✓ LongCat 停止生成按钮选择器被删
+    被 LongCat：stop-generate 停止生成按钮 杀死
+✓ LongCat reason-title 排除决策被撤销
+    被 思考完成后的 reason-title（文案变『已深度思考』）不许算生成中 杀死
+✓ 元宝 data-conv-outputting 状态属性选择器被删
+    被 元宝：data-conv-outputting 状态属性 杀死
+✓ N3：必填空串/纯空白检查被删
+    被 _executeStep 拒绝 required_fields 缺失 杀死
+✓ N4：模板变量值序列化被绕过
+    被 _buildPrompt 对对象值 JSON 序列化 杀死
+✓ N2：输入字段名改回 innerHTML 拼接
+    被 N2：输入字段名含 HTML 时不得被解析 杀死
+✓ N2：pack 列表 name 改回 innerHTML 拼接
+    被 N2：pack 列表 杀死
+✓ N8：广播标记谎报为 precise
+    被 没有目标标签页时才广播 杀死
+✓ N8：popup 广播提示被摘除
+    被 N8：广播投递时 popup 要提示 杀死
+✓ N10：首装播种调用被摘除
+    被 首次安装且 storage 为空时播种默认 Pack 杀死
+✓ N10：空仓判定被拆掉（已有 Pack 也被覆盖）
+    被 已有 Pack 时不许被默认 Pack 覆盖 杀死
+✓ N10：update 也播种（用户删光被静默塞回）
+    被 update 不播种 杀死
+✓ N20：回执字段渲染回退 innerHTML（标记注入复辟）
+    被 Studio 回执字段含 HTML 杀死
+✓ N20：download_url 协议白名单失效（javascript: 进 href）
+    被 非 http(s) 时不许进 href 杀死
+✓ N20：状态行渲染回退 innerHTML（错误串注入复辟）
+    被 错误串（response.error / error.message）含 HTML 杀死
+✓ N11：GET_ALL_PACKS 打标被摘（孤儿包伪装正常）
+    被 GET_ALL_PACKS 给孤儿包打 unrecognized:true 杀死
+✓ N11：popup 孤儿判定被拆（警告永不出现）
+    被 popup 对孤儿包出可见警告 杀死
+✓ N11：popup 警告文案被摘（可见警告变哑巴）
+    被 popup 对孤儿包出可见警告 杀死
+✓ 把元宝的消息选择器退回 0 命中的旧三件套
+    被 元宝消息气泡能被数出来 杀死
+✓ 把智谱的消息选择器退回 0 命中的旧三件套
+    被 智谱消息气泡能被数出来 杀死
+✓ 把文心的消息选择器退回 0 命中的旧三件套
+    被 文心只数 AI 回复容器，不被 answer 附属元素撑大 杀死
+✓ 把 Kimi 的消息选择器退回恒定命中的旧选择器
+    被 Kimi 只数 assistant 条目，不把用户消息算进来 杀死
+✓ 把 LongCat 的消息选择器退回 0 命中的旧三件套
+    被 LongCat 只数 AI 条目，不把 human 气泡算进来 杀死
+✓ 把 LongCat 的正文选择器退回把状态行带进来的旧版
+    被 LongCat 取到正文而不是「已搜到 N 个网页」状态行 杀死
+✓ 超时被判回可重试（N21 原样复活）
+    被 错误码是 RESPONSE_TIMEOUT ⇒ 只能续等，不能重发 杀死
+✓ 执行器不认分流结果，一律重跑这一步
+    被 超时后 SEND_TO_AI 只发一次，随后是带 baselineCount 的续等 杀死
+✓ 续等重新数基准条数
+    被 续等要用发送前的基准条数，不许重新数 杀死
+✓ 续等的消息里丢掉 baselineCount
+    被 超时后 SEND_TO_AI 只发一次，随后是带 baselineCount 的续等 杀死
+✓ 文案兜底退化成子串包含
+    被 文案里只是**提到**超时，不算超时（不许用子串包含误判） 杀死
+✓ 为了修超时把重试整个关掉
+    被 非超时的失败照样重试（别为了修超时把重试一起废了） 杀死
+✓ 广播投递超时也放行重发
+    被 广播投递遇到超时：宁可失败也不重发 杀死
+✓ 预检路径退回只带日期（N22 原样复活）
+    被 同日两次不同候选集，不得写同一路径 杀死
+✓ 候选集不参与文件名
+    被 任意两个不同候选集，路径都必须不同（穷举三个真实组合） 杀死
+✓ 候选集不排序（同一组因顺序分成两份文件）
+    被 同一组候选集换个顺序，得到同一个路径 杀死
+✓ 覆盖已有回执时不吭声
+    被 文件存在时提示里带路径与原大小 杀死
+✓ 执行器忽略 fresh_session（会话边界形同虚设）
+    被 声明 fresh_session ⇒ 先开新会话，再发提示词（同一标签页） 杀死
+✓ strict 模式下开新会话失败照旧把提示词发出去
+    被 strict：开新会话失败 ⇒ 一条提示词都不许发，Pack 必须失败 杀死
+✓ 广播投递也放行 fresh_session
+    被 广播投递声明 fresh_session ⇒ 明确失败，且不发提示词 杀死
+✓ prefer 降级被记成「成功开过新会话」
+    被 prefer：开不成也照常发送，但回执里必须留下 available:false 杀死
+✓ 执行器丢掉 NEW_SESSION 上报的明细（durationMs 到不了回执）
+    被 NEW_SESSION 上报的 durationMs 原样进回执（重置开销可复核） 杀死
+✓ 交付的 Pack 悄悄去掉 fresh_session 声明
+    被 真实 Pack 的 step_8_output 声明了 fresh_session=prefer 杀死
+✓ 删掉「新建会话」文案（Kimi 的 a.logo 立刻够不着）
+    被 没有 adapter 声明时，「新建会话」文案也要能兜住 Kimi 的 a.logo 杀死
+✓ 隐藏语义兜底被清空（千问永远开不成新会话）
+    被 千问：入口藏在 opacity-0/pointer-events-none 的 hover-reveal 层里，靠语义属性兜底 杀死
+✓ Kimi 的 <a> 不再拦默认跳转（整页导航把内容脚本带走）
+    被 Kimi：a.new-chat-btn 是 <a>，点击时默认跳转必须被拦掉 杀死
+✓ 输入区同名诱饵不再排除（点到发送区旁边那个）
+    被 输入区里的同名诱饵不认 杀死
+✓ 回执不再记 durationMs（重置开销又变成猜）
+    被 chatglm：div.new-session 不是 button，仍被 adapter-selector 命中并真的清空 12→0 杀死
+✓ 点了没生效也报成功（不假装重置这条被拆）
+    被 点了没生效：消息数没下降就不能算成功 杀死
+✓ chatglm 的 newChat 选择器被改坏
+    被 chatglm：div.new-session 不是 button，仍被 adapter-selector 命中并真的清空 12→0 杀死
+✓ 元宝的 newChat 选择器被改坏
+    被 元宝：div.yb-new-chat-entry__item 用「新建对话」措辞，仍走 adapter-selector 杀死
+✓ Kimi 的 newChat 选择器被改坏
+    被 Kimi：a.new-chat-btn 是 <a>，点击时默认跳转必须被拦掉 杀死
+✓ 文心把恒命中的 [class*=message] 兜底塞回 messageList
+    被 文心落地页：通知中心恒在 8 个，但发送前的气泡基准必须是 0 杀死
+✓ 文心的 newChat 选择器被改坏
+    被 文心：div.new-dialog-container-plain 走 adapter-selector 杀死
+✓ 自足性检查放过一个上游没产出的变量
+    被 声明 fresh_session 的步骤，提示词引用的变量必须全部来自上游 杀死
+✓ 往只读探针里插一次真实 click
+    被 探测器里没有任何点击 / 输入 / 悬停 / 键盘调用 杀死
+✓ 只读探针的回执谎报 redlines.clicks 为真
+    被 回执明写 readonly mode 与 redlines 全 false 杀死
+✓ 把 deepseek 悄悄加进活跃白名单
+    被 白名单恰好是 5 个活跃站 杀死
+✓ 冻结平台不再被硬闸门拒绝（默认放行）
+    被 冻结平台默认被硬闸门拒绝 杀死
+✓ 候选集里的冻结站被静默跳过而不是整体拒绝
+    被 候选集里混进一个冻结站，整个预检都拒绝 杀死
+✓ 冻结闸门被挪到 launch() 之后
+    被 L2 真机驱动在 launch() 之前调用了冻结闸门 杀死
+✓ L2 回执不再记录平台放行策略
+    被 L2 驱动把放行策略与 Pack 变体写进回执 杀死
+✓ A/B 方案谎称已经执行过
+    被 方案默认标注「未执行」 杀死
+✓ A 组不再删掉 fresh_session（A/B 变成同一组）
+    被 A 组真的删掉了出厂 Pack 的 fresh_session 杀死
+✓ 验收判据删掉「B 组必须真的重置成功」
+    被 验收判据含「B 组必须真的重置成功」 杀死
+✓ 归因边界删掉「不能说重置免费」
+    被 归因边界明写「不能归因给重置」 杀死
+
+全部 120 条变异都被杀死。

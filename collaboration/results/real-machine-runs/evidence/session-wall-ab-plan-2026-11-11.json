@@ -1,0 +1,100 @@
+{
+  "status": "plan-only / NOT-EXECUTED",
+  "proposition": "fresh_session 会话边界能解掉 deepseek / longcat 的 step_8 长会话撞墙",
+  "generatedAt": "2026-11-11T10:59:28.386Z",
+  "whyNotRunNow": [
+    "用户 2026-11-11 红线：仅保留 qianwen / yuanbao / chatglm / yiyan / kimi，其他冻结不去碰。",
+    "platform-freeze.mjs 已把这条红线落成代码级闸门；ALLOW_FROZEN=1 只有用户明确解冻后才可以加。",
+    "本轮活跃 5 站只验到「重置真的做到了」（N23），没有碰过真正撞墙的两个站。"
+  ],
+  "unfreezeConditions": [
+    "用户给出明确的解冻指令（点名平台 + 允许范围）。",
+    "两站登录态可用（PRECHECK=1 先看 composerVisible / looksLikeLogin，不发包）。",
+    "dist 产物与源码一致（npm run build 后核关键字，G1–G10 口径）。",
+    "确认账号额度：2 站 × 2 变体 × 8 步 = 32 步真实发送。"
+  ],
+  "activePlatforms": [
+    "qianwen",
+    "yuanbao",
+    "chatglm",
+    "yiyan",
+    "kimi"
+  ],
+  "frozenPlatforms": [
+    "deepseek",
+    "longcat"
+  ],
+  "platformPolicy": [
+    {
+      "id": "deepseek",
+      "allowed": false,
+      "active": false,
+      "unfrozenBy": null,
+      "reason": "frozen-by-user-redline"
+    },
+    {
+      "id": "longcat",
+      "allowed": false,
+      "active": false,
+      "unfrozenBy": null,
+      "reason": "frozen-by-user-redline"
+    }
+  ],
+  "variants": [
+    {
+      "id": "A-control",
+      "packVariant": "no-boundary",
+      "freshSession": "removed",
+      "role": "对照组：复现 step_8 长会话撞墙"
+    },
+    {
+      "id": "B-boundary",
+      "packVariant": "with-boundary",
+      "freshSession": "prefer",
+      "role": "实验组：出厂 Pack，step_8_output 声明 fresh_session=prefer"
+    }
+  ],
+  "runMatrix": [
+    {
+      "platform": "deepseek",
+      "variant": "no-boundary",
+      "out": "L2-deepseek-auto-2026-11-11.ab-no-boundary.json"
+    },
+    {
+      "platform": "deepseek",
+      "variant": "with-boundary",
+      "out": "L2-deepseek-auto-2026-11-11.ab-with-boundary.json"
+    },
+    {
+      "platform": "longcat",
+      "variant": "no-boundary",
+      "out": "L2-longcat-auto-2026-11-11.ab-no-boundary.json"
+    },
+    {
+      "platform": "longcat",
+      "variant": "with-boundary",
+      "out": "L2-longcat-auto-2026-11-11.ab-with-boundary.json"
+    }
+  ],
+  "commands": [
+    "# 解冻后由人逐条执行（本脚本不代跑）：",
+    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=<variant-pack.json> OUT=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs"
+  ],
+  "acceptance": {
+    "packCompleted": "exec.success === true && exec.result.status === completed && 8/8 steps success",
+    "resetActuallyHappened": "B 组回执 sessionResets[0].available === true && messageCountAfter < messageCountBefore —— 否则 B 不能算「开了新会话」，这轮对照作废",
+    "noDuplicateSend": "截图里每个 step 只有一条提问气泡；N21 的续等只发 WAIT_FOR_RESPONSE，不重发",
+    "likeForLike": "同站、同账号态、同 prompt、相邻时间窗；A 与 B 只允许差 fresh_session 一个变量",
+    "verdictRule": "只有 A 撞墙且 B 通过才支持命题；A/B 都通过 ⇒ 本轮墙不存在，不能归功边界；A/B 都撞墙 ⇒ 边界无效，另找根因"
+  },
+  "attributionBoundaries": [
+    "不能把整包耗时差异归因给会话重置——RESULT §14.1/§14.2 已判否（重置只在 step_8，step_1~7 的差值与它无关）。",
+    "也不能说「重置免费」——durationMs 非零，4 站实测 304–319ms，代码上界 8s。",
+    "B 单轮通过 ≠ 边界有效：N21 续等修复、N24 文心假基准修复是同期混杂变量，必须在 A/B 两轮里同时固定。",
+    "chatglm 那轮 419.6s vs 349.8s 的差异主要在 step_2 抖动（28.7→70.2s），既不能归因给重置，也不能反过来当「重置无代价」的证据。"
+  ],
+  "precheckPath": "/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-11.deepseek-longcat.json"
+}
