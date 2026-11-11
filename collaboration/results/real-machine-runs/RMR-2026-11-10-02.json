@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-10-02",
+  "created_at": "2026-11-10T20:57:20+08:00",
+  "updated_at": "2026-11-10T20:57:20+08:00",
+  "operator": "workbuddy_rasp",
+  "purpose": "跨站取回判据修复轮：按 RMR-2026-11-10-01 的根因，只补 yuanbao / chatglm 两个 adapter 的 messageList（及 yuanbao 的 messageContent），不动 wait-policy.js 公共判据；重建 dist 后重跑两站，并用同一份最终构建补跑 qianwen，形成「真机 3 平台回归」证据。全部为机器评分口径，非人工验收。",
+  "platforms": [
+    "qianwen",
+    "yuanbao",
+    "chatglm"
+  ],
+  "locales": [
+    "zh-CN"
+  ],
+  "records": [
+    {
+      "layer": "L2",
+      "platform": "yuanbao",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T20:22:23+08:00",
+      "evidence": [
+        "EXECUTE_PACK 精确投递 tabId=1785644612，8/8 步 success=True，status=completed，duration=96779ms",
+        "7 个产出字段全部非空：43/423/136/293/97/760/1079 字；无 {{占位符}}、[object Object]、状态条或流式碎片",
+        "修复：messageList 首位改 [data-conv-speaker]（真机会话页实测 2 条：human + ai）；messageContent 首选 .hyc-content-md-done（done 修饰只在生成结束后出现，天然避开碎片）",
+        "构建：dist 于 20:20 重建，SW 自检三标记全 true，service-worker.js size=105417"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-yuanbao-auto-2026-11-10.fix1.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yuanbao-auto-2026-11-10.fix1.png"
+      ],
+      "reason": "旧 messageList 三个选择器在本站 0 命中导致 countGrew 恒 false；换成带无哈希 data 属性的真实气泡后判据成立。",
+      "notes": "构建差异如实登记：本轮跑在 build A（size=105417），chatglm/qianwen 跑在 build B（size=105780）。两者唯一差异是 chatglm-adapter 新增 .answer-content-wrap 选择器，按域名分流，对 yuanbao 路径无影响；未为消除这个差异重复消耗账号额度。"
+    },
+    {
+      "layer": "L2",
+      "platform": "chatglm",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T20:35:04+08:00",
+      "evidence": [
+        "EXECUTE_PACK 精确投递 tabId=1785644815，8/8 步 success=True，status=completed，duration=422918ms",
+        "7 个产出字段全部非空：45/478/266/222/312/568/1113 字；无占位符、对象串、状态条或碎片",
+        "发送期 DOM 采样（probe1.dom-samples.json）实证 .answer-content-wrap 随时间 0→1→2→3 递增，旧三选择器全程 0 命中",
+        "修复：messageList 首位改 .answer-content-wrap；元素自身带 content 子串，命中 messageContent 的 [class*=content] 自身判定",
+        "构建：最终 dist（SW size=105780）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-chatglm-auto-2026-11-10.fix1.json",
+        "collaboration/results/real-machine-runs/evidence/L2-chatglm-auto-2026-11-10.fix1.png",
+        "collaboration/results/real-machine-runs/evidence/L2-chatglm-auto-2026-11-10.probe1.dom-samples.json"
+      ],
+      "reason": "发送期采样给出真实气泡容器，替换恒 0 命中的旧选择器后 countGrew 成立。",
+      "notes": "耗时 7 分钟，明显慢于另两站；未在本次判定中作为缺陷，仅记录。"
+    },
+    {
+      "layer": "L2",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T20:56:58+08:00",
+      "evidence": [
+        "用与 chatglm 相同的最终构建（SW size=105780）补跑，确认 adapter 改动未回归影响既有 pass 平台",
+        "EXECUTE_PACK 精确投递 tabId=1785644920，8/8 步 success=True，status=completed，duration=362000ms",
+        "7 个产出字段全部非空：56/582/436/327/341/602/1322 字"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-10.fix1.json",
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-10.fix1.png"
+      ],
+      "reason": "同一最终构建上的三平台证据闭合。",
+      "notes": "本次不做 §4.5 语义裁决（属机器技术判定，跨站语义一致性是独立工作）。"
+    },
+    {
+      "layer": "GATE",
+      "platform": "*",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T20:57:20+08:00",
+      "evidence": [
+        "前半段「真机 3 平台回归」：本 run 已出 3 平台 L2 pass 证据，但**是否判定闭环由用户拍板**，本记录不宣布门禁关闭",
+        "后半段「第一个外部用户」：docs/EXTERNAL_USER_*.md 与 collaboration/results/external-user/ 仍停在 2026-11-03，零真人会话证据 ⇒ 仍为空"
+      ],
+      "evidence_files": [],
+      "reason": "按 memory/project_route_decision.md 的 Why，机器评分/工程健康度不得充当路线依据；不说「验收通过」。",
+      "notes": "路线 A/B 仍待拍板。"
+    }
+  ]
+}

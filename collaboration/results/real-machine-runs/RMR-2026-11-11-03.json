@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-11-03",
+  "created_at": "2026-11-11T13:02:00+08:00",
+  "updated_at": "2026-11-11T05:01:32.477Z",
+  "operator": "workbuddy_rasp",
+  "purpose": "按用户 2026-11-11 12:18 裁定「只保留 qianwen/yuanbao/chatglm/yiyan/kimi，其余冻结」后，对 5 个活跃平台做一次**同日同构建同 Pack** 的完整 L2 回归。此前 5 站 pass 分散在 11-10 与 11-11 05:37 三个不同时间点、两个不同构建上，从未有一次统一证据；本轮补上。",
+  "prerequisites": {
+    "dist_rebuilt": "2026-11-11 12:41 npm run build，重建后 dist 整体指纹 4bfb4dac… 与重建前**逐字节一致** ⇒ 07:22 构建即为当前产物，mtime 07:56 系 mutation-check 回写造成的假象",
+    "sw_selfcheck": "hasGate/hasStatusSelector/hasMin50 全 true，size=108590",
+    "sw_cache_cleared": "每站跑前 clearSwCaches 清 2-3 项",
+    "precheck": "5 站 composerVisible=true / looksLikeLogin=false（yiyan 重定向到 wenxin.baidu.com，该域已在 hostnames 内）",
+    "profile": "~/Library/Application Support/rm-qianwen-l2-profile"
+  },
+  "platforms": [
+    "qianwen",
+    "yuanbao",
+    "chatglm",
+    "yiyan",
+    "kimi"
+  ],
+  "locales": [
+    "zh-CN"
+  ],
+  "pack": {
+    "id": "xiaohongshu-knowledge-creator",
+    "topic": "AI 智能体（Agent）到底是什么",
+    "level": "普通上班族"
+  },
+  "records": [
+    {
+      "layer": "L2",
+      "platform": "qianwen",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T04:46:06.937Z",
+      "stepsPassed": 8,
+      "stepsTotal": 8,
+      "durationSec": 257.7,
+      "fieldLens": {
+        "hook_statement": 43,
+        "explanation_text": 584,
+        "use_cases": 417,
+        "boundary_notes": 356,
+        "takeaway_content": 365,
+        "visual_content": 613,
+        "final_content": 1584
+      },
+      "evidence": [
+        "8 步全 success，exec.success=true，总耗时 257.7s",
+        "逐 step 耗时(s)：0 / 32.8 / 40.3 / 26.8 / 33.8 / 29.3 / 54.3 / 40.3",
+        "7 个产出字段字符数：43/584/417/356/365/613/1584（hook/explain/use_cases/boundary/takeaway/visual/final）",
+        "污染扫描（服务出错/请先登录/请到小红书/已搜到/登录后/Error:/无法回答/undefined）：0 命中"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-11.full5.json",
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-11.full5.png"
+      ]
+    },
+    {
+      "layer": "L2",
+      "platform": "yuanbao",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T04:47:50.497Z",
+      "stepsPassed": 8,
+      "stepsTotal": 8,
+      "durationSec": 100.3,
+      "fieldLens": {
+        "hook_statement": 41,
+        "explanation_text": 672,
+        "use_cases": 137,
+        "boundary_notes": 220,
+        "takeaway_content": 246,
+        "visual_content": 592,
+        "final_content": 1346
+      },
+      "evidence": [
+        "8 步全 success，exec.success=true，总耗时 100.3s",
+        "逐 step 耗时(s)：0 / 11.2 / 17.2 / 11.7 / 12.2 / 12.2 / 16.2 / 19.7",
+        "7 个产出字段字符数：41/672/137/220/246/592/1346（hook/explain/use_cases/boundary/takeaway/visual/final）",
+        "污染扫描（服务出错/请先登录/请到小红书/已搜到/登录后/Error:/无法回答/undefined）：0 命中"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-yuanbao-auto-2026-11-11.full5.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yuanbao-auto-2026-11-11.full5.png"
+      ]
+    },
+    {
+      "layer": "L2",
+      "platform": "chatglm",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T04:56:09.742Z",
+      "stepsPassed": 8,
+      "stepsTotal": 8,
+      "durationSec": 495.4,
+      "fieldLens": {
+        "hook_statement": 36,
+        "explanation_text": 524,
+        "use_cases": 311,
+        "boundary_notes": 256,
+        "takeaway_content": 197,
+        "visual_content": 592,
+        "final_content": 960
+      },
+      "evidence": [
+        "8 步全 success，exec.success=true，总耗时 495.4s",
+        "逐 step 耗时(s)：0 / 170.7 / 38.2 / 35.2 / 22.7 / 33.7 / 151.3 / 43.7",
+        "7 个产出字段字符数：36/524/311/256/197/592/960（hook/explain/use_cases/boundary/takeaway/visual/final）",
+        "污染扫描（服务出错/请先登录/请到小红书/已搜到/登录后/Error:/无法回答/undefined）：0 命中",
+        "⚠️ 时长指纹异常：step_2=170.7s、step_7=151.3s，均 > 该站默认 60s 等待上限（PLATFORM_RESPONSE_TIMEOUT 只登记 deepseek/longcat=180s）。170.7≈60+60+50.7、151.3≈60+60+31.3，形状符合「3 次尝试、其中 2 次为重发」⇒ 疑似 N21 生效",
+        "❗ 未能观测证实：再次访问 chatglm 触发滑块验证（「请按住滑块，拖动到最右边」），按红线不绕，故重发是否真的发生**未确认**，仅有时间指纹"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-chatglm-auto-2026-11-11.full5.json",
+        "collaboration/results/real-machine-runs/evidence/L2-chatglm-auto-2026-11-11.full5.png"
+      ]
+    },
+    {
+      "layer": "L2",
+      "platform": "yiyan",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T04:57:40.344Z",
+      "stepsPassed": 8,
+      "stepsTotal": 8,
+      "durationSec": 87.7,
+      "fieldLens": {
+        "hook_statement": 66,
+        "explanation_text": 266,
+        "use_cases": 171,
+        "boundary_notes": 139,
+        "takeaway_content": 116,
+        "visual_content": 519,
+        "final_content": 711
+      },
+      "evidence": [
+        "8 步全 success，exec.success=true，总耗时 87.7s",
+        "逐 step 耗时(s)：0 / 11.7 / 13.2 / 11.2 / 11.2 / 10.7 / 15.2 / 14.7",
+        "7 个产出字段字符数：66/266/171/139/116/519/711（hook/explain/use_cases/boundary/takeaway/visual/final）",
+        "污染扫描（服务出错/请先登录/请到小红书/已搜到/登录后/Error:/无法回答/undefined）：0 命中"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-auto-2026-11-11.full5.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-auto-2026-11-11.full5.png"
+      ]
+    },
+    {
+      "layer": "L2",
+      "platform": "kimi",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T04:59:47.328Z",
+      "stepsPassed": 8,
+      "stepsTotal": 8,
+      "durationSec": 118.6,
+      "fieldLens": {
+        "hook_statement": 33,
+        "explanation_text": 416,
+        "use_cases": 287,
+        "boundary_notes": 226,
+        "takeaway_content": 219,
+        "visual_content": 339,
+        "final_content": 1027
+      },
+      "evidence": [
+        "8 步全 success，exec.success=true，总耗时 118.6s",
+        "逐 step 耗时(s)：0 / 17.2 / 19.2 / 15.2 / 14.7 / 16.2 / 17.7 / 18.7",
+        "7 个产出字段字符数：33/416/287/226/219/339/1027（hook/explain/use_cases/boundary/takeaway/visual/final）",
+        "污染扫描（服务出错/请先登录/请到小红书/已搜到/登录后/Error:/无法回答/undefined）：0 命中"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-auto-2026-11-11.full5.json",
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-auto-2026-11-11.full5.png"
+      ]
+    }
+  ],
+  "gate": {
+    "l2_pass": "5/10（分母仍 10；活跃 5 站本轮 5/5 全 pass，冻结 5 站不计为通过）",
+    "conclusion": "活跃平台全绿，但门禁**未闭合**：分母口径不变、冻结项仍 fail/not-run",
+    "machine_judged": true,
+    "human_acceptance": false,
+    "note": "本文件是机器执行判定，不是人工验收。"
+  }
+}

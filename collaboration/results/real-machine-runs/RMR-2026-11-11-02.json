@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-11-02",
+  "created_at": "2026-11-11T08:55:00+08:00",
+  "updated_at": "2026-11-11T10:00:00+08:00",
+  "operator": "workbuddy_rasp",
+  "purpose": "按用户 2026-11-11 08:45 指令新增 dots.ai 实例测试。按「先登录 → 只读结构探针 → 发送期采样 → 再决定是否写 adapter」的顺序推进；结论是**该站网页端不对新对话生成内容**，因此不写 adapter、不跑 L2——写下去只会得到假绿。",
+  "platforms": [
+    "dots"
+  ],
+  "locales": [
+    "zh-CN"
+  ],
+  "records": [
+    {
+      "layer": "L0",
+      "platform": "dots",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T08:46:43+08:00",
+      "evidence": [
+        "可达：https://dots.ai 打开后落到 https://dots.ai/chat/home/new，title=点点",
+        "账号态已具备：截图左下角显示登录账号 17Mojo（非游客态、无扫码提示），侧栏有「任务 / 收藏 / 新建对话」与两条历史会话",
+        "站点归属：静态资源走 fe-platform-s8.rednotecdn.com ⇒ 小红书「点点」"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/login-dots-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/login-dots-2026-11-11.png"
+      ],
+      "reason": "可达且已登录，具备做 L2 的前置条件。",
+      "notes": "登录助手本轮加了 `id@url` 形式：新平台必须先能登录，才谈得上登记（登记表要与生产层 PLATFORM_CONFIGS 对齐，而生产层需要真 adapter 与真选择器）。"
+    },
+    {
+      "layer": "L1",
+      "platform": "dots",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T08:47:43+08:00",
+      "evidence": [
+        "只读结构探针（evidence/L2-dots-dom-shape-2026-11-11.json）：点侧栏历史会话后进入 /chat/home/CHAT_54c918a4…",
+        "精确计数（evidence/L2-dots-selector-count-2026-11-11.json）：`.assistant-message-item` 12 个 / `.user-message-item` 8 个，逐条 1 对 1，是干净的 per-message 容器",
+        "正文有两个变体：`.assistant-message-card` 7 个 + `.message-card_long-rich-text` 5 个 = 12，正好覆盖全部 AI 消息",
+        "陷阱：`.prose-dd` 有 12 个但**不是每条一个**——832 字那条被切成 99/462/136/134 四个块。拿它当 messageContent 只能取到第一块 ⇒ 静默截断",
+        "空闲态 `[class*=stop] / [class*=loading] / [class*=thinking] / [class*=search] / [class*=deep] / [class*=stream]` 全部 0 命中"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-dots-dom-shape-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-dots-selector-count-2026-11-11.json"
+      ],
+      "reason": "选择器层已探明，具备写 adapter 的条件。",
+      "notes": "若日后该站开放网页端生成，可直接按 `.assistant-message-item` +（`.assistant-message-card` / `.message-card_long-rich-text`）落 adapter，不要用 `.prose-dd`。"
+    },
+    {
+      "layer": "L2",
+      "platform": "dots",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T08:53:26+08:00",
+      "evidence": [
+        "发送期采样（evidence/L2-dots-during-send-2026-11-11.json）：点品牌色 36px 圆形发送按钮后，`.assistant-message-item` 立即出现 1 条，正文恒定 **「请到小红书官网体验」（9 字）**，80 秒内一字未变、无流式增长",
+        "换一条完全不同领域的提示词（「帮我列一个周末去杭州的两天行程，只要要点。」）复跑：同样 9 字、同样 80 秒不变 ⇒ 不是单次偶发、也不是提示词触发",
+        "截图（evidence/L2-dots-during-send-2026-11-11.png）显示：用户消息正常发出，AI 气泡只有这一句引导语，输入框为空",
+        "对照：侧栏历史会话里存在完整长答（832 / 1134 / 824 字等）。这些是**从小红书 App 同步来的历史**，能读不能在同一网页端复现"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-dots-during-send-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-dots-during-send-2026-11-11.png"
+      ],
+      "reason": "平台侧能力限制：网页端对新对话不生成内容，固定回一句 9 字引导语去官网/App。9 字低于任何一步的长度闸门，写 adapter 只会得到一次确定的 fail——那是把平台限制记成产物缺陷，属于自欺。",
+      "notes": "无法排除是账号灰度/地区策略（本账号能看到 App 同步历史，说明账号本身有效）。要变成可用实例，只有两条路：①该站开放网页端生成；②走 App 内自动化（超出本扩展的浏览器插件形态）。 ｜ 🔧 2026-11-11 09:52 用户裁定「dots 真进 L2，要立项」⇒ 已出具立项书 `docs/PROPOSAL-DOTS-L2-APP-AUTOMATION.md`（方案对比 / M1–M4 里程碑 / 风险 / 验收门禁 / 待拍板三项）。状态仍为 **not-run**：立项 ≠ 通过，需 M1 可行性判定后才能判断通道是否成立。"
+    },
+    {
+      "layer": "GATE",
+      "platform": "*",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T10:00:00+08:00",
+      "evidence": [
+        "L2 pass 仍为 **5/10**（qianwen / yuanbao / chatglm / yiyan / kimi），dots 记为 **not-run**，**不计入** 10 平台分母",
+        "deepseek / longcat 各 7/8，仍卡 step_8_output（见 RMR-2026-11-11-01 与 RESULT §9）",
+        "chatgpt / claude / gemini 按用户 06:10 裁定封存（≠ 已验证）",
+        "用户 09:52 裁定：① 删除本轮测试会话（已执行并核实，侧栏由 3 条「点点」清为 0，用户自有「AI排版提示词」保留）；② dots 真进 L2 —— 已立项（`docs/PROPOSAL-DOTS-L2-APP-AUTOMATION.md`），但**立项不改门禁**：dots 仍 not-run、仍不计入 10 平台分母"
+      ],
+      "evidence_files": [],
+      "reason": "本轮的产出是「排除一个不可用实例」，不是新增一个 pass。排除同样要留证，但不得折算成通过。",
+      "notes": "全部为机器执行判定，非人工验收。路线 A/B 仍待用户拍板。 dots 转入「立项推进中」，M1 未过之前不得计入任何通过数。"
+    }
+  ]
+}

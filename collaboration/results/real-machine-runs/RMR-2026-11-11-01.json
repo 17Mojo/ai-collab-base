@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-11-01",
+  "created_at": "2026-11-11T05:42:00+08:00",
+  "updated_at": "2026-11-11T07:50:00+08:00",
+  "operator": "workbuddy_rasp",
+  "purpose": "按用户 2026-11-11 05:18 裁定「前半段未认定闭环——缺少更多实例」，把 L2 从 3/10 向上扩。本轮起跑 4 个预检已确认登录态的平台（yiyan / kimi / longcat / gemini）。首轮 4 站全部未通过，但失败原因分属三类不同层次（选择器 / 账号态 / 网络），其中只有选择器一类可由代码修复；修完 yiyan / kimi 后重跑，两站 8/8 步全过。全部为机器执行判定，非人工验收。 ｜ 07:50 追加：按用户 06:10 裁定「关注 deepseek 和 longcat，其他暂封存」，本轮把这两站从账号态推进到收口——deepseek 7/8、longcat 0/8→7/8，两站都卡在同一个 step_8_output（fusion），但成因不同：deepseek 是答案超出等待窗口，longcat 是平台直接回「服务出错啦」。隔离实验证明 longcat 那条 fusion 提示词本身没问题（全新会话 21s 答完 1481 字），问题在长会话。",
+  "platforms": [
+    "yiyan",
+    "kimi",
+    "longcat",
+    "gemini"
+  ],
+  "locales": [
+    "zh-CN"
+  ],
+  "records": [
+    {
+      "layer": "L2",
+      "platform": "yiyan",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T05:37:20+08:00",
+      "evidence": [
+        "首轮（05:22）fail：step_2_hook Response timeout 243957ms；发送期 DOM 采样 45 次实锤 messageList 三件套（[class*=message] / [class*=response] / .chat-item）全程 0 命中，而 [class*=answer] 0→25 增长",
+        "结构探针（evidence/L2-yiyan-dom-shape-2026-11-11.json）：AI 回复链为 div.answer-container → div.ai-entry → div.cosd-markdown-content → div.marklang → p.marklang-paragraph；human 气泡为 div.cs-question-bubble",
+        "精确计数（evidence/L2-yiyan-selector-count-2026-11-11.json）：div.answer-container 4 个 = 4 轮 AI 回复（文本 66/44/38/32），div.cs-question-bubble 4 个，[class*=answer] 45 个（含 hover 菜单/历史条目等附属元素，不可用）",
+        "修复：messageList 首位加 div.answer-container / div.ai-entry；messageContent 改为 [.cosd-markdown-content, .marklang, [class*=content]]，移除会命中 45 个嵌套元素的 [class*=answer]",
+        "重跑（fix1）：EXECUTE_PACK 8/8 步 success=true，status=completed，duration=105553ms；7 个产出字段 88/415/146/143/170/382/1401 字，均为真正文（含「开社区水果店的张姐」等具体案例），无占位符/对象串/状态条/流式碎片"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-auto-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-auto-2026-11-11.png",
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-dom-shape-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-selector-count-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-auto-2026-11-11.fix1.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yiyan-auto-2026-11-11.fix1.png"
+      ],
+      "reason": "旧选择器在本站真实会话页 0 命中 ⇒ countGrew 恒 false；换成真实答案容器后判据成立。",
+      "notes": "首轮截图确认 AI 回复当时仅 31 字（低于 MIN_AI_CONTENT_LENGTH_DEFAULT=50），但 Pack 的 step_2_hook 配了 min_output_length=15（packs/examples/xiaohongshu_knowledge_creator.json:61），故长度不是首轮失败原因——这一点经回源码核实，不采信「回复太短所以挂」的直觉判断。"
+    },
+    {
+      "layer": "L2",
+      "platform": "kimi",
+      "status": "pass",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T05:39:38+08:00",
+      "evidence": [
+        "首轮（05:26）fail：step_2_hook Response timeout 243972ms；发送期采样 45 次显示 [class*=message] 恒定 2 命中（不是气泡），.chat-message 为 0",
+        "结构探针（evidence/L2-kimi-dom-shape-2026-11-11.json）：.chat-content-item 6 个 = 3 user + 3 assistant；assistant 条目内先出现 .markdown-container.toolcall-content-text（思考过程），后出现正文 .markdown-container > .markdown",
+        "精确计数（evidence/L2-kimi-selector-count-2026-11-11.json）：.chat-content-item-assistant 3 个 = 3 轮 AI 回复；.chat-content-item-user 3 个",
+        "修复：messageList 改为 [.chat-content-item-assistant, .chat-content-item]（只收 AI 条目）；messageContent 用 .markdown-container:not(.toolcall-content-text) 精确排除思考过程",
+        "重跑（fix1）：8/8 步 success=true，status=completed，duration=129670ms；7 字段 31/427/187/155/119/278/725 字，均为真正文（「嘴很灵的顾问」比喻完整），无思考过程混入"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-auto-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-auto-2026-11-11.png",
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-dom-shape-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-selector-count-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-auto-2026-11-11.fix1.json",
+        "collaboration/results/real-machine-runs/evidence/L2-kimi-auto-2026-11-11.fix1.png"
+      ],
+      "reason": "旧 [class*=message] 恒定命中 ⇒ countGrew 恒 false；换 assistant 条目后计数随回复增长。",
+      "notes": "toolcall 思考块是该站特有的污染源：若不排除，会把「思考已完成…」当成答案取回且长度足以通过闸门 ⇒ 静默错数据。已用 :not(.toolcall-content-text) + 契约测试双重钉住。"
+    },
+    {
+      "layer": "L2",
+      "platform": "deepseek",
+      "status": "fail",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T07:05:48+08:00",
+      "evidence": [
+        "fix1（06:30）/ fix2（06:42）均卡 step_2_hook：失败步耗时 243.9s / 244.0s = 4×60s + 3~4s ⇒ 单步等待上限恒为 60s，与 adapter 里声明的 180s 无关",
+        "根因（连错三次才定位）：`message.config?.timeouts?.response`、`currentConfig?.timeouts?.response` 都是空——`currentConfig = PLATFORM_CONFIGS[id]` 只有 SELECTORS，adapter 的 timeouts 从未流过任何边界。修法：content-script 新增站点例外表 PLATFORM_RESPONSE_TIMEOUT（deepseek/longcat = 180s），取值优先级 = Pack 步骤 config.timeout > 例外表 > 60s",
+        "fix3（07:05）：失败步耗时 724.0s = 4×180s + 4×1s ⇒ 180s 确认生效；步骤成功数 5→7、产出字段 4→6",
+        "fix3 逐 step 耗时：0 / 9.7 / 11.7 / **191.9** / 10.7 / **389.8** / 10.7 / **724.0（失败）**（秒）",
+        "step_4 与 step_6 的 191.9s / 389.8s 形状 = 180+1+10.9 / 180+1+180+1+27.8 ⇒ 前一次必然超时、后一次靠**重发**在同一会话里成功（pack-executor.js:643-654 的重试直接再走 SEND_TO_AI）。已登记 known_gaps N21",
+        "step_8_output（fusion，吞 6 个字段）4 次尝试全超时；同轮截图显示该答案在运行结束后**确实完整生成**（长文，非碎片），说明不是取不到，而是生成时长超出等待窗口",
+        "选择器契约本身有效：7 步产出 45/387/188/216/99/393 字等真正文"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.fix1.json",
+        "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.fix2.json",
+        "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.fix3.json",
+        "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.fix3.png"
+      ],
+      "reason": "不是选择器、不是账号态：7/8 步取回真正文。卡在 step_8 的响应时长——4 个 180s 窗口（合计 720s）都没等到答案稳定。",
+      "notes": "不再加 timeout（60→180 是修死配置，180→300 属为过而过）。真正的病根在重试语义：Response timeout 时重发同一条提示词，既污染会话又把上下文越拖越长。见 known_gaps N21。"
+    },
+    {
+      "layer": "L2",
+      "platform": "longcat",
+      "status": "fail",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T07:43:01+08:00",
+      "evidence": [
+        "首轮（05:31）fail：step_2 Response timeout 243.9s；截图左下角「请先登录」，[class*=message] 计数 6→14→11 非单调 ⇒ 当时是**账号态**阻塞（真人登录后本项解除）",
+        "fix2（07:18）fail：Step step_2_hook failed，724s 区间的 723.9s = 4×180s + 3.9s（180s 生效）；0 个产出字段",
+        "结构探针（evidence/L2-longcat-dom-shape-2026-11-11.fix2.json）：旧 messageList 三件套 `.message` / `[class*=response]` / `[class*=chat-item]` 在已登录会话页 **0 / 0 / 0** 命中 ⇒ countGrew 恒 false ⇒ 必然 Response timeout",
+        "精确计数（evidence/L2-longcat-selector-count-2026-11-11.json）：`.v-message-list` 1 个（14 子元素，是容器不是消息）；`.v-chat-messge-view` 14 个（7 user + 7 AI，messge 是站点自己的拼写）；`.assistant-message` / `.v-chat-assistant-message` 各 7 个；`.md-show-container` 5 个；打字指示器 `.v-loading-dot` / `[class*=stop-generate]` / `[class*=loading-dot-box]` / `[class*=loading-text]` 空闲态全部 0 命中（isTyping 无假阳）",
+        "污染源实证：`.assistant-message` 整卡 55 字 vs 正文 45 字，多出的 10 字正是「已搜到 14 个网页」联网搜索状态行 ⇒ messageContent 只认 `.md-show-container` / `.mt-markdown-body`，禁止整卡回退",
+        "另有陷阱：正文容器 `.mt-markdown-body` **永久带 result-streaming 类**（完成态 5/5 都带），绝不能进 typingIndicator",
+        "同屏还观察到重发污染的直接证据：该会话 7 条 AI 消息里 5 条是**同一句 hook** 的重复回答、2 条是「服务出错啦，请稍后再试试。」",
+        "fix3（07:43）：**7/8 步成功**，总 1227.0s，产出 37 / 587 / 124 / 478 / 247 / 878 字（全部真正文）；step_8_output 724.0s = 4×180s + 4s 超时",
+        "step_8 失败成因与 deepseek 不同：截图最后一条 AI 是**平台自己回的「服务出错啦，请稍后再试试。」**（无 markdown 容器 ⇒ 取回空串 ⇒ 继续等 ⇒ 180s 超时 ⇒ 重发 ⇒ 再报错，4 轮同错）",
+        "隔离实验（evidence/L2-longcat-fusion-isolated-2026-11-11.json）：把同一条 2437 字的 fusion 提示词发进**全新会话**，21s 答完、产出 1481 字正文 ⇒ 提示词本身不被平台拒绝，长会话才是变量"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.png",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.fix2.json",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.fix2.png",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-dom-shape-2026-11-11.fix2.json",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-selector-count-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.fix3.json",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.fix3.png",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-fusion-isolated-2026-11-11.json",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-fusion-isolated-2026-11-11.png"
+      ],
+      "reason": "账号态已解除；选择器 0 命中已修（0/8 → 7/8）。剩下的 step_8 是**平台侧错误**：在已累积 7 轮、约 5–6k 字上下文的会话里，平台对 fusion 请求直接回「服务出错啦」，而同一条提示词在全新会话 21s 正常作答。",
+      "notes": "不据此再改选择器——本站取回链已经是干净的（7 步真正文，且状态行与 result-streaming 两个陷阱都已钉住）。下一步该动的是 Pack 的会话结构（每步新会话 / 上下文瘦身），不是 adapter。"
+    },
+    {
+      "layer": "L2",
+      "platform": "gemini",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T05:33:59+08:00",
+      "evidence": [
+        "首次尝试（05:31）未进入业务逻辑：清 SW 缓存时被 WorkBuddy safe-delete shim 拦截（52 文件 > 阈值 50，路径 Default/Service Worker）",
+        "带 CODEBUDDY_SAFE_DELETE_ENABLED=0 重跑：SW 自检通过（hasGate/hasStatusSelector/hasMin50 全 true，size=119837），但 page.goto 报 net::ERR_CONNECTION_CLOSED at https://gemini.google.com/",
+        "对照：2026-11-10 11:14Z 的预检里 gemini composerVisible=true / looksLikeLogin=false，说明当时可达；本轮不可达属网络环境变化"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-10.json"
+      ],
+      "reason": "网络不可达（连接被关闭），环境阻塞，未进入 L2 判定。",
+      "notes": "与选择器无关，不改 adapter。需在可访问该站的网络环境下补跑。"
+    },
+    {
+      "layer": "GATE",
+      "platform": "*",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-11T07:50:00+08:00",
+      "evidence": [
+        "L2 pass 平台数：3/10 → **5/10**（qianwen / yuanbao / chatglm / yiyan / kimi）",
+        "用户 2026-11-11 05:18 明确裁定「前半段未认定闭环，缺少更多实例」⇒ 本轮只扩实例，不宣布闭环",
+        "用户同时裁定「第一个外部用户暂缓，确定性更高时再启动，避免不佳体验」⇒ 该项记为 deferred，不再作为阻塞项催办",
+        "deepseek / longcat 均**未通过**（各 7/8 步），但两站都不是选择器问题：deepseek 是答案超出 4×180s 窗口，longcat 是平台在长会话里直接报错 ⇒ L2 pass 仍记 **5/10**，不因为「7/8 看着不错」放行",
+        "两站同卡 step_8_output（fusion，吞 6 个字段、提示词最长、上下文最深）⇒ 这条共性把「平台慢」改判成「Pack 串行单会话的尾部撞墙」"
+      ],
+      "evidence_files": [],
+      "reason": "按用户裁定，扩实例本身就是当前任务；不以「凑够平台数」为由宣布门禁关闭。全部为机器执行判定。",
+      "notes": "剩余待扩：chatgpt / claude / gemini 已按用户 06:10 裁定**封存**（不排期、不催办，≠ 已验证）。当前活跃只剩 deepseek / longcat 两站的 step_8 收口。"
+    }
+  ]
+}

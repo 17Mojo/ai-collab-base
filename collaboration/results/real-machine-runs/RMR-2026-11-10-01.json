@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "run_id": "RMR-2026-11-10-01",
+  "created_at": "2026-11-10T19:26:18+08:00",
+  "updated_at": "2026-11-10T19:26:18+08:00",
+  "operator": "workbuddy_rasp",
+  "purpose": "L2 扩平台轮：按路线门禁前半段「真机 3 平台回归」，在 qianwen 之外补 2 个 L1 已 pass 平台（yuanbao、chatglm）跑完整 8 步 Pack。两站均在 step_2_hook 判 Response timeout；只读 DOM 探针实锤 messageList 选择器 0 命中 ⇒ countGrew 恒 false。结论：门禁前半段未闭环，且暴露跨站通用取回判据缺陷。",
+  "platforms": [
+    "yuanbao",
+    "chatglm"
+  ],
+  "locales": [
+    "zh-CN"
+  ],
+  "records": [
+    {
+      "layer": "L2",
+      "platform": "yuanbao",
+      "status": "fail",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T19:17:14+08:00",
+      "evidence": [
+        "EXECUTE_PACK 精确投递 tabId=1785643781，step_1_topic success，step_2_hook failed",
+        "错误：标签页 1785643781 没能完成这次发送：Response timeout（duration=123522ms）",
+        "会话截图显示 prompt 气泡与完整 AI 回复均真实存在（「别再把它当成更高级的聊天机器人——它是一套能自己定计划、调工具、改错并交付结果的自主执行系统。」），页面左下角为已登录账号 17Mojo ⇒ 不是发送失败，也不是未登录",
+        "只读 DOM 探针：[class*=\"message\"]=0、[class*=\"response\"]=0、.message-item=0、[data-conv-speaker]=0、[data-message-id]=0；[class*=\"chat\"]=9（布局/侧栏，非气泡）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-yuanbao-auto-2026-11-10.json",
+        "collaboration/results/real-machine-runs/evidence/L2-yuanbao-auto-2026-11-10.png",
+        "collaboration/results/real-machine-runs/evidence/L2-selector-probe-2026-11-10.json"
+      ],
+      "reason": "handleWaitForResponse（src/content/content-script.js:279-321）要求 countGrew=currentCount>initialCount；yuanbao-adapter.js 的 messageList 三个选择器在本站真实会话页 0 命中，initialCount=0 且发送后仍为 0 ⇒ sampleWaitState 永不 ready ⇒ 60s 超时。",
+      "notes": "构建已于 19:12 用 11-09 最新源码重建（dist/service-worker.js 三自检标记全 true），不是旧 SW 粘连。"
+    },
+    {
+      "layer": "L2",
+      "platform": "chatglm",
+      "status": "fail",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T19:22:20+08:00",
+      "evidence": [
+        "EXECUTE_PACK 精确投递 tabId=1785643860，step_1_topic success，step_2_hook failed",
+        "错误：标签页 1785643860 没能完成这次发送：Response timeout（duration=244458ms）",
+        "会话截图显示访客气泡、完整 AI 回复与「思考结束」状态条，页面可继续输入 ⇒ 不是发送失败、不是生成未完成、不是登录墙（游客态可发）",
+        "只读 DOM 探针：[class*=\"message\"]=0、[class*=\"response\"]=0、.message-item=0、[data-conv-speaker]=0、[data-message-id]=0；[class*=\"chat\"]=6（布局/侧栏，非气泡）"
+      ],
+      "evidence_files": [
+        "collaboration/results/real-machine-runs/evidence/L2-chatglm-auto-2026-11-10.json",
+        "collaboration/results/real-machine-runs/evidence/L2-chatglm-auto-2026-11-10.png",
+        "collaboration/results/real-machine-runs/evidence/L2-selector-probe-2026-11-10.json"
+      ],
+      "reason": "与 yuanbao 同源：消息容器选择器 0 命中 ⇒ countGrew 恒 false。两站独立复现，判定为跨站通用缺陷而非单站选择器漂移。",
+      "notes": "本轮未做 §4.5 语义裁决——取回层就失败了，评语义无对象；不得拿截图里的模型回复冒充扩展产物。"
+    },
+    {
+      "layer": "L1",
+      "platform": "yuanbao",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T19:26:18+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "本轮为 L2 扩平台专项，L1 DOM 契约探针未跑；L1 基线见 RMR-2026-11-04-01（yuanbao = pass）。",
+      "notes": ""
+    },
+    {
+      "layer": "L1",
+      "platform": "chatglm",
+      "status": "not-run",
+      "locale": "zh-CN",
+      "checked_at": "2026-11-10T19:26:18+08:00",
+      "evidence": [],
+      "evidence_files": [],
+      "reason": "同上；L1 基线见 RMR-2026-11-04-01（chatglm = pass）。",
+      "notes": ""
+    }
+  ]
+}
