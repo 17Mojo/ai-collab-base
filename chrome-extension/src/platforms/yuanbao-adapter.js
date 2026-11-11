@@ -21,6 +21,13 @@ const SELECTORS = {
     "button[data-send]",
   ],
   messageList: [
+    // 2026-11-10 真机实证（RMR-2026-11-10-01）：旧三个选择器在已登录会话页
+    // **全部 0 命中** ⇒ handleWaitForResponse 的 countGrew 恒 false ⇒ 永远
+    // 60s 超时，尽管 prompt 与 AI 回复都已真实渲染（见 L2-yuanbao-auto-2026-11-10.png）。
+    // 真实气泡带无哈希 data 属性：data-conv-speaker="human" / "ai"，
+    // 单轮会话实测 2 条（1 用户 + 1 AI），新消息会追加同类元素 ⇒ 计数会增长。
+    // 类名为 agent-chat__list__item，但带哈希后缀风险，用 data 属性更稳。
+    '[data-conv-speaker]',
     '[class*="message"]',
     // 2026-10-25 真机实测**删除**了 '[class*="chat"]'。
     //
@@ -38,7 +45,20 @@ const SELECTORS = {
     '[class*="response"]',
     ".message-item",
   ],
-  messageContent: [".prose", '[class*="answer"]', '[class*="content"]'],
+  // 2026-11-10 真机 DOM 采集：AI 气泡内部的正文链是
+  // agent-chat__list__item__content → agent-chat__bubble__content →
+  // ... → .hyc-content-md.hyc-content-md-done → .hyc-common-markdown → .ybc-p。
+  // `.hyc-content-md-done` 的 done 修饰只在生成结束后出现：流式期间该选择器
+  // 不命中 ⇒ extractMessageContent 返回空串 ⇒ 等待继续，天然避开取到碎片。
+  // 旧的 .prose / [class*="answer"] 在本站 0 命中；[class*="content"] 会命中
+  // 整卡（含状态条），故只作最后兜底。
+  messageContent: [
+    ".hyc-content-md-done",
+    ".agent-chat__bubble__content",
+    ".prose",
+    '[class*="answer"]',
+    '[class*="content"]',
+  ],
   // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
   // yb_v2 chunks：136（conv-item）+ 7972（SendButton）+ 3807/6742（hyc-deepthink）+ 7538（markdown）。
   // 最强信号是**无哈希 data 属性**：data-conv-speaker="ai" + data-conv-outputting="true"

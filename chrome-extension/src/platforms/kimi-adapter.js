@@ -14,8 +14,16 @@ const SELECTORS = {
     'button[aria-label*="发送"]',
     'button[class*="send"]',
   ],
-  messageList: [".chat-message", '[class*="message"]'],
-  messageContent: [".prose", ".chat-content", '[class*="content"]'],
+  // 🔧 2026-11-11 真机实测（已登录会话，kimi.com/chat/...）：
+  //   `.chat-content-item` 6 个 = 3 条 user + 3 条 assistant；
+  //   `.chat-content-item-assistant` 3 个 = **每条 AI 回复恰好 1 个**。
+  // 旧 `[class*="message"]` 在本站恒定 2 命中（命中的不是气泡）⇒ countGrew 恒 false
+  // ⇒ 每次 Response timeout。旧 `.chat-message` 为 0 命中。
+  // 只收 assistant 条目：与 yiyan 同理，避免把用户 prompt 当成 AI 正文回填。
+  messageList: [".chat-content-item-assistant", ".chat-content-item"],
+  // 正文：assistant 条目内**先**有 `.toolcall-content-text`（思考过程/工具调用），
+  // 用 :not() 精确排除，否则会把「思考已完成 → 推理过程」当成答案取回。
+  messageContent: [".markdown-container:not(.toolcall-content-text)", ".markdown"],
   // 2026-10-25 真机实测**删除**了 '[class*="loading"]'。
   //
   // 实测（空闲落地页，无会话）：`[class*="loading"]` 命中 9 个元素，

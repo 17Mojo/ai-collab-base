@@ -14,7 +14,17 @@ const SELECTORS = {
     'button[aria-label*="发送"]',
     'button[class*="send"]',
   ],
-  messageList: [".chat-message", '[class*="message"]', '[class*="response"]'],
+  // 2026-11-10 发送期 DOM 采样实证（L2-chatglm-auto-2026-11-10.probe1.dom-samples.json）：
+  // 旧三个选择器在整个生成过程中恒为 0 ⇒ countGrew 恒 false ⇒ 60s 超时。
+  // `.answer-content-wrap` 实测随时间 0 → 1 → 2 → 3 递增，且只对应 AI 回复卡，
+  // 因此「最新一条」天然就是最新回复；自身带 content 子串，正好命中下方
+  // messageContent 的 [class*="content"] 自身判定（extractMessageContent 先看自身）。
+  messageList: [
+    ".answer-content-wrap",
+    ".chat-message",
+    '[class*="message"]',
+    '[class*="response"]',
+  ],
   messageContent: [".chat-content", ".message-text", '[class*="content"]'],
   // 2026-10-25 真机实测**删除**了 '[class*="loading"]'。
   //

@@ -129,7 +129,11 @@ class DeepSeekAdapter extends PlatformAdapter {
     return {
       platformId: this.platformId,
       selectors: this.selectors,
-      timeouts: { response: 60000, typing: 5000, input: 100 },
+      // 🔧 2026-11-11 实测（RMR-2026-11-11-01）：多轮会话下本站单步响应会突破 60s
+      // —— step_2/3/4 各约 10s 成功，step_5 用了 132.7s，step_6 四次 60s 全超时。
+      // 取回链路本身**有效**（前 5 步都取到了真正文），卡的是单次等待上限。
+      // ⇒ 放到 180s 容纳长响应。这是 per-adapter 上限，不改公共判据。
+      timeouts: { response: 180000, typing: 5000, input: 100 },
     };
   }
 }

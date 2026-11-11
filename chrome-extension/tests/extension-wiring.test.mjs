@@ -1404,3 +1404,58 @@ test("N11：popup 对孤儿包出可见警告（不伪装成正常 Pack）", asy
   assert.equal(normalRow.dataset.unrecognized, undefined, "正常行不许带警告标");
   assert.equal(normalRow.querySelector(".pack-warn"), null, "正常行不许有警告元素");
 });
+
+test("SEND_TO_AI 的等待上限走过例外表，且表键必须真实存在（防静默失效）", () => {
+  // 2026-11-11 实锤（RMR-2026-11-11-01）。这条链路踩了三次，每次都被实测打回
+  // （失败步耗时始终是 244s = 4×60s+3×1s，一秒没变）：
+  //   1. `message.config?.timeout` —— message.config 是 **Pack 步骤的 config**
+  //      （pack-executor: `const config = step.config`，装 min_output_length /
+  //      example_hooks），没有 timeout 字段；
+  //   2. `message.config?.timeouts?.response` —— 同样落空；
+  //   3. `currentConfig?.timeouts?.response` —— currentConfig 是
+  //      `PLATFORM_CONFIGS[hostname]`，即 adapter 的 **SELECTORS**，也不含 timeouts。
+  // ⇒ 最终用站点例外表 PLATFORM_RESPONSE_TIMEOUT 收口（技术债已注明在源码里）。
+  const contentScript = readFileSync(
+    join(HERE, "../src/content/content-script.js"),
+    "utf8",
+  );
+  assert.match(
+    contentScript,
+    /message\.config\?\.timeout\s*\?\?\s*PLATFORM_RESPONSE_TIMEOUT\[currentPlatformId\]/,
+    "SEND_TO_AI 必须从 PLATFORM_RESPONSE_TIMEOUT 取站点上限",
+  );
+
+  // 表键写错 = 静默失效（一个字符之差就退回 60s，而且没有任何报错）。
+  // 所以强制要求：例外表的每个键都必须在 PLATFORM_CONFIGS 里真实存在。
+  const configsBlock = contentScript.match(/const PLATFORM_CONFIGS = \{([\s\S]*?)\};/);
+  const overrideBlock = contentScript.match(
+    /const PLATFORM_RESPONSE_TIMEOUT = \{([\s\S]*?)\};/,
+  );
+  assert.ok(configsBlock, "找不到 PLATFORM_CONFIGS 定义");
+  assert.ok(overrideBlock, "找不到 PLATFORM_RESPONSE_TIMEOUT 定义");
+
+  const overrideKeys = [...overrideBlock[1].matchAll(/"([^"]+)"\s*:/g)].map((m) => m[1]);
+  assert.ok(overrideKeys.length > 0, "例外表不该为空");
+  for (const key of overrideKeys) {
+    assert.match(
+      configsBlock[1],
+      new RegExp(`"${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"\\s*:`),
+      `例外表键 "${key}" 在 PLATFORM_CONFIGS 里不存在 —— 该覆盖永远不会生效`,
+    );
+  }
+
+  // 反向护栏：每个平台 adapter 仍须在 timeouts.response 上给出数字。
+  // 注意：该字段当前**尚未**接入内容脚本（是技术债，见 PLATFORM_RESPONSE_TIMEOUT
+  // 注释），此断言只保证「声明存在」，不代表它已生效——别把它当成生效的证据。
+  const platformsDir = join(HERE, "../src/platforms");
+  const adapters = readdirSync(platformsDir).filter((n) => n.endsWith("-adapter.js"));
+  assert.ok(adapters.length >= 10, `adapter 数量异常：${adapters.length}`);
+  for (const file of adapters) {
+    const src = readFileSync(join(platformsDir, file), "utf8");
+    assert.match(
+      src,
+      /timeouts:\s*\{[^}]*response:\s*\d+/,
+      `${file} 的 getConfig() 必须在 timeouts.response 上声明一个数字`,
+    );
+  }
+});

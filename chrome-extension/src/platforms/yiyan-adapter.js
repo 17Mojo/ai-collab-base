@@ -22,6 +22,17 @@ const SELECTORS = {
     "button[data-send]",
   ],
   messageList: [
+    // 🔧 2026-11-11 真机实测（已登录会话，wenxin.baidu.com/search/...）：
+    // AI 回复容器是 `div.answer-container`，**每条 AI 回复恰好 1 个**
+    // （实测 4 轮会话 = 4 个，文本 66/44/38/32 字）。
+    // 旧三件套（[class*="message"] / [class*="response"] / .chat-item）在本站
+    // 真实会话页 **0 命中** ⇒ `countGrew` 恒 false ⇒ 每次 Response timeout（243s）。
+    //
+    // 必须排在首位：findElements 是「按优先级取**第一个有命中**的选择器」。
+    // 只收 AI 容器、**不收** human 气泡（`div.cs-question-bubble`）——否则
+    // 发送后「最新一条」可能是用户自己刚发出去的 prompt，会被当成 AI 正文静默回填。
+    "div.answer-container",
+    "div.ai-entry",
     '[class*="message"]',
     // 2026-10-25 真机实测**删除**了 '[class*="chat"]'。
     //
@@ -40,7 +51,11 @@ const SELECTORS = {
     '[class*="response"]',
     ".chat-item",
   ],
-  messageContent: [".prose", '[class*="answer"]', '[class*="content"]'],
+  // 正文链路：div.answer-container → div.ai-entry → div.cosd-markdown-content
+  //            → div.marklang → p.marklang-paragraph
+  // 去掉 '[class*="answer"]'：本站该选择器共 **45 个**命中（含 `_answer-history_`、
+  // `cs-answer-hover-menu-container` 等嵌套/附属元素），取到的不一定是答案正文。
+  messageContent: [".cosd-markdown-content", ".marklang", '[class*="content"]'],
   // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
   // main-130a629d.js（入口主包）：深度思考加载行是自定义元素 <thinking-loading>
   // （「正在思考」文本挂其上，标签名无哈希；仅流式生成期挂载，旧版中间停顿态已弃用）；

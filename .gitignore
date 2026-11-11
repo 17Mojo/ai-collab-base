@@ -38,6 +38,8 @@ wheels/
 # Logs
 logs/
 *.log
+# 真机回归证据日志属交付物（RESULT 报告以其为最终判定依据），例外放行
+!collaboration/results/real-machine-runs/evidence/*.log
 
 # AI Collab specific
 .claude/settings.json

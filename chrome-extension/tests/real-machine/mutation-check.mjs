@@ -30,6 +30,17 @@
  *
  * 退出码：0 = 全部变异都被杀死；1 = 有变异存活（守护有洞）。
  *
+ * ## WorkBuddy 沙箱里跑的坑（2026-11-10 实锤）
+ *
+ * 收尾的 `rmSync(.mutation-tmp)` 一次删 182 个文件，会撞上
+ * WorkBuddy 的 safe-delete shim（阈值 50）⇒ 抛
+ * `SAFE_DELETE_BULK_CONFIRM_REQUIRED` ⇒ **进程退出码 1，但断言本身已全绿**
+ * （日志里 76 条 ✓、0 条 ✗ 才是结论，别只看退出码）。
+ * 想拿干净的 0：
+ *   `CODEBUDDY_SAFE_DELETE_ENABLED=0 node tests/real-machine/mutation-check.mjs`
+ * （2026-11-10 21:46 实测有效：76/76 被杀死、`EXIT_CODE=0`、临时目录自动清理。）
+ * 若已被拦，手工清残留：`rm -rf chrome-extension/.mutation-tmp`。
+ *
  * 用法：node tests/real-machine/mutation-check.mjs
  */
 
@@ -252,18 +263,16 @@ const MUTATIONS = [
   //
   // 这条变异把分支删掉，用同一条测试证明「真删了就会红」——
   // 否则这条修复只是一次「看着对」的接线，没有证据。
+  //
+  // 🔧 2026-11-11：锚点从「整段 handler 文本」改成「只改 case 标签」。
+  // 原锚点是一段 8 行的 find 字面量，只要 handler 内部改一行（本轮就改了超时取值），
+  // 锚点就悄悄失配——变异器会把它记成「存活」，看起来像守护有洞，实际是锚点漂移。
+  // 改 case 标签只需一行，语义同样是「这条消息没人认了」，但不会随实现细节漂。
   {
     name: "把内容脚本的 SEND_TO_AI 分支删掉",
     why: "后台的 AI 步骤靠它才能拿到 AI 的回复；删了 Pack 执行链路就断",
     target: "src/content/content-script.js",
-    find:
-      '      case "SEND_TO_AI":\n' +
-      "        handleSendToAI(message.prompt, message.config?.timeout)\n" +
-      "          .then((result) => sendResponse({ success: true, result }))\n" +
-      "          .catch((error) =>\n" +
-      "            sendResponse({ success: false, error: error.message }),\n" +
-      "          );\n" +
-      "        return true;\n",
+    find: '      case "SEND_TO_AI":\n',
     replace: "",
     testFile: "extension-wiring.test.mjs",
     expectTest: "Pack 的 AI 步骤发的那条消息",
@@ -804,6 +813,65 @@ const MUTATIONS = [
     replace: "          warnEl.textContent = '';",
     testFile: "extension-wiring.test.mjs",
     expectTest: "popup 对孤儿包出可见警告",
+  },
+
+  // ── 2026-11-10 多平台 L2 消息选择器契约 ──────────────────────
+  // RMR-2026-11-10-01：yuanbao / chatglm 的旧 messageList 在真实会话页
+  // 全部 0 命中 ⇒ countGrew 恒 false ⇒ 明明回复已生成却判 Response timeout。
+  // 这两条锚守的是「修好的选择器不许再漂回去」。
+  {
+    name: "把元宝的消息选择器退回 0 命中的旧三件套",
+    why: "真机实锤：旧三个选择器在已登录会话页 0 命中，handleWaitForResponse 永远等不到 ready",
+    target: "src/platforms/yuanbao-adapter.js",
+    find: "    '[data-conv-speaker]',\n",
+    replace: "",
+    testFile: "real-machine/multi-platform-selector.test.mjs",
+    expectTest: "元宝消息气泡能被数出来",
+  },
+  {
+    name: "把智谱的消息选择器退回 0 命中的旧三件套",
+    why: "发送期 DOM 采样：.chat-message / [class*=message] / [class*=response] 全程 0 命中，只有 .answer-content-wrap 随回复 0→1→2→3 增长",
+    target: "src/platforms/chatglm-adapter.js",
+    find: '    ".answer-content-wrap",\n',
+    replace: "",
+    testFile: "real-machine/multi-platform-selector.test.mjs",
+    expectTest: "智谱消息气泡能被数出来",
+  },
+  {
+    name: "把文心的消息选择器退回 0 命中的旧三件套",
+    why: "2026-11-11 真机实测：已登录会话页旧三件套 0 命中；只有 div.answer-container 随回复增长（4 轮 = 4 个，文本 66/44/38/32）",
+    target: "src/platforms/yiyan-adapter.js",
+    find: '    "div.answer-container",\n',
+    replace: "",
+    testFile: "real-machine/multi-platform-selector.test.mjs",
+    expectTest: "文心只数 AI 回复容器，不被 answer 附属元素撑大",
+  },
+  {
+    name: "把 Kimi 的消息选择器退回恒定命中的旧选择器",
+    why: "2026-11-11 真机实测：[class*=message] 在本站恒定 2 命中（不是气泡）；只有 .chat-content-item-assistant 每条回复 1 个",
+    target: "src/platforms/kimi-adapter.js",
+    find: '  messageList: [".chat-content-item-assistant", ".chat-content-item"],\n',
+    replace: "  messageList: ['.chat-message', '[class*=\"message\"]'],\n",
+    testFile: "real-machine/multi-platform-selector.test.mjs",
+    expectTest: "Kimi 只数 assistant 条目，不把用户消息算进来",
+  },
+  {
+    name: "把 LongCat 的消息选择器退回 0 命中的旧三件套",
+    why: "2026-11-11 真机实测：.message / [class*=response] / [class*=chat-item] 在已登录会话页 0/0/0 命中，fix2 因此在 step_2 挂了 723.9s（4×180s）",
+    target: "src/platforms/longcat-adapter.js",
+    find: '  messageList: [".assistant-message", ".v-chat-assistant-message"],\n',
+    replace: "  messageList: [\".message\", '[class*=\"response\"]', '[class*=\"chat-item\"]'],\n",
+    testFile: "real-machine/multi-platform-selector.test.mjs",
+    expectTest: "LongCat 只数 AI 条目，不把 human 气泡算进来",
+  },
+  {
+    name: "把 LongCat 的正文选择器退回把状态行带进来的旧版",
+    why: "整卡 textContent 含「已搜到 N 个网页」（比正文多 10 字，足以顶过 50 字闸门）；正文只认 .md-show-container",
+    target: "src/platforms/longcat-adapter.js",
+    find: '  messageContent: [".md-show-container", ".mt-markdown-body", ".markdown"],\n',
+    replace: "  messageContent: ['.prose', '.response-content', '[class*=\"content\"]'],\n",
+    testFile: "real-machine/multi-platform-selector.test.mjs",
+    expectTest: "LongCat 取到正文而不是「已搜到 N 个网页」状态行",
   },
 ];
 
