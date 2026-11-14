@@ -1,18 +1,32 @@
 name: Project Health Check
 
-# 🔧 2026-11-14 Node 24 单点试点（只在**本 workflow** 生效，验收前不推全库）
+# 🔧 2026-11-14 Node 24 分组升级 · 第四组：artifact 成对升级
 #
-# 背景：CI annotations 报 checkout@v4 / setup-python@v5 仍声明 Node.js 20，
-# runner 强制把它们迁到 Node 24。官方 v7 的 action.yml 均为 `using: node24`。
-# 本 workflow 只做「checkout → setup-python → 跑体检脚本 → 传 artifact」，
-# 不涉及 git push / persist-credentials / pull_request_target，是最小面试点。
+# 前情：PR #49 在本 workflow 单点试点 checkout@v4→v7 / setup-python@v5→v7
+# 并验收通过；PR #50 / #51 已把官方 actions 推广到 build / security /
+# lint / mypy-gate。本组把当时「故意不动」的两处 artifact action 成对升完。
 #
-# 本轮**故意不动**：
-#   - upload-artifact@v4 / download-artifact@v4：必须成对升级，且跨 job 下载
-#     只在 pull_request 事件触发，workflow_dispatch 验不到，留作下一组；
-#   - sticky-pull-request-comment@v2：第三方 action，单独评估；
-#   - runs-on: ubuntu-latest：Ubuntu 26 迁移是 runner 侧通知，不是配置错误。
-# 验收通过后再讨论是否把这两处版本推广到其余 6 个 workflow。
+# 为什么必须成对：upload-artifact@v7 与 download-artifact@v8 均转 ESM +
+# Node 24（runner ≥ 2.327.1）。v7 默认 archive: true 仍打包 zip，
+# v8 默认 skip-decompress: false、检查 Content-Type 后解压 ⇒ 两者自洽，
+# health_output.md 落到 GITHUB_WORKSPACE，下游 grep 读得到。
+# v8 另新增：digest-mismatch 默认 error、direct downloads（为配合 v7 可选的
+# archive:false 直传单文件）；本 workflow 未启用直传，走原有 zip 路径。
+# name 用 health-report-<github.run_id>，download 侧 run-id 默认当前
+# github.run_id，跨 job 由 needs: health 保证顺序，无需 github-token。
+#
+# 同时把本文件加入 pull_request.paths：此前只改 workflow 自身**不会触发**
+# 本 workflow 的 PR 事件，而 fail-on-low-score 的下载步骤带
+# `if: github.event_name == 'pull_request'` ⇒ workflow_dispatch / schedule
+# 下必然 skipped，跨 job 下载链路根本没被 PR 验证过（PR #49 试点时正是
+# 靠 workflow_dispatch，下载 job 按设计 skipped）。加入自身后本 PR 可自验；
+# 写法与 mypy-gate.yml 的 paths 对齐（那个文件一直包含自身）。
+#
+# 本轮仍**故意不动**：
+#   - marocchino/sticky-pull-request-comment@v2：第三方 action，单独评估；
+#   - runs-on: ubuntu-latest：Ubuntu 26 迁移是 runner 侧通知，不是配置错误；
+#   - pip install -r requirements.txt 2>/dev/null || true：与 PR #52 清掉的
+#     mypy-gate 同型吞错，另开单，不混入 action 版本升级。
 
 on:
   schedule:
@@ -25,6 +39,9 @@ on:
       - "ai_collab/**"
       - "tests/**"
       - "scripts/project_healthcheck.py"
+      # 2026-11-14：改 workflow 自身也要触发自己，否则 PR 事件下才执行的
+      # fail-on-low-score（跨 job artifact 下载）永远验不到。对齐 mypy-gate.yml。
+      - ".github/workflows/healthcheck.yml"
 
 jobs:
   health:
@@ -59,7 +76,7 @@ jobs:
           echo "grade=$GRADE" >> $GITHUB_OUTPUT
 
       - name: Upload report as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: health-report-${{ github.run_id }}
           path: health_output.md
@@ -84,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download health report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: health-report-${{ github.run_id }}
 
