@@ -28,10 +28,17 @@ jobs:
           node-version: "20"
 
       - name: Build Chrome Extension
+        # 2026-11-14 清吞错：此前 npm ci 失败会静默降级到 npm install，
+        # npm run build 失败被 2>/dev/null 吞掉后还打印不实的
+        # "no build script; using source" —— package.json 实际有
+        # "build": "node build.js"。GitHub 默认 shell 是 bash -e {0}，
+        # 裸命令失败即挡住 step；npm ci --dry-run 已验证 lockfile 一致。
+        # 口径与 test.yml 的 Install dependencies 一致（那里已注明
+        # 「npm ci 失败就是真失败」，并清理过 adapter tests skipped 的历史假绿）。
         run: |
           cd chrome-extension
-          npm ci 2>/dev/null || npm install
-          npm run build 2>/dev/null || echo "no build script; using source"
+          npm ci
+          npm run build
           mkdir -p dist
           echo "Extension build placeholder" > dist/BUILD_INFO.txt
 
