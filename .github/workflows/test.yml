@@ -33,6 +33,20 @@ name: Test Suite
 # 35262 B 上传成功）。全仓无 codecov.yml / 徽章 / 其他引用，删除无下游依赖。
 # 若日后要接 Codecov：先配好 CODECOV_TOKEN 或 OIDC 信任，再显式加回并
 # 验证真实上传成功，不要恢复这个 tokenless 的静默失败版本。
+#
+# 🔧 2026-11-15 清静默失败：删掉 3 处 `pip install -e . 2>/dev/null || true`
+# （nightly.yml 另有 1 处，同一裁定）。生产日志实证这 4 处**从未成功**：
+# `Getting requirements to build editable: finished with status 'error'`，
+# 无 `Successfully installed ai-collab-system`；stderr 被 2>/dev/null 吞、
+# 退出码被 || true 吞成绿。根因：pyproject.toml 用 setuptools 自动包发现，
+# flat-layout 下 8 个顶层包目录（packs/rules/memory/config/products/
+# openspec/ai_collab/collaboration）让它拒绝构建，本地干净快照已复现。
+# 删除安全：CI 在安装从未成功时一直全绿；pytest 从仓库根可直接 import
+# ai_collab，perf 用 `python3 -m ai_collab.cli` 跑源码
+# （ai_collab/cli/__main__.py 存在），全仓 workflow 无 `ai-collab` 命令调用。
+# **回溯更正**：PR #52 把这行分类为「可选可编辑安装」不准确，实为静默失败。
+# 若日后要真正支持可编辑安装，需先在 pyproject.toml 配置
+# `[tool.setuptools.packages.find] include = ["ai_collab*"]` 并验证，属另案。
 
 on:
   push:
@@ -64,7 +78,6 @@ jobs:
           python -m pip install --upgrade pip
           # 使用完整 requirements.txt（包含 aiohttp、sqlalchemy、pydantic 等）
           pip install -r requirements.txt
-          pip install -e . 2>/dev/null || true
 
       - name: Lint (ruff)
         # 只检查主源码目录。src/ 已于 6030087 删除——此前把 src/ 写在这里，
@@ -125,7 +138,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -e . 2>/dev/null || true
 
       - name: Run e2e static checks
         run: |
@@ -148,7 +160,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -e . 2>/dev/null || true
 
       - name: Run performance baseline
         # 墙钟阈值在共享 runner 上有机器速度噪声（最紧的 cli_help 阈值 1.0s，
