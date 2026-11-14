@@ -1,5 +1,19 @@
 name: Project Health Check
 
+# 🔧 2026-11-14 Node 24 单点试点（只在**本 workflow** 生效，验收前不推全库）
+#
+# 背景：CI annotations 报 checkout@v4 / setup-python@v5 仍声明 Node.js 20，
+# runner 强制把它们迁到 Node 24。官方 v7 的 action.yml 均为 `using: node24`。
+# 本 workflow 只做「checkout → setup-python → 跑体检脚本 → 传 artifact」，
+# 不涉及 git push / persist-credentials / pull_request_target，是最小面试点。
+#
+# 本轮**故意不动**：
+#   - upload-artifact@v4 / download-artifact@v4：必须成对升级，且跨 job 下载
+#     只在 pull_request 事件触发，workflow_dispatch 验不到，留作下一组；
+#   - sticky-pull-request-comment@v2：第三方 action，单独评估；
+#   - runs-on: ubuntu-latest：Ubuntu 26 迁移是 runner 侧通知，不是配置错误。
+# 验收通过后再讨论是否把这两处版本推广到其余 6 个 workflow。
+
 on:
   schedule:
     # 每周一 06:00 UTC 跑一次
@@ -17,10 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
