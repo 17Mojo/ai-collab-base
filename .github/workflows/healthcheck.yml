@@ -22,11 +22,23 @@ name: Project Health Check
 # 靠 workflow_dispatch，下载 job 按设计 skipped）。加入自身后本 PR 可自验；
 # 写法与 mypy-gate.yml 的 paths 对齐（那个文件一直包含自身）。
 #
-# 本轮仍**故意不动**：
-#   - marocchino/sticky-pull-request-comment@v2：第三方 action，单独评估；
+# 🔧 2026-11-14 Node 24 第三方第二组：sticky-pull-request-comment v2→v3。
+# 上游 action.yml 原文核对：v3 的 runs.using 为 "node24"（v2 是 node20）；
+# 本 workflow 用的 header / message 两个 input 均保留，GITHUB_TOKEN 默认仍是
+# ${{ github.token }}。v3.0.0 换 Node 24，v3.0.1 把构建从 ncc 换成 rollup
+# 并把上游自家 CI 改用 pull_request trigger —— 后者不是使用者的触发约束；
+# 本 workflow 本就是 pull_request 事件，且该 step 带
+# `if: github.event_name == 'pull_request'`，语义不变。
+# PR #53 的 run 43598745440 已证 v2 的 "Comment on PR" 在仓库默认
+# GITHUB_TOKEN 权限下 success ⇒ 权限前提不变，本轮不额外加 permissions：
+# 若加就必须同时给 contents: read，否则第 51 行的 actions/checkout
+# 会因权限收紧反而失败。
+#
+# 本轮仍**故意不动**（Task #16 两处，另开单）：
 #   - runs-on: ubuntu-latest：Ubuntu 26 迁移是 runner 侧通知，不是配置错误；
 #   - pip install -r requirements.txt 2>/dev/null || true：与 PR #52 清掉的
-#     mypy-gate 同型吞错，另开单，不混入 action 版本升级。
+#     mypy-gate 同型吞错，不混入 action 版本升级；
+#   - Check score 里 SCORE 为空时静默 exit 0：文件缺失/格式变更会被吞成假绿。
 
 on:
   schedule:
@@ -84,7 +96,7 @@ jobs:
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: project-health
           message: |
