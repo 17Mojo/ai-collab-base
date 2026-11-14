@@ -25,10 +25,18 @@ name: Build Artifacts
 #     （push / load 默认仍 'false'）；移除的是 DOCKER_BUILD_NO_SUMMARY、
 #     DOCKER_BUILD_EXPORT_RETENTION_DAYS 两个 env 与 legacy export-build 工具，
 #     本 workflow 未设置、未依赖 build summary。
-#   - build-push 上的 continue-on-error: true 是既有配置，本轮不扩大也不收窄，
-#     与 PR #52 / Task #16 的吞错同类，另案裁定，不混入版本升级。
+#   - build-push 上的 continue-on-error: true 当时按「不混入版本升级」留到
+#     另案；已于本轮 Task #20 清掉，见下方 Build backend image 注释。
 # 本 workflow 只有 push / workflow_dispatch，无 pull_request 触发 ⇒
 # 用 workflow_dispatch 手跑 build-docker job 验证，不看 PR checks。
+#
+# 🔧 2026-11-14 清吞错（Task #20）：摘掉 Build backend image 的
+# continue-on-error: true。此前镜像构建失败会被吞成绿 job，且本 workflow
+# 无 pull_request 触发，PR checks 根本看不到这个 job。
+# 前置核查：最近 6 次 build.yml run（含 main push 与 workflow_dispatch）的
+# build-docker job 全部 success；PR #56 的 run 43605560522 日志实证
+# "#12 exporting to oci image format DONE" + ImageID，镜像真构建并 load
+# ⇒ 摘掉兜底不引入新失败。此后 Dockerfile / 依赖拉不动就真红。
 
 on:
   push:
@@ -76,10 +84,12 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Build backend image
+        # 2026-11-14 清吞错：去掉 continue-on-error，镜像构建失败真挡 CI。
+        # 口径同 PR #52 的 npm ci / npm run build；最近 6 次 run 该 job 全绿，
+        # 生产日志有 exporting to oci image format DONE + ImageID 实证。
         uses: docker/build-push-action@v7
         with:
           context: ./local-backend
           tags: ai-collab-backend:latest
           push: false
           load: true
-        continue-on-error: true
