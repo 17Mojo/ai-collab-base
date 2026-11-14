@@ -8,6 +8,15 @@
     data-role="send-button" 发送按钮（应为 1 个）
     data-role="message"     消息（可多个）
   改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+
+  🔧 2026-11-14 同步：生产 yiyan-adapter.js 在 2026-11-11 真机实测后把
+  messageList 从 `[class*="message"]` / `[class*="response"]` / `.chat-item`
+  换成 `div.answer-container` / `div.ai-entry`（旧三件套在新 UI 上恒命中
+  8 个「通知中心」元素，而 answer-container 发送前为 0 ⇒ 基准跨选择器跳变
+  ⇒ 明明答完还判 Response timeout 243.6s）。
+  本快照据此同步：2 条标注消息为 `div.answer-container`，正文容器同步为
+  `.cosd-markdown-content`。未标注的 `.chat-item` 保留为负例，守护
+  「不返回标注范围之外的元素」。
 -->
 <head>
   <meta charset="UTF-8">
@@ -41,18 +50,19 @@
   <div class="spinner" style="display:none;"></div>
 
   <!-- Message List -->
-  <div class="chat-message" data-role="message">
-    <div class="answer-content">
+  <div class="answer-container" data-role="message">
+    <div class="cosd-markdown-content">
       <div class="prose"><p>你好，文心一言</p></div>
     </div>
   </div>
 
-  <div class="chat-message" data-role="message">
-    <div class="answer-content">
+  <div class="answer-container" data-role="message">
+    <div class="cosd-markdown-content">
       <div class="prose"><p>你好！我是文心一言，很高兴为你服务。</p></div>
     </div>
   </div>
 
+  <!-- 负例：新 UI 上这类元素属于通知中心/旧气泡，不在标注范围内 -->
   <div class="chat-item">
     <div class="answer-content">
       <div class="prose"><p>推荐一本好书</p></div>

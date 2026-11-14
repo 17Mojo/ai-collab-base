@@ -8,6 +8,14 @@
     data-role="send-button" 发送按钮（应为 1 个）
     data-role="message"     消息（可多个）
   改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
+
+  🔧 2026-11-14 同步：生产 longcat-adapter.js 在 2026-11-11 真机实测后把
+  messageList 从 `.message` / `[class*="response"]` / `[class*="chat-item"]`
+  换成 `.assistant-message` / `.v-chat-assistant-message`（旧三件套在已登录
+  会话 0 命中，且 `.v-chat-messge-view` 会把 human 气泡一起数进去，
+  导致把用户 prompt 当 AI 正文回填）。
+  本快照据此同步：3 条标注消息统一为 assistant 条目，正文容器同步为
+  `.md-show-container`。下方旧 class 保留为「标注范围之外」的负例。
 -->
 <head>
   <meta charset="UTF-8">
@@ -36,25 +44,19 @@
   </div>
 
   <!-- Message List -->
-  <div class="message" data-role="message">
-    <div class="response-content">
-      <div class="prose"><p>What is LongCat?</p></div>
-    </div>
+  <div class="assistant-message" data-role="message">
+    <div class="md-show-container"><div class="prose"><p>What is LongCat?</p></div></div>
   </div>
 
-  <div class="message" data-role="message">
-    <div class="response-content">
-      <div class="prose"><p>LongCat is an AI assistant. How can I help you?</p></div>
-    </div>
+  <div class="assistant-message" data-role="message">
+    <div class="md-show-container"><div class="prose"><p>LongCat is an AI assistant. How can I help you?</p></div></div>
   </div>
 
-  <div class="message" data-role="message">
-    <div class="response-content">
-      <div class="prose"><p>Write a haiku about cats</p></div>
-    </div>
+  <div class="assistant-message" data-role="message">
+    <div class="md-show-container"><div class="prose"><p>Write a haiku about cats</p></div></div>
   </div>
 
-  <!-- Fallback selectors -->
+  <!-- 负例：标注范围之外的元素，不属于现行生产选择器 -->
   <div class="response-item" style="display:none;">
     <div class="content"><p>fallback</p></div>
   </div>
