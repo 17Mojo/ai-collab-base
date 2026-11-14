@@ -1,5 +1,17 @@
 name: Build Artifacts
 
+# 🔧 2026-11-14 Node 24 第二组（build + security）：官方 actions/* 升到 v7。
+# 试点 PR #49 已验收「checkout / setup-python v7 在最小面 workflow 上安全」。
+# 本组两个 workflow 步骤内均无 git push、不读 checkout 凭据、无 pull_request_target ⇒
+# checkout v6 的 persist-credentials 改存单独文件、v7 的 fork PR 限制都不命中。
+# setup-node v7 转 ESM、移除 dummy NODE_AUTH_TOKEN、新增 cache outputs；本 workflow
+# 只用 node-version、不发布 npm ⇒ 行为变化不命中。
+# upload-artifact v7 转 ESM 并新增可选 archive:false 直传单文件，默认仍打包 zip，
+# name / path / if-no-files-found / retention-days inputs 不变；GitHub-hosted runner
+# 满足 v6 起要求的 >= 2.327.1。全仓唯一 download-artifact 在 healthcheck.yml，
+# 且没有跨 workflow 下载 ⇒ 本组升级不会破坏任何下载链路。
+# 第三方 docker/setup-buildx-action@v3 / docker/build-push-action@v5 本轮不动。
+
 on:
   push:
     branches: [main]
@@ -10,8 +22,8 @@ jobs:
   build-extension:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
 
@@ -24,7 +36,7 @@ jobs:
           echo "Extension build placeholder" > dist/BUILD_INFO.txt
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: chrome-extension
           path: chrome-extension/dist/
@@ -33,7 +45,7 @@ jobs:
   build-docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

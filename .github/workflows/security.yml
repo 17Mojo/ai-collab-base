@@ -1,5 +1,14 @@
 name: Security Scan
 
+# 🔧 2026-11-14 Node 24 第二组：官方 actions/* 升到 v7（试点 PR #49 已验收）。
+# 本 workflow 步骤内无 git 操作、不读 checkout 凭据、普通 pull_request 事件 ⇒
+# checkout v7 的 fork PR 限制（仅 pull_request_target / workflow_run）不命中；
+# setup-python v7.0.0 移除 pip-install input 与 EOL Python，本 workflow 只用
+# python-version: "3.12" ⇒ 均不命中。
+# upload-artifact v7 默认仍打包 zip（新增可选的 archive:false 直传单文件）、
+# 原有 inputs 不变，且本 workflow 不下载 artifact。
+# 详见 build.yml 头部的分组依据。
+
 on:
   push:
     branches: [main, develop]
@@ -18,10 +27,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -54,7 +63,7 @@ jobs:
 
       - name: Upload Bandit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bandit-report
           path: bandit-report.json
@@ -67,10 +76,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -90,7 +99,7 @@ jobs:
 
       - name: Upload pip-audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pip-audit-report
           path: pip-audit-report.json
