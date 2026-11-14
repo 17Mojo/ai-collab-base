@@ -1,5 +1,15 @@
 name: Mypy Type Check Gate
 
+# 🔧 2026-11-14 Node 24 第三组：官方 actions/* 升到 v7（PR #49 / #50 已验收）。
+# 只用 python-version: "3.12"，setup-python v7 移除 pip-install input、调整 EOL
+# 测试矩阵均不命中；checkout v7 的 fork PR 限制不命中（普通 PR 事件、步骤内无
+# git 操作、不读 checkout 凭据）。
+# upload-artifact v7 默认仍打包 zip（archive: true）、原有 inputs 不变，
+# artifact name 里的 github.run_id 表达式不受影响；本 workflow 不下载 artifact，
+# 全仓唯一 download-artifact 在 healthcheck.yml 且无跨 workflow 下载 ⇒ 链路安全。
+# 本地 composite action ./.github/actions/coverage-gate 非外部版本，不动。
+# 分组依据与 breaking-change 逐条核对另见 build.yml / security.yml 头部注释。
+
 on:
   push:
     branches: [main]
@@ -16,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -43,7 +53,7 @@ jobs:
 
       - name: Upload mypy report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mypy-report-${{ github.run_id }}
           path: mypy_output.txt
@@ -55,10 +65,10 @@ jobs:
     timeout-minutes: 15
     needs: mypy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
