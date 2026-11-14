@@ -1,5 +1,27 @@
 name: Test Suite
 
+# 🔧 2026-11-14 Node 24 第五组 B（test.yml）：官方 actions/* 升到 v7。
+# 这是本系列最后一批官方 action。前四组 + 第五组 A 已逐条核对并生产验证
+# 所有 breaking changes：PR #49（healthcheck 试点）、#50（build+security）、
+# #51（lint+mypy-gate）、#53（healthcheck artifact 成对 v7/v8）、
+# #54（nightly，且拿到全 workflow 零 Node 20 告警）。
+#
+# 本 workflow 面最大（6 job、12 处），但类型都已在前组验证过：
+#   - checkout@v7：PR #50 / #51 已验。本 workflow 是普通 push / pull_request /
+#     workflow_dispatch，步骤内无 git 操作、不读 checkout 凭据 ⇒ fork PR 限制
+#     （仅 pull_request_target / workflow_run）不命中。
+#   - setup-python@v7：矩阵 3.10 / 3.11 / 3.12。PR #51 已由生产日志证实
+#     setup-python@v7 在 Ubuntu 26 runner 上装成 CPython 3.10.22
+#     （python-3.10.22-linux-26.04-x64.tar.gz），且 cache: pip 正常；
+#     「Remove EOL Python versions」只动上游自家 CI 测试矩阵，运行时不拒绝
+#     EOL 版本。本 workflow 显式禁用 cache pip，v7 移除的是 pip-install input。
+#   - setup-node@v7：PR #50 的 build.yml 已验 node-version: "20" 正常；
+#     ESM 迁移、移除 dummy NODE_AUTH_TOKEN、新增 cache outputs 均不命中
+#     （本 workflow 只用 node-version，不发布 npm）。
+#   - 本 workflow 无 upload/download-artifact ⇒ 不涉及 artifact 链路。
+# 本地 composite ./.github/actions/coverage-gate 与第三方
+# codecov/codecov-action@v4 均不动（第三方单独评估）。
+
 on:
   push:
     branches: [main, develop]
@@ -16,10 +38,10 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           # 禁用 cache pip：避免使用陈旧的缓存依赖
@@ -87,10 +109,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -110,10 +132,10 @@ jobs:
     # HOME 隔离掉（tests/perf/conftest.py），基线不再依赖运行者的机器历史。
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -143,10 +165,10 @@ jobs:
   chrome-extension-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "20"
 
@@ -199,8 +221,8 @@ jobs:
   pack-validation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
@@ -220,10 +242,10 @@ jobs:
     # 测试侧以 STUDIO_TEST_BASE_URL 指过来（tests/integration/test_studio_integration.py）。
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
