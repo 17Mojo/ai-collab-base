@@ -88,12 +88,17 @@ jobs:
           pip install ruff
           ruff check ai_collab/ scripts/
 
-      - name: Type check (mypy, informational)
-        # mypy 已清零（Success: no issues found in 99 source files），
-        # 阻塞式门禁见 mypy-gate.yml。此处保留为信息性输出，
-        # continue-on-error 暂留以防上游 mypy 版本升级引入新告警。
-        continue-on-error: true
+      - name: Type check (mypy)
+        # 2026-11-15 清吞错：摘掉 continue-on-error，并补 set -o pipefail。
+        # 双重吞错：默认 shell 是 bash -e {0}（无 pipefail），
+        # `mypy ... | tail -10` 的 step 退出码来自 tail；再叠加 step 级开关，
+        # mypy 报错也照样全绿。本地对照：无 pipefail → 0，加 pipefail → 1，
+        # mypy 成功路径 → 0（不误伤）。
+        # 严格阻塞门禁另见 mypy-gate.yml（3.12 / 同一 ai_collab/ 口径，本就
+        # 不带 continue-on-error）；摘掉此处开关只是与既有门禁对齐，并未
+        # 新增「上游 mypy 升级引红」这一类风险。
         run: |
+          set -o pipefail
           pip install mypy
           mypy ai_collab/ 2>&1 | tail -10
 

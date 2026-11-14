@@ -87,15 +87,20 @@ jobs:
         run: pip install pip-audit
 
       - name: Audit dependencies
-        # 当前策略：发现漏洞只警告，不阻塞
-        continue-on-error: true
+        # 2026-11-15 清吞错：发现漏洞即真失败。此前是三重吞错——step 级
+        # continue-on-error 加两条 pip-audit 各自的 || true / || echo，
+        # 只摘开关等于没清（本地对照：漏洞场景下脚本仍 exit 0）。
+        # 依赖清单缺失也不再静默 skip：扫描根本没跑就该挡 CI，而不是绿。
+        # pip-audit 源码 _cli.py 实证：漏洞路径先写 --output 报告再 sys.exit(1)，
+        # 故下面 Upload 的 if: always() 能拿到报告；_fatal() 类致命错误不产出
+        # 报告，upload-artifact 只会给 warning，不会二次失败。
         run: |
-          if [ -f requirements.txt ]; then
-            pip-audit -r requirements.txt --format json --output pip-audit-report.json || true
-            pip-audit -r requirements.txt || echo "::warning::Vulnerable dependencies detected, see report"
-          else
-            echo "::notice::No requirements.txt found, skipping"
+          if [ ! -f requirements.txt ]; then
+            echo "::error::requirements.txt 不存在，依赖漏洞扫描无法执行。"
+            exit 1
           fi
+          pip-audit -r requirements.txt --format json --output pip-audit-report.json
+          pip-audit -r requirements.txt
 
       - name: Upload pip-audit report
         if: always()
