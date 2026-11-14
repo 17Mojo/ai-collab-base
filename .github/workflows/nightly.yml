@@ -16,8 +16,13 @@ name: Nightly Build
 #   - 只用 python-version: "3.12"，setup-python v7 移除 pip-install input、
 #     调整 EOL 测试矩阵均不命中；checkout v7 的 fork PR 限制不命中
 #     （无 pull_request 事件、步骤内无 git 操作、不读 checkout 凭据）。
-# 按 PR #52 的全仓分类，`pip install -e . 2>/dev/null || true` 属
-# 「可选可编辑安装」，另案裁定，不混入 action 版本升级。
+# 🔧 2026-11-15 清静默失败：删掉 Install dependencies 里的
+# `pip install -e . 2>/dev/null || true`。**回溯更正**：PR #52 当时分类为
+# 「可选可编辑安装」不准确 —— 生产日志与本地干净快照复现均证实它从未成功
+# （setuptools 在 flat-layout 下发现 8 个顶层包目录而拒绝构建），stderr 被
+# 2>/dev/null 吞、退出码被 || true 吞成绿。本 workflow 用
+# `python -m pytest tests/` 从源码跑，不依赖可编辑安装；test.yml 头部有同一
+# 裁定的完整依据。若日后要支持可编辑安装，另开单修 pyproject.toml。
 
 on:
   schedule:
@@ -44,7 +49,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov
-          pip install -e . 2>/dev/null || true
 
       - name: Run full test suite with coverage
         # 2026-11-14：这条命令走管道。未指定 shell 时 GitHub 在 Linux 上默认用
