@@ -28,7 +28,12 @@ jobs:
           pip install -e . 2>/dev/null || true
 
       - name: Run full test suite with coverage
+        # 2026-11-14：这条命令走管道。未指定 shell 时 GitHub 在 Linux 上默认用
+        # `bash -e {0}`（**不带 pipefail**）⇒ pytest 失败会被 tee 的 0 退出码吞掉，
+        # nightly 显示全绿而实际测试红了。显式开 pipefail，让左端失败真的挡住 step。
+        # 本地复现：bash -e -c 'false | tee /dev/null' → 0；加 -o pipefail → 1。
         run: |
+          set -o pipefail
           python -m pytest tests/ -v --tb=short \
             --cov=ai_collab --cov-report=html --cov-report=xml \
             --durations=20 \
