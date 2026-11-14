@@ -19,8 +19,27 @@ name: Test Suite
 #     ESM 迁移、移除 dummy NODE_AUTH_TOKEN、新增 cache outputs 均不命中
 #     （本 workflow 只用 node-version，不发布 npm）。
 #   - 本 workflow 无 upload/download-artifact ⇒ 不涉及 artifact 链路。
-# 本地 composite ./.github/actions/coverage-gate 与第三方
-# codecov/codecov-action@v4 均不动（第三方单独评估）。
+# 🔧 2026-11-14 Node 24 第三方第三组（最后一组）：codecov v4→v7。
+# 上游 action.yml 原文（v7 tag 与 v7.1.1 同一 commit 303a32d）：
+#   - v7 的 runs.using = composite，不再是 node20 JS action；主体是
+#     dist/codecov.sh 下载 Codecov CLI（依赖 bash/git/curl/gpg），唯一 JS
+#     step 是 pinned actions/github-script@ed597411…（= v8.0.0，node24）。
+#   - `file` input 在 **v5.0.0 就被 deprecated 并移除**（Migration Guide
+#     明确 file → files、plugin → plugins），v7 只留 `files`；本 workflow
+#     的 file: ./coverage.xml 必须改成 files: ./coverage.xml。单元素列表
+#     与原单文件语义等价（v7 描述为「追加到搜索到的报告」）。
+#   - fail_ci_if_error 默认 false，与显式值一致；token 无 default、
+#     use_oidc 默认 false ⇒ 不调 getIDToken，不需要 id-token: write；
+#     skip_validation 默认 false 需 gpg，runner 具备（run 43603021708 的
+#     v4 日志已实证 gpg 导入与 SHA256SUM 校验可用）。
+#   - v6.0.0 起支持 node24；v7.0.0 只是 GPG 签名账户 codecovsecurity →
+#     codecovsecops 的迁移，非功能 breaking。
+# 注意（既有假绿，非本轮引入，另案 Task #21）：run 43603021708 里 codecov
+# v4 的 step conclusion=success，但 CLI 日志三阶段全部报
+# "Token required - not valid tokenless upload" —— 无 CODECOV_TOKEN 且
+# protected branch，上传实际失败，被 fail_ci_if_error: false 吞成绿。
+# 本轮只做版本与 input 迁移，不改变该行为，也不假装修好了上传。
+# 本地 composite ./.github/actions/coverage-gate 仍不动。
 
 on:
   push:
@@ -86,9 +105,9 @@ jobs:
 
       - name: Upload coverage to Codecov (optional)
         if: matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
-          file: ./coverage.xml
+          files: ./coverage.xml
           fail_ci_if_error: false  # Codecov 不可用时不阻塞 CI
 
       - name: Run integration tests
