@@ -10,7 +10,25 @@ name: Build Artifacts
 # name / path / if-no-files-found / retention-days inputs 不变；GitHub-hosted runner
 # 满足 v6 起要求的 >= 2.327.1。全仓唯一 download-artifact 在 healthcheck.yml，
 # 且没有跨 workflow 下载 ⇒ 本组升级不会破坏任何下载链路。
-# 第三方 docker/setup-buildx-action@v3 / docker/build-push-action@v5 本轮不动。
+# 🔧 2026-11-14 Node 24 第三方第一组（build.yml）：docker pair 成对升级。
+# 官方 actions/* 已在 PR #49~#55 全部收官（v7 / download v8），剩余 Node 20
+# 告警只来自 4 个第三方 action，逐个按上游 action.yml 原文事实核查后分组落地。
+# 本组成对升 setup-buildx-action v3→v4、build-push-action v5→v7：
+#   - 两者 runs.using 均由 node20 改为 node24，要求 runner >= 2.327.1；
+#     官方 v7 系列已在 PR #49~#55 于同一批 GitHub-hosted runner 上生产验证过，
+#     前提成立。
+#   - setup-buildx v4 的 "Remove deprecated inputs/outputs" 不命中：本 workflow
+#     无 with、不读 outputs；v4 仍保留 version / driver / cache-binary / cleanup
+#     等 inputs 与 name / driver / platforms / nodes outputs。
+#   - build-push v7 的 breaking changes 不命中：本 workflow 只用的
+#     context / tags / push / load 四个 input 在 v7 action.yml 中全部保留
+#     （push / load 默认仍 'false'）；移除的是 DOCKER_BUILD_NO_SUMMARY、
+#     DOCKER_BUILD_EXPORT_RETENTION_DAYS 两个 env 与 legacy export-build 工具，
+#     本 workflow 未设置、未依赖 build summary。
+#   - build-push 上的 continue-on-error: true 是既有配置，本轮不扩大也不收窄，
+#     与 PR #52 / Task #16 的吞错同类，另案裁定，不混入版本升级。
+# 本 workflow 只有 push / workflow_dispatch，无 pull_request 触发 ⇒
+# 用 workflow_dispatch 手跑 build-docker job 验证，不看 PR checks。
 
 on:
   push:
@@ -55,10 +73,10 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./local-backend
           tags: ai-collab-backend:latest
