@@ -1,5 +1,16 @@
 name: Code Quality
 
+# 🔧 2026-11-14 Node 24 第三组（lint + mypy-gate）：官方 actions/* 升到 v7。
+# 依据：PR #49 单点试点、PR #50 第二组（build + security）均已验收通过。
+# setup-python v7 release note 的「Remove EOL Python versions」经核查只动上游自家
+# CI 测试矩阵与 fixture（actions/setup-python#1333 的改动文件全是 .github/workflows/
+# 与 __tests__/data/），运行时并不拒绝 EOL 版本；生产 versions-manifest.json 中
+# 3.10.22 明确含 linux 26.04 构建 ⇒ 本文件 3 个 job 的 python-version: "3.10"
+# 在 Ubuntu 26 runner 上仍可用。v7 action.yml 仍保留 cache / cache-hit，
+# lint job 的 cache: pip 不受影响；v7 移除的 pip-install input 本文件未使用。
+# checkout v7 的 fork PR 限制只针对 pull_request_target / workflow_run，
+# 本文件是普通 push / pull_request 且步骤内无 git 操作 ⇒ 不命中。
+
 on:
   push:
     branches: [main]
@@ -10,8 +21,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.10"
           cache: pip
@@ -28,8 +39,8 @@ jobs:
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
@@ -48,8 +59,8 @@ jobs:
     # 这个真问题用「仓库小了」这个假象掩盖过去。
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
