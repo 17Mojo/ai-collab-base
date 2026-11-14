@@ -1,5 +1,24 @@
 name: Nightly Build
 
+# 🔧 2026-11-14 Node 24 第五组 A（nightly）：官方 actions/* 升到 v7。
+# 前四组已逐条核对并生产验证官方 v7/v8 的 breaking changes：
+# PR #49 healthcheck 试点、#50 build+security、#51 lint+mypy-gate、
+# #53 healthcheck artifact 成对（upload@v7 + download@v8）。本组与第五组 B
+# （test.yml）是最后两批 checkout / setup-python / upload-artifact。
+#
+# 本 workflow 的特点与核查：
+#   - 只有 schedule + workflow_dispatch，**PR 不触发** ⇒ 必须手跑分支验证；
+#   - 4 处 upload-artifact 都带 if: always()，且**全无下载方**（全仓唯一
+#     download-artifact@v8 在 healthcheck.yml，用的是各自的 github.run_id）
+#     ⇒ 升 v7 不触及下载链路；v7 默认 archive: true、原有 inputs 不变；
+#   - `set -o pipefail`（PR #48 修掉 tee 吞 pytest 退出码）保持不动，
+#     本 PR 不改任何 run 脚本；
+#   - 只用 python-version: "3.12"，setup-python v7 移除 pip-install input、
+#     调整 EOL 测试矩阵均不命中；checkout v7 的 fork PR 限制不命中
+#     （无 pull_request 事件、步骤内无 git 操作、不读 checkout 凭据）。
+# 按 PR #52 的全仓分类，`pip install -e . 2>/dev/null || true` 属
+# 「可选可编辑安装」，另案裁定，不混入 action 版本升级。
+
 on:
   schedule:
     # 每天 UTC 02:00（避开工作时间，跑全量慢测）
@@ -13,10 +32,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -41,7 +60,7 @@ jobs:
 
       - name: Upload coverage HTML
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-coverage-html
           path: htmlcov/
@@ -49,7 +68,7 @@ jobs:
 
       - name: Upload coverage XML
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-coverage-xml
           path: coverage.xml
@@ -57,7 +76,7 @@ jobs:
 
       - name: Upload test log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-test-log
           path: nightly-test.log
@@ -75,7 +94,7 @@ jobs:
 
       - name: Upload facts snapshot
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-facts-snapshot
           path: nightly-facts-snapshot.md
