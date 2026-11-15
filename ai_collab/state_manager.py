@@ -17,7 +17,16 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any, TypeVar, cast
+
+from .identity import (
+    IDENTITY_REQUIRED_SINCE,
+    derive_assignee_from_session,
+    normalize_model_id,
+    normalize_session_id,
+    resolve_identity,
+)
 
 T = TypeVar("T")
 
@@ -314,6 +323,8 @@ class StateManager:
         "support_skills",
         "acceptance_commands",
     )
+    # 身份字段：切点之后必填（见 ai_collab/identity.py 的 IDENTITY_REQUIRED_SINCE）。
+    TASK_CONTRACT_IDENTITY_FIELDS = ("session_id", "model_id")
     TASK_CONTRACT_DEFAULT_CHANGE_ID = "legacy/task-contract-migration"
     TASK_CONTRACT_DEFAULT_REVIEWER = "codex"
     # 无法从 orchestration 反查角色时的兜底角色代号（PROTOCOL §7.3）
@@ -1069,6 +1080,8 @@ class StateManager:
         support_skills: list[str] | None = None,
         acceptance_commands: list[str] | None = None,
         result_file: str | None = None,
+        session_id: str | None = None,
+        model_id: str | None = None,
         contract_required: bool = True,
     ) -> dict[str, Any]:
         """
@@ -1110,10 +1123,23 @@ class StateManager:
             contract_required=contract_required,
         )
 
+        normalized_session_id = None if not session_id else normalize_session_id(session_id)
+        normalized_model_id = None if not model_id else normalize_model_id(model_id)
+        if session_id and not normalized_session_id:
+            raise ValueError(f"session_id 格式非法: {session_id!r}（约束见 ai_collab/identity.py）")
+        if model_id and not normalized_model_id:
+            raise ValueError(f"model_id 格式非法: {model_id!r}（约束见 ai_collab/identity.py）")
+
         def _mutate() -> dict[str, Any]:
             if task_id in self.state["tasks"]:
                 raise ValueError(f"任务ID已存在: {task_id}")
             task_dict: dict[str, Any] = asdict(task)
+            # 身份字段不进 Task dataclass：它是契约层事实，按需写入即可，
+            # 避免为两个可选字段改动整个状态模型的字段顺序与序列化形状。
+            if normalized_session_id:
+                task_dict["session_id"] = normalized_session_id
+            if normalized_model_id:
+                task_dict["model_id"] = normalized_model_id
             self.state["tasks"][task_id] = task_dict
             if task_id not in self.state["active_tasks"]:
                 self.state["active_tasks"].append(task_id)
@@ -1398,6 +1424,8 @@ class StateManager:
         support_skills: list[str] | None = None,
         acceptance_commands: list[str] | None = None,
         result_file: str | None = None,
+        session_id: str | None = None,
+        model_id: str | None = None,
         note: str | None = None,
         actor: str | None = None,
     ) -> dict[str, Any]:
@@ -1410,13 +1438,16 @@ class StateManager:
         Args:
             task_id: 任务唯一标识
             change_id: OpenSpec 变更 ID 或特殊标签
-            assignee: 承接方（Agent 提供商，即 PROTOCOL §7.3 的 assignee_provider）
+            assignee: 路由键（Agent 提供商标签）。PROTOCOL §7.3 已改为
+                session_id + model_id 声明身份，此字段降级为运行时投递键。
             assignee_role: 承接角色代号（PROTOCOL §7.3 的 assignee_role，如 AGENT_EXEC）
             reviewer: 审核者
             primary_skill: 主技能
             support_skills: 支撑技能列表
             acceptance_commands: 验收命令列表
             result_file: 结果文件相对路径
+            session_id: 执行会话标识（PROTOCOL §7.3 身份字段）
+            model_id: 执行模型标识（PROTOCOL §7.3 身份字段）
             note: 可选备注，会写入任务 notes
             actor: 写入者标识，用于 owner lock 判定
         """
@@ -1454,6 +1485,23 @@ class StateManager:
             _set_str("result_file", result_file)
             _set_list("support_skills", support_skills)
             _set_list("acceptance_commands", acceptance_commands)
+
+            def _set_identity(field: str, value: str | None) -> None:
+                """身份字段只接受合法格式，非法即报错——静默丢弃会让工单看起来「已声明」。"""
+                if value is None:
+                    return
+                raw = value.strip()
+                if not raw:
+                    return
+                normalized = normalize_session_id(raw) if field == "session_id" else normalize_model_id(raw)
+                if not normalized:
+                    raise ValueError(f"{field} 格式非法: {value!r}（约束见 ai_collab/identity.py）")
+                if task.get(field) != normalized:
+                    task[field] = normalized
+                    updated[field] = normalized
+
+            _set_identity("session_id", session_id)
+            _set_identity("model_id", model_id)
 
             if not updated:
                 return {
@@ -1719,11 +1767,22 @@ class StateManager:
             if any(not isinstance(item, str) or not item.strip() for item in value):
                 invalid_fields.append(field_name)
 
+        # 身份：切点之后必填，切点之前按历史处理（不判错、不编造，只计数）。
+        identity = resolve_identity(task)
+        if identity["state"] == "missing":
+            missing_fields.extend(self.TASK_CONTRACT_IDENTITY_FIELDS)
+        elif identity["state"] == "invalid":
+            invalid_fields.extend(
+                name for name in self.TASK_CONTRACT_IDENTITY_FIELDS if task.get(name) and not identity.get(name)
+            )
+
         valid = not missing_fields and not invalid_fields
         return {
             "valid": valid,
             "missing_fields": missing_fields,
             "invalid_fields": invalid_fields,
+            "identity_state": identity["state"],
+            "legacy_identity": identity["state"] == "legacy",
         }
 
     def _normalize_non_empty_str(self, value: Any) -> str | None:
@@ -1938,6 +1997,7 @@ class StateManager:
 
         checked = 0
         skipped = 0
+        legacy_identity = 0
         issues: list[dict[str, Any]] = []
 
         for task in tasks:
@@ -1947,6 +2007,8 @@ class StateManager:
 
             checked += 1
             check = self._evaluate_task_contract(task)
+            if check.get("legacy_identity"):
+                legacy_identity += 1
             if check["valid"]:
                 continue
 
@@ -1955,8 +2017,9 @@ class StateManager:
                     "task_id": task_id,
                     "missing_fields": check["missing_fields"],
                     "invalid_fields": check["invalid_fields"],
+                    "identity_state": check.get("identity_state", ""),
                     "remediation": (
-                        "re-register task with --change-id --assignee --reviewer "
+                        "re-register task with --change-id --session-id --model-id --reviewer "
                         "--primary-skill --support-skills --acceptance-commands --result-file "
                         "or update task metadata to satisfy contract"
                     ),
@@ -1967,9 +2030,78 @@ class StateManager:
             "scope": scope,
             "checked_tasks": checked,
             "skipped_tasks": skipped,
+            "legacy_identity": legacy_identity,
             "invalid_count": len(issues),
             "valid": len(issues) == 0,
             "issues": issues,
+        }
+
+    def audit_task_identity(self, scope: str = "all", apply: bool = False) -> dict[str, Any]:
+        """身份迁移审计：逐条给出身份状态，只按注册表事实补路由键，不编造身份。
+
+        - declared：session_id + model_id 齐全且合法
+        - partial：只给了其中一个（可补齐，但补什么得由人决定）
+        - legacy：切点之前创建且未声明（历史欠账，无事实可依，保持原样）
+        - missing：切点之后创建且未声明（必须补，否则契约不合法）
+        - invalid：给了但格式非法
+
+        写入只在一种情况下发生：工单已有 session_id 但缺 `assignee` 路由键，且该会话在
+        注册表里可查——写入的是注册表里的事实，不是推测。
+        """
+        if scope not in {"active", "all"}:
+            raise ValueError(f"不支持的 scope: {scope}")
+
+        tasks = self.get_active_tasks() if scope == "active" else self.get_all_tasks()
+        counts = {"declared": 0, "partial": 0, "legacy": 0, "missing": 0, "invalid": 0}
+        details: list[dict[str, Any]] = []
+        route_fillable: list[dict[str, str]] = []
+        applied: list[str] = []
+
+        workspace = Path(self._workspace_root())
+        for task in tasks:
+            task_id = str(task.get("task_id") or "")
+            if not task_id:
+                continue
+
+            identity = resolve_identity(task)
+            state = identity["state"]
+            has_session = bool(str(task.get("session_id") or "").strip())
+            has_model = bool(str(task.get("model_id") or "").strip())
+            if state != "invalid" and has_session != has_model:
+                state = "partial"
+            counts[state] = counts.get(state, 0) + 1
+
+            entry = {
+                "task_id": task_id,
+                "state": state,
+                "session_id": str(task.get("session_id") or ""),
+                "model_id": str(task.get("model_id") or ""),
+                "created_at": str(task.get("created_at") or ""),
+            }
+            details.append(entry)
+
+            if has_session and not str(task.get("assignee") or "").strip():
+                derived = derive_assignee_from_session(workspace, str(task.get("session_id")))
+                if derived:
+                    route_fillable.append({"task_id": task_id, "assignee": derived})
+                    if apply:
+                        self.update_task_contract(
+                            task_id,
+                            assignee=derived,
+                            note="身份审计：按会话注册表补路由键",
+                            actor="identity_audit",
+                        )
+                        applied.append(task_id)
+
+        return {
+            "scope": scope,
+            "apply": apply,
+            "cutoff": IDENTITY_REQUIRED_SINCE,
+            "total": len(details),
+            "counts": counts,
+            "route_fillable": route_fillable,
+            "applied": applied,
+            "details": details,
         }
 
     def migrate_task_contracts(

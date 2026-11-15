@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-11",
+  "updated_at": "2026-11-16",
   "purpose": "已确认但本次未修的缺陷台账。宁可写下来也不要留在某人脑子里——下一个人接手时不必重新考古一遍。",
   "conventions": {
     "id": "N1、N2……递增，永不复用。关闭后把 status 改 closed 并保留条目与结论，不要删。",
@@ -477,6 +477,49 @@
         "自纠：上一轮回复称『4 条命令已备好』不成立——plan.commands 里 PACK_PATH 是 <variant-pack.json> 占位符、两个变体 Pack 从未落盘。已修：emitVariantPacks() 纯本地生成带硬性自检的 A/B 变体（ab-pack-2026-11-11.no-boundary.json / .with-boundary.json），命令改用真实绝对路径并带 sha256，计划明写 imported/executed=false；补「4 轮必须串行」「预检也要 ALLOW_FROZEN=1」两条约束。守护：session-wall-ab.test.mjs 15/15、局部变异 8/8，RESULT §18.2。",
         "dist 一致性已核：npm run build 退出码 0，content-script.js / service-worker.js build 前后 sha256 均 IDENTICAL；证据 evidence/dist-consistency-2026-11-11.json。",
         "解冻前置 4 条仍只满足 1 条（dist）：无明确解冻指令、两站登录态未核（deepseek 从未预检、longcat 只有 11-10 旧快照）、32 步额度未确认。⇒ 命题仍未验，N25 保持 open。"
+      ]
+    },
+    {
+      "id": "N26",
+      "priority": "P2",
+      "status": "open",
+      "title": "身份审计只读状态账本（18 条），磁盘上另有 8 个任务文件未被计入",
+      "reader": "读 `tasks migrate-identity` 输出、准备据 `legacy=18` 宣布「历史工单已全部盘点」的人——26 个 `TASK-*.md` 里只有 18 个在账本就是 `tasks` 字典的键，剩下 8 个文件这份审计从没见过；以及后续要做「给历史工单补身份」的人——按账本补完仍会有 8 个文件没有身份字段，届时会被误当成「补漏了」。",
+      "where": [
+        "ai_collab/state_manager.py:2054（audit_task_identity 取 get_all_tasks()，即 state['tasks']）",
+        "ai_collab/state_manager.py:2246（get_all_tasks 只读账本，不扫 collaboration/tasks/*.md）",
+        "collaboration/tasks/（磁盘 26 个 TASK-*.md，账本 18 条）"
+      ],
+      "detail": "2026-11-16 在 migrate-session-identity 收口阶段实测：`python3 -m ai_collab.cli -w <main> tasks migrate-identity` 报 `total=18 legacy=18`，而对 26 个任务文件逐个 grep `session_id:` / `model_id:` 得到 26/26 两者皆无。两处事实不矛盾（账本是任务事实源，md 是文档载体），但**数量差 8** 说明有一部分任务只存在于文件里、从未进账本，因此任何以账本为输入的身份类审计都天然漏掉它们。本 change 未引入该差异，但把它写进「证据」会让 `legacy=18` 看起来像全量，属于会误导的口径。",
+      "impact": "① 据 `legacy=18` 宣布历史欠账已全部盘点，实际漏 8 个文件；② 后续按账本补身份后复算，md 侧仍有 8 个空字段，容易被判成「迁移没跑完」而反复返工；③ 若将来有工具改成扫 md 文件，同一批任务会被算两次或给出不同 legacy 数，两套口径并存。",
+      "fix": "已做（本轮）：在 `openspec/changes/migrate-session-identity/tasks.md` 的「偏离与理由 §2」写明差 8 条、审计输入是账本而非文件，并在 E7 证据里同时给出账本 18 与磁盘 26 两个数，避免单口径误导。待做：① 决定任务事实源的唯一归属——要么把 8 个文件补录进账本，要么在审计输出里显式声明「本审计覆盖账本 N 条，磁盘另有 M 个未登记文件」；② 若选后者，给 `audit_task_identity` 增加 `unregistered_files` 计数并加守护用例；③ 补录前不得在报告里使用「全部任务」这类全量措辞。",
+      "found_at": "2026-11-16",
+      "closed_at": null,
+      "appended_evidence": [
+        "账本侧：`tasks migrate-identity` → `total=18 declared=0 partial=0 legacy=18 missing=0 invalid=0`；该次运行前后 `logs/collaboration_state.json` sha256 均为 62d92b34…f1b5d4（只读实测）。",
+        "磁盘侧：`for f in TASK-*.md` 逐个 grep 身份字段 → `文件总数=26 有 session_id=0 有 model_id=0 两者皆无=26`。",
+        "差值 8 未逐条追查归属，本条只登记「数量不一致且审计口径会误导」，不宣称已知是哪 8 个。"
+      ]
+    },
+    {
+      "id": "N27",
+      "priority": "P2",
+      "status": "open",
+      "title": "机器本地的监控快照被跟踪进库，提交会把共享快照覆盖成本机单会话",
+      "reader": "在 worktree 或干净检出里跑过一次 `sessions register` / `tasks validate-contract` 然后 `git add -A` 的人——`collaboration/monitoring/*_latest.md` 会被静默改写，提交后 main 上的 8 会话快照变成「单会话、healthy 1」，而这份 diff 看起来像一次正常的数据更新；以及看板读者——他们以为那是团队会话总览，实际是最后一个人跑 CLI 那台机器的本地视图。",
+      "where": [
+        "collaboration/monitoring/SESSION_REGISTRY_SUMMARY_latest.md（自动生成，头部写着「自动生成」）",
+        "collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md（同上）",
+        "ai_collab/state_manager.py:2054 附近（validate-contract 结束时刷新该摘要）"
+      ],
+      "detail": "2026-11-16 在 migrate-session-identity 收口阶段实测：本 worktree 只跑了一次 `sessions register` 与一次 `validate-contract`，两个摘要文件立刻被改写——`SESSION_REGISTRY_SUMMARY_latest.md` 从「生成时间 2026-10-24 / 会话数 8 / healthy 7 / unhealthy 1」变成「2026-11-16 / 会话数 1 / healthy 1 / unhealthy 0」，8 个真实会话 ID 整段被本机唯一会话 `sess-migrate-identity-20261116` 替换。数据源 `logs/session_registry_state.json` 是 gitignored 的本机状态，因此这些摘要天生只描述「生成它的那台机器」。",
+      "impact": "① `git add -A` 提交后 main 上的团队会话总览被覆写成单机视图，且 diff 形如正常刷新，评审很难看出信息丢失；② 两份 worktree 并行时互相覆盖，谁最后提交谁赢，历史里留下一串语义错误的快照；③ 任何以该摘要为输入的健康度/审计判断都会读到该机器以外的会话数为 0，得出「团队只有一个会话」的荒谬结论。",
+      "fix": "已做（本轮）：识别到该风险后将两个文件从提交 pathspec 中排除并 `git checkout --` 还原，提交里不含它们，`git status` 复跑后确认无残留。待做：① 把 `collaboration/monitoring/*_latest.md` 加入 `.gitignore` 并 `git rm --cached`，让摘要不再入库；② 若要保留团队级总览，改为 CI/汇总侧生成，数据源换成跨会话的聚合口径而非单机 `logs/`；③ 在修复前，任何 `git add -A` 式提交都应显式排除该目录。",
+      "found_at": "2026-11-16",
+      "closed_at": null,
+      "appended_evidence": [
+        "实测 diff：`-生成时间: 2026-10-24T19:06:17` / `-会话数: 8` / `+会话数: 1`，8 条 `assignee=claude_code` 会话行被删除，只留 `sess-migrate-identity-20261116`。",
+        "该改动由 `sessions register` 与 `tasks validate-contract` 自动触发，非人为编辑；本轮已 `git checkout --` 还原，未进入提交。"
       ]
     }
   ]

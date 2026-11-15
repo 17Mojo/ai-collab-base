@@ -43,6 +43,7 @@ from ..daily_report import (
     write_daily_report_markdown,
 )
 from ..dispatch_trigger import build_handoff_payload, parse_trigger_phrase, split_orders_by_assignee
+from ..identity import derive_assignee_from_session
 from ..missing_ack_monitor import run_missing_ack_monitor
 from ..noop_pending_monitor import (
     get_noop_pending_stats,
@@ -1067,6 +1068,22 @@ def cmd_tasks(args):
 
     elif cmd == "register":
         task_id = args.task_id or f"TASK-{int(datetime.now().timestamp())}"
+        session_id = getattr(args, "session_id", None)
+        model_id = getattr(args, "model_id", None)
+        assignee = getattr(args, "assignee", None) or args.ai
+        route_source = "explicit"
+        if session_id:
+            # 身份 → 路由的桥：只给身份时按会话注册表反查路由键。
+            derived = derive_assignee_from_session(Path(os.path.abspath(args.workspace or os.getcwd())), session_id)
+            if derived:
+                assignee = derived
+                route_source = "registry"
+            elif not getattr(args, "assignee", None):
+                print(
+                    f"\n错误: 会话 {session_id} 未在会话注册表中登记，无法反查路由键\n"
+                    "      请先 sessions register 登记该会话，或显式给出 --assignee"
+                )
+                return 1
         task = state.register_task(
             task_id=task_id,
             ai_type=args.ai,
@@ -1074,17 +1091,22 @@ def cmd_tasks(args):
             files=args.files or [],
             vscode_context={"source": "cli"},
             change_id=getattr(args, "change_id", None),
-            assignee=getattr(args, "assignee", None) or args.ai,
+            assignee=assignee,
             assignee_role=getattr(args, "assignee_role", None),
             reviewer=getattr(args, "reviewer", None),
             primary_skill=getattr(args, "primary_skill", None),
             support_skills=getattr(args, "support_skills", None),
             acceptance_commands=getattr(args, "acceptance_commands", None),
             result_file=getattr(args, "result_file", None),
+            session_id=session_id,
+            model_id=model_id,
         )
         print(f"\n任务已注册: {task_id}")
         print(f"  AI: {task['ai_type']}")
         print(f"  描述: {task['description']}")
+        if session_id:
+            print(f"  身份: session_id={task.get('session_id', '')} model_id={task.get('model_id', '')}")
+            print(f"  路由键来源: {route_source}（assignee={task.get('assignee', '')}）")
 
     elif cmd == "validate-contract":
         scope = getattr(args, "scope", None) or "active"
@@ -1094,8 +1116,13 @@ def cmd_tasks(args):
         print(
             "\n契约校验结果: "
             f"checked={report['checked_tasks']} skipped={report['skipped_tasks']} "
-            f"invalid={report['invalid_count']}"
+            f"invalid={report['invalid_count']} legacy_identity={report.get('legacy_identity', 0)}"
         )
+        if report.get("legacy_identity"):
+            print(
+                f"  说明: legacy_identity={report['legacy_identity']} 为时间切点之前创建、未声明身份的工单；"
+                f"不判错、不计入 invalid，但需在后续补记（切点之后缺失会判 invalid）"
+            )
         if report["issues"]:
             for item in report["issues"]:
                 print(f"  - {item['task_id']}")
@@ -1188,6 +1215,33 @@ def cmd_tasks(args):
                 )
         if bool(getattr(args, "strict", False)) and int(report.get("issue_count", 0)) > 0:
             return 1
+    elif cmd == "migrate-identity":
+        scope = getattr(args, "scope", None) or "all"
+        apply_changes = bool(getattr(args, "apply", False))
+        report = state.audit_task_identity(scope=scope, apply=apply_changes)
+        counts = report["counts"]
+        print(
+            "\n身份迁移审计: "
+            f"scope={report['scope']} apply={report['apply']} cutoff={report['cutoff']} total={report['total']} "
+            f"declared={counts.get('declared', 0)} partial={counts.get('partial', 0)} "
+            f"legacy={counts.get('legacy', 0)} missing={counts.get('missing', 0)} "
+            f"invalid={counts.get('invalid', 0)}"
+        )
+        if report["route_fillable"]:
+            print("  路由键可按注册表补全:")
+            for item in report["route_fillable"]:
+                print(f"    - {item['task_id']} -> assignee={item['assignee']}")
+        else:
+            print("  路由键可补全项: 0（注册表未提供可反查的会话）")
+        if apply_changes:
+            print(f"  已写入: {len(report['applied'])} 条")
+        else:
+            print("  只读审计，未写入任何文件（加 --apply 才写，且只写注册表事实）")
+        if counts.get("missing", 0):
+            print("  提示: missing 表示切点之后创建却未声明身份，需用 tasks update --session-id --model-id 补齐")
+        if counts.get("legacy", 0):
+            print("  提示: legacy 是历史欠账，本命令不为其编造身份值")
+
     elif cmd == "migrate-contract":
         scope = getattr(args, "scope", None) or "all"
         dry_run = bool(getattr(args, "dry_run", False))
@@ -1239,6 +1293,8 @@ def cmd_tasks(args):
             "support_skills": getattr(args, "support_skills", None),
             "acceptance_commands": getattr(args, "acceptance_commands", None),
             "result_file": getattr(args, "result_file", None),
+            "session_id": getattr(args, "session_id", None),
+            "model_id": getattr(args, "model_id", None),
         }
         contract_updates = {key: value for key, value in contract_updates.items() if value}
 
@@ -1266,7 +1322,8 @@ def cmd_tasks(args):
             print(
                 "\n错误: 需要指定 --status 或至少一个契约字段"
                 "\n      (--acceptance-commands / --result-file / --assignee / --assignee-role"
-                " / --reviewer / --primary-skill / --support-skills / --change-id)"
+                " / --reviewer / --primary-skill / --support-skills / --change-id"
+                " / --session-id / --model-id)"
             )
             return 1
 
@@ -5038,6 +5095,7 @@ def main():
             "validate-contract",
             "audit-result-consistency",
             "migrate-contract",
+            "migrate-identity",
         ],
         help="子命令",
     )
@@ -5079,6 +5137,8 @@ def main():
     tasks_parser.add_argument("--support-skills", nargs="*", help="支持技能列表")
     tasks_parser.add_argument("--acceptance-commands", nargs="*", help="验收命令列表")
     tasks_parser.add_argument("--result-file", help="结果文件路径")
+    tasks_parser.add_argument("--session-id", help="执行会话标识（PROTOCOL §7.3 身份字段）")
+    tasks_parser.add_argument("--model-id", help="执行模型标识（PROTOCOL §7.3 身份字段）")
     tasks_parser.add_argument("--report", help="审计报告路径（audit-result-consistency 专用）")
     tasks_parser.add_argument("--summary", help="审计摘要路径（audit-result-consistency 专用）")
     tasks_parser.add_argument(
@@ -5089,6 +5149,7 @@ def main():
     )
     tasks_parser.add_argument("--strict", action="store_true", help="契约校验失败时返回非零状态码")
     tasks_parser.add_argument("--dry-run", action="store_true", help="迁移任务契约时仅预览不落盘")
+    tasks_parser.add_argument("--apply", action="store_true", help="身份审计时写入可按注册表反查的路由键（默认只读）")
     tasks_parser.add_argument("--default-change-id", help="迁移任务契约时使用的默认 change_id")
     tasks_parser.add_argument("--migration-reviewer", help="迁移任务契约时使用的默认 reviewer")
 

@@ -51,6 +51,7 @@
 - [ ] 检查 `collaboration_state.json` 冲突状态
 - [ ] 确认目标文件未被标记为 `implementing` 或 `testing`
 - [ ] 确认当前角色绑定状态（通过 `/menu status`）
+- [ ] 确认工单身份字段（`session_id` / `model_id`，PROTOCOL §7.3）已声明或可从会话注册表反查
 - [ ] 创建开发日志文件
 ```
 
