@@ -210,7 +210,17 @@ def detect_worktree_branch_collisions(workspace: Path) -> dict[str, Any]:
 
     检测是只读的 `git worktree list --porcelain`，不改任何工作树状态。
     """
-    result = _run_git(workspace, ["worktree", "list", "--porcelain"])
+    try:
+        result = _run_git(workspace, ["worktree", "list", "--porcelain"])
+    except OSError as exc:
+        # 接进 preflight 后本函数会在各种环境里跑：git 不在 PATH 时不能让异常逃逸，
+        # 否则「开工检查」自己先崩了。查不到 ≠ 无冲突，故带上 error 交由调用方决定口径。
+        return {
+            "collisions": [],
+            "worktree_count": 0,
+            "severity": "none",
+            "error": f"git 不可用: {exc}",
+        }
     if result.returncode != 0:
         return {
             "collisions": [],
