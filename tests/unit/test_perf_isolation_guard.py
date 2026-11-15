@@ -114,6 +114,8 @@ state.register_task(
     support_skills=["devops-architect"],
     acceptance_commands=["python3 -m pytest -q tests/perf/"],
     result_file="collaboration/results/RESULT_PERF-GUARD-001.md",
+    session_id="sess-perf-guard-001",
+    model_id="codearts-qwen-3",
 )
 start = time.perf_counter()
 state.update_task_status("PERF-GUARD-001", TaskStatus.IMPLEMENTING, note="guard")

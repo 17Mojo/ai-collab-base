@@ -88,6 +88,9 @@ def test_state_update_performance(tmp_path):
         support_skills=["devops-architect"],
         acceptance_commands=["python3 -m pytest -q tests/perf/"],
         result_file="collaboration/results/RESULT_PERF-UPDATE-001.md",
+        # 身份是契约的一部分（PROTOCOL §7.3），缺了会在 update_task_status 时被契约门禁拦下。
+        session_id="sess-perf-update-001",
+        model_id="codearts-qwen-3",
     )
 
     # Measure state update

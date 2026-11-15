@@ -484,6 +484,8 @@ def test_task_contract_allows_implementing_when_required_fields_complete(tmp_pat
         support_skills=["planning-with-files"],
         acceptance_commands=["pytest -q tests/unit/test_cli.py"],
         result_file="collaboration/results/RESULT_TASK-CONTRACT-OK-001.md",
+        session_id="sess-contract-ok-001",
+        model_id="claude-opus-4.6",
         contract_required=True,
     )
 
@@ -766,6 +768,8 @@ def test_migrate_task_contracts_upgrades_legacy_tasks(tmp_path: Path, monkeypatc
         ai_type="copilot",
         description="legacy task",
         files=["collaboration/tasks/TASK-MIGRATE-LEGACY-001.md"],
+        session_id="sess-migrate-legacy-001",
+        model_id="copilot-gpt-5.1",
         contract_required=False,
     )
 
@@ -796,6 +800,8 @@ def test_migrate_task_contracts_dry_run_keeps_state_unchanged(tmp_path: Path, mo
         ai_type="claude_code",
         description="legacy dry-run",
         files=["ai_collab/state_manager.py"],
+        session_id="sess-migrate-dryrun-001",
+        model_id="claude-opus-4.6",
         contract_required=False,
     )
 
