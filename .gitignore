@@ -26,6 +26,10 @@ wheels/
 # IDE
 .idea/
 .vscode/settings.json.license
+# 会话级配置覆盖层：会话基线不进库，否则每个后续提交都会被 G2 判成基线过期
+.vscode/ai-collab.local.json
+# 会话级必读声明（含文件哈希）：每个会话各不相同，不进库
+.ai_collab_session.json
 *.swp
 *.swo
 *~
@@ -36,7 +40,11 @@ wheels/
 .LSOverride
 
 # Logs
-logs/
+# 目录级排除 `logs/` 会让取反规则一律失效（git 不允许重新包含被排除目录下的文件），
+# 因此改成「忽略直接子项 + 逐层取反」，只放行 PROTOCOL §7.4 要求的开发日志落点。
+logs/*
+!logs/claude-code/
+!logs/claude-code/**
 *.log
 # 真机回归证据日志属交付物（RESULT 报告以其为最终判定依据），例外放行
 !collaboration/results/real-machine-runs/evidence/*.log

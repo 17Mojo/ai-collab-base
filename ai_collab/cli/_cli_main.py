@@ -1508,6 +1508,31 @@ def cmd_sessions(args):
     workspace = Path(os.path.abspath(args.workspace or os.getcwd()))
     cmd = getattr(args, "subcommand", "")
 
+    if cmd == "ack-reads":
+        # 必读清单的唯一写入入口：把「已读」写成带哈希的可核验声明。
+        if not getattr(args, "session_id", None):
+            print("\n错误: sessions ack-reads 需要指定 --session-id")
+            return 1
+        from ..governance import SESSION_REL, GovernanceError, ack_required_reads, verify_required_reads
+
+        try:
+            record = ack_required_reads(
+                workspace,
+                session_id=str(args.session_id).strip(),
+                acknowledged_by=str(getattr(args, "assignee", "") or "").strip(),
+            )
+        except GovernanceError as exc:
+            print(f"\n错误: {exc}")
+            return 1
+        reads = verify_required_reads(workspace)
+        print("\n必读清单声明已写入:")
+        print(f"  file: {SESSION_REL}")
+        print(f"  session_id: {record.get('session_id', '')}")
+        print(f"  acknowledged_at: {record.get('acknowledged_at', '')}")
+        print(f"  declared: {reads['declared']}  verified: {reads['verified']}")
+        print(f"  verify: {'PASS' if reads['ok'] else 'FAIL'}  {reads['detail']}")
+        return 0 if reads["ok"] else 1
+
     if cmd == "register":
         if not getattr(args, "session_id", None):
             print("\n错误: sessions register 需要指定 --session-id")
@@ -5073,6 +5098,7 @@ def main():
         "subcommand",
         choices=[
             "register",
+            "ack-reads",
             "refresh",
             "inspect",
             "health",
