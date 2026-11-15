@@ -265,9 +265,7 @@ class HandoffManager:
         with open(target_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    def _send_feedback(
-        self, handoff: dict[str, Any], feedback: str, result_files: list[str] | None
-    ):
+    def _send_feedback(self, handoff: dict[str, Any], feedback: str, result_files: list[str] | None):
         """发送回馈通知"""
         from_ai = handoff["to_ai"]
         to_ai = handoff["from_ai"]
@@ -318,9 +316,7 @@ def create_handoff(
     metadata: dict[str, Any] | None = None,
 ) -> str:
     """创建交接通知"""
-    return _handoff_manager.create_handoff(
-        from_ai, to_ai, handoff_type, title, description, files, metadata
-    )
+    return _handoff_manager.create_handoff(from_ai, to_ai, handoff_type, title, description, files, metadata)
 
 
 def accept_handoff(handoff_id: str, by_ai: str) -> bool:
@@ -328,9 +324,7 @@ def accept_handoff(handoff_id: str, by_ai: str) -> bool:
     return _handoff_manager.accept_handoff(handoff_id, by_ai)
 
 
-def complete_handoff(
-    handoff_id: str, by_ai: str, feedback: str, result_files: list[str] | None = None
-) -> bool:
+def complete_handoff(handoff_id: str, by_ai: str, feedback: str, result_files: list[str] | None = None) -> bool:
     """完成交接并发送回馈"""
     return _handoff_manager.complete_handoff(handoff_id, by_ai, feedback, result_files)
 

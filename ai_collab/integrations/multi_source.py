@@ -222,9 +222,7 @@ class KnowledgeAggregator:
 
         # 3. 验证加成: 通过验证的源比例
         if knowledge.cross_validation:
-            validation_rate = sum(knowledge.cross_validation.values()) / len(
-                knowledge.cross_validation
-            )
+            validation_rate = sum(knowledge.cross_validation.values()) / len(knowledge.cross_validation)
             validation_bonus = validation_rate * 0.2
         else:
             validation_bonus = 0.0
@@ -255,7 +253,7 @@ class KnowledgeAggregator:
         # 合并多个源的内容
         merged_parts = []
         for i, source in enumerate(sources):
-            merged_parts.append(f"[Source {i+1}: {source.source_type}]\n{source.content}")
+            merged_parts.append(f"[Source {i + 1}: {source.source_type}]\n{source.content}")
 
         return "\n\n".join(merged_parts)
 

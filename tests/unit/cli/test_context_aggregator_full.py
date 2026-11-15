@@ -187,9 +187,7 @@ class TestContextAggregatorCLIAddFromFile:
         cli = ContextAggregatorCLI()
 
         with patch("builtins.open", mock_open(read_data="Notebook content")):
-            result = cli.add_from_file(
-                file_path="/path/to/notebook.txt", source="notebook", confidence=0.9
-            )
+            result = cli.add_from_file(file_path="/path/to/notebook.txt", source="notebook", confidence=0.9)
 
         assert_success(result)
         mock_aggregator.extract_knowledge.assert_called_once_with(
@@ -533,9 +531,7 @@ class TestContextAggregatorCLIMain:
         mock_aggregator.extract_knowledge.return_value = mock_context_id
         mock_aggregator_class.return_value = mock_aggregator
 
-        with patch(
-            "sys.argv", ["context_aggregator.py", "add", "--source", "file", "--content", "test"]
-        ):
+        with patch("sys.argv", ["context_aggregator.py", "add", "--source", "file", "--content", "test"]):
             result = main()
 
         assert result == 0
@@ -692,9 +688,7 @@ class TestContextAggregatorCLIMainFull:
         mock_aggregator.extract_knowledge.return_value = mock_context_id
         mock_aggregator_class.return_value = mock_aggregator
 
-        with patch(
-            "sys.argv", ["context_aggregator.py", "add-file", "--path", "/path/to/file.txt"]
-        ):
+        with patch("sys.argv", ["context_aggregator.py", "add-file", "--path", "/path/to/file.txt"]):
             with patch("builtins.open", mock_open(read_data="test content")):
                 result = main()
 

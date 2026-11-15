@@ -27,9 +27,7 @@ class TestPackRatingCLISimple:
             mock_api_class.return_value = mock_api
 
             cli = PackRatingCLI()
-            result = cli.add_rating(
-                pack_id="test_pack", score=5, title="Excellent", content="Great pack!"
-            )
+            result = cli.add_rating(pack_id="test_pack", score=5, title="Excellent", content="Great pack!")
 
             assert_success(result)
             mock_api.rate_pack.assert_called_once()
@@ -103,9 +101,7 @@ class TestBulkOperationPattern:
 
         with patch("ai_collab.cli.pack_bulk.BulkOperationEngine") as mock_engine_class:
             mock_engine = MagicMock()
-            mock_engine.bulk_create.return_value = create_mock_bulk_result(
-                total=3, succeeded=3, failed=0
-            )
+            mock_engine.bulk_create.return_value = create_mock_bulk_result(total=3, succeeded=3, failed=0)
             mock_engine_class.return_value = mock_engine
 
             cli = PackBulkCLI()

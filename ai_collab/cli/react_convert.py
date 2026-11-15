@@ -76,9 +76,7 @@ def save_artifacts(artifacts: ConversionArtifacts, output_dir: str):
 
         f.write("## Summary\n\n")
         f.write(f"- **Schema Valid**: {'✓' if artifacts.validation_report.schema_valid else '✗'}\n")
-        f.write(
-            f"- **Compliance Valid**: {'✓' if artifacts.validation_report.compliance_valid else '✗'}\n"
-        )
+        f.write(f"- **Compliance Valid**: {'✓' if artifacts.validation_report.compliance_valid else '✗'}\n")
         f.write(
             f"- **Status**: {artifacts.validation_report.schema_valid and artifacts.validation_report.compliance_valid and 'READY_FOR_OWNER_REVIEW' or 'BLOCKED'}\n\n"
         )
@@ -174,10 +172,7 @@ def convert_requirement_file(requirement_path: str, output_dir: str, verbose: bo
 
     status = (
         "READY_FOR_OWNER_REVIEW"
-        if (
-            artifacts.validation_report.schema_valid
-            and artifacts.validation_report.compliance_valid
-        )
+        if (artifacts.validation_report.schema_valid and artifacts.validation_report.compliance_valid)
         else "BLOCKED"
     )
     print(f"Status: {status}")
@@ -207,9 +202,7 @@ def convert_requirement_file(requirement_path: str, output_dir: str, verbose: bo
 
 def main() -> int:
     """Main CLI entry point"""
-    parser = argparse.ArgumentParser(
-        description="Convert Owner requirements to Pack drafts using ReAct pattern"
-    )
+    parser = argparse.ArgumentParser(description="Convert Owner requirements to Pack drafts using ReAct pattern")
     parser.add_argument("--requirement", "-r", required=True, help="Path to requirement JSON file")
     parser.add_argument(
         "--output",

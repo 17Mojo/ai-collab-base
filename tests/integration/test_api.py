@@ -283,9 +283,7 @@ class TestPackAPI:
         create_response = client.post("/api/packs/bulk/create", json=payload_create)
         assert create_response.status_code == 200
 
-        payload_get = {
-            "pack_ids": ["test-bulk-get-001", "test-bulk-get-002", "test-bulk-get-missing"]
-        }
+        payload_get = {"pack_ids": ["test-bulk-get-001", "test-bulk-get-002", "test-bulk-get-missing"]}
         response = client.post("/api/packs/bulk/get", json=payload_get)
         assert response.status_code == 200
         data = response.json()
@@ -463,9 +461,7 @@ class TestExecutionAPI:
             "continue_on_error": True,
             "items": [{"input": "ok1"}, "invalid-item", {"input": "ok2"}],
         }
-        response = client.post(
-            "/api/packs/test-pack-bulk-exec-001/executions/bulk-create", json=payload
-        )
+        response = client.post("/api/packs/test-pack-bulk-exec-001/executions/bulk-create", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 3

@@ -123,8 +123,7 @@ class TestRatingSystem:
         )
 
         ratings = [
-            PackRating(rating_id=f"r{i}", pack_id="rating-test-pack", user_id=f"u{i}", rating=i)
-            for i in range(1, 6)
+            PackRating(rating_id=f"r{i}", pack_id="rating-test-pack", user_id=f"u{i}", rating=i) for i in range(1, 6)
         ]
 
         avg_score = sum(r.rating for r in ratings) / len(ratings)

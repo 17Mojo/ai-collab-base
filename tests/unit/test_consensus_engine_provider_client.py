@@ -65,9 +65,7 @@ class TestSyncProviderClient:
         """Test calling sync provider client"""
         # Create sync mock client
         sync_client = Mock()
-        sync_client.query = Mock(
-            return_value={"ai": "test_sync", "response": "Sync response", "confidence": 0.9}
-        )
+        sync_client.query = Mock(return_value={"ai": "test_sync", "response": "Sync response", "confidence": 0.9})
 
         # Create engine and register provider
         engine = ConsensusEngine()
@@ -109,9 +107,7 @@ class TestProviderClientFailure:
     async def test_provider_client_not_found(self):
         """client=None 是配置缺口：如实失败降级，不给 test_none 配假填充"""
         engine = ConsensusEngine()
-        engine.providers["test_none"] = AIProvider(
-            name="test_none", client=None, timeout=30.0, enabled=True
-        )
+        engine.providers["test_none"] = AIProvider(name="test_none", client=None, timeout=30.0, enabled=True)
 
         result = await engine.generate_consensus("test")
 
@@ -178,9 +174,7 @@ class TestResponseNormalization:
     async def test_dict_response_normalization(self):
         """Test dict response normalization"""
         client = Mock()
-        client.query = Mock(
-            return_value={"ai": "custom_ai", "response": "Custom response", "confidence": 0.85}
-        )
+        client.query = Mock(return_value={"ai": "custom_ai", "response": "Custom response", "confidence": 0.85})
 
         engine = ConsensusEngine()
         engine.register_provider("dict_provider", client)
@@ -263,9 +257,7 @@ class TestTimeoutAndRetry:
         client.query = failing_query
 
         engine = ConsensusEngine()
-        provider = AIProvider(
-            name="retry_provider", client=client, timeout=30.0, max_retries=3, enabled=True
-        )
+        provider = AIProvider(name="retry_provider", client=client, timeout=30.0, max_retries=3, enabled=True)
         engine.providers["retry_provider"] = provider
 
         result = await engine.generate_consensus("test")

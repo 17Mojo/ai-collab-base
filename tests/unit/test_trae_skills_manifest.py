@@ -101,13 +101,9 @@ def test_required_skill_frontmatter_contract() -> None:
         assert "allowed-tools" in frontmatter, f"{skill}: missing 'allowed-tools'"
 
         name = frontmatter["name"]
-        assert (
-            isinstance(name, str) and name == skill
-        ), f"{skill}: name must equal directory name, got {name!r}"
+        assert isinstance(name, str) and name == skill, f"{skill}: name must equal directory name, got {name!r}"
 
         allowed_tools = frontmatter["allowed-tools"]
         assert isinstance(allowed_tools, list), f"{skill}: allowed-tools must be a list"
         assert allowed_tools, f"{skill}: allowed-tools must not be empty"
-        assert len(allowed_tools) == len(
-            set(allowed_tools)
-        ), f"{skill}: allowed-tools contains duplicates"
+        assert len(allowed_tools) == len(set(allowed_tools)), f"{skill}: allowed-tools contains duplicates"

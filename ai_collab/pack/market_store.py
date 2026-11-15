@@ -97,10 +97,7 @@ class PackMarketStore:
             cursor.execute("PRAGMA table_info(pack_listings)")
             existing_cols = {row[1] for row in cursor.fetchall()}
             if "dependencies" not in existing_cols:
-                cursor.execute(
-                    "ALTER TABLE pack_listings ADD COLUMN dependencies "
-                    "TEXT NOT NULL DEFAULT '[]'"
-                )
+                cursor.execute("ALTER TABLE pack_listings ADD COLUMN dependencies TEXT NOT NULL DEFAULT '[]'")
 
             # Pack 版本历史表（追加式，见方法 docstring 的语义说明）
             cursor.execute(
@@ -156,17 +153,13 @@ class PackMarketStore:
             )
 
             # 创建索引
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_pack_category ON pack_listings(category)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_pack_category ON pack_listings(category)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_pack_status ON pack_listings(status)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_pack_author ON pack_listings(author)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_rating_pack ON pack_ratings(pack_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_rating_user ON pack_ratings(user_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedback_pack ON user_feedback(pack_id)")
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_versions_pack ON pack_versions(pack_id)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_versions_pack ON pack_versions(pack_id)")
 
             conn.commit()
 
@@ -309,9 +302,7 @@ class PackMarketStore:
             with _connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM pack_listings WHERE pack_id = ?", (listing.pack_id,)
-                )
+                cursor.execute("SELECT * FROM pack_listings WHERE pack_id = ?", (listing.pack_id,))
                 old_row = cursor.fetchone()
                 if old_row is not None:
                     self._archive_version(conn, self._row_to_listing(old_row))
@@ -709,9 +700,7 @@ class PackMarketStore:
                 created_at=datetime.fromisoformat(row["created_at"]),
             )
 
-    def list_feedback(
-        self, pack_id: str, feedback_type: str | None = None
-    ) -> list[UserFeedback]:
+    def list_feedback(self, pack_id: str, feedback_type: str | None = None) -> list[UserFeedback]:
         """列出用户反馈
 
         Args:

@@ -76,20 +76,19 @@ def test_pick_returns_first_model_with_matching_receipt(
     def _fake_probe(client, *, model_id, provider_id, workspace, timeout, cleanup=True):
         # glm-5.3 真实推理成功但回执落在别的模型上（静默回落）→ 不算可用。
         if model_id == "glm-5.3":
-            return _probe_result(
-                model_id, provider_id, usable=True, used_model="inferhub-provider/silent-default"
-            )
-        return _probe_result(
-            model_id, provider_id, usable=True, used_model=f"{provider_id}/{model_id}"
-        )
+            return _probe_result(model_id, provider_id, usable=True, used_model="inferhub-provider/silent-default")
+        return _probe_result(model_id, provider_id, usable=True, used_model=f"{provider_id}/{model_id}")
 
     monkeypatch.setattr(check, "probe_model", _fake_probe)
 
     code = check.main(
         [
             "--pick",
-            "--models", "glm-5.3", "kimi-k3",
-            "--workspace", str(tmp_path),
+            "--models",
+            "glm-5.3",
+            "kimi-k3",
+            "--workspace",
+            str(tmp_path),
             "--json",
         ]
     )
@@ -113,9 +112,7 @@ def test_pick_outputs_plain_model_without_json(
         ),
     )
 
-    code = check.main(
-        ["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)]
-    )
+    code = check.main(["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)])
 
     assert code == 0
     assert capsys.readouterr().out.strip() == "inferhub-provider/glm-5.3"
@@ -135,9 +132,7 @@ def test_pick_fails_without_any_usable_model(
         ),
     )
 
-    code = check.main(
-        ["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)]
-    )
+    code = check.main(["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)])
 
     assert code == 1
     out = capsys.readouterr().out
@@ -163,8 +158,11 @@ def test_pick_fails_without_any_usable_model_json(
     code = check.main(
         [
             "--pick",
-            "--models", "glm-5.3", "kimi-k3",
-            "--workspace", str(tmp_path),
+            "--models",
+            "glm-5.3",
+            "kimi-k3",
+            "--workspace",
+            str(tmp_path),
             "--json",
         ]
     )
@@ -196,17 +194,13 @@ def test_pick_skips_models_missing_from_registry(
         ),
     )
 
-    code = check.main(
-        ["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)]
-    )
+    code = check.main(["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)])
 
     assert code == 0
     assert capsys.readouterr().out.strip() == "inferhub-provider/kimi-k3"
 
 
-def test_pick_stops_at_first_usable_model(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_pick_stops_at_first_usable_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """找到第一个可用候选就停止，不再探测后面的（--pick 是挑选不是全测）。"""
     _patch_kernel(monkeypatch)
     _patch_registry(monkeypatch)
@@ -214,15 +208,11 @@ def test_pick_stops_at_first_usable_model(
 
     def _fake_probe(client, *, model_id, provider_id, workspace, timeout, cleanup=True):
         probed.append(model_id)
-        return _probe_result(
-            model_id, provider_id, usable=True, used_model=f"{provider_id}/{model_id}"
-        )
+        return _probe_result(model_id, provider_id, usable=True, used_model=f"{provider_id}/{model_id}")
 
     monkeypatch.setattr(check, "probe_model", _fake_probe)
 
-    code = check.main(
-        ["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)]
-    )
+    code = check.main(["--pick", "--models", "glm-5.3", "kimi-k3", "--workspace", str(tmp_path)])
 
     assert code == 0
     assert probed == ["glm-5.3"]
@@ -235,9 +225,7 @@ def test_pick_and_watch_are_mutually_exclusive(
     _patch_kernel(monkeypatch)
     _patch_registry(monkeypatch)
 
-    code = check.main(
-        ["--pick", "--watch", "300", "--workspace", str(tmp_path)]
-    )
+    code = check.main(["--pick", "--watch", "300", "--workspace", str(tmp_path)])
 
     assert code == 2
     err = capsys.readouterr().err

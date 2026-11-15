@@ -73,7 +73,7 @@ def test_mock_backend_pack_list():
                 "version": "2.0.0",
                 "description": "Another test pack",
                 "category": "test",
-            }
+            },
         ],
         "total": 2,
         "page": 1,
@@ -103,23 +103,15 @@ def test_tree_view_data_structure():
             "label": "Test Pack 1 (v1.0.0)",
             "description": "A test pack",
             "collapsibleState": 0,  # None
-            "command": {
-                "command": "promptPack.selectPack",
-                "title": "Select Pack",
-                "arguments": ["pack-001"]
-            }
+            "command": {"command": "promptPack.selectPack", "title": "Select Pack", "arguments": ["pack-001"]},
         },
         {
             "id": "pack-002",
             "label": "Test Pack 2 (v2.0.0)",
             "description": "Another test pack",
             "collapsibleState": 0,
-            "command": {
-                "command": "promptPack.selectPack",
-                "title": "Select Pack",
-                "arguments": ["pack-002"]
-            }
-        }
+            "command": {"command": "promptPack.selectPack", "title": "Select Pack", "arguments": ["pack-002"]},
+        },
     ]
 
     # Validate tree view structure

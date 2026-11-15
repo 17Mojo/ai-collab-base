@@ -200,9 +200,7 @@ class BruteForceProtection:
 
                 return {
                     "blocked": True,
-                    "blocked_until": datetime.fromtimestamp(
-                        self._blocked_until[identifier]
-                    ).isoformat(),
+                    "blocked_until": datetime.fromtimestamp(self._blocked_until[identifier]).isoformat(),
                     "remaining_time_seconds": int(self.block_duration.total_seconds()),
                     "attempts": failed_attempts,
                     "reason": "Too many failed attempts",
@@ -272,9 +270,7 @@ class IPBlacklist:
         """初始化 IP 黑名单"""
         self._blacklist: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
-        self._storage_file = os.path.join(
-            os.path.dirname(__file__), "..", "..", "data", "ip_blacklist.json"
-        )
+        self._storage_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "ip_blacklist.json")
         self._load_from_storage()
 
     def _load_from_storage(self):
@@ -316,9 +312,7 @@ class IPBlacklist:
                 "ip": ip_address,
                 "reason": reason,
                 "added_at": now.isoformat(),
-                "expires_at": (now + timedelta(hours=duration_hours)).isoformat()
-                if duration_hours
-                else None,
+                "expires_at": (now + timedelta(hours=duration_hours)).isoformat() if duration_hours else None,
                 "is_permanent": duration_hours is None,
             }
             self._save_to_storage()
@@ -486,7 +480,7 @@ if __name__ == "__main__":
     # 模拟请求
     for i in range(10):
         allowed, info = limiter.is_allowed("test-client")
-        print(f"请求 {i+1}: {'允许' if allowed else '拒绝'} (剩余: {info['remaining']})")
+        print(f"请求 {i + 1}: {'允许' if allowed else '拒绝'} (剩余: {info['remaining']})")
         time.sleep(0.1)
 
     # 测试防暴力破解保护
@@ -498,7 +492,7 @@ if __name__ == "__main__":
     for i in range(6):
         result = protection.record_attempt("test-user", success=False)
         print(
-            f"尝试 {i+1}: {'被封禁' if result['blocked'] else '未被封禁'} (剩余尝试: {result.get('remaining_attempts', 'N/A')})"
+            f"尝试 {i + 1}: {'被封禁' if result['blocked'] else '未被封禁'} (剩余尝试: {result.get('remaining_attempts', 'N/A')})"
         )
 
     # 测试 IP 黑名单

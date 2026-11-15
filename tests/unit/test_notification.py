@@ -133,6 +133,7 @@ class TestModuleHelpers:
 
     def test_broadcast_signature(self):
         import inspect
+
         sig = inspect.signature(broadcast)
         assert "content" in sig.parameters
         assert "priority" in sig.parameters
@@ -140,22 +141,24 @@ class TestModuleHelpers:
 
     def test_mention_signature(self):
         import inspect
+
         sig = inspect.signature(mention)
         assert "mentions" in sig.parameters
         assert "content" in sig.parameters
 
     def test_direct_signature(self):
         import inspect
+
         sig = inspect.signature(direct)
         assert "target" in sig.parameters
         assert sig.parameters["priority"].default == "high"
-
 
 
 class TestNotificationQueueGetPending:
     def test_get_pending_broadcast(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
         q.emit(Notification(content="hello", mode=NotificationMode.BROADCAST))
         pending = q.get_pending("claude_code")
@@ -165,6 +168,7 @@ class TestNotificationQueueGetPending:
     def test_get_pending_broadcast_unknown_ai_excluded(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
         q.emit(Notification(content="hello", mode=NotificationMode.BROADCAST))
         # Unknown AI is not in BROADCAST_TARGETS, should get nothing
@@ -174,24 +178,18 @@ class TestNotificationQueueGetPending:
     def test_get_pending_broadcast_mention(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
-        q.emit(Notification(
-            content="hello @team",
-            mode=NotificationMode.BROADCAST_MENTION,
-            mentions=["claude_code"]
-        ))
+        q.emit(Notification(content="hello @team", mode=NotificationMode.BROADCAST_MENTION, mentions=["claude_code"]))
         pending = q.get_pending("claude_code")
         assert len(pending) == 1
 
     def test_get_pending_direct_target_match(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
-        q.emit(Notification(
-            content="secret",
-            mode=NotificationMode.DIRECT,
-            direct_target="claude_code"
-        ))
+        q.emit(Notification(content="secret", mode=NotificationMode.DIRECT, direct_target="claude_code"))
         pending = q.get_pending("claude_code")
         assert len(pending) == 1
         # Other AI should not see direct message
@@ -202,12 +200,9 @@ class TestNotificationQueueGetPending:
         """DIRECT 但目标不在 BROADCAST_TARGETS 中,不被 claude_code 看到"""
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
-        q.emit(Notification(
-            content="direct",
-            mode=NotificationMode.DIRECT,
-            direct_target="some_other_ai"
-        ))
+        q.emit(Notification(content="direct", mode=NotificationMode.DIRECT, direct_target="some_other_ai"))
         # claude_code is not the target
         assert len(q.get_pending("claude_code")) == 0
 
@@ -216,6 +211,7 @@ class TestNotificationQueueMarkRead:
     def test_mark_read_moves_to_history(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
         msg_id = q.emit(Notification(content="hello", mode=NotificationMode.BROADCAST))
         # Mark read by all broadcast targets
@@ -227,6 +223,7 @@ class TestNotificationQueueMarkRead:
     def test_mark_read_partial(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
         msg_id = q.emit(Notification(content="hello", mode=NotificationMode.BROADCAST))
         # Only mark by claude_code
@@ -238,6 +235,7 @@ class TestNotificationQueueMarkRead:
     def test_mark_read_nonexistent_message(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import NotificationQueue
+
         q = NotificationQueue()
         # Should not raise
         q.mark_read("MSG-NONEXISTENT", "claude_code")
@@ -247,12 +245,14 @@ class TestNotificationQueueGetUnreadCount:
     def test_get_unread_count_initial(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import NotificationQueue
+
         q = NotificationQueue()
         assert q.get_unread_count("claude_code") == 0
 
     def test_get_unread_count_after_emit(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
         q.emit(Notification(content="hi", mode=NotificationMode.BROADCAST))
         q.emit(Notification(content="hi2", mode=NotificationMode.BROADCAST))
@@ -262,6 +262,7 @@ class TestNotificationQueueGetUnreadCount:
     def test_get_unread_count_after_read(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationMode, NotificationQueue
+
         q = NotificationQueue()
         msg_id = q.emit(Notification(content="hi", mode=NotificationMode.BROADCAST))
         # claude_code 标记已读
@@ -274,6 +275,7 @@ class TestNotificationAPIDirect:
     def test_direct_creates_notification(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import NotificationAPI, Priority
+
         api = NotificationAPI()
         msg_id = api.direct("claude_code", "秘密消息", priority=Priority.HIGH)
         assert msg_id.startswith("MSG-")
@@ -281,6 +283,7 @@ class TestNotificationAPIDirect:
     def test_direct_writes_to_target_file(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import NotificationAPI
+
         api = NotificationAPI()
         api.direct("claude_code", "秘密消息")
         # Check notification file was written
@@ -292,6 +295,7 @@ class TestNotificationAPIMention:
     def test_mention_writes_to_all_targets(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import NotificationAPI, Priority
+
         api = NotificationAPI()
         msg_id = api.mention(["claude_code"], "重要通知", priority=Priority.HIGH)
         assert msg_id.startswith("MSG-")
@@ -305,17 +309,14 @@ class TestNotificationAPIWriteTarget:
     def test_write_to_target_creates_file(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         from ai_collab.notification import Notification, NotificationAPI, Priority
+
         api = NotificationAPI()
-        notification = Notification(
-            content="test",
-            mode="direct",
-            direct_target="claude_code",
-            priority=Priority.HIGH
-        )
+        notification = Notification(content="test", mode="direct", direct_target="claude_code", priority=Priority.HIGH)
         api._write_to_target("claude_code", notification, "MSG-test-1")
         target_file = tmp_path / "notifications" / "claude_code_notification.json"
         assert target_file.exists()
         import json
+
         data = json.loads(target_file.read_text())
         assert data["message_id"] == "MSG-test-1"
         assert data["read"] is False
@@ -324,6 +325,7 @@ class TestNotificationAPIWriteTarget:
 class TestNotificationEnumStrings:
     def test_priority_values(self):
         from ai_collab.notification import Priority
+
         assert Priority.LOW == "low"
         assert Priority.NORMAL == "normal"
         assert Priority.HIGH == "high"
@@ -331,6 +333,7 @@ class TestNotificationEnumStrings:
 
     def test_notification_mode_values(self):
         from ai_collab.notification import NotificationMode
+
         assert NotificationMode.BROADCAST == "broadcast"
         assert NotificationMode.BROADCAST_MENTION == "broadcast@mention"
         assert NotificationMode.DIRECT == "direct"

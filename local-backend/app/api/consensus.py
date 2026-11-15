@@ -129,6 +129,4 @@ async def list_providers():
     from ai_collab.engines.consensus_engine import ConsensusEngine
 
     engine = ConsensusEngine()
-    return ProvidersResponse(
-        providers=list(engine.providers.keys()), defaults=["chatgpt", "claude", "kimi", "qianwen"]
-    )
+    return ProvidersResponse(providers=list(engine.providers.keys()), defaults=["chatgpt", "claude", "kimi", "qianwen"])

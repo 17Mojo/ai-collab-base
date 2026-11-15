@@ -73,9 +73,7 @@ class PerformanceMonitor:
             if status_code >= 400:
                 stats["failed_calls"] += 1
                 if error:
-                    stats["errors"].append(
-                        {"error": error, "timestamp": datetime.now().isoformat()}
-                    )
+                    stats["errors"].append({"error": error, "timestamp": datetime.now().isoformat()})
                     # 只保留最近10个错误
                     if len(stats["errors"]) > 10:
                         stats["errors"] = stats["errors"][-10:]
@@ -166,9 +164,7 @@ class PerformanceMonitor:
         if not output_path:
             output_dir = os.path.join(os.path.dirname(__file__), "..", "..", "logs", "performance")
             os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(
-                output_dir, f"performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            )
+            output_path = os.path.join(output_dir, f"performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
 
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(
@@ -334,9 +330,7 @@ class APILogger:
             with open(self._current_log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
-    def log_response(
-        self, method: str, path: str, status_code: int, duration_ms: float, response_size: int = 0
-    ):
+    def log_response(self, method: str, path: str, status_code: int, duration_ms: float, response_size: int = 0):
         """记录 API 响应"""
         with self._lock:
             timestamp = datetime.now().isoformat()
@@ -354,9 +348,7 @@ class APILogger:
             with open(self._current_log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
-    def log_error(
-        self, method: str, path: str, error: str, status_code: int = 500, duration_ms: float = 0
-    ):
+    def log_error(self, method: str, path: str, error: str, status_code: int = 500, duration_ms: float = 0):
         """记录 API 错误"""
         with self._lock:
             timestamp = datetime.now().isoformat()

@@ -119,11 +119,7 @@ def register_codex_session_from_runtime(
             "runtime_file": str(runtime_file),
         }
 
-    anchor = (
-        runtime.get("last_synced_at")
-        or runtime.get("last_run_at")
-        or runtime.get("last_plan_at")
-    )
+    anchor = runtime.get("last_synced_at") or runtime.get("last_run_at") or runtime.get("last_plan_at")
     anchor_time = _parse_iso(anchor)
     if anchor_time is None:
         return {
@@ -170,11 +166,7 @@ def register_claude_session_from_hook(
     hook_input: dict[str, Any],
     event_name: str,
 ) -> dict[str, Any]:
-    session_id = str(
-        hook_input.get("session_id")
-        or hook_input.get("sessionId")
-        or ""
-    ).strip()
+    session_id = str(hook_input.get("session_id") or hook_input.get("sessionId") or "").strip()
     if not session_id:
         return {"status": "skipped", "reason": "missing_session_id"}
 
@@ -214,9 +206,7 @@ def register_session_from_activation(
         assignee=normalized_assignee,
         transport_mode="manual",
         session_status="active",
-        last_handoff_artifact=_relative_to_workspace(
-            workspace, workspace / ".cc-claude-codex" / "runtime.json"
-        ),
+        last_handoff_artifact=_relative_to_workspace(workspace, workspace / ".cc-claude-codex" / "runtime.json"),
     )
     return {"status": "ok", **result}
 

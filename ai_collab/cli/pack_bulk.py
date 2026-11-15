@@ -101,9 +101,7 @@ class PackBulkCLI:
         """
         pack_id_list = [pid.strip() for pid in pack_ids.split(",")]
 
-        print(
-            f"Archiving {len(pack_id_list)} packs ({'parallel' if parallel else 'sequential'})..."
-        )
+        print(f"Archiving {len(pack_id_list)} packs ({'parallel' if parallel else 'sequential'})...")
 
         result = self.engine.bulk_archive(pack_id_list, parallel)
 
@@ -155,9 +153,9 @@ class PackBulkCLI:
         """
         result = self.engine.get_operation_status(operation_id)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Operation Status: {operation_id}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         if result.completed_at is None:
             status = "RUNNING"
@@ -196,7 +194,7 @@ class PackBulkCLI:
                 if error:
                     print(f"      Error: {error}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 
@@ -208,9 +206,9 @@ class PackBulkCLI:
         """
         operations = self.engine.get_all_operations()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("All Bulk Operations")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         if not operations:
             print("No operations found.")
@@ -224,9 +222,9 @@ class PackBulkCLI:
             print(f"  Created: {op['created_at']}")
             print()
 
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
         print(f"Total: {len(operations)} operations")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return 0
 
@@ -236,9 +234,9 @@ class PackBulkCLI:
         Args:
             result: 操作结果
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Bulk Operation Result")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         status = "SUCCESS" if result.failed == 0 else "PARTIAL FAILURE"
         if result.succeeded == 0:
@@ -266,7 +264,7 @@ class PackBulkCLI:
                     print(f"  ✗ {pack_id}")
                     print(f"      Error: {error}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
 
 def main():
@@ -340,9 +338,7 @@ def main():
                 i += 1
 
         if not pack_ids or not version_bump:
-            print(
-                "Usage: pack_bulk.py update-version --pack-ids <id1,id2> --bump <type> [--no-parallel]"
-            )
+            print("Usage: pack_bulk.py update-version --pack-ids <id1,id2> --bump <type> [--no-parallel]")
             print("Version types: major, minor, patch")
             return 1
 
@@ -387,9 +383,7 @@ def main():
                 i += 1
 
         if not pack_ids or not confirm_token:
-            print(
-                "Usage: pack_bulk.py delete --pack-ids <id1,id2> --confirm <token> [--no-parallel]"
-            )
+            print("Usage: pack_bulk.py delete --pack-ids <id1,id2> --confirm <token> [--no-parallel]")
             print("Example: delete --pack-ids pack1,pack2 --confirm delete_2")
             return 1
 

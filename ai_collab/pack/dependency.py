@@ -368,9 +368,7 @@ class DependencyResolver:
                     continue
 
                 # 创建新节点
-                new_node = DependencyNode(
-                    pack_id=dep.name, version=version_str, resolved=False, depth=depth + 1
-                )
+                new_node = DependencyNode(pack_id=dep.name, version=version_str, resolved=False, depth=depth + 1)
                 resolved_dicts[dep.name] = version_str
                 result.resolved.append(new_node)
                 stack.append((new_node, depth + 1))
@@ -381,9 +379,7 @@ class DependencyResolver:
 
         return result
 
-    def _check_conflict(
-        self, dep: PackDependency, resolved: dict[str, str]
-    ) -> dict[str, Any] | None:
+    def _check_conflict(self, dep: PackDependency, resolved: dict[str, str]) -> dict[str, Any] | None:
         """检查冲突"""
         if dep.name not in resolved:
             return None

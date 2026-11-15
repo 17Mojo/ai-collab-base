@@ -40,9 +40,9 @@ class PackVersionCLI:
         Returns:
             退出码
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Versions for Pack: {pack_id}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 从市场获取 Pack 信息
         pack_result = self.api.get_pack(pack_id)
@@ -67,18 +67,14 @@ class PackVersionCLI:
             print(f"      Released: {v.created_at.strftime('%Y-%m-%d %H:%M')}")
             print(f"      By: {v.created_by}")
             if v.changelog:
-                changelog_preview = (
-                    v.changelog[:60] + "..." if len(v.changelog) > 60 else v.changelog
-                )
+                changelog_preview = v.changelog[:60] + "..." if len(v.changelog) > 60 else v.changelog
                 print(f"      Changelog: {changelog_preview}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 
-    def bump_version(
-        self, pack_id: str, version_type: str, changelog: str, created_by: str = "unknown"
-    ) -> int:
+    def bump_version(self, pack_id: str, version_type: str, changelog: str, created_by: str = "unknown") -> int:
         """升级版本
 
         Args:
@@ -145,9 +141,9 @@ class PackVersionCLI:
         Returns:
             退出码
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Version Details")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 获取版本历史
         version_history = self.manager.get_version(pack_id, version_string)
@@ -175,7 +171,7 @@ class PackVersionCLI:
         print("\nChangelog:")
         print(f"  {version_history.changelog}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 
@@ -224,9 +220,9 @@ class PackVersionCLI:
         version1 = PackVersion.from_string(v1)
         version2 = PackVersion.from_string(v2)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Version Comparison")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         print(f"Version 1: {version1}")
         print(f"Version 2: {version2}")
@@ -244,7 +240,7 @@ class PackVersionCLI:
         distance = self.manager.calculate_distance(v1, v2)
         print(f"Distance: {distance}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 

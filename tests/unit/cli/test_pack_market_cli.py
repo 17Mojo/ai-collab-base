@@ -115,9 +115,7 @@ class TestPackMarketCLIPublish:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_publish_success_pending(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_publish_success_pending(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         store = MagicMock()
@@ -142,9 +140,7 @@ class TestPackMarketCLIPublish:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_publish_approve(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_publish_approve(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         store = MagicMock()
@@ -163,9 +159,7 @@ class TestPackMarketCLIPublish:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_publish_carries_dependencies(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_publish_carries_dependencies(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         store = MagicMock()
@@ -181,16 +175,12 @@ class TestPackMarketCLIPublish:
 
         assert code == 0
         listing = store.create_listing.call_args[0][0]
-        assert listing.dependencies == [
-            {"name": "base-pack", "version": "^1.0.0", "optional": True}
-        ]
+        assert listing.dependencies == [{"name": "base-pack", "version": "^1.0.0", "optional": True}]
 
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_publish_validation_failure(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_publish_validation_failure(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         """缺必需顶层字段 → 阻断（pack validate 同款 error 判据）"""
         from ai_collab.cli.pack_market import PackMarketCLI
 
@@ -211,9 +201,7 @@ class TestPackMarketCLIPublish:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_publish_bad_version(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_publish_bad_version(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         store = MagicMock()
@@ -231,9 +219,7 @@ class TestPackMarketCLIPublish:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_publish_missing_file(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_publish_missing_file(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         store = MagicMock()
@@ -273,9 +259,7 @@ class TestPackMarketCLIPublish:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_publish_newer_version_updates_row(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_publish_newer_version_updates_row(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         """同 pack_id 发更高版本 → 单行覆盖更新（保留下载/评分计数）"""
         from ai_collab.cli.pack_market import PackMarketCLI
 
@@ -310,16 +294,12 @@ class TestPackMarketCLIInstall:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_install_success(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_install_success(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}]
         }
         mock_api_class.return_value = api
 
@@ -373,9 +353,7 @@ class TestPackMarketCLIInstall:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_install_not_found(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_install_not_found(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
@@ -391,16 +369,12 @@ class TestPackMarketCLIInstall:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_install_no_version_satisfies_range(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_install_no_version_satisfies_range(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "2.0.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "2.0.0"}]
         }
         mock_api_class.return_value = api
 
@@ -413,17 +387,13 @@ class TestPackMarketCLIInstall:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_install_with_dependencies(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_install_with_dependencies(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         """带依赖：走安装顺序 + 冲突扫描 + 索引登记 dependencies"""
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}]
         }
         mock_api_class.return_value = api
 
@@ -453,17 +423,13 @@ class TestPackMarketCLIInstall:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_install_deps_from_local_body(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_install_deps_from_local_body(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         """市场条目 dependencies 为空（旧库存量条目）→ 从 packs/ 正文 JSON 补依赖图兜底"""
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}]
         }
         mock_api_class.return_value = api
 
@@ -482,20 +448,14 @@ class TestPackMarketCLIInstall:
         packs_root = tmp_path / "packs" / "examples"
         packs_root.mkdir(parents=True)
         body_deps = [{"name": "base-pack", "version": "^1.0.0", "optional": False}]
-        (packs_root / "demo-pack.json").write_text(
-            json.dumps(_pack_dict(deps=body_deps)), encoding="utf-8"
-        )
+        (packs_root / "demo-pack.json").write_text(json.dumps(_pack_dict(deps=body_deps)), encoding="utf-8")
 
-        cli = PackMarketCLI(
-            db_path=str(tmp_path / "packs.db"), packs_root=str(tmp_path / "packs")
-        )
+        cli = PackMarketCLI(db_path=str(tmp_path / "packs.db"), packs_root=str(tmp_path / "packs"))
         code = cli.install("demo-pack")
 
         assert code == 0
         resolver.get_install_order.assert_called_once()  # 走了依赖解析路径
-        index = json.loads(
-            (tmp_path / "packs" / ".packs-index.json").read_text(encoding="utf-8")
-        )
+        index = json.loads((tmp_path / "packs" / ".packs-index.json").read_text(encoding="utf-8"))
         assert index["installed"]["demo-pack"]["dependencies"] == body_deps
 
     @patch("ai_collab.cli.pack_market.DependencyResolver")
@@ -509,9 +469,7 @@ class TestPackMarketCLIInstall:
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}]
         }
         mock_api_class.return_value = api
 
@@ -531,21 +489,15 @@ class TestPackMarketCLIInstall:
         packs_root = tmp_path / "packs" / "examples"
         packs_root.mkdir(parents=True)
         body_deps = [{"name": "body-base", "version": "^2.0.0", "optional": False}]
-        (packs_root / "demo-pack.json").write_text(
-            json.dumps(_pack_dict(deps=body_deps)), encoding="utf-8"
-        )
+        (packs_root / "demo-pack.json").write_text(json.dumps(_pack_dict(deps=body_deps)), encoding="utf-8")
 
-        cli = PackMarketCLI(
-            db_path=str(tmp_path / "packs.db"), packs_root=str(tmp_path / "packs")
-        )
+        cli = PackMarketCLI(db_path=str(tmp_path / "packs.db"), packs_root=str(tmp_path / "packs"))
         code = cli.install("demo-pack")
 
         assert code == 0
         out = capsys.readouterr().out
         assert "依赖来源" not in out  # 未走正文兜底
-        index = json.loads(
-            (tmp_path / "packs" / ".packs-index.json").read_text(encoding="utf-8")
-        )
+        index = json.loads((tmp_path / "packs" / ".packs-index.json").read_text(encoding="utf-8"))
         assert index["installed"]["demo-pack"]["dependencies"] == store_deps
 
 
@@ -561,9 +513,7 @@ class TestPackMarketCLIUpgrade:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_upgrade_not_installed(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_upgrade_not_installed(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         packs_root = tmp_path / "packs"
@@ -576,16 +526,12 @@ class TestPackMarketCLIUpgrade:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_upgrade_already_latest(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_upgrade_already_latest(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "1.2.0"}]
         }
         mock_api_class.return_value = api
 
@@ -601,9 +547,7 @@ class TestPackMarketCLIUpgrade:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_upgrade_minor_success(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path
-    ):
+    def test_upgrade_minor_success(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
@@ -639,9 +583,7 @@ class TestPackMarketCLIUpgrade:
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "2.0.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "2.0.0"}]
         }
         mock_api_class.return_value = api
 
@@ -671,16 +613,12 @@ class TestPackMarketCLIUpgrade:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_upgrade_major_clean_passes(
-        self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path, capsys
-    ):
+    def test_upgrade_major_clean_passes(self, mock_api_class, mock_store_class, mock_resolver_class, tmp_path, capsys):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
         api.list_packs.return_value = {
-            "packs": [
-                {"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "2.0.0"}
-            ]
+            "packs": [{"pack_id": "demo-pack", "pack_name": "Demo Pack", "version": "2.0.0"}]
         }
         mock_api_class.return_value = api
 
@@ -706,9 +644,7 @@ class TestPackMarketCLIHistory:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_history_lists_versions(
-        self, mock_api_class, mock_store_class, mock_resolver_class, capsys
-    ):
+    def test_history_lists_versions(self, mock_api_class, mock_store_class, mock_resolver_class, capsys):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         store = MagicMock()
@@ -743,9 +679,7 @@ class TestPackMarketCLIHistory:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_history_unknown_pack_returns_1(
-        self, mock_api_class, mock_store_class, mock_resolver_class, capsys
-    ):
+    def test_history_unknown_pack_returns_1(self, mock_api_class, mock_store_class, mock_resolver_class, capsys):
         from ai_collab.cli.pack_market import PackMarketCLI
 
         api = MagicMock()
@@ -766,9 +700,7 @@ class TestPackMarketCLIHistory:
     @patch("ai_collab.cli.pack_market.DependencyResolver")
     @patch("ai_collab.cli.pack_market.PackMarketStore")
     @patch("ai_collab.cli.pack_market.PackMarketAPI")
-    def test_history_resolves_pack_name_to_id(
-        self, mock_api_class, mock_store_class, mock_resolver_class
-    ):
+    def test_history_resolves_pack_name_to_id(self, mock_api_class, mock_store_class, mock_resolver_class):
         """pack_name 传入 → 经市场当前条目反查 pack_id 再查历史"""
         from ai_collab.cli.pack_market import PackMarketCLI
 

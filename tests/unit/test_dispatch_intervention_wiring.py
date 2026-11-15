@@ -275,7 +275,7 @@ def test_delivery_runs_adapter_for_codearts_target(tmp_path: Path):
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/bridge_delivery.txt\"",
+            "bridgeCommand": 'cp "{event_file}" "{workspace}/bridge_delivery.txt"',
         },
     )
     relpath = "collaboration/monitoring/AGENT_TRIGGER_codearts_agent_latest.md"

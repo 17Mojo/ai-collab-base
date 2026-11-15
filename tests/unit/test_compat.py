@@ -314,9 +314,7 @@ class TestCompatibilityChecker:
 
         report = checker.check_compatibility(source, target, breaking_changes)
 
-        behavior_issues = [
-            i for i in report.issues if i.issue_type == BreakingChangeType.BEHAVIOR_CHANGE
-        ]
+        behavior_issues = [i for i in report.issues if i.issue_type == BreakingChangeType.BEHAVIOR_CHANGE]
         assert len(behavior_issues) == 1
         assert behavior_issues[0].severity == "medium"
 
@@ -439,15 +437,11 @@ class TestDependencyValidator:
         # Mock pack manager that returns packs for conflict testing
         class MockPack1:
             def __init__(self):
-                self.manifest = type(
-                    "obj", (object,), {"dependencies": ["shared-dep"], "version": "1.0.0"}
-                )()
+                self.manifest = type("obj", (object,), {"dependencies": ["shared-dep"], "version": "1.0.0"})()
 
         class MockPack2:
             def __init__(self):
-                self.manifest = type(
-                    "obj", (object,), {"dependencies": ["shared-dep"], "version": "2.0.0"}
-                )()
+                self.manifest = type("obj", (object,), {"dependencies": ["shared-dep"], "version": "2.0.0"})()
 
         class MockSharedDep:
             def __init__(self):

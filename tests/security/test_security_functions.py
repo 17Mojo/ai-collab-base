@@ -40,9 +40,7 @@ class TestTokenManager:
             manager = TokenManager(storage_path=str(storage_path))
 
             # 生成令牌
-            token = manager.generate_token(
-                client_name="test-client", permissions=["read", "execute"], expires_hours=24
-            )
+            token = manager.generate_token(client_name="test-client", permissions=["read", "execute"], expires_hours=24)
 
             # 验证令牌长度（64字符十六进制）
             assert len(token) == 64

@@ -21,9 +21,7 @@ def _run(*args: str, module: str = "ai_collab.cli", workspace: str | None = None
     if workspace:
         cmd += ["-w", workspace]
     cmd += list(args)
-    return subprocess.run(
-        cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=60
-    )
+    return subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=60)
 
 
 def test_cli_entry_invalid_days_exits_nonzero():

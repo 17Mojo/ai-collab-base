@@ -5,7 +5,6 @@ ai_collab/engines/consensus_engine.py 补测
       模块便捷函数 / _check_ai_clients_health 边界 / retry 失败路径
 """
 
-
 import pytest
 
 from ai_collab.engines import consensus_engine as ce_mod
@@ -24,6 +23,7 @@ def engine():
 # ============================================================
 # _check_ai_clients_health 边界
 # ============================================================
+
 
 def test_check_ai_clients_health_returns_false_when_no_enabled_providers(engine):
     """所有 providers enabled=False → 返回 False"""
@@ -45,6 +45,7 @@ def test_check_ai_clients_health_true_when_client_set(monkeypatch, engine):
 # _extract_consensus
 # ============================================================
 
+
 def test_extract_consensus_joins_responses(engine):
     responses = [
         {"response": "first", "ai": "a", "confidence": 0.9},
@@ -62,6 +63,7 @@ def test_extract_consensus_empty_returns_empty(engine):
 # ============================================================
 # _verify_consensus 三分支
 # ============================================================
+
 
 def test_verify_consensus_short_content(engine):
     """len < 50 → 返回 '共识内容不足'"""
@@ -89,6 +91,7 @@ def test_verify_consensus_clean_returns_input(engine):
 # ============================================================
 # get_consensus_summary
 # ============================================================
+
 
 def test_get_consensus_summary_includes_all_sources(engine):
     result = {
@@ -126,11 +129,14 @@ def test_get_consensus_summary_no_sources(engine):
 # 模块便捷函数 generate_consensus
 # ============================================================
 
+
 @pytest.mark.asyncio
 async def test_module_generate_consensus_function(monkeypatch):
     """generate_consensus(topic) → 走 ConsensusEngine().generate_consensus(topic)"""
+
     async def fake_generate(self, topic):
         return {"topic": topic, "sources": [], "consensus": "ok", "timestamp": "t", "version": "v"}
+
     monkeypatch.setattr(ConsensusEngine, "generate_consensus", fake_generate)
     out = await generate_consensus("hello")
     assert out["topic"] == "hello"
@@ -140,6 +146,7 @@ async def test_module_generate_consensus_function(monkeypatch):
 # ============================================================
 # _query_single_provider retry 路径
 # ============================================================
+
 
 @pytest.mark.asyncio
 async def test_query_single_provider_raises_after_max_retries(engine):
@@ -177,6 +184,7 @@ async def test_query_single_provider_succeeds_on_retry(engine):
 # ============================================================
 # __main__ 入口防御（避免 import 副作用触发异步执行）
 # ============================================================
+
 
 def test_main_module_reexported():
     """smoke: 模块顶层 import 不抛异常"""

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate task locks report."""
+
 import argparse
 import re
 import sys

@@ -56,7 +56,9 @@ class TestPackLoading:
     def test_pack_metadata_has_pack_id(self, pack_name, pack_data):
         """Pack metadata 包含 pack_id"""
         metadata = pack_data.get("metadata", {})
-        assert "pack_id" in metadata or "name" in metadata or "pack_name" in metadata, f"{pack_name} missing pack_id/name/pack_name in metadata"
+        assert "pack_id" in metadata or "name" in metadata or "pack_name" in metadata, (
+            f"{pack_name} missing pack_id/name/pack_name in metadata"
+        )
 
 
 class TestSchemaV2Compatibility:
@@ -137,13 +139,23 @@ class TestBranchPackStructure:
         with open(branch_path, encoding="utf-8") as f:
             data = json.load(f)
 
-        valid_condition_types = {"regex_match", "keyword_match", "always", "error_match", "timeout", "contains", "equals", "not_empty"}
+        valid_condition_types = {
+            "regex_match",
+            "keyword_match",
+            "always",
+            "error_match",
+            "timeout",
+            "contains",
+            "equals",
+            "not_empty",
+        }
         for step in data.get("workflow", {}).get("steps", []):
             if step.get("branches"):
                 for branch in step["branches"]:
                     if "condition_type" in branch:
-                        assert branch["condition_type"] in valid_condition_types, \
+                        assert branch["condition_type"] in valid_condition_types, (
                             f"Invalid condition_type: {branch['condition_type']}"
+                        )
 
 
 class TestPackCount:
@@ -162,8 +174,7 @@ class TestPackCount:
 
         invalid = [p.name for p in pack_files if not validate_pack(str(p)).is_valid]
         assert not invalid, (
-            f"packs/examples/ 下这些包未通过 validate_pack: {invalid}。"
-            "不可运行的包应放 packs/templates/。"
+            f"packs/examples/ 下这些包未通过 validate_pack: {invalid}。不可运行的包应放 packs/templates/。"
         )
 
     def test_templates_has_structural_corpus(self):

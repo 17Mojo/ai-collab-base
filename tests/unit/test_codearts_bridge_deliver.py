@@ -101,9 +101,7 @@ def test_extract_message_falls_back_to_pull_snapshot(tmp_path: Path):
 
 def test_extract_message_raises_when_no_artifact(tmp_path: Path):
     with pytest.raises(bridge.BridgeError):
-        bridge.extract_message(
-            event_file=tmp_path / "missing.md", artifact_file=tmp_path / "missing2.md"
-        )
+        bridge.extract_message(event_file=tmp_path / "missing.md", artifact_file=tmp_path / "missing2.md")
 
 
 # ---------------------------------------------------------------------------
@@ -120,9 +118,7 @@ def test_resolve_credentials_prefers_env_var(monkeypatch: pytest.MonkeyPatch):
     assert (username, password) == ("codearts", "from-env")
 
 
-def test_resolve_credentials_reads_credential_file(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-):
+def test_resolve_credentials_reads_credential_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.delenv("OPENCODE_SERVER_PASSWORD", raising=False)
     monkeypatch.delenv("CODEARTS_KERNEL_PASSWORD", raising=False)
     # 用户名也必须从环境里清掉：`resolve_credentials()` 让**环境变量优先于
@@ -147,9 +143,7 @@ def test_resolve_credentials_reads_credential_file(
     assert (username, password) == ("who", "from-file")
 
 
-def test_resolve_credentials_fails_loudly_without_password(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-):
+def test_resolve_credentials_fails_loudly_without_password(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.delenv("OPENCODE_SERVER_PASSWORD", raising=False)
     monkeypatch.delenv("CODEARTS_KERNEL_PASSWORD", raising=False)
     monkeypatch.setattr(bridge, "CREDENTIAL_FILE", tmp_path / "absent.env")
@@ -165,9 +159,7 @@ def test_resolve_credentials_fails_loudly_without_password(
 # ---------------------------------------------------------------------------
 
 
-def test_discover_kernel_prefers_alive_pid(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-):
+def test_discover_kernel_prefers_alive_pid(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     alive = tmp_path / "Vscode_alive" / "server_config.properties"
     dead = tmp_path / "Vscode_dead" / "server_config.properties"
     alive.parent.mkdir(parents=True)
@@ -185,9 +177,7 @@ def test_discover_kernel_prefers_alive_pid(
     assert pid == os.getpid()
 
 
-def test_discover_kernel_raises_without_config(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-):
+def test_discover_kernel_raises_without_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setattr(bridge, "KERNEL_CONFIG_ROOT", tmp_path / "absent")
 
     with pytest.raises(bridge.BridgeError):
@@ -222,9 +212,7 @@ def test_send_message_uses_expected_path_and_body(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     client.send_message(
         session_id="ses_abc",
         workspace=Path("/tmp/ws"),
@@ -243,19 +231,13 @@ def test_send_message_uses_expected_path_and_body(monkeypatch: pytest.MonkeyPatc
 
 def test_send_message_reports_http_error(monkeypatch: pytest.MonkeyPatch):
     def _fake_urlopen(request, timeout=None):
-        raise bridge.urllib.error.HTTPError(
-            request.full_url, 401, "Unauthorized", {}, None
-        )
+        raise bridge.urllib.error.HTTPError(request.full_url, 401, "Unauthorized", {}, None)
 
     monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     with pytest.raises(bridge.BridgeError) as excinfo:
-        client.send_message(
-            session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build"
-        )
+        client.send_message(session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build")
 
     assert "401" in str(excinfo.value)
 
@@ -286,7 +268,9 @@ def test_deliver_via_cron_creates_and_fires():
     kernel = _FakeKernel()
 
     result = bridge.deliver_via_cron(
-        kernel, workspace=Path("/tmp/ws"), message="派发内容"  # type: ignore[arg-type]
+        kernel,
+        workspace=Path("/tmp/ws"),
+        message="派发内容",  # type: ignore[arg-type]
     )
 
     assert result["channel"] == "cron"
@@ -302,7 +286,9 @@ def test_deliver_via_cron_raises_when_create_fails():
 
     with pytest.raises(bridge.BridgeError):
         bridge.deliver_via_cron(
-            _Failing(), workspace=Path("/tmp/ws"), message="x"  # type: ignore[arg-type]
+            _Failing(),
+            workspace=Path("/tmp/ws"),
+            message="x",  # type: ignore[arg-type]
         )
 
 
@@ -373,13 +359,9 @@ def test_request_keeps_full_list_instead_of_truncating(
         def __exit__(self, *args):
             return False
 
-    monkeypatch.setattr(
-        bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response()
-    )
+    monkeypatch.setattr(bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response())
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     payload = client.request("GET", "/session")
 
     raw = payload.get("raw")
@@ -390,9 +372,7 @@ def test_request_keeps_full_list_instead_of_truncating(
 
 def test_list_sessions_parses_literal_list(monkeypatch: pytest.MonkeyPatch):
     """`list_sessions` 曾因 raw 是字符串而恒返回空 —— 会话快路径从未生效。"""
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     monkeypatch.setattr(
         client,
         "request",
@@ -419,9 +399,7 @@ def test_main_returns_nonzero_when_credential_missing(
     monkeypatch.delenv("OPENCODE_SERVER_PASSWORD", raising=False)
     monkeypatch.delenv("CODEARTS_KERNEL_PASSWORD", raising=False)
     monkeypatch.setattr(bridge, "CREDENTIAL_FILE", tmp_path / "absent.env")
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
 
     code = bridge.main(
         [
@@ -443,13 +421,9 @@ def test_main_dry_run_does_not_require_credential(
 ):
     monkeypatch.delenv("OPENCODE_SERVER_PASSWORD", raising=False)
     monkeypatch.delenv("CODEARTS_KERNEL_PASSWORD", raising=False)
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
 
-    code = bridge.main(
-        ["--workspace", str(tmp_path), "--event-file", str(event), "--dry-run"]
-    )
+    code = bridge.main(["--workspace", str(tmp_path), "--event-file", str(event), "--dry-run"])
 
     assert code == 0
     payload = json.loads(capsys.readouterr().out)
@@ -497,9 +471,7 @@ def test_repo_codearts_adapter_is_enabled():
 
 
 def test_repo_codearts_adapter_declares_model_pool():
-    adapter = json.loads(VSCODE_CONFIG.read_text(encoding="utf-8"))[
-        "sessionOrchestration"
-    ]["codeartsAdapter"]
+    adapter = json.loads(VSCODE_CONFIG.read_text(encoding="utf-8"))["sessionOrchestration"]["codeartsAdapter"]
     models = adapter.get("models") or []
     # 模型池条目有两种写法："glm-5.3"（只给 modelID）或
     # {"providerID": ..., "modelID": ...}（显式给 provider）。这里只关心
@@ -536,9 +508,7 @@ def test_send_message_body_carries_model(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     client.send_message(
         session_id="ses_abc",
         workspace=Path("/tmp/ws"),
@@ -579,12 +549,8 @@ def test_send_message_body_omits_model_when_not_given(
         )[1],
     )
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
-    client.send_message(
-        session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
+    client.send_message(session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build")
 
     assert "model" not in captured["body"]
 
@@ -611,9 +577,7 @@ def test_create_session_returns_session_id(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     session_id = client.create_session(workspace=Path("/tmp/ws"), title="派单")
 
     assert session_id == "ses_new1"
@@ -637,13 +601,9 @@ def test_create_session_raises_when_response_has_no_id(
         def __exit__(self, *args):
             return False
 
-    monkeypatch.setattr(
-        bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response()
-    )
+    monkeypatch.setattr(bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response())
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     with pytest.raises(bridge.BridgeError):
         client.create_session(workspace=Path("/tmp/ws"), title="t")
 
@@ -783,9 +743,7 @@ def test_main_rejects_model_with_cron_channel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """cron 通道由 kernel 决定模型，配 --model 必须**明确失败**，不能假绿。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
 
     code = bridge.main(
         [
@@ -808,9 +766,7 @@ def test_main_defaults_to_new_session_when_model_given(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """给了模型就必须走 new_session（cron 钉不住模型）。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "KernelClient", lambda **_: object())
     monkeypatch.setattr(
@@ -830,9 +786,7 @@ def test_main_defaults_to_new_session_when_model_given(
         return {
             "channel": "new_session",
             "session_id": "ses_new",
-            "response": {
-                "info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}
-            },
+            "response": {"info": {"providerID": "inferhub-provider", "modelID": "glm-5.3"}},
         }
 
     monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
@@ -867,9 +821,7 @@ def test_main_reports_silent_fallback_in_model_applied(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """请求 A、实际 B → model_applied 必须是 False（不能装作钉住了）。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "KernelClient", lambda **_: object())
     monkeypatch.setattr(
@@ -953,14 +905,10 @@ def test_setup_credentials_writes_credential_file_without_echoing_password(
     assert "密码未回显" in stdout
 
 
-def test_setup_credentials_does_not_deliver_anything(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_setup_credentials_does_not_deliver_anything(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """引导只写凭据文件，绝不触发任何投递。"""
     monkeypatch.setattr(bridge, "CREDENTIAL_FILE", tmp_path / "kernel-bridge.env")
-    monkeypatch.setattr(
-        bridge, "resolve_credentials", lambda **_: ("codearts", "pw")
-    )
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
 
     def _boom(*_args, **_kwargs):
         raise AssertionError("引导命令不应发起任何 kernel 请求")
@@ -1004,9 +952,7 @@ def test_setup_credentials_uses_env_password_when_present(
     code = bridge.main(["--workspace", str(tmp_path), "--setup-credentials"])
 
     assert code == 0
-    assert "OPENCODE_SERVER_PASSWORD=env-provided-pw" in credential_file.read_text(
-        encoding="utf-8"
-    )
+    assert "OPENCODE_SERVER_PASSWORD=env-provided-pw" in credential_file.read_text(encoding="utf-8")
     assert "env-provided-pw" not in capsys.readouterr().out
 
 
@@ -1044,7 +990,8 @@ def test_inspect_cron_residue_flags_active_running_task():
     )
 
     residue = bridge.inspect_cron_residue(
-        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+        kernel,
+        workspace=Path("/tmp/ws"),  # type: ignore[arg-type]
     )
 
     assert residue["total"] == 2
@@ -1058,9 +1005,7 @@ def test_inspect_cron_residue_flags_active_running_task():
 
 def test_inspect_cron_residue_marks_past_next_fire_as_stale():
     """nextFireTime 停在过去 = 手动触发未走完成回调的残留，不是待触发的计划。"""
-    past_ms = int(
-        (datetime.now() - timedelta(hours=9)).timestamp() * 1000
-    )
+    past_ms = int((datetime.now() - timedelta(hours=9)).timestamp() * 1000)
     kernel = _ResidueKernel(
         [
             {
@@ -1073,7 +1018,8 @@ def test_inspect_cron_residue_marks_past_next_fire_as_stale():
     )
 
     residue = bridge.inspect_cron_residue(
-        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+        kernel,
+        workspace=Path("/tmp/ws"),  # type: ignore[arg-type]
     )
 
     stuck = residue["stuck"][0]
@@ -1095,19 +1041,19 @@ def test_inspect_cron_residue_future_next_fire_is_not_stale():
     )
 
     residue = bridge.inspect_cron_residue(
-        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+        kernel,
+        workspace=Path("/tmp/ws"),  # type: ignore[arg-type]
     )
 
     assert residue["stuck"][0]["staleNextFire"] is False
 
 
 def test_inspect_cron_residue_clean_when_no_stuck_task():
-    kernel = _ResidueKernel(
-        [{"id": "aa844576", "status": "expired", "isRunning": False}]
-    )
+    kernel = _ResidueKernel([{"id": "aa844576", "status": "expired", "isRunning": False}])
 
     residue = bridge.inspect_cron_residue(
-        kernel, workspace=Path("/tmp/ws")  # type: ignore[arg-type]
+        kernel,
+        workspace=Path("/tmp/ws"),  # type: ignore[arg-type]
     )
 
     assert residue["stuck_count"] == 0
@@ -1128,13 +1074,9 @@ def test_list_cron_tasks_parses_json_body(monkeypatch: pytest.MonkeyPatch):
         def __exit__(self, *args):
             return False
 
-    monkeypatch.setattr(
-        bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response()
-    )
+    monkeypatch.setattr(bridge.urllib.request, "urlopen", lambda request, timeout=None: _Response())
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     tasks = client.list_cron_tasks(workspace=Path("/tmp/ws"))
 
     assert [task["id"] for task in tasks] == ["aa844576"]
@@ -1144,15 +1086,11 @@ def test_main_check_residue_does_not_deliver(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """--check-residue 只体检，不投递、不建会话。"""
-    monkeypatch.setattr(
-        bridge, "resolve_credentials", lambda **_: ("codearts", "pw")
-    )
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(
         bridge,
         "KernelClient",
-        lambda **_: _ResidueKernel(
-            [{"id": "296fc444", "status": "active", "isRunning": True}]
-        ),
+        lambda **_: _ResidueKernel([{"id": "296fc444", "status": "active", "isRunning": True}]),
     )
 
     def _boom(*_args, **_kwargs):
@@ -1261,9 +1199,7 @@ def test_purge_uses_kernel_delete_route_first(tmp_path: Path):
     assert result["api_refused_running"] == []
 
 
-def test_purge_falls_back_to_file_when_route_refuses_running_task(
-    tmp_path: Path, monkeypatch
-):
+def test_purge_falls_back_to_file_when_route_refuses_running_task(tmp_path: Path, monkeypatch):
     """官方路由拒绝「正在执行」的任务时，走文件级兜底。"""
     store = tmp_path / "cron" / "scheduled_tasks.json"
     _write_store(store, ["296fc444", "aa844576"], active="296fc444")
@@ -1277,10 +1213,7 @@ def test_purge_falls_back_to_file_when_route_refuses_running_task(
     # 复核用：kernel 读的就是这个文件，改完应立刻反映。
     def _list(*, workspace: Path):
         payload = json.loads(store.read_text(encoding="utf-8"))
-        return [
-            {"id": t["id"], "status": t["status"], "isRunning": t["status"] == "active"}
-            for t in payload["tasks"]
-        ]
+        return [{"id": t["id"], "status": t["status"], "isRunning": t["status"] == "active"} for t in payload["tasks"]]
 
     monkeypatch.setattr(kernel, "list_cron_tasks", _list)
 
@@ -1303,12 +1236,12 @@ def test_purge_dry_run_touches_nothing(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
     before = store.read_text(encoding="utf-8")
 
-    kernel = _PurgeKernel(
-        [{"id": "296fc444", "status": "active", "isRunning": True}]
-    )
+    kernel = _PurgeKernel([{"id": "296fc444", "status": "active", "isRunning": True}])
 
     result = bridge.purge_cron_residue(
-        kernel, workspace=tmp_path, dry_run=True  # type: ignore[arg-type]
+        kernel,
+        workspace=tmp_path,
+        dry_run=True,  # type: ignore[arg-type]
     )
 
     assert result["mode"] == "dry-run"
@@ -1364,9 +1297,7 @@ def test_purge_residue_cli_flag_runs_purge(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.setattr(bridge, "KernelClient", lambda **_: kernel)
     # 凭据解析必须打桩：本用例只关心清理流程，不该依赖本机
     # ~/.codeartsdoer/kernel-bridge.env 里的真实凭据（CI runner 上没有）。
-    monkeypatch.setattr(
-        bridge, "resolve_credentials", lambda **_: ("codearts", "pw")
-    )
+    monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
 
     def _boom(*_args, **_kwargs):
         raise AssertionError("清理模式不应触发投递")
@@ -1400,9 +1331,7 @@ def test_remove_from_cron_store_never_deletes_kernel_lock(tmp_path: Path, monkey
     monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
     # 用 stub 替换 time 模块（raising=False）：这样本用例在旧实现上
     # 也会因为「锁被删掉」而失败，而不是因为缺少 time 属性而失败。
-    monkeypatch.setattr(
-        bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False
-    )
+    monkeypatch.setattr(bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False)
 
     result = bridge._remove_from_cron_store(["b2"])
 
@@ -1420,9 +1349,7 @@ def test_remove_from_cron_store_reports_lock_conflict(tmp_path: Path, monkeypatc
     monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
     # 用 stub 替换 time 模块（raising=False）：这样本用例在旧实现上
     # 也会因为「锁被删掉」而失败，而不是因为缺少 time 属性而失败。
-    monkeypatch.setattr(
-        bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False
-    )
+    monkeypatch.setattr(bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False)
 
     result = bridge._remove_from_cron_store(["b2"])
 
@@ -1439,9 +1366,7 @@ def test_remove_from_cron_store_reports_no_lock_conflict(tmp_path: Path, monkeyp
     assert result["lock_conflict"] is False
 
 
-def test_remove_from_cron_store_rereads_store_after_lock_conflict(
-    tmp_path: Path, monkeypatch
-):
+def test_remove_from_cron_store_rereads_store_after_lock_conflict(tmp_path: Path, monkeypatch):
     """锁冲突时重新读一次存储：kernel 在这期间加的任务不能被覆盖掉。"""
     store = tmp_path / "cron" / "scheduled_tasks.json"
     _write_store(store, ["a1", "b2"])
@@ -1449,9 +1374,7 @@ def test_remove_from_cron_store_rereads_store_after_lock_conflict(
     monkeypatch.setattr(bridge, "CRON_STORE_PATH", store)
     # 用 stub 替换 time 模块（raising=False）：这样本用例在旧实现上
     # 也会因为「锁被删掉」而失败，而不是因为缺少 time 属性而失败。
-    monkeypatch.setattr(
-        bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False
-    )
+    monkeypatch.setattr(bridge, "time", SimpleNamespace(sleep=lambda _s: None), raising=False)
 
     calls = {"n": 0}
     real_read = bridge._read_cron_store
@@ -1488,7 +1411,6 @@ def test_remove_from_cron_store_leaves_no_temp_file(tmp_path: Path, monkeypatch)
     assert leftovers == []
 
 
-
 # ---------------------------------------------------------------------------
 # 模型降级链（--model-fallback）与投递回执落盘
 #
@@ -1502,9 +1424,7 @@ def test_remove_from_cron_store_leaves_no_temp_file(tmp_path: Path, monkeypatch)
 
 def _patch_delivery_harness(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     """给降级链用例搭公共桩：凭据 / KernelClient / 残留体检。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "KernelClient", lambda **_: object())
     monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
@@ -1537,11 +1457,16 @@ def test_fallback_chain_first_choice_succeeds_without_fallback(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "deepseek-v4.1-flash,kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "deepseek-v4.1-flash,kimi-k3",
             "--json",
         ]
     )
@@ -1552,9 +1477,7 @@ def test_fallback_chain_first_choice_succeeds_without_fallback(
     assert payload["model_used"] == "inferhub-provider/glm-5.3"
     assert payload["model_applied"] is True
     assert payload["fallback_used"] is False
-    assert payload["model_attempts"] == [
-        {"model": "inferhub-provider/glm-5.3", "ok": True, "error": ""}
-    ]
+    assert payload["model_attempts"] == [{"model": "inferhub-provider/glm-5.3", "ok": True, "error": ""}]
 
 
 def test_fallback_chain_silent_fallback_moves_to_next_candidate(
@@ -1584,11 +1507,16 @@ def test_fallback_chain_silent_fallback_moves_to_next_candidate(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "deepseek-v4.1-flash,kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "deepseek-v4.1-flash,kimi-k3",
             "--json",
         ]
     )
@@ -1618,9 +1546,7 @@ def test_fallback_chain_http_error_moves_to_next_candidate(
 
     def _fake_deliver(client, *, workspace, message, agent, model=None):
         if model and model["modelID"] == "glm-5.3":
-            raise bridge.BridgeError(
-                "POST /session/ses_1/message 返回 HTTP 500: upstream boom"
-            )
+            raise bridge.BridgeError("POST /session/ses_1/message 返回 HTTP 500: upstream boom")
         return {
             "channel": "new_session",
             "session_id": "ses_new_2",
@@ -1631,11 +1557,16 @@ def test_fallback_chain_http_error_moves_to_next_candidate(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "deepseek-v4.1-flash",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "deepseek-v4.1-flash",
             "--json",
         ]
     )
@@ -1676,24 +1607,25 @@ def test_fallback_chain_all_candidates_fail(
             return {
                 "channel": "new_session",
                 "session_id": "ses_new_1",
-                "response": {
-                    "info": {"providerID": "minimax", "modelID": "MiniMax-M3.1"}
-                },
+                "response": {"info": {"providerID": "minimax", "modelID": "MiniMax-M3.1"}},
             }
-        raise bridge.BridgeError(
-            "无法连接 kernel http://127.0.0.1:14934: connection refused"
-        )
+        raise bridge.BridgeError("无法连接 kernel http://127.0.0.1:14934: connection refused")
 
     monkeypatch.setattr(bridge, "resolve_model", _resolve)
     monkeypatch.setattr(bridge, "deliver_via_new_session", _fake_deliver)
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "deepseek-v4.1-flash,kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "deepseek-v4.1-flash,kimi-k3",
             "--json",
         ]
     )
@@ -1740,11 +1672,16 @@ def test_fallback_chain_retry_uses_fresh_session(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "kimi-k3",
             "--json",
         ]
     )
@@ -1772,10 +1709,14 @@ def test_single_model_failure_keeps_legacy_behaviour(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
             "--json",
         ]
     )
@@ -1787,15 +1728,16 @@ def test_single_model_failure_keeps_legacy_behaviour(
 def test_model_fallback_requires_primary_model(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--model-fallback",
+            "kimi-k3",
         ]
     )
 
@@ -1806,17 +1748,20 @@ def test_model_fallback_requires_primary_model(
 def test_model_fallback_rejects_cron_channel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--channel", "cron",
-            "--model", "glm-5.3",
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--channel",
+            "cron",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "kimi-k3",
         ]
     )
 
@@ -1828,17 +1773,20 @@ def test_model_fallback_rejects_session_channel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """降级重试必须用全新会话 —— 复用已有会话的 session 通道不兼容降级链。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--channel", "session",
-            "--model", "glm-5.3",
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--channel",
+            "session",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "kimi-k3",
         ]
     )
 
@@ -1868,11 +1816,16 @@ def test_delivery_receipt_written_on_success(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--intervention-id", "int-rcpt-1",
-            "--model", "glm-5.3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--intervention-id",
+            "int-rcpt-1",
+            "--model",
+            "glm-5.3",
             "--json",
         ]
     )
@@ -1893,9 +1846,7 @@ def test_delivery_receipt_written_on_success(
     assert payload["receipt_file"] == "logs/codearts_delivery_receipt.json"
 
 
-def test_delivery_receipt_overwritten_per_delivery(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_delivery_receipt_overwritten_per_delivery(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """每次投递覆盖写：回执文件只有一个，内容是最近一次投递。"""
     event = _patch_delivery_harness(monkeypatch, tmp_path)
     monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
@@ -1912,11 +1863,16 @@ def test_delivery_receipt_overwritten_per_delivery(
     for intervention_id in ("int-first", "int-second"):
         code = bridge.main(
             [
-                "--workspace", str(tmp_path),
-                "--event-file", str(event),
-                "--kernel-url", "http://127.0.0.1:14934",
-                "--intervention-id", intervention_id,
-                "--model", "glm-5.3",
+                "--workspace",
+                str(tmp_path),
+                "--event-file",
+                str(event),
+                "--kernel-url",
+                "http://127.0.0.1:14934",
+                "--intervention-id",
+                intervention_id,
+                "--model",
+                "glm-5.3",
                 "--json",
             ]
         )
@@ -1951,10 +1907,14 @@ def test_delivery_receipt_write_failure_only_warns(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
             "--json",
         ]
     )
@@ -1964,9 +1924,7 @@ def test_delivery_receipt_write_failure_only_warns(
     assert "写投递回执失败" in err
 
 
-def test_inbox_copy_carries_fallback_trace_fields(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_inbox_copy_carries_fallback_trace_fields(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """write_inbox_copy 落的 payload 里必须带 fallback_used / model_attempts。"""
     event = _patch_delivery_harness(monkeypatch, tmp_path)
     monkeypatch.setattr(bridge, "resolve_model", _default_resolve_model)
@@ -1991,20 +1949,24 @@ def test_inbox_copy_carries_fallback_trace_fields(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--intervention-id", "int-trace-1",
-            "--model", "glm-5.3",
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--intervention-id",
+            "int-trace-1",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "kimi-k3",
             "--json",
         ]
     )
 
     assert code == 0
-    inbox_files = list(
-        (tmp_path / "collaboration" / "monitoring" / "codearts_inbox").glob("*.md")
-    )
+    inbox_files = list((tmp_path / "collaboration" / "monitoring" / "codearts_inbox").glob("*.md"))
     assert len(inbox_files) == 1
     text = inbox_files[0].read_text(encoding="utf-8")
     assert "fallback_used" in text
@@ -2069,9 +2031,7 @@ class _TimeoutKernel:
     ) -> dict[str, Any]:
         self.calls += 1
         self.messages.setdefault(session_id, []).append(message)
-        raise bridge.BridgeTimeoutError(
-            f"POST /session/{session_id}/message 等待超时（{timeout}s）: timed out"
-        )
+        raise bridge.BridgeTimeoutError(f"POST /session/{session_id}/message 等待超时（{timeout}s）: timed out")
 
     def list_messages(self, *, session_id: str, workspace: Path) -> list[dict[str, Any]]:
         if self.calls not in self.accepted_calls:
@@ -2102,9 +2062,7 @@ def test_receipt_timeout_accepted_is_success_without_fallback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """R1b 用例 1：等回执超时但核实到消息已被接受 → 成功、不降级、不重投。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     kernel = _TimeoutKernel(accepted_calls={1})
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
@@ -2113,11 +2071,16 @@ def test_receipt_timeout_accepted_is_success_without_fallback(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "kimi-k3",
             "--json",
         ]
     )
@@ -2147,9 +2110,7 @@ def test_receipt_timeout_accepted_keeps_actual_model_from_assistant(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """R1b 用例 2：核实到 assistant 消息 → model_used 取实际用掉的模型。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     kernel = _TimeoutKernel(accepted_calls={1}, with_assistant=True)
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
@@ -2158,10 +2119,14 @@ def test_receipt_timeout_accepted_keeps_actual_model_from_assistant(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
             "--json",
         ]
     )
@@ -2178,9 +2143,7 @@ def test_receipt_timeout_not_accepted_falls_back_to_next_candidate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """R1b 用例 3：核实不到消息（确实没被接受）→ 这次候选失败，换下一个。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     kernel = _TimeoutKernel(accepted_calls={2})
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
@@ -2189,11 +2152,16 @@ def test_receipt_timeout_not_accepted_falls_back_to_next_candidate(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "kimi-k3",
             "--json",
         ]
     )
@@ -2216,9 +2184,7 @@ def test_receipt_timeout_all_candidates_fail_exits_with_reasons(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """R1b 用例 4：所有候选都超时且都没被接受 → 退出码 2 + 逐条原因。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     kernel = _TimeoutKernel()
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
@@ -2227,11 +2193,16 @@ def test_receipt_timeout_all_candidates_fail_exits_with_reasons(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--model-fallback", "kimi-k3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--model-fallback",
+            "kimi-k3",
             "--json",
         ]
     )
@@ -2249,9 +2220,7 @@ def test_receipt_timeout_single_candidate_exits_two_without_traceback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """R1b 用例 5：单候选（无降级链）超时且没被接受 → 退出码 2，不许 traceback。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     kernel = _TimeoutKernel()
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
@@ -2260,10 +2229,14 @@ def test_receipt_timeout_single_candidate_exits_two_without_traceback(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
             "--json",
         ]
     )
@@ -2279,9 +2252,7 @@ def test_receipt_timeout_is_forwarded_to_kernel_client(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """R1b 用例 6：--receipt-timeout 单独管等回执窗口，默认 600 秒。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     kernel = _TimeoutKernel(accepted_calls={1, 2})
     captured: dict[str, Any] = {}
 
@@ -2296,10 +2267,14 @@ def test_receipt_timeout_is_forwarded_to_kernel_client(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
             "--json",
         ]
     )
@@ -2310,11 +2285,16 @@ def test_receipt_timeout_is_forwarded_to_kernel_client(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--model", "glm-5.3",
-            "--receipt-timeout", "42",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--model",
+            "glm-5.3",
+            "--receipt-timeout",
+            "42",
             "--json",
         ]
     )
@@ -2330,9 +2310,7 @@ def test_accepted_without_receipt_is_written_to_receipt_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ):
     """R1b 用例 7：accepted_without_receipt 落进回执文件。"""
-    event = _write_event(
-        tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n"
-    )
+    event = _write_event(tmp_path / "event.md", "## Pull Snapshot\n\n```text\n正文\n```\n")
     kernel = _TimeoutKernel(accepted_calls={1})
     monkeypatch.setattr(bridge, "resolve_credentials", lambda **_: ("codearts", "pw"))
     monkeypatch.setattr(bridge, "inspect_cron_residue", lambda client, *, workspace: {})
@@ -2341,11 +2319,16 @@ def test_accepted_without_receipt_is_written_to_receipt_file(
 
     code = bridge.main(
         [
-            "--workspace", str(tmp_path),
-            "--event-file", str(event),
-            "--kernel-url", "http://127.0.0.1:14934",
-            "--intervention-id", "int-accepted-1",
-            "--model", "glm-5.3",
+            "--workspace",
+            str(tmp_path),
+            "--event-file",
+            str(event),
+            "--kernel-url",
+            "http://127.0.0.1:14934",
+            "--intervention-id",
+            "int-accepted-1",
+            "--model",
+            "glm-5.3",
             "--json",
         ]
     )
@@ -2370,13 +2353,9 @@ def test_request_wraps_socket_timeout_into_bridge_timeout(
 
     monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     with pytest.raises(bridge.BridgeTimeoutError) as excinfo:
-        client.send_message(
-            session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build"
-        )
+        client.send_message(session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build")
 
     assert isinstance(excinfo.value, bridge.BridgeError)
     assert "等待超时" in str(excinfo.value)
@@ -2392,13 +2371,9 @@ def test_request_wraps_connection_error_into_bridge_error(
 
     monkeypatch.setattr(bridge.urllib.request, "urlopen", _fake_urlopen)
 
-    client = bridge.KernelClient(
-        base_url="http://127.0.0.1:14934", username="codearts", password="pw"
-    )
+    client = bridge.KernelClient(base_url="http://127.0.0.1:14934", username="codearts", password="pw")
     with pytest.raises(bridge.BridgeError):
-        client.send_message(
-            session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build"
-        )
+        client.send_message(session_id="ses_abc", workspace=Path("/tmp/ws"), message="x", agent="build")
 
 
 def test_verify_message_accepted_ignores_messages_from_before_the_send(
@@ -2475,7 +2450,6 @@ def test_verify_message_accepted_matches_by_content(
     }
 
 
-
 def test_verify_message_accepted_ignores_identical_message_from_before_the_send():
     """R1b 用例 12：只有"发送之前的同内容旧消息"不算本条被接受。"""
     sent_at_ms = int(time.time() * 1000)
@@ -2530,7 +2504,6 @@ def test_verify_message_accepted_accepts_message_without_timestamp():
     assert assistants == []
 
 
-
 def test_verify_message_accepted_rejects_unrelated_recent_message():
     """R1b 用例 14：会话里有别的（刚发的）用户消息也不算本条被接受。
 
@@ -2562,7 +2535,6 @@ def test_verify_message_accepted_rejects_unrelated_recent_message():
 
     assert accepted is False
     assert assistants == []
-
 
 
 if __name__ == "__main__":

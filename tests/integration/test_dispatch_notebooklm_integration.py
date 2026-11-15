@@ -30,9 +30,7 @@ class TestDispatchBridgeNotebookLMIntegration:
             cwd=str(ROOT),
         )
         assert result.returncode == 0
-        assert (
-            "notebooklm_enriched" not in result.stdout or "notebooklm_enriched=0" in result.stdout
-        )
+        assert "notebooklm_enriched" not in result.stdout or "notebooklm_enriched=0" in result.stdout
 
     def test_dry_run_with_enrich_notebooklm(self):
         """测试 dry-run 模式启用 NotebookLM 增强"""

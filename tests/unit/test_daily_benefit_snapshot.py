@@ -2,12 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
-SCRIPT = (
-    Path(__file__).resolve().parents[2]
-    / "collaboration"
-    / "scripts"
-    / "run_daily_benefit_snapshot.py"
-)
+SCRIPT = Path(__file__).resolve().parents[2] / "collaboration" / "scripts" / "run_daily_benefit_snapshot.py"
 
 
 def _write_jsonl(path: Path, items: list[dict]) -> None:
@@ -57,9 +52,7 @@ def test_daily_snapshot_writes_latest_and_dated_files(tmp_path):
     assert result.returncode == 0, result.stderr
 
     latest_report = workspace / "logs" / "automation_benefit_report_test.json"
-    latest_dashboard = (
-        workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md"
-    )
+    latest_dashboard = workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md"
     assert latest_report.exists()
     assert latest_dashboard.exists()
 
@@ -93,9 +86,7 @@ def test_daily_snapshot_dry_run_does_not_write(tmp_path):
     assert "mode=dry-run" in result.stdout
 
     assert not (workspace / "logs" / "automation_benefit_report_test.json").exists()
-    assert not (
-        workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md"
-    ).exists()
+    assert not (workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md").exists()
     assert not (workspace / "logs" / "automation_benefit_daily_history_test.jsonl").exists()
 
 
@@ -117,10 +108,6 @@ def test_daily_snapshot_upserts_same_date_history(tmp_path):
     assert second.returncode == 0, second.stderr
 
     history = workspace / "logs" / "automation_benefit_daily_history_test.jsonl"
-    rows = [
-        json.loads(line)
-        for line in history.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    rows = [json.loads(line) for line in history.read_text(encoding="utf-8").splitlines() if line.strip()]
     assert len(rows) == 1
     assert rows[0]["overall_efficiency_ratio"] == 6.0

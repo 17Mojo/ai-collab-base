@@ -85,9 +85,7 @@ def ack_prefix_for_assignee(
     try:
         from .role_prefix import resolve_ack_prefix
 
-        return resolve_ack_prefix(
-            normalized, assignee_role=assignee_role, workspace=workspace
-        )
+        return resolve_ack_prefix(normalized, assignee_role=assignee_role, workspace=workspace)
     except Exception:  # pragma: no cover - 解析器不可用时退回兜底表
         return _ACK_PREFIX.get(normalized, _UNKNOWN_ASSIGNEE_PREFIX)
 
@@ -106,9 +104,7 @@ def build_ack_line(
     assignee_role: str | None = None,
     workspace: Path | None = None,
 ) -> str:
-    prefix = ack_prefix_for_assignee(
-        assignee, assignee_role=assignee_role, workspace=workspace
-    )
+    prefix = ack_prefix_for_assignee(assignee, assignee_role=assignee_role, workspace=workspace)
     resolved_status = str(status or ack_status_for_assignee(assignee)).strip()
     return f"{prefix}.ACK|task={task_id}|status={resolved_status}|result={result_file}"
 

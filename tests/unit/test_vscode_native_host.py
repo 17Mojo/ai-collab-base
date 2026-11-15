@@ -4,9 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-HOST_SCRIPT = (
-    Path(__file__).resolve().parents[2] / "products" / "vscode-extension" / "native_host.py"
-)
+HOST_SCRIPT = Path(__file__).resolve().parents[2] / "products" / "vscode-extension" / "native_host.py"
 
 
 def run_stdio(payload: dict) -> dict:

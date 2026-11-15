@@ -91,9 +91,7 @@ def resolve_run_hint(
     与 ACK 提示同源：先按工单声明的角色取角色命令前缀，
     否则取 provider 在 provider_registry 里声明的 fallback_ack_prefix。
     """
-    run_hint, _ = resolve_hints(
-        provider_id, assignee_role=assignee_role, workspace=workspace
-    )
+    run_hint, _ = resolve_hints(provider_id, assignee_role=assignee_role, workspace=workspace)
     return run_hint
 
 
@@ -108,9 +106,7 @@ def resolve_ack_prefix(
     优先用工单声明的角色（PROTOCOL §7.3 的 assignee_role），
     其次用编排配置里 provider 绑定的角色，最后退回兜底表。
     """
-    _, ack_hint = resolve_hints(
-        provider_id, assignee_role=assignee_role, workspace=workspace
-    )
+    _, ack_hint = resolve_hints(provider_id, assignee_role=assignee_role, workspace=workspace)
     return ack_hint.split(".", 1)[0]
 
 
@@ -143,9 +139,7 @@ def resolve_hints(
         if not prefix and config.providers:
             entry = config.providers.get(normalized)
             if entry is not None:
-                prefix = str(
-                    getattr(entry, "extra", {}).get("fallback_ack_prefix") or ""
-                ).strip()
+                prefix = str(getattr(entry, "extra", {}).get("fallback_ack_prefix") or "").strip()
 
     if not prefix:
         prefix = FALLBACK_ACK_PREFIX.get(normalized, "")
@@ -165,9 +159,7 @@ def resolve_ack_hint(
     workspace: Path | str | None = None,
 ) -> str:
     """provider → ACK 提示（如 'A.ACK'）。"""
-    _, ack_hint = resolve_hints(
-        provider_id, assignee_role=assignee_role, workspace=workspace
-    )
+    _, ack_hint = resolve_hints(provider_id, assignee_role=assignee_role, workspace=workspace)
     return ack_hint
 
 

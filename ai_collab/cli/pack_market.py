@@ -53,9 +53,7 @@ class PackMarketCLI:
 
     def _save_index(self, index: dict) -> None:
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
-        self.index_path.write_text(
-            json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        self.index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def _load_pack_json(self, path: str) -> dict[str, Any] | None:
         try:
@@ -131,16 +129,20 @@ class PackMarketCLI:
                 errors.append(f"缺少必需字段: {field}")
         meta = pack.get("metadata") or {}
         for field in (
-            "pack_id", "pack_name", "version", "type",
-            "description", "designer", "created_at", "updated_at",
+            "pack_id",
+            "pack_name",
+            "version",
+            "type",
+            "description",
+            "designer",
+            "created_at",
+            "updated_at",
         ):
             if field not in meta:
                 errors.append(f"metadata 缺少必需字段: {field}")
         metrics = (pack.get("quality_metrics") or {}).get("metrics")
         if isinstance(metrics, dict) and metrics:
-            total = sum(
-                m.get("weight", 0) for m in metrics.values() if isinstance(m, dict)
-            )
+            total = sum(m.get("weight", 0) for m in metrics.values() if isinstance(m, dict))
             if abs(total - 1.0) > 0.01:
                 warnings.append(f"质量指标权重总和不为 1.0: {total:.3f}")
         steps = (pack.get("workflow") or {}).get("steps")
@@ -199,10 +201,7 @@ class PackMarketCLI:
                 print(f"\n✗ 版本比较失败: {exc}")
                 return 1
             if new.compare(cur) <= 0:
-                print(
-                    f"\n✗ 同 pack_id 已存在 v{existing.version}（≥ 发布版本 v{version_str}）"
-                    "；请提高版本号或删旧条目"
-                )
+                print(f"\n✗ 同 pack_id 已存在 v{existing.version}（≥ 发布版本 v{version_str}）；请提高版本号或删旧条目")
                 return 1
             listing.downloads = existing.downloads
             listing.rating = existing.rating
@@ -210,10 +209,7 @@ class PackMarketCLI:
             if not self.store.update_listing(listing):
                 print("\n✗ 版本更新失败")
                 return 1
-            print(
-                f"\n✓ Pack 已发布（{listing.pack_id} v{existing.version} → "
-                f"v{listing.version}，单行覆盖更新）"
-            )
+            print(f"\n✓ Pack 已发布（{listing.pack_id} v{existing.version} → v{listing.version}，单行覆盖更新）")
         else:
             print(f"\n✓ Pack 已发布（{listing.pack_id} v{listing.version}）")
         if deps:
@@ -234,9 +230,7 @@ class PackMarketCLI:
         range_expr = range_expr or "*"
 
         packs = self.api.list_packs().get("packs", [])
-        candidates = [
-            p for p in packs if p.get("pack_name") == name or p.get("pack_id") == name
-        ]
+        candidates = [p for p in packs if p.get("pack_name") == name or p.get("pack_id") == name]
         if not candidates:
             print(f"\n✗ 市场中未找到 Pack: {name}")
             return 1
@@ -254,8 +248,10 @@ class PackMarketCLI:
                 chosen = p
                 break
         if chosen is None:
-            print(f"\n✗ 无版本满足约束 {name}@{range_expr}（可用: "
-                  f"{', '.join(str(p.get('version')) for p in candidates)}）")
+            print(
+                f"\n✗ 无版本满足约束 {name}@{range_expr}（可用: "
+                f"{', '.join(str(p.get('version')) for p in candidates)}）"
+            )
             return 1
 
         pack_id = str(chosen.get("pack_id"))
@@ -286,7 +282,9 @@ class PackMarketCLI:
                 )
             )
         for d in deps:
-            self.resolver.register_version(str(d.get("name")), str(d.get("version", "1.0.0")).lstrip(">=<^~* ") or "1.0.0")
+            self.resolver.register_version(
+                str(d.get("name")), str(d.get("version", "1.0.0")).lstrip(">=<^~* ") or "1.0.0"
+            )
 
         order = self.resolver.get_install_order(root) if deps else [pack_id]
         conflicts = self.resolver.detect_conflicts([root]) if deps else []
@@ -320,9 +318,7 @@ class PackMarketCLI:
     def upgrade(self, name: str) -> int:
         index = self._load_index()
         installed = index.get("installed", {})
-        match_id = next(
-            (pid for pid in installed if pid == name or pid.endswith(name)), None
-        )
+        match_id = next((pid for pid in installed if pid == name or pid.endswith(name)), None)
         if match_id is None:
             print(f"\n✗ 本地索引未安装: {name}（先 pack install）")
             return 1
@@ -404,10 +400,7 @@ class PackMarketCLI:
         for v in versions:
             deps = v.get("dependencies") or []
             dep_note = f"{len(deps)} 项依赖" if deps else "无依赖"
-            print(
-                f"  v{v['version']}  [快照:{v.get('status', '?')}]  {dep_note}"
-                f"  归档于 {v.get('archived_at', '?')}"
-            )
+            print(f"  v{v['version']}  [快照:{v.get('status', '?')}]  {dep_note}  归档于 {v.get('archived_at', '?')}")
             for d in deps:
                 if isinstance(d, dict):
                     print(f"    - {d.get('name')} {d.get('version', '*')}")

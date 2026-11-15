@@ -88,9 +88,13 @@ jobs:
               counts[sev] = counts.get(sev, 0) + 1
           print(f"::notice::Bandit summary: HIGH={counts['HIGH']} MEDIUM={counts['MEDIUM']} LOW={counts['LOW']}")
 
-          # 当前策略：HIGH > 0 警告（不阻塞），等修复完再切严格
+          # 2026-11-15 升门禁：HIGH 级 findings 真挡 PR。
+          # 当前实测 HIGH=0 / MEDIUM=1 / LOW=42（B110/B603/B404/B607 等
+          # 低危常见模式），升门禁不引红。MEDIUM/LOW 仍只警告，
+          # 收敛到阈值前不纳入阻塞，避免一次性引入 43 处源码改动。
           if counts["HIGH"] > 0:
-              print(f"::warning title=Bandit High issues found::{counts['HIGH']} High severity issues detected. See artifacts for details.")
+              print(f"::error::{counts['HIGH']} High severity Bandit issues detected. See artifacts for details.")
+              sys.exit(1)
           PY
 
       - name: Upload Bandit report

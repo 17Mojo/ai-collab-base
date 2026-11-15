@@ -162,7 +162,9 @@ class TestTransactionSemantics:
 
         # 用完全独立的连接读取，绕开 store 自身的连接
         with closing(sqlite3.connect(temp_db)) as conn:
-            rows = conn.execute("SELECT pack_name FROM pack_listings WHERE pack_id = ?", (sample_listing.pack_id,)).fetchall()
+            rows = conn.execute(
+                "SELECT pack_name FROM pack_listings WHERE pack_id = ?", (sample_listing.pack_id,)
+            ).fetchall()
 
         assert rows, "数据未落盘：独立连接读不到刚写入的记录"
         assert rows[0][0] == sample_listing.pack_name

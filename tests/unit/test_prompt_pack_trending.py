@@ -99,9 +99,7 @@ class TestDownloadEventsDataModel:
 
         reloaded = PackRegistry(registry.packs_root)
 
-        assert reloaded.index["alpha"].download_events == registry.index[
-            "alpha"
-        ].download_events
+        assert reloaded.index["alpha"].download_events == registry.index["alpha"].download_events
 
     def test_legacy_index_without_download_events_loads(self, registry_factory):
         """旧索引文件没有 download_events 字段时按 [] 处理，不报错、统计不丢"""
@@ -113,9 +111,7 @@ class TestDownloadEventsDataModel:
 
         raw = json.loads(registry.index_file.read_text(encoding="utf-8"))
         del raw["alpha"]["download_events"]
-        registry.index_file.write_text(
-            json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        registry.index_file.write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8")
 
         reloaded = PackRegistry(registry.packs_root)
 
@@ -132,9 +128,7 @@ class TestDownloadEventsDataModel:
 
         raw = json.loads(registry.index_file.read_text(encoding="utf-8"))
         raw["alpha"]["download_events"] = "not-a-list"
-        registry.index_file.write_text(
-            json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        registry.index_file.write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8")
 
         reloaded = PackRegistry(registry.packs_root)
 

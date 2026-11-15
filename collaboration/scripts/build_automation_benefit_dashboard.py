@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build automation benefit dashboard from dispatch/receipt history."""
+
 import argparse
 import json
 import sys
@@ -62,8 +63,9 @@ def main() -> int:
         ratio = (v["dispatch"] + v["receipt"]) / 2 if (v["dispatch"] + v["receipt"]) > 0 else 0.0
         achieved = ratio >= args.target_ratio
         total_ratio_sum += ratio
-        days.append({"date": d, "dispatch": v["dispatch"], "receipt": v["receipt"],
-                     "ratio": ratio, "achieved": achieved})
+        days.append(
+            {"date": d, "dispatch": v["dispatch"], "receipt": v["receipt"], "ratio": ratio, "achieved": achieved}
+        )
 
     overall_ratio = (total_ratio_sum / day_count) if day_count else 0.0
     overall_achieved = overall_ratio >= args.target_ratio if day_count else False

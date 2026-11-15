@@ -36,11 +36,13 @@ def test_init_extracts_metadata_and_workflow():
 
 
 def test_execute_runs_all_steps_in_order(capsys):
-    pack = _make_minimal_pack(steps=[
-        {"name": "loc", "type": "LOCAL", "inputs": [{"key": "k1", "source": "user_input"}]},
-        {"name": "gen", "type": "GENERATION", "template": "hi {k1}"},
-        {"name": "val", "type": "VALIDATION"},
-    ])
+    pack = _make_minimal_pack(
+        steps=[
+            {"name": "loc", "type": "LOCAL", "inputs": [{"key": "k1", "source": "user_input"}]},
+            {"name": "gen", "type": "GENERATION", "template": "hi {k1}"},
+            {"name": "val", "type": "VALIDATION"},
+        ]
+    )
     exe = PackExecutorMVP(pack)
     result = exe.execute({"k1": "world"})
 
@@ -53,17 +55,21 @@ def test_execute_runs_all_steps_in_order(capsys):
 
 
 def test_execute_breaks_on_error(capsys):
-    pack = _make_minimal_pack(steps=[
-        {"name": "s1", "type": "LOCAL"},
-        {"name": "s2", "type": "UNKNOWN_TYPE"},
-        {"name": "s3", "type": "LOCAL"},
-    ])
+    pack = _make_minimal_pack(
+        steps=[
+            {"name": "s1", "type": "LOCAL"},
+            {"name": "s2", "type": "UNKNOWN_TYPE"},
+            {"name": "s3", "type": "LOCAL"},
+        ]
+    )
     exe = PackExecutorMVP(pack)
     orig = exe._execute_step
+
     def fake_step(step):
         if step["name"] == "s2":
             return {"status": "error", "error": "boom"}
         return orig(step)
+
     exe._execute_step = fake_step
 
     result = exe.execute({"k1": "v"})
@@ -160,10 +166,14 @@ def test_local_step_pulls_from_user_input(capsys):
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
     exe.context["user_input"] = {"a": 1, "b": "two"}
-    out = exe._execute_local({"inputs": [
-        {"key": "a", "source": "user_input"},
-        {"key": "b", "source": "user_input"},
-    ]})
+    out = exe._execute_local(
+        {
+            "inputs": [
+                {"key": "a", "source": "user_input"},
+                {"key": "b", "source": "user_input"},
+            ]
+        }
+    )
     assert out["status"] == "success"
     assert exe.context["a"] == 1
     assert exe.context["b"] == "two"
@@ -370,9 +380,11 @@ def test_load_pack_from_file(tmp_path):
 
 
 def test_execute_pack_function(capsys):
-    pack = _make_minimal_pack(steps=[
-        {"name": "g", "type": "GENERATION", "template": "OK"},
-    ])
+    pack = _make_minimal_pack(
+        steps=[
+            {"name": "g", "type": "GENERATION", "template": "OK"},
+        ]
+    )
     result = execute_pack(pack, {"x": 1})
     assert result["status"] == "completed"
     assert result["final_content"] == "OK"
@@ -389,10 +401,12 @@ def test_apply_fusion_strategy_no_sources_returns_consensus():
 def test_apply_fusion_strategy_concat():
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
-    consensus = {"sources": [
-        {"response": "A", "confidence": 0.9},
-        {"response": "B", "confidence": 0.7},
-    ]}
+    consensus = {
+        "sources": [
+            {"response": "A", "confidence": 0.9},
+            {"response": "B", "confidence": 0.7},
+        ]
+    }
     out = exe._apply_fusion_strategy(consensus, "concat")
     assert "A" in out and "B" in out
 
@@ -400,10 +414,12 @@ def test_apply_fusion_strategy_concat():
 def test_apply_fusion_strategy_best_picks_highest_confidence():
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
-    consensus = {"sources": [
-        {"response": "low", "confidence": 0.2},
-        {"response": "high", "confidence": 0.95},
-    ]}
+    consensus = {
+        "sources": [
+            {"response": "low", "confidence": 0.2},
+            {"response": "high", "confidence": 0.95},
+        ]
+    }
     out = exe._apply_fusion_strategy(consensus, "best")
     assert out == "high"
 
@@ -411,10 +427,12 @@ def test_apply_fusion_strategy_best_picks_highest_confidence():
 def test_apply_fusion_strategy_weighted_sorts_by_confidence():
     pack = _make_minimal_pack()
     exe = PackExecutorMVP(pack)
-    consensus = {"sources": [
-        {"response": "low", "confidence": 0.3},
-        {"response": "high", "confidence": 0.9},
-    ]}
+    consensus = {
+        "sources": [
+            {"response": "low", "confidence": 0.3},
+            {"response": "high", "confidence": 0.9},
+        ]
+    }
     out = exe._apply_fusion_strategy(consensus, "weighted")
     assert out.index("high") < out.index("low")
     assert "[置信度: 0.90]" in out
@@ -428,11 +446,11 @@ def test_apply_fusion_strategy_unknown_returns_consensus():
     assert out == "fallback-text"
 
 
-
 class TestExecuteValidation:
     def test_validation_short_content_detected(self):
         """内容过短被识别"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "短"
@@ -445,6 +463,7 @@ class TestExecuteValidation:
     def test_validation_passes_for_long_content(self):
         """长内容验证通过"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "很长的内容 " * 20
@@ -456,6 +475,7 @@ class TestExecuteValidation:
     def test_validation_keyword_coverage_low(self):
         """关键词覆盖率低被识别"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "无关内容"
@@ -468,6 +488,7 @@ class TestExecuteValidation:
 class TestGenerateFinalResult:
     def test_generate_final_result_basic(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "test content"
@@ -481,6 +502,7 @@ class TestGenerateFinalResult:
 class TestExecuteFusion:
     def test_fusion_concat(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "content1"
@@ -489,6 +511,7 @@ class TestExecuteFusion:
 
     def test_fusion_best(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "x" * 100
@@ -497,6 +520,7 @@ class TestExecuteFusion:
 
     def test_fusion_default_strategy(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "test"
@@ -510,6 +534,7 @@ class TestLoadPackFromFile:
         pack_file = tmp_path / "test_pack.json"
         pack_file.write_text("""{"metadata": {"pack_name": "X"}, "workflow": {"steps": []}}""")
         from ai_collab.pack.pack_executor_mvp import load_pack_from_file
+
         result = load_pack_from_file(str(pack_file))
         assert result["metadata"]["pack_name"] == "X"
 
@@ -517,15 +542,15 @@ class TestLoadPackFromFile:
 class TestExecutePackFunction:
     def test_execute_pack_function(self):
         from ai_collab.pack.pack_executor_mvp import execute_pack
+
         pack = _make_minimal_pack()
         result = execute_pack(pack, {"input": "test"})
         assert "status" in result or "pack_name" in result
 
-
-
     def test_fusion_merge_dedup(self):
         """merge 策略去重"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "line1"
@@ -533,7 +558,6 @@ class TestExecutePackFunction:
         result = exe._execute_fusion({"strategy": "merge"})
         # merge 应该去重
         assert "line1" in result["outputs"]["content"]
-
 
 
 class TestExecuteGenerationWithConsensus:
@@ -622,6 +646,7 @@ class TestExecuteGenerationWithConsensus:
         class BrokenEngine:
             def __init__(self):
                 self.providers = {}
+
             async def generate_consensus(self, topic):
                 raise RuntimeError("provider offline")
 
@@ -676,6 +701,7 @@ class TestExecuteTracking:
     def test_tracking_step_default(self, tmp_path, monkeypatch):
         """默认追踪步骤"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         monkeypatch.chdir(tmp_path)
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
@@ -688,6 +714,7 @@ class TestExecuteTracking:
     def test_tracking_writes_to_file(self, tmp_path, monkeypatch):
         """追踪步骤写入文件"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         monkeypatch.chdir(tmp_path)
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
@@ -705,6 +732,7 @@ class TestExecuteStepRouting:
 
     def test_routes_to_local(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         result = exe._execute_step({"type": "LOCAL", "key": "test", "value": "v"})
@@ -712,6 +740,7 @@ class TestExecuteStepRouting:
 
     def test_routes_to_analysis(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["content"] = "分析一些内容"
@@ -720,6 +749,7 @@ class TestExecuteStepRouting:
 
     def test_routes_to_generation(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["topic"] = "test"
@@ -728,6 +758,7 @@ class TestExecuteStepRouting:
 
     def test_routes_to_validation(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "long content " * 20
@@ -736,6 +767,7 @@ class TestExecuteStepRouting:
 
     def test_routes_to_fusion(self):
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "test"
@@ -745,12 +777,12 @@ class TestExecuteStepRouting:
     def test_unknown_step_type_skipped(self):
         """未知步骤类型返回 skipped(不抛异常)"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         result = exe._execute_step({"type": "UNKNOWN_TYPE"})
         assert result["status"] == "skipped"
         assert "暂不支持" in result["message"]
-
 
 
 class TestExecuteFusionWithMultipleContents:
@@ -759,6 +791,7 @@ class TestExecuteFusionWithMultipleContents:
     def test_fusion_concat_single_content(self):
         """concat 拼接 generated_contents list"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "first"
@@ -769,6 +802,7 @@ class TestExecuteFusionWithMultipleContents:
     def test_fusion_concat_multiple_with_separator(self):
         """concat 多个内容用 --- 分隔"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         # 注入多个 generated_contents 到 context (虽然 _execute_fusion 只取 generated_content 单 key)
@@ -780,6 +814,7 @@ class TestExecuteFusionWithMultipleContents:
     def test_fusion_best_picks_longest(self):
         """best 策略选最长"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "x" * 100
@@ -789,6 +824,7 @@ class TestExecuteFusionWithMultipleContents:
     def test_fusion_merge_dedup_lines(self):
         """merge 策略按行去重"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "line1\nline2"
@@ -801,6 +837,7 @@ class TestExecuteFusionWithMultipleContents:
     def test_fusion_default_strategy_uses_first(self):
         """未知 strategy 使用第一个内容"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["generated_content"] = "first_content"
@@ -812,6 +849,7 @@ class TestExecuteFusionWithMultipleContents:
     def test_fusion_no_generated_content_fallback(self):
         """context 无 generated_content* 时 fallback 到 generated_content"""
         from ai_collab.pack.pack_executor_mvp import PackExecutorMVP
+
         pack = _make_minimal_pack()
         exe = PackExecutorMVP(pack)
         exe.context["some_other_key"] = "value"
@@ -831,18 +869,18 @@ class TestPackExecutorMVPModule:
         # 临时替换 argv 模拟 __main__
         # 直接调用 execute_pack 函数路径,不执行整个 __main__
         from ai_collab.pack.pack_executor_mvp import execute_pack
+
         test_pack = {
             "metadata": {"pack_name": "Test", "version": "1.0.0"},
             "workflow": {
                 "steps": [
                     {"name": "S1", "type": "LOCAL", "inputs": []},
                 ]
-            }
+            },
         }
         test_input = {"topic": "test", "content": "test content"}
         # execute_pack 返回完整结果
         assert execute_pack(test_pack, test_input) is not None
-
 
 
 class TestModuleMainBlock:
@@ -851,6 +889,7 @@ class TestModuleMainBlock:
     def test_module_imports_clean(self):
         """模块顶层导入正常"""
         from ai_collab.pack import pack_executor_mvp
+
         assert hasattr(pack_executor_mvp, "PackExecutorMVP")
         assert hasattr(pack_executor_mvp, "execute_pack")
         assert hasattr(pack_executor_mvp, "load_pack_from_file")
@@ -860,6 +899,7 @@ class TestModuleMainBlock:
         import os
         import subprocess
         import sys
+
         # 从 test 目录向上 3 级到 proj/,再下降到模块
         proj_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         module_path = os.path.join(proj_root, "ai_collab", "pack", "pack_executor_mvp.py")
@@ -867,7 +907,9 @@ class TestModuleMainBlock:
         env["PYTHONPATH"] = proj_root
         result = subprocess.run(
             [sys.executable, module_path],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
             cwd=proj_root,
             env=env,
         )
@@ -876,7 +918,6 @@ class TestModuleMainBlock:
             print(f"STDOUT: {result.stdout[:500]}")
             print(f"STDERR: {result.stderr[:500]}")
         assert "Prompt Pack MVP" in result.stdout
-
 
 
 # --- v2 形状兼容（2026-11-03）---

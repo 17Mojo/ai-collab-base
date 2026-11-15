@@ -120,9 +120,7 @@ def test_command_flags_are_recognized_by_the_tool() -> None:
                 continue
             recognized: set[str] = set()
             for src in sources:
-                recognized |= _recognized_flags(
-                    (REPO_ROOT / src).read_text(encoding="utf-8")
-                )
+                recognized |= _recognized_flags((REPO_ROOT / src).read_text(encoding="utf-8"))
             for flag in sorted(set(FLAG_RE.findall(block))):
                 if flag not in recognized:
                     problems.append(f"{tool} 不认 {flag}")

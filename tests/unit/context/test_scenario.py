@@ -100,9 +100,7 @@ class TestScenarioDetector:
     def test_detect_writing_scenario(self, tmp_path):
         # Create content structure
         (tmp_path / "posts").mkdir()
-        (tmp_path / "posts" / "article1.md").write_text(
-            "---\ntitle: Test\ndate: 2026-04-03\n---\nContent"
-        )
+        (tmp_path / "posts" / "article1.md").write_text("---\ntitle: Test\ndate: 2026-04-03\n---\nContent")
 
         detector = ScenarioDetector(str(tmp_path))
         result = detector.detect(active_files=["posts/article1.md"])
@@ -130,9 +128,7 @@ class TestScenarioDetector:
     def test_detect_design_scenario(self, tmp_path):
         # Create design files
         (tmp_path / "assets" / "styles").mkdir(parents=True)
-        (tmp_path / "assets/styles/main.css").write_text(
-            ".container { width: 100%; height: 100%; color: blue; }"
-        )
+        (tmp_path / "assets/styles/main.css").write_text(".container { width: 100%; height: 100%; color: blue; }")
 
         detector = ScenarioDetector(str(tmp_path))
         result = detector.detect(active_files=["assets/styles/main.css"])

@@ -527,9 +527,7 @@ class TestContextSearchCLIExportResults:
         mock_engine = MagicMock()
         mock_engine.search.return_value = (
             [],
-            MagicMock(
-                method=MagicMock(value="semantic"), scope=MagicMock(value="all"), total_results=0
-            ),
+            MagicMock(method=MagicMock(value="semantic"), scope=MagicMock(value="all"), total_results=0),
         )
         mock_engine_class.return_value = mock_engine
 
@@ -544,9 +542,7 @@ class TestContextSearchCLIExportResults:
 
     @patch("ai_collab.cli.context_search.ContextSearchEngine")
     @patch("ai_collab.cli.context_aggregator.ContextAggregator")
-    def test_export_results_multiple_items(
-        self, mock_aggregator_class, mock_engine_class, tmp_path
-    ):
+    def test_export_results_multiple_items(self, mock_aggregator_class, mock_engine_class, tmp_path):
         """测试导出多个结果"""
         from ai_collab.cli.context_search import ContextSearchCLI
 
@@ -913,9 +909,7 @@ class TestContextSearchCLIInteractive:
     @patch("ai_collab.cli.context_search.ContextSearchEngine")
     @patch("ai_collab.cli.context_aggregator.ContextAggregator")
     @patch("builtins.input")
-    def test_interactive_suggest_command(
-        self, mock_input, mock_aggregator_class, mock_engine_class
-    ):
+    def test_interactive_suggest_command(self, mock_input, mock_aggregator_class, mock_engine_class):
         """测试 /suggest 命令 - lines 275-277"""
         from ai_collab.cli.context_search import ContextSearchCLI
 
@@ -935,9 +929,7 @@ class TestContextSearchCLIInteractive:
     @patch("ai_collab.cli.context_search.ContextSearchEngine")
     @patch("ai_collab.cli.context_aggregator.ContextAggregator")
     @patch("builtins.input")
-    def test_interactive_history_command(
-        self, mock_input, mock_aggregator_class, mock_engine_class
-    ):
+    def test_interactive_history_command(self, mock_input, mock_aggregator_class, mock_engine_class):
         """测试 /history 命令 - lines 278-279"""
         from ai_collab.cli.context_search import ContextSearchCLI
 
@@ -976,9 +968,7 @@ class TestContextSearchCLIInteractive:
     @patch("ai_collab.cli.context_search.ContextSearchEngine")
     @patch("ai_collab.cli.context_aggregator.ContextAggregator")
     @patch("builtins.input")
-    def test_interactive_unknown_command(
-        self, mock_input, mock_aggregator_class, mock_engine_class
-    ):
+    def test_interactive_unknown_command(self, mock_input, mock_aggregator_class, mock_engine_class):
         """测试未知命令 - lines 282-284"""
         from ai_collab.cli.context_search import ContextSearchCLI
 
@@ -1031,9 +1021,7 @@ class TestContextSearchCLIInteractive:
     @patch("ai_collab.cli.context_search.ContextSearchEngine")
     @patch("ai_collab.cli.context_aggregator.ContextAggregator")
     @patch("builtins.input")
-    def test_interactive_keyboard_interrupt(
-        self, mock_input, mock_aggregator_class, mock_engine_class
-    ):
+    def test_interactive_keyboard_interrupt(self, mock_input, mock_aggregator_class, mock_engine_class):
         """测试 KeyboardInterrupt - lines 294-296"""
         from ai_collab.cli.context_search import ContextSearchCLI
 

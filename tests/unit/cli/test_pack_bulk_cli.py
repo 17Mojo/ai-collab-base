@@ -608,9 +608,7 @@ class TestPackBulkCLIMain:
         mock_cli.bulk_create.return_value = 0
         mock_cli_class.return_value = mock_cli
 
-        with patch(
-            "sys.argv", ["pack_bulk.py", "create", "--specs", "/path/specs.json", "--workers", "10"]
-        ):
+        with patch("sys.argv", ["pack_bulk.py", "create", "--specs", "/path/specs.json", "--workers", "10"]):
             result = main()
 
         # Should be initialized with max_workers=10

@@ -28,11 +28,7 @@ class TestRegexPattern:
 
     def test_regex_pattern_with_extract_fields(self):
         """Test RegexPattern with extract_fields"""
-        rp = RegexPattern(
-            pattern="ERROR:\\s*(\\w+)",
-            flags="i",
-            extract_fields={"error_code": "error_code"}
-        )
+        rp = RegexPattern(pattern="ERROR:\\s*(\\w+)", flags="i", extract_fields={"error_code": "error_code"})
         assert rp.extract_fields is not None
         assert rp.extract_fields["error_code"] == "error_code"
 
@@ -42,11 +38,7 @@ class TestBranchCondition:
 
     def test_branch_condition_creation(self):
         """Test basic BranchCondition creation"""
-        bc = BranchCondition(
-            target_step="step_success",
-            condition_type="regex_match",
-            target_field="output"
-        )
+        bc = BranchCondition(target_step="step_success", condition_type="regex_match", target_field="output")
         assert bc.target_step == "step_success"
         assert bc.condition_type == "regex_match"
         assert bc.target_field == "output"
@@ -55,11 +47,7 @@ class TestBranchCondition:
     def test_branch_condition_with_regex_config(self):
         """Test BranchCondition with regex_config"""
         rp = RegexPattern(pattern="^SUCCESS:", flags="i")
-        bc = BranchCondition(
-            target_step="step_success",
-            condition_type="regex_match",
-            regex_config=rp
-        )
+        bc = BranchCondition(target_step="step_success", condition_type="regex_match", regex_config=rp)
         assert bc.regex_config is not None
         assert bc.regex_config.pattern == "^SUCCESS:"
 
@@ -79,7 +67,7 @@ class TestWorkflowStepBranches:
             branches=[bc1, bc2],
             on_error="step_error_handler",
             on_timeout="step_timeout_handler",
-            next_step="step_2"
+            next_step="step_2",
         )
 
         assert ws.branches is not None
@@ -90,11 +78,7 @@ class TestWorkflowStepBranches:
 
     def test_workflow_step_without_branches(self):
         """Test WorkflowStep without branches (backward compatibility)"""
-        ws = WorkflowStep(
-            id="step_1",
-            name="Simple Step",
-            type=StepType.LOCAL
-        )
+        ws = WorkflowStep(id="step_1", name="Simple Step", type=StepType.LOCAL)
 
         assert ws.branches is None
         assert ws.next_step is None
@@ -129,8 +113,9 @@ class TestPackLoading:
         for step in steps:
             if step.get("branches"):
                 for branch in step["branches"]:
-                    assert branch["target_step"] in step_ids, \
+                    assert branch["target_step"] in step_ids, (
                         f"Branch target {branch['target_step']} not found in steps"
+                    )
 
     def test_branch_regex_config_valid(self):
         """Test branch regex_config structure"""
@@ -175,13 +160,13 @@ class TestSchemaSerialization:
             type=StepType.ANALYSIS,
             branches=[bc],
             next_step="step_2",
-            on_error="error_handler"
+            on_error="error_handler",
         )
 
         # The WorkflowStep doesn't have to_dict, but we can check the fields
-        assert hasattr(ws, 'branches')
-        assert hasattr(ws, 'next_step')
-        assert hasattr(ws, 'on_error')
+        assert hasattr(ws, "branches")
+        assert hasattr(ws, "next_step")
+        assert hasattr(ws, "on_error")
 
 
 if __name__ == "__main__":

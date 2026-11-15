@@ -41,9 +41,9 @@ class PackTemplateCLI:
         Returns:
             退出码
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Template Library")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 解析类别
         category_enum = None
@@ -79,9 +79,9 @@ class PackTemplateCLI:
                     tags_str = ", ".join(template.tags)
                     print(f"  {'':25s} | Tags: {tags_str}")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Total: {len(templates)} templates")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return 0
 
@@ -100,9 +100,9 @@ class PackTemplateCLI:
             print(f"✗ Template not found: {template_id}")
             return 1
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Template Details")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         print(f"ID: {template.template_id}")
         print(f"Name: {template.name}")
@@ -132,7 +132,7 @@ class PackTemplateCLI:
         for i, step in enumerate(template.workflow_data.get("steps", []), 1):
             print(f"  {i}. {step.get('action', 'unknown')}: {step.get('field', 'N/A')}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 
@@ -164,9 +164,7 @@ class PackTemplateCLI:
 
         # 获取模板的 category
         template_obj = self.library.get_template(template_id)
-        template_category = (
-            template_obj.category.value if template_obj else "general"
-        )
+        template_category = template_obj.category.value if template_obj else "general"
 
         # 创建 Pack
         result = self.api.create_pack(
@@ -203,9 +201,9 @@ class PackTemplateCLI:
         """
         templates = self.library.search_templates(query)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Templates matching: '{query}'")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         if not templates:
             print("No matching templates found.")
@@ -217,9 +215,9 @@ class PackTemplateCLI:
             print(f"  Category: {template.category.value}")
             print(f"  Description: {template.description[:50]}...")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Total: {len(templates)} matching templates")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return 0
 
@@ -231,9 +229,9 @@ class PackTemplateCLI:
         """
         categories = self.library.get_categories()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Template Categories")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         for category in categories:
             templates = self.library.list_templates(category)
@@ -244,7 +242,7 @@ class PackTemplateCLI:
                 for template in templates[:3]:
                     print(f"    - {template.template_id}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 

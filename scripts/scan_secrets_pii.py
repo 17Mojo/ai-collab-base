@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Scan workspace for secrets and PII."""
+
 import argparse
 import re
 import sys
@@ -39,19 +40,38 @@ RULES = [
 RULES += [
     {
         "rule_id": "password_literal",
-        "pattern": re.compile(r'''(?i)password\s*[=:]\s*(["'])([^"'\n]{3,})\1'''),
+        "pattern": re.compile(r"""(?i)password\s*[=:]\s*(["'])([^"'\n]{3,})\1"""),
         "placeholder_indicators": [
-            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
-            "pw", "none", "secret", "test", "from-file", "env-provided",
-            "resolve_credentials", "os.environ",
+            "your-",
+            "dummy-",
+            "xxxx",
+            "change-me",
+            "<",
+            "{",
+            "todo",
+            "pw",
+            "none",
+            "secret",
+            "test",
+            "from-file",
+            "env-provided",
+            "resolve_credentials",
+            "os.environ",
         ],
     },
     {
         "rule_id": "password_literal_bare",
-        "pattern": re.compile(r'''(?i)password\s*[=:]\s*([A-Za-z0-9][A-Za-z0-9\-]{11,})'''),
+        "pattern": re.compile(r"""(?i)password\s*[=:]\s*([A-Za-z0-9][A-Za-z0-9\-]{11,})"""),
         "placeholder_indicators": [
-            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
-            "resolve_credentials", "os.environ",
+            "your-",
+            "dummy-",
+            "xxxx",
+            "change-me",
+            "<",
+            "{",
+            "todo",
+            "resolve_credentials",
+            "os.environ",
         ],
     },
     {
@@ -59,9 +79,15 @@ RULES += [
         # 上面 B 段要求「含数字且含字母」，纯数字会漏掉，这里补一条独立规则。
         # 阈值 6 位，且不跨行、不吃标识符。
         "rule_id": "password_literal_bare_numeric",
-        "pattern": re.compile(r'''(?i)password[ \t]*[=:][ \t]*(\d{6,})(?![0-9])'''),
+        "pattern": re.compile(r"""(?i)password[ \t]*[=:][ \t]*(\d{6,})(?![0-9])"""),
         "placeholder_indicators": [
-            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
+            "your-",
+            "dummy-",
+            "xxxx",
+            "change-me",
+            "<",
+            "{",
+            "todo",
         ],
     },
     {
@@ -69,11 +95,15 @@ RULES += [
         # 12 位以上交给 B 段，避免同一处命中记两条；不含短横线，
         # 因此「标识符调用」形态（见 R2 契约正文）不会被误命中。
         "rule_id": "password_literal_bare_short",
-        "pattern": re.compile(
-            r'''(?i)password[ \t]*[=:][ \t]*([A-Za-z][A-Za-z0-9]{4,14}\d)(?![A-Za-z0-9_\-])'''
-        ),
+        "pattern": re.compile(r"""(?i)password[ \t]*[=:][ \t]*([A-Za-z][A-Za-z0-9]{4,14}\d)(?![A-Za-z0-9_\-])"""),
         "placeholder_indicators": [
-            "your-", "dummy-", "xxxx", "change-me", "<", "{", "todo",
+            "your-",
+            "dummy-",
+            "xxxx",
+            "change-me",
+            "<",
+            "{",
+            "todo",
         ],
     },
     {
@@ -127,8 +157,15 @@ def scan_workspace(workspace: Path) -> dict:
         if EXCLUDED_DIRS & set(path.parts):
             continue
         if path.suffix not in {
-            ".py", ".md", ".json", ".env", ".txt",
-            ".yml", ".yaml", ".js", ".ts",
+            ".py",
+            ".md",
+            ".json",
+            ".env",
+            ".txt",
+            ".yml",
+            ".yaml",
+            ".js",
+            ".ts",
         }:
             continue
         scanned_files += 1
@@ -180,9 +217,7 @@ def main() -> int:
     report = scan_workspace(Path(args.workspace))
     if args.output:
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.output).write_text(
-            __import__("json").dumps(report, indent=2, ensure_ascii=False)
-        )
+        Path(args.output).write_text(__import__("json").dumps(report, indent=2, ensure_ascii=False))
 
     if report["has_findings"]:
         for item in report["findings"]:

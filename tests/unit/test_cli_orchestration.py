@@ -85,9 +85,7 @@ class TestOrchestrationRoles:
 
     def test_activate_preserves_provider_registry(self, temp_workspace):
         registry_before = json.loads(
-            (temp_workspace / "config" / "agent-orchestration.json").read_text(
-                encoding="utf-8"
-            )
+            (temp_workspace / "config" / "agent-orchestration.json").read_text(encoding="utf-8")
         ).get("provider_registry", {})
 
         cli.cmd_orchestration(
@@ -102,9 +100,7 @@ class TestOrchestrationRoles:
         )
 
         registry_after = json.loads(
-            (temp_workspace / "config" / "agent-orchestration.json").read_text(
-                encoding="utf-8"
-            )
+            (temp_workspace / "config" / "agent-orchestration.json").read_text(encoding="utf-8")
         ).get("provider_registry", {})
 
         # load→save 往返不能抹掉 provider 元数据（如 fallback_ack_prefix）
@@ -145,33 +141,19 @@ class TestOrchestrationRoles:
 
 class TestOrchestrationSnapshot:
     def test_snapshot_create_writes_snapshot(self, temp_workspace, capsys):
-        result = cli.cmd_orchestration(
-            _args(temp_workspace, subcommand="snapshot", action="create", note="测试点")
-        )
+        result = cli.cmd_orchestration(_args(temp_workspace, subcommand="snapshot", action="create", note="测试点"))
 
         assert result == 0
         assert "快照已创建" in capsys.readouterr().out
 
-        payload = json.loads(
-            (temp_workspace / "config" / "agent-orchestration.json").read_text(
-                encoding="utf-8"
-            )
-        )
+        payload = json.loads((temp_workspace / "config" / "agent-orchestration.json").read_text(encoding="utf-8"))
         assert len(payload["snapshots"]) == 1
 
     def test_snapshot_does_not_nest_previous_snapshots(self, temp_workspace):
-        cli.cmd_orchestration(
-            _args(temp_workspace, subcommand="snapshot", action="create", note="第一次")
-        )
-        cli.cmd_orchestration(
-            _args(temp_workspace, subcommand="snapshot", action="create", note="第二次")
-        )
+        cli.cmd_orchestration(_args(temp_workspace, subcommand="snapshot", action="create", note="第一次"))
+        cli.cmd_orchestration(_args(temp_workspace, subcommand="snapshot", action="create", note="第二次"))
 
-        payload = json.loads(
-            (temp_workspace / "config" / "agent-orchestration.json").read_text(
-                encoding="utf-8"
-            )
-        )
+        payload = json.loads((temp_workspace / "config" / "agent-orchestration.json").read_text(encoding="utf-8"))
         for snapshot in payload["snapshots"]:
             # 快照不复制 snapshots / history，否则配置体积指数膨胀
             assert "snapshots" not in snapshot["config_copy"]
@@ -188,9 +170,7 @@ class TestOrchestrationSnapshot:
                 model_variant=None,
             )
         )
-        cli.cmd_orchestration(
-            _args(temp_workspace, subcommand="snapshot", action="create", note="回滚点")
-        )
+        cli.cmd_orchestration(_args(temp_workspace, subcommand="snapshot", action="create", note="回滚点"))
         cli.cmd_orchestration(
             _args(
                 temp_workspace,
@@ -202,11 +182,7 @@ class TestOrchestrationSnapshot:
             )
         )
 
-        payload = json.loads(
-            (temp_workspace / "config" / "agent-orchestration.json").read_text(
-                encoding="utf-8"
-            )
-        )
+        payload = json.loads((temp_workspace / "config" / "agent-orchestration.json").read_text(encoding="utf-8"))
         target = payload["snapshots"][-1]["snapshot_id"]
 
         result = cli.cmd_orchestration(

@@ -118,9 +118,7 @@ class NotebookLMCache:
                 similarity = SequenceMatcher(None, normalized, cached_normalized).ratio()
 
                 if similarity >= self._similarity_threshold:
-                    logger.info(
-                        f"找到相似问题: {similarity:.2f} - '{cached_answer.question[:50]}...'"
-                    )
+                    logger.info(f"找到相似问题: {similarity:.2f} - '{cached_answer.question[:50]}...'")
                     return cached_key
 
         return None
@@ -239,9 +237,7 @@ class NotebookLMCache:
         with self._lock:
             self._stats.total_entries = len(self._cache)
             self._stats.calculate_hit_rate()
-            self._stats.avg_query_time_saved_ms = (
-                self._stats.cache_hits * self._avg_query_time_ms
-            )
+            self._stats.avg_query_time_saved_ms = self._stats.cache_hits * self._avg_query_time_ms
 
             return {
                 "backend": "notebooklm_cache",

@@ -232,22 +232,14 @@ class PackImporter:
             else:
                 for i, dep in enumerate(deps):
                     if not isinstance(dep, dict):
-                        errors.append(
-                            ImportValidationError(f"dependencies[{i}]", "依赖项必须是字典", "severity")
-                        )
+                        errors.append(ImportValidationError(f"dependencies[{i}]", "依赖项必须是字典", "severity"))
                         continue
 
                     if "name" not in dep:
-                        errors.append(
-                            ImportValidationError(f"dependencies[{i}]", "缺少 name 字段", "error")
-                        )
+                        errors.append(ImportValidationError(f"dependencies[{i}]", "缺少 name 字段", "error"))
 
                     if "version_range" not in dep:
-                        errors.append(
-                            ImportValidationError(
-                                f"dependencies[{i}]", "缺少 version_range 字段", "warning"
-                            )
-                        )
+                        errors.append(ImportValidationError(f"dependencies[{i}]", "缺少 version_range 字段", "warning"))
 
         # 验证 versions
         if "versions" in data:
@@ -261,9 +253,7 @@ class PackImporter:
                         continue
 
                     if "version_string" not in ver:
-                        errors.append(
-                            ImportValidationError(f"versions[{i}]", "缺少 version_string 字段", "error")
-                        )
+                        errors.append(ImportValidationError(f"versions[{i}]", "缺少 version_string 字段", "error"))
 
         return errors
 

@@ -41,22 +41,18 @@ class ErrorCategoryClassifier:
     SORTED_CATEGORIES = [
         (
             "timeout",
-            lambda e, sc: any(
-                keyword in e.lower() for keyword in ["timeout", "timed out", "deadline"]
-            ),
+            lambda e, sc: any(keyword in e.lower() for keyword in ["timeout", "timed out", "deadline"]),
         ),
         (
             "database",
             lambda e, sc: any(
-                keyword in e.lower()
-                for keyword in ["database", "sqlite", "sql", "connection", "constraint", "foreign"]
+                keyword in e.lower() for keyword in ["database", "sqlite", "sql", "connection", "constraint", "foreign"]
             ),
         ),
         (
             "validation",
             lambda e, sc: any(
-                keyword in e.lower()
-                for keyword in ["validation", "invalid", "value", "type", "format", "schema"]
+                keyword in e.lower() for keyword in ["validation", "invalid", "value", "type", "format", "schema"]
             ),
         ),
         (
@@ -198,9 +194,7 @@ class ErrorAggregator:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def get_recent_errors(
-        self, category: str | None = None, limit: int = 50
-    ) -> list[dict[str, Any]]:
+    def get_recent_errors(self, category: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
         """获取最近的错误
 
         Args:
@@ -313,9 +307,7 @@ class FaultArchiver:
         self._lock = threading.Lock()
         os.makedirs(output_dir, exist_ok=True)
 
-    def archive_now(
-        self, error_stats: dict[str, Any] = None, recent_errors: list[dict[str, Any]] = None
-    ) -> str:
+    def archive_now(self, error_stats: dict[str, Any] = None, recent_errors: list[dict[str, Any]] = None) -> str:
         """立即归档错误数据
 
         Args:
@@ -339,9 +331,7 @@ class FaultArchiver:
                 "recent_errors": recent_errors or [],
                 "metadata": {
                     "total_errors": len(recent_errors) if recent_errors else 0,
-                    "categories_count": len(error_stats.get("by_category", {}))
-                    if error_stats
-                    else 0,
+                    "categories_count": len(error_stats.get("by_category", {})) if error_stats else 0,
                     "archived_by": "manual" if error_stats else "auto",
                 },
             }

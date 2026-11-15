@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate collaboration governance files."""
+
 import argparse
 import sys
 from pathlib import Path
@@ -37,11 +38,13 @@ def main():
         refs = [ln.strip() for ln in agents_file.read_text().splitlines() if ln.strip()]
         missing = [f for f in REQUIRED_FILES if f not in refs]
         if missing:
-            issues.append({
-                "kind": "missing_agents_reference",
-                "path": "AGENTS.md",
-                "missing_refs": missing,
-            })
+            issues.append(
+                {
+                    "kind": "missing_agents_reference",
+                    "path": "AGENTS.md",
+                    "missing_refs": missing,
+                }
+            )
 
     # Check lock files if requested
     if args.with_locks:

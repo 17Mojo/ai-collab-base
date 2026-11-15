@@ -256,8 +256,7 @@ def test_perf_suite_ignores_polluted_ambient_global_state(tmp_path: Path):
         f"{result.stdout[-3000:]}\n{result.stderr[-2000:]}"
     )
     assert _digest(polluted) == before, (
-        f"ambient 全局状态文件被改写（原 {polluted_size} 字节）——"
-        "说明性能用例仍写向运行者的真实全局文件，隔离没有生效"
+        f"ambient 全局状态文件被改写（原 {polluted_size} 字节）——说明性能用例仍写向运行者的真实全局文件，隔离没有生效"
     )
 
 
@@ -297,8 +296,7 @@ def test_polluted_global_state_is_reclaimed_and_stops_dominating_measurement(
     steady_isolated = min(isolated_timings[1:])
 
     assert polluted_size_after < polluted_size_before * 0.1, (
-        f"死条目没有被回收：{polluted_size_before} → {polluted_size_after} 字节。"
-        "全局状态文件的无上限增长这个缺陷还在"
+        f"死条目没有被回收：{polluted_size_before} → {polluted_size_after} 字节。全局状态文件的无上限增长这个缺陷还在"
     )
 
     dominance = first_polluted / max(steady_isolated, 1e-6)
@@ -329,9 +327,7 @@ def test_polluted_global_state_is_reclaimed_and_stops_dominating_measurement(
     )
 
 
-def test_polluted_global_state_would_dominate_without_reclamation(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_polluted_global_state_would_dominate_without_reclamation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """反证：回收逻辑坏掉时，污染态会重新主导写入路径——证明上面那条对照有牙齿。
 
     这里不靠改产品代码，而是**直接构造**「产品没能回收」的状态：把死条目的 key
@@ -364,8 +360,7 @@ def test_polluted_global_state_would_dominate_without_reclamation(
 
     size_after = polluted.stat().st_size
     assert size_after >= size_before * 0.9, (
-        f"污染竟然被回收了：{size_before} → {size_after} 字节——"
-        "这份反证的前提（产品回收不掉）不成立，说明反证场景搭错了"
+        f"污染竟然被回收了：{size_before} → {size_after} 字节——这份反证的前提（产品回收不掉）不成立，说明反证场景搭错了"
     )
 
     polluted_min = min(polluted_timings)

@@ -72,18 +72,10 @@ def _resolve_paths(
     artifact_dir: str | None = None,
 ) -> tuple[Path, Path, Path, Path]:
     config = _load_session_config(workspace)
-    resolved_report = workspace / str(
-        config.get("healthReport", report_path or DEFAULT_REPORT_PATH)
-    )
-    resolved_history = workspace / str(
-        config.get("healthHistory", history_path or DEFAULT_HISTORY_PATH)
-    )
-    resolved_summary = workspace / str(
-        config.get("healthSummary", summary_path or DEFAULT_SUMMARY_PATH)
-    )
-    resolved_artifact_dir = workspace / str(
-        config.get("interventionArtifactDir", artifact_dir or DEFAULT_ARTIFACT_DIR)
-    )
+    resolved_report = workspace / str(config.get("healthReport", report_path or DEFAULT_REPORT_PATH))
+    resolved_history = workspace / str(config.get("healthHistory", history_path or DEFAULT_HISTORY_PATH))
+    resolved_summary = workspace / str(config.get("healthSummary", summary_path or DEFAULT_SUMMARY_PATH))
+    resolved_artifact_dir = workspace / str(config.get("interventionArtifactDir", artifact_dir or DEFAULT_ARTIFACT_DIR))
     return resolved_report, resolved_history, resolved_summary, resolved_artifact_dir
 
 
@@ -144,9 +136,9 @@ def _select_latest_session(records: list[dict[str, Any]]) -> dict[str, dict[str,
         if assignee not in SUPPORTED_ASSIGNEES:
             continue
         current = selected.get(assignee)
-        if current is None or _parse_iso(
-            item.get("updated_at") or item.get("last_seen_at")
-        ) >= _parse_iso(current.get("updated_at") or current.get("last_seen_at")):
+        if current is None or _parse_iso(item.get("updated_at") or item.get("last_seen_at")) >= _parse_iso(
+            current.get("updated_at") or current.get("last_seen_at")
+        ):
             selected[assignee] = item
     return selected
 
@@ -169,9 +161,7 @@ def _run_hint(
 ) -> str:
     """执行方的 RUN 提示（角色优先，其次 provider 兜底）。"""
     if assignee_role or workspace:
-        run_hint, _ = resolve_hints(
-            assignee, assignee_role=assignee_role, workspace=workspace
-        )
+        run_hint, _ = resolve_hints(assignee, assignee_role=assignee_role, workspace=workspace)
         return run_hint
     return RUN_HINT.get(assignee, "RUN")
 
@@ -256,9 +246,7 @@ def _trigger_payload_relpath(workspace: Path, assignee: str) -> str:
     指着一个根本不存在的文件。
     """
     config = load_json(workspace / ".vscode" / "ai-collab.json", default={})
-    trigger_config = (
-        config.get("trigger") if isinstance(config.get("trigger"), dict) else {}
-    ) or {}
+    trigger_config = (config.get("trigger") if isinstance(config.get("trigger"), dict) else {}) or {}
     output_dir = str(trigger_config.get("outputDir") or "collaboration/monitoring")
     prefix = str(trigger_config.get("payloadPrefix") or "AGENT_TRIGGER")
     return f"{output_dir.rstrip('/')}/{prefix}_{assignee}_latest.md"
@@ -284,12 +272,8 @@ def _build_exact_message(incident: dict[str, Any], *, workspace: Path | None = N
         return "\n".join(lines)
 
     if reason_code == "ack_silence_after_run":
-        assignee_role = (
-            resolve_assignee_roles(workspace).get(assignee) if workspace else None
-        )
-        run_hint = _run_hint(
-            assignee, assignee_role=assignee_role, workspace=str(workspace or "")
-        )
+        assignee_role = resolve_assignee_roles(workspace).get(assignee) if workspace else None
+        run_hint = _run_hint(assignee, assignee_role=assignee_role, workspace=str(workspace or ""))
         lines = [
             f"检测到 `{assignee}` 在 RUN 后未按预期返回 ACK 或 receipt。",
         ]
@@ -300,8 +284,7 @@ def _build_exact_message(incident: dict[str, Any], *, workspace: Path | None = N
             [
                 f"请先执行 `{_run_reset_hint(assignee, assignee_role=assignee_role, workspace=str(workspace or ''))}`，"
                 f"再重新执行 `{run_hint}`。",
-                "payload 里的「#### 执行步骤」就是本次要做的事：按描述实现、"
-                "写出结果文件、跑完验收命令。",
+                "payload 里的「#### 执行步骤」就是本次要做的事：按描述实现、写出结果文件、跑完验收命令。",
                 "写文件请用 bash（heredoc），不要用 `write`/`edit` 工具；"
                 "也不要派生子代理 —— 真机实测这两个调用会把会话卡死并中止。",
                 "完成后不要手写 ACK，请使用任务块中的 `python3 -m ai_collab.cli ack ...` 生成并原样回复。",
@@ -317,13 +300,11 @@ def _build_exact_message(incident: dict[str, Any], *, workspace: Path | None = N
             "请对以下任务逐个执行 ack 命令，并原样回复输出的单行 ACK：",
         ]
         for task_id in task_ids:
-            lines.append(
-                f"python3 -m ai_collab.cli ack --task-id {task_id} --ai {assignee} --status ok"
-            )
+            lines.append(f"python3 -m ai_collab.cli ack --task-id {task_id} --ai {assignee} --status ok")
         return "\n".join(lines)
 
     if reason_code == "missing_result_file":
-        return f"检测到 `{assignee}` 的终态任务缺少结果文件。\n" "请先补齐 `result_file` 指向的结果产物，再继续收口。"
+        return f"检测到 `{assignee}` 的终态任务缺少结果文件。\n请先补齐 `result_file` 指向的结果产物，再继续收口。"
 
     if reason_code == "unparseable_result_header":
         return (
@@ -332,15 +313,23 @@ def _build_exact_message(incident: dict[str, Any], *, workspace: Path | None = N
         )
 
     if reason_code == "terminal_status_mismatch":
-        return f"检测到 `{assignee}` 的控制面终态与结果文件状态头不一致。\n" "请修正结果文件中的顶层状态头，使其与控制面终态一致后再继续收口。"
+        return (
+            f"检测到 `{assignee}` 的控制面终态与结果文件状态头不一致。\n"
+            "请修正结果文件中的顶层状态头，使其与控制面终态一致后再继续收口。"
+        )
 
     if reason_code == "unregistered_session":
-        return f"控制面尚未登记 `{assignee}` 的活跃会话。\n" "请先注册或确认目标会话，再继续执行派发/纠偏动作；在此之前系统不会宣称可自动投递。"
+        return (
+            f"控制面尚未登记 `{assignee}` 的活跃会话。\n"
+            "请先注册或确认目标会话，再继续执行派发/纠偏动作；在此之前系统不会宣称可自动投递。"
+        )
 
     return str(incident.get("recommended_action") or "请根据控制面摘要执行纠偏。")
 
 
-def _build_intervention_artifact_markdown(*, incident: dict[str, Any], artifact_path: Path, workspace: Path | None = None) -> str:
+def _build_intervention_artifact_markdown(
+    *, incident: dict[str, Any], artifact_path: Path, workspace: Path | None = None
+) -> str:
     exact_message = _build_exact_message(incident, workspace=workspace)
     lines = [
         "# Session Intervention Artifact（自动生成）",
@@ -392,9 +381,7 @@ def _upsert_intervention_for_incident(
     artifact_file = _artifact_path(artifact_dir, incident)
     artifact_file.parent.mkdir(parents=True, exist_ok=True)
     artifact_file.write_text(
-        _build_intervention_artifact_markdown(
-            incident=incident, artifact_path=artifact_file, workspace=workspace
-        ),
+        _build_intervention_artifact_markdown(incident=incident, artifact_path=artifact_file, workspace=workspace),
         encoding="utf-8",
     )
     artifact_relpath = str(artifact_file.relative_to(workspace))
@@ -411,9 +398,7 @@ def _upsert_intervention_for_incident(
         current = existing["interventions"][0]
         incident["intervention_id"] = str(current.get("intervention_id") or "")
         incident["delivery_mode"] = str(current.get("delivery_mode") or "manual")
-        incident["delivery_status"] = str(
-            current.get("delivery_status") or "pending_operator_delivery"
-        )
+        incident["delivery_status"] = str(current.get("delivery_status") or "pending_operator_delivery")
         incident["intervention_action"] = "reused_open"
         return incident
 
@@ -482,9 +467,7 @@ def _resolve_obsolete_health_interventions(
                 "intervention_id": intervention_id,
                 "session_id": str(resolved_item.get("session_id") or item.get("session_id") or ""),
                 "assignee": str(resolved_item.get("assignee") or item.get("assignee") or ""),
-                "reason_code": str(
-                    resolved_item.get("reason_code") or item.get("reason_code") or ""
-                ),
+                "reason_code": str(resolved_item.get("reason_code") or item.get("reason_code") or ""),
                 "source_signal": str(resolved_item.get("source_signal") or source_signal),
                 "previous_delivery_status": str(item.get("delivery_status") or ""),
                 "next_delivery_status": str(resolved_item.get("delivery_status") or "resolved"),
@@ -540,9 +523,7 @@ def _collect_payload_freshness_incidents(
             reason_code="stale_payload",
             source_signal="payload_freshness",
             summary=str(freshness.get("warning") or "payload freshness 校验失败"),
-            recommended_action=str(
-                freshness.get("fix_command") or build_payload_refresh_command(assignee)
-            ),
+            recommended_action=str(freshness.get("fix_command") or build_payload_refresh_command(assignee)),
             sessions_by_assignee=sessions_by_assignee,
             details=[{**freshness, "last_handoff_artifact": artifact_relpath}],
         )
@@ -562,11 +543,7 @@ def _collect_ack_silence_incidents(
             grouped[assignee].append(item)
 
     for assignee, entries in grouped.items():
-        task_ids = [
-            str(item.get("task_id") or "")
-            for item in entries
-            if str(item.get("task_id") or "").strip()
-        ]
+        task_ids = [str(item.get("task_id") or "") for item in entries if str(item.get("task_id") or "").strip()]
         threshold = entries[0].get("threshold_seconds", 0) if entries else 0
         assignee_role = resolve_assignee_roles(workspace).get(assignee)
         _merge_incident(
@@ -604,11 +581,7 @@ def _collect_missing_ack_incidents(
             grouped[assignee].append(item)
 
     for assignee, entries in grouped.items():
-        task_ids = [
-            str(item.get("task_id") or "")
-            for item in entries
-            if str(item.get("task_id") or "").strip()
-        ]
+        task_ids = [str(item.get("task_id") or "") for item in entries if str(item.get("task_id") or "").strip()]
         _merge_incident(
             incidents,
             assignee=assignee,
@@ -638,11 +611,7 @@ def _collect_result_consistency_incidents(
             grouped[(assignee, reason_code)].append(item)
 
     for (assignee, reason_code), entries in grouped.items():
-        task_ids = [
-            str(item.get("task_id") or "")
-            for item in entries
-            if str(item.get("task_id") or "").strip()
-        ]
+        task_ids = [str(item.get("task_id") or "") for item in entries if str(item.get("task_id") or "").strip()]
         _merge_incident(
             incidents,
             assignee=assignee,
@@ -737,17 +706,11 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
     lines.append(f"- interventions: `{report.get('intervention_count', 0)}`")
     lines.append(f"- open_interventions: `{report.get('open_intervention_count', 0)}`")
     if report.get("adapter_reports", {}).get("claude_push_report"):
-        lines.append(
-            f"- claude_push_report: `{report.get('adapter_reports', {}).get('claude_push_report', '')}`"
-        )
+        lines.append(f"- claude_push_report: `{report.get('adapter_reports', {}).get('claude_push_report', '')}`")
     if report.get("adapter_reports", {}).get("codearts_pull_report"):
-        lines.append(
-            f"- codearts_pull_report: `{report.get('adapter_reports', {}).get('codearts_pull_report', '')}`"
-        )
+        lines.append(f"- codearts_pull_report: `{report.get('adapter_reports', {}).get('codearts_pull_report', '')}`")
     if report.get("adapter_reports", {}).get("codex_native_report"):
-        lines.append(
-            f"- codex_native_report: `{report.get('adapter_reports', {}).get('codex_native_report', '')}`"
-        )
+        lines.append(f"- codex_native_report: `{report.get('adapter_reports', {}).get('codex_native_report', '')}`")
     lines.append("")
 
     lines.append("## Sessions")
@@ -813,9 +776,7 @@ def run_session_health_aggregation(
     session_records = list(registry.get("sessions", []) or [])
     sessions_by_assignee = _select_latest_session(session_records)
     project_state = _load_project_state(workspace)
-    tasks_by_id = (
-        project_state.get("tasks", {}) if isinstance(project_state.get("tasks"), dict) else {}
-    )
+    tasks_by_id = project_state.get("tasks", {}) if isinstance(project_state.get("tasks"), dict) else {}
 
     incidents: dict[tuple[str, str, str, str], dict[str, Any]] = {}
     _collect_payload_freshness_incidents(
@@ -900,8 +861,7 @@ def run_session_health_aggregation(
         [
             item
             for item in incident_list
-            if str(item.get("delivery_status") or "").strip().lower()
-            not in TERMINAL_DELIVERY_STATUSES
+            if str(item.get("delivery_status") or "").strip().lower() not in TERMINAL_DELIVERY_STATUSES
         ]
     )
     healthy_count = len(
@@ -955,11 +915,7 @@ def run_session_health_aggregation(
         )
 
     unregistered_count = len(
-        [
-            item
-            for item in sessions_summary
-            if str(item.get("session_status") or "") == "unregistered"
-        ]
+        [item for item in sessions_summary if str(item.get("session_status") or "") == "unregistered"]
     )
     report = {
         "generated_at": datetime.now().isoformat(),

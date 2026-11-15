@@ -291,9 +291,7 @@ class TestVersionManager:
     def test_create_major_version(self, manager):
         """测试创建主版本"""
         manager.create_version("test_pack_major", VersionType.MINOR, "Initial")
-        next_version = manager.create_version(
-            "test_pack_major", VersionType.MAJOR, "Breaking changes"
-        )
+        next_version = manager.create_version("test_pack_major", VersionType.MAJOR, "Breaking changes")
 
         assert next_version.major == 1
         assert next_version.minor == 0
@@ -431,9 +429,7 @@ class TestVersionManager:
         manager.create_version("test_pack_range", VersionType.MINOR, "v3")  # 0.3.0
 
         # 获取 0.1.0 到 0.2.0 之间的版本（包含边界）
-        versions = manager.get_version_range(
-            "test_pack_range", min_version="0.1.0", max_version="0.2.0"
-        )
+        versions = manager.get_version_range("test_pack_range", min_version="0.1.0", max_version="0.2.0")
 
         # Should return 0.1.0 and 0.2.0 (both within range)
         assert len(versions) >= 1  # At least one version in range
@@ -544,9 +540,7 @@ class TestVersionManagerComplexScenarios:
         # 模拟添加预发布版本
         v_stable = manager.get_latest_version("pack_c_pre")
         if v_stable:
-            prerelease = PackVersion(
-                v_stable.major, v_stable.minor, v_stable.patch, prerelease="alpha"
-            )
+            prerelease = PackVersion(v_stable.major, v_stable.minor, v_stable.patch, prerelease="alpha")
 
             # 预发布版本应该小于稳定版本
             assert prerelease < v_stable

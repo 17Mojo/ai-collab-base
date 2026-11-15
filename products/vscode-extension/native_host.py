@@ -5,6 +5,7 @@ Supports two protocols:
 1. --stdio-json: line-delimited JSON
 2. native: 4-byte little-endian length prefix + JSON payload
 """
+
 import json
 import socket
 import struct

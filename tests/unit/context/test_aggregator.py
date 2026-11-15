@@ -19,9 +19,7 @@ class TestKnowledgeSource:
 
     def test_create_knowledge_source(self):
         """测试创建知识源"""
-        source = KnowledgeSource(
-            source_id="test_001", source_type="notebooklm", content="Test content", confidence=0.8
-        )
+        source = KnowledgeSource(source_id="test_001", source_type="notebooklm", content="Test content", confidence=0.8)
 
         assert source.source_id == "test_001"
         assert source.source_type == "notebooklm"
@@ -54,16 +52,12 @@ class TestKnowledgeSource:
     def test_invalid_confidence(self):
         """测试无效置信度"""
         with pytest.raises(ValueError):
-            KnowledgeSource(
-                source_id="test_003", source_type="notebooklm", content="Test", confidence=1.5
-            )
+            KnowledgeSource(source_id="test_003", source_type="notebooklm", content="Test", confidence=1.5)
 
     def test_invalid_source_type(self):
         """测试无效源类型"""
         with pytest.raises(ValueError):
-            KnowledgeSource(
-                source_id="test_004", source_type="invalid", content="Test", confidence=0.8
-            )
+            KnowledgeSource(source_id="test_004", source_type="invalid", content="Test", confidence=0.8)
 
 
 class TestKnowledgeAggregator:
@@ -100,9 +94,7 @@ class TestKnowledgeAggregator:
 
     def test_add_source(self, aggregator):
         """测试添加源"""
-        source = KnowledgeSource(
-            source_id="test_001", source_type="notebooklm", content="Test content", confidence=0.8
-        )
+        source = KnowledgeSource(source_id="test_001", source_type="notebooklm", content="Test content", confidence=0.8)
 
         source_id = aggregator.add_source(source)
         assert source_id == "test_001"
@@ -137,9 +129,7 @@ class TestKnowledgeAggregator:
                 content="Same content",  # 重复内容
                 confidence=0.8,
             ),
-            KnowledgeSource(
-                source_id="src_003", source_type="api", content="Different content", confidence=0.7
-            ),
+            KnowledgeSource(source_id="src_003", source_type="api", content="Different content", confidence=0.7),
         ]
 
         deduplicated = aggregator.deduplicate(sources)
@@ -182,12 +172,8 @@ class TestKnowledgeAggregator:
     def test_calculate_confidence(self, aggregator):
         """测试置信度计算"""
         sources = [
-            KnowledgeSource(
-                source_id="src_001", source_type="notebooklm", content="Content 1", confidence=0.9
-            ),
-            KnowledgeSource(
-                source_id="src_002", source_type="file", content="Content 2", confidence=0.8
-            ),
+            KnowledgeSource(source_id="src_001", source_type="notebooklm", content="Content 1", confidence=0.9),
+            KnowledgeSource(source_id="src_002", source_type="file", content="Content 2", confidence=0.8),
         ]
 
         knowledge = AggregatedKnowledge(
@@ -231,17 +217,13 @@ class TestContextAggregator:
             context_aggregator.extract_knowledge(
                 source_type="file", content="Python is used for data science", confidence=0.8
             ),
-            context_aggregator.extract_knowledge(
-                source_type="api", content="Python supports OOP", confidence=0.7
-            ),
+            context_aggregator.extract_knowledge(source_type="api", content="Python supports OOP", confidence=0.7),
         ]
         return [s.source_id for s in sources]
 
     def test_extract_knowledge(self, context_aggregator):
         """测试提取知识"""
-        source = context_aggregator.extract_knowledge(
-            source_type="notebooklm", content="Test content", confidence=0.8
-        )
+        source = context_aggregator.extract_knowledge(source_type="notebooklm", content="Test content", confidence=0.8)
 
         assert source.source_type == "notebooklm"
         assert source.content == "Test content"
@@ -250,9 +232,7 @@ class TestContextAggregator:
 
     def test_aggregate_from_sources(self, context_aggregator, setup_sources):
         """测试从源聚合"""
-        result = context_aggregator.aggregate_from_sources(
-            sources=setup_sources, context=None, max_sources=3
-        )
+        result = context_aggregator.aggregate_from_sources(sources=setup_sources, context=None, max_sources=3)
 
         assert isinstance(result, AggregatedKnowledge)
         assert len(result.sources) > 0
@@ -284,12 +264,8 @@ class TestContextAggregator:
     def test_merge_knowledge_all(self, context_aggregator):
         """测试全部合并"""
         sources = [
-            KnowledgeSource(
-                source_id="src_001", source_type="notebooklm", content="Content 1", confidence=0.9
-            ),
-            KnowledgeSource(
-                source_id="src_002", source_type="file", content="Content 2", confidence=0.3
-            ),
+            KnowledgeSource(source_id="src_001", source_type="notebooklm", content="Content 1", confidence=0.9),
+            KnowledgeSource(source_id="src_002", source_type="file", content="Content 2", confidence=0.3),
         ]
 
         result = context_aggregator.merge_knowledge(sources, strategy="all")

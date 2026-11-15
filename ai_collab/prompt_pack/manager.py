@@ -104,9 +104,7 @@ class PackManager:
             """递归解析依赖"""
             # 检测循环依赖
             if pack_name in path:
-                raise PackDependencyError(
-                    f"Circular dependency detected: {' -> '.join(path + [pack_name])}"
-                )
+                raise PackDependencyError(f"Circular dependency detected: {' -> '.join(path + [pack_name])}")
 
             if pack_name in visited:
                 # 已经解析过
@@ -351,9 +349,7 @@ class PackManager:
         used_tokens = sum(self.estimate_pack_tokens(pack) for pack in packs)
         return max(0, total_budget - used_tokens)
 
-    def select_packs_within_budget(
-        self, packs: list[PromptPack], budget_limit: int
-    ) -> list[PromptPack]:
+    def select_packs_within_budget(self, packs: list[PromptPack], budget_limit: int) -> list[PromptPack]:
         """
         选择在预算内的 Pack
 
@@ -438,9 +434,7 @@ class PackManager:
             else:
                 keep_count = max(1, int(len(words) * keep_ratio))
                 compressed_text = " ".join(words[:keep_count])
-            compressed_pack.add_rule(
-                rule_name, compressed_text, priority=rule_file.priority, enabled=rule_file.enabled
-            )
+            compressed_pack.add_rule(rule_name, compressed_text, priority=rule_file.priority, enabled=rule_file.enabled)
 
         return compressed_pack
 

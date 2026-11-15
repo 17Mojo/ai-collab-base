@@ -17,9 +17,7 @@ import pytest
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 加载 error_tracking 模块
-error_tracking_path = os.path.join(
-    project_root, "local-backend", "app", "core", "error_tracking.py"
-)
+error_tracking_path = os.path.join(project_root, "local-backend", "app", "core", "error_tracking.py")
 spec = importlib.util.spec_from_file_location("error_tracking", error_tracking_path)
 error_tracking = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(error_tracking)
@@ -67,9 +65,7 @@ class TestErrorCategoryClassifier:
 
     def test_classify_validation_errors(self):
         """测试验证错误分类"""
-        assert (
-            ErrorCategoryClassifier.classify("Validation error: invalid input", 400) == "validation"
-        )
+        assert ErrorCategoryClassifier.classify("Validation error: invalid input", 400) == "validation"
         assert ErrorCategoryClassifier.classify("Invalid value type", 400) == "validation"
         assert ErrorCategoryClassifier.classify("Schema validation failed", 422) == "validation"
 
@@ -227,9 +223,7 @@ class TestFaultArchiver:
         """每个测试方法前设置"""
         # 使用临时目录
         self.temp_dir = tempfile.mkdtemp()
-        self.archiver = FaultArchiver(
-            output_dir=self.temp_dir, auto_archive_interval_hours=1, archive_threshold=10
-        )
+        self.archiver = FaultArchiver(output_dir=self.temp_dir, auto_archive_interval_hours=1, archive_threshold=10)
 
     def teardown_method(self):
         """每个测试方法后清理"""

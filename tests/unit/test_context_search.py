@@ -71,6 +71,7 @@ def engine(mock_aggregator):
 
 # =================== Enum & dataclass ===================
 
+
 class TestEnums:
     def test_search_method_values(self):
         assert SearchMethod.SEMANTIC.value == "semantic"
@@ -119,6 +120,7 @@ class TestSearchQuery:
 
 # =================== search 主入口 ===================
 
+
 class TestSearch:
     def test_empty_history_returns_empty(self, mock_aggregator):
         mock_aggregator.get_history.return_value = []
@@ -128,28 +130,23 @@ class TestSearch:
         assert stats.total_results == 0
 
     def test_semantic_search_finds_matches(self, engine):
-        results, stats = engine.search(
-            "python", method=SearchMethod.SEMANTIC, min_score=0.0
-        )
+        results, stats = engine.search("python", method=SearchMethod.SEMANTIC, min_score=0.0)
         assert len(results) >= 1
         assert all(r.score > 0 for r in results)
         assert stats.method == SearchMethod.SEMANTIC
 
     def test_keyword_search_finds_matches(self, engine):
-        results, _ = engine.search(
-            "python", method=SearchMethod.KEYWORD, min_score=0.0
-        )
+        results, _ = engine.search("python", method=SearchMethod.KEYWORD, min_score=0.0)
         assert len(results) >= 1
 
     def test_hybrid_search_finds_matches(self, engine):
-        results, _ = engine.search(
-            "python", method=SearchMethod.HYBRID, min_score=0.0
-        )
+        results, _ = engine.search("python", method=SearchMethod.HYBRID, min_score=0.0)
         assert len(results) >= 1
 
     def test_unknown_method_falls_back_to_semantic(self, engine):
         # 强制走 default 分支 — 用一个非法方法
         from ai_collab.context.search import SearchMethod as SM
+
         # 直接调内部方法即可绕过 enum 校验
         results = engine._semantic_search(
             SearchQuery("python", method=SM.SEMANTIC),
@@ -171,6 +168,7 @@ class TestSearch:
 
 
 # =================== scope 过滤 ===================
+
 
 class TestScopeFilter:
     def test_scope_all_returns_all(self, engine):
@@ -201,6 +199,7 @@ class TestScopeFilter:
 
 # =================== 私有方法 ===================
 
+
 class TestPrivateMethods:
     def test_extract_candidates_from_result(self, engine):
         history = engine.aggregator.get_history(limit=100)
@@ -209,9 +208,7 @@ class TestPrivateMethods:
         assert "src3" in cands
 
     def test_extract_candidates_no_result(self, engine):
-        empty_ctx = AggregationContext(
-            context_id="empty", query="x", sources=[], result=None
-        )
+        empty_ctx = AggregationContext(context_id="empty", query="x", sources=[], result=None)
         cands = engine._extract_candidates([empty_ctx])
         # result=None 时，hasattr(ctx, "result") 为真但 ctx.result 为假
         assert cands == {}
@@ -232,6 +229,7 @@ class TestPrivateMethods:
 
 
 # =================== suggest / stats ===================
+
 
 class TestSuggest:
     def test_suggest_returns_suggestions(self, engine):
@@ -254,12 +252,12 @@ class TestStats:
         assert engine.get_search_history() == []
 
 
-
 def test_graph_method_does_not_crash():
     """SearchMethod.GRAPH 调用不崩溃 (实际降级到 HYBRID, 见 _graph_search deprecation)"""
     from unittest.mock import MagicMock
 
     from ai_collab.context.search import ContextSearchEngine, SearchMethod
+
     eng = ContextSearchEngine(aggregator=MagicMock())
     eng.aggregator.get_history.return_value = []
     # 不应抛异常 - 即使图谱未集成, GRAPH 方法也应能走完
@@ -273,10 +271,12 @@ def test_graph_search_method_is_deprecated():
     from unittest.mock import MagicMock
 
     from ai_collab.context.search import ContextSearchEngine, SearchQuery
+
     eng = ContextSearchEngine(aggregator=MagicMock())
     query = SearchQuery(query="test")
     candidates = {}
     import warnings
+
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         eng._graph_search(query, candidates)

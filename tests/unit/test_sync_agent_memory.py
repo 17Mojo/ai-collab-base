@@ -92,7 +92,8 @@ def test_sync_writes_mirror_and_is_idempotent(tmp_path, monkeypatch):
     _write_memory(src, "project.md", "# p\n", {"type": "project", "description": "P"})
     _write_memory(src, "user.md", "# u\n", {"description": "U"})
     monkeypatch.setattr(
-        sys, "argv",
+        sys,
+        "argv",
         ["sync_agent_memory.py", "--source", str(src), "--dest", str(dst), "--quiet"],
     )
     assert main() == 0
@@ -101,7 +102,8 @@ def test_sync_writes_mirror_and_is_idempotent(tmp_path, monkeypatch):
     assert (dst / ".sync-manifest.json").exists()
     assert "## User" in (dst / "MEMORY.md").read_text(encoding="utf-8")
     monkeypatch.setattr(
-        sys, "argv",
+        sys,
+        "argv",
         ["sync_agent_memory.py", "--source", str(src), "--dest", str(dst), "--check", "--quiet"],
     )
     assert main() == 0
@@ -112,13 +114,15 @@ def test_check_detects_drift(tmp_path, monkeypatch):
     dst = tmp_path / "dst"
     _write_memory(src, "project.md", "# p\n", {"type": "project"})
     monkeypatch.setattr(
-        sys, "argv",
+        sys,
+        "argv",
         ["sync_agent_memory.py", "--source", str(src), "--dest", str(dst), "--quiet"],
     )
     assert main() == 0
     _write_memory(src, "project.md", "# changed\n", {"type": "project"})
     monkeypatch.setattr(
-        sys, "argv",
+        sys,
+        "argv",
         ["sync_agent_memory.py", "--source", str(src), "--dest", str(dst), "--check", "--quiet"],
     )
     assert main() == 1
@@ -126,7 +130,8 @@ def test_check_detects_drift(tmp_path, monkeypatch):
 
 def test_missing_source_returns_nonzero(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        sys, "argv",
+        sys,
+        "argv",
         ["sync_agent_memory.py", "--source", str(tmp_path / "nope"), "--dest", str(tmp_path / "dst"), "--quiet"],
     )
     assert main() == 1

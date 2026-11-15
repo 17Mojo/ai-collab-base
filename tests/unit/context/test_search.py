@@ -75,9 +75,7 @@ class TestContextSearchEngine:
         aggregator = ContextAggregator()
 
         # 使用 extract_knowledge 添加测试上下文
-        aggregator.extract_knowledge(
-            source_type="api", content="Python is a programming language", confidence=0.9
-        )
+        aggregator.extract_knowledge(source_type="api", content="Python is a programming language", confidence=0.9)
 
         aggregator.extract_knowledge(
             source_type="api", content="JavaScript is used for web development", confidence=0.85
@@ -186,21 +184,11 @@ class TestSearchFeatures:
         aggregator = ContextAggregator()
 
         # 添加多个测试上下文
-        aggregator.extract_knowledge(
-            source_type="api", content="Python programming language", confidence=0.9
-        )
-        aggregator.extract_knowledge(
-            source_type="file", content="JavaScript web framework", confidence=0.85
-        )
-        aggregator.extract_knowledge(
-            source_type="api", content="Machine learning algorithms", confidence=0.8
-        )
-        aggregator.extract_knowledge(
-            source_type="file", content="Data science with Python", confidence=0.75
-        )
-        aggregator.extract_knowledge(
-            source_type="api", content="Web development frontend", confidence=0.7
-        )
+        aggregator.extract_knowledge(source_type="api", content="Python programming language", confidence=0.9)
+        aggregator.extract_knowledge(source_type="file", content="JavaScript web framework", confidence=0.85)
+        aggregator.extract_knowledge(source_type="api", content="Machine learning algorithms", confidence=0.8)
+        aggregator.extract_knowledge(source_type="file", content="Data science with Python", confidence=0.75)
+        aggregator.extract_knowledge(source_type="api", content="Web development frontend", confidence=0.7)
         return ContextSearchEngine(aggregator)
 
     def test_suggest(self, setup_engine):
@@ -243,9 +231,7 @@ class TestSearchScoring:
         aggregator = ContextAggregator()
 
         # 添加包含特定词频的上下文
-        aggregator.extract_knowledge(
-            source_type="api", content="python python python python", confidence=0.9
-        )
+        aggregator.extract_knowledge(source_type="api", content="python python python python", confidence=0.9)
 
         aggregator.extract_knowledge(source_type="api", content="python", confidence=0.8)
         return ContextSearchEngine(aggregator)

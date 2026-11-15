@@ -303,9 +303,7 @@ class TestPackTemplateCLIErrorHandling:
         result = cli.create_pack("test_template", "Test Pack", parameters={"param1": "value1"})
 
         assert result == 0
-        mock_library.create_instance.assert_called_once_with(
-            "test_template", "Test Pack", {"param1": "value1"}
-        )
+        mock_library.create_instance.assert_called_once_with("test_template", "Test Pack", {"param1": "value1"})
 
     @patch("ai_collab.cli.pack_template.TemplateLibrary")
     @patch("ai_collab.cli.pack_template.PackMarketAPI")

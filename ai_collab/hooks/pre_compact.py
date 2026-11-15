@@ -25,7 +25,7 @@ def _get_cwd(hook_input: dict) -> Path:
     cwd = hook_input.get("cwd")
     if isinstance(cwd, bytes):
         # Decode bytes to string before creating Path
-        return Path(cwd.decode('utf-8'))
+        return Path(cwd.decode("utf-8"))
     elif isinstance(cwd, str):
         return Path(cwd)
     return Path(".")

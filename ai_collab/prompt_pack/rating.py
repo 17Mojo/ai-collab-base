@@ -121,9 +121,7 @@ class RatingSystem:
             reviews_data = {review_id: review.to_dict() for review_id, review in reviews.items()}
             json.dump(reviews_data, f, ensure_ascii=False, indent=2)
 
-    def add_review(
-        self, pack_name: str, user: str, rating: int, title: str, content: str
-    ) -> Review:
+    def add_review(self, pack_name: str, user: str, rating: int, title: str, content: str) -> Review:
         """
         添加评价
 
@@ -255,9 +253,7 @@ class RatingSystem:
         reviews = self._load_reviews(pack_name)
 
         if not reviews:
-            return RatingSummary(
-                pack_name=pack_name, average_rating=0.0, total_reviews=0, rating_distribution={}
-            )
+            return RatingSummary(pack_name=pack_name, average_rating=0.0, total_reviews=0, rating_distribution={})
 
         # 计算平均评分
         total_rating = sum(review.rating for review in reviews.values())
@@ -318,9 +314,7 @@ class RatingSystem:
         """
         reviews = self._load_reviews(pack_name)
 
-        return sorted(reviews.values(), key=lambda r: (r.helpful_count, r.rating), reverse=True)[
-            :limit
-        ]
+        return sorted(reviews.values(), key=lambda r: (r.helpful_count, r.rating), reverse=True)[:limit]
 
     def _update_pack_rating(self, pack_name: str) -> None:
         """
@@ -335,9 +329,7 @@ class RatingSystem:
             registry = PackRegistry(self.packs_root)
             summary = self.get_rating_summary(pack_name)
             if summary.total_reviews > 0:
-                registry.update_pack_stats(
-                    pack_name, rating=summary.average_rating, review_count=summary.total_reviews
-                )
+                registry.update_pack_stats(pack_name, rating=summary.average_rating, review_count=summary.total_reviews)
         except Exception:
             # 忽略错误（商店可能不可用）
             pass

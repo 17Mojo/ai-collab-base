@@ -51,15 +51,9 @@ def _resolve_paths(
     summary_path: str | None = None,
 ) -> tuple[Path, Path, Path]:
     config = _load_config(workspace)
-    resolved_state = workspace / (
-        state_path or str(config.get("registryState", DEFAULT_STATE_PATH))
-    )
-    resolved_history = workspace / (
-        history_path or str(config.get("registryHistory", DEFAULT_HISTORY_PATH))
-    )
-    resolved_summary = workspace / (
-        summary_path or str(config.get("registrySummary", DEFAULT_SUMMARY_PATH))
-    )
+    resolved_state = workspace / (state_path or str(config.get("registryState", DEFAULT_STATE_PATH)))
+    resolved_history = workspace / (history_path or str(config.get("registryHistory", DEFAULT_HISTORY_PATH)))
+    resolved_summary = workspace / (summary_path or str(config.get("registrySummary", DEFAULT_SUMMARY_PATH)))
     return resolved_state, resolved_history, resolved_summary
 
 
@@ -167,9 +161,7 @@ def build_summary_markdown(*, payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _write_summary(
-    *, workspace: Path, summary_file: Path, sessions: list[dict[str, Any]]
-) -> dict[str, Any]:
+def _write_summary(*, workspace: Path, summary_file: Path, sessions: list[dict[str, Any]]) -> dict[str, Any]:
     payload = _build_summary_payload(
         workspace=workspace,
         state_file=workspace / DEFAULT_STATE_PATH,
@@ -233,11 +225,7 @@ def register_session(
 
     payload, sessions = _load_state(state_file)
     existing_session = sessions.get(normalized_session_id)
-    existing: dict[str, Any] = (
-        cast(dict[str, Any], existing_session)
-        if isinstance(existing_session, dict)
-        else {}
-    )
+    existing: dict[str, Any] = cast(dict[str, Any], existing_session) if isinstance(existing_session, dict) else {}
     now = datetime.now().isoformat()
     seen_at = _normalize_text(observed_at, fallback=now)
     record = {
@@ -246,9 +234,7 @@ def register_session(
         "transport_mode": normalized_transport,
         "session_status": _normalize_text(session_status, fallback="active").lower(),
         "last_seen_at": seen_at,
-        "last_handoff_artifact": str(
-            last_handoff_artifact or existing.get("last_handoff_artifact") or ""
-        ).strip(),
+        "last_handoff_artifact": str(last_handoff_artifact or existing.get("last_handoff_artifact") or "").strip(),
         "health_status": _normalize_text(health_status, fallback="healthy").lower(),
         "created_at": str(existing.get("created_at") or seen_at),
         "updated_at": now,
@@ -379,15 +365,9 @@ def update_session_health(
     now = datetime.now().isoformat()
     record = dict(existing)
     normalized_reason_codes = sorted(
-        {
-            str(item or "").strip().lower()
-            for item in list(reason_codes or [])
-            if str(item or "").strip()
-        }
+        {str(item or "").strip().lower() for item in list(reason_codes or []) if str(item or "").strip()}
     )
-    record["health_status"] = _normalize_text(
-        health_status, fallback=record.get("health_status", "healthy")
-    ).lower()
+    record["health_status"] = _normalize_text(health_status, fallback=record.get("health_status", "healthy")).lower()
     record["health_reason_codes"] = normalized_reason_codes
     record["health_incident_count"] = max(int(incident_count or 0), 0)
     record["health_updated_at"] = now
@@ -442,32 +422,20 @@ def inspect_sessions(
     normalized_session_status = str(session_status or "").strip().lower()
     normalized_health_status = str(health_status or "").strip().lower()
     if normalized_session_id:
-        records = [
-            item for item in records if str(item.get("session_id", "")) == normalized_session_id
-        ]
+        records = [item for item in records if str(item.get("session_id", "")) == normalized_session_id]
     if normalized_assignee:
-        records = [
-            item
-            for item in records
-            if str(item.get("assignee", "")).strip().lower() == normalized_assignee
-        ]
+        records = [item for item in records if str(item.get("assignee", "")).strip().lower() == normalized_assignee]
     if normalized_transport_mode:
         records = [
-            item
-            for item in records
-            if str(item.get("transport_mode", "")).strip().lower() == normalized_transport_mode
+            item for item in records if str(item.get("transport_mode", "")).strip().lower() == normalized_transport_mode
         ]
     if normalized_session_status:
         records = [
-            item
-            for item in records
-            if str(item.get("session_status", "")).strip().lower() == normalized_session_status
+            item for item in records if str(item.get("session_status", "")).strip().lower() == normalized_session_status
         ]
     if normalized_health_status:
         records = [
-            item
-            for item in records
-            if str(item.get("health_status", "")).strip().lower() == normalized_health_status
+            item for item in records if str(item.get("health_status", "")).strip().lower() == normalized_health_status
         ]
 
     summary_payload = _build_summary_payload(

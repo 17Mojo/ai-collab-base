@@ -64,9 +64,7 @@ class PackDependencyCLI:
         print(f"Adding dependency {dep_name} ({version_range}) to {pack_id}...")
 
         # 创建依赖
-        dep = PackDependency(
-            name=dep_name, version_range=version_range, optional=optional, reason=reason
-        )
+        dep = PackDependency(name=dep_name, version_range=version_range, optional=optional, reason=reason)
 
         # 检查是否存在
         pack = self.api.get_pack(pack_id)
@@ -135,9 +133,9 @@ class PackDependencyCLI:
 
         dependencies = pack.get("dependencies", [])
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Dependencies for {pack_id}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         if not dependencies:
             print("No dependencies found.")
@@ -151,9 +149,9 @@ class PackDependencyCLI:
                 print(f"   Reason: {dep['reason']}")
             print()
 
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Total: {len(dependencies)} dependencies")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return 0
 
@@ -172,9 +170,9 @@ class PackDependencyCLI:
             print(f"✗ Pack not found: {pack_id}")
             return 1
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Resolving dependencies for {pack_id}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 构建根节点
         root = DependencyNode(pack_id=pack_id, version=pack.get("version", "1.0.0"), resolved=False)
@@ -290,9 +288,9 @@ class PackDependencyCLI:
             print(f"✗ Pack not found: {pack_id}")
             return 1
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Checking dependency conflicts for {pack_id}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 构建图
         root = DependencyNode(pack_id=pack_id, version=pack.get("version", "1.0.0"))
@@ -339,9 +337,7 @@ def main():
 
     if command == "add":
         if len(sys.argv) < 5:
-            print(
-                "Usage: pack_dependency.py add <pack_id> <dep_name> --version <range> [--optional] [--reason <text>]"
-            )
+            print("Usage: pack_dependency.py add <pack_id> <dep_name> --version <range> [--optional] [--reason <text>]")
             return 1
 
         pack_id = sys.argv[2]

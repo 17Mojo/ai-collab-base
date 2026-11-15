@@ -44,9 +44,7 @@ class ContextAggregator:
         self.aggregator = KnowledgeAggregator()
         self.contexts: dict[str, AggregationContext] = {}
 
-    def aggregate_from_sources(
-        self, sources: list[str], context: Any, max_sources: int = 5
-    ) -> AggregatedKnowledge:
+    def aggregate_from_sources(self, sources: list[str], context: Any, max_sources: int = 5) -> AggregatedKnowledge:
         """
         从多个源聚合知识
 
@@ -122,9 +120,7 @@ class ContextAggregator:
 
         return source
 
-    def merge_knowledge(
-        self, sources: list[KnowledgeSource], strategy: str = "weighted"
-    ) -> AggregatedKnowledge:
+    def merge_knowledge(self, sources: list[KnowledgeSource], strategy: str = "weighted") -> AggregatedKnowledge:
         """
         合并知识
 
@@ -136,9 +132,7 @@ class ContextAggregator:
             聚合知识对象
         """
         if not sources:
-            return AggregatedKnowledge(
-                content="", sources=[], cross_validation={}, overall_confidence=0.0
-            )
+            return AggregatedKnowledge(content="", sources=[], cross_validation={}, overall_confidence=0.0)
 
         # 根据策略选择源
         if strategy == "weighted":

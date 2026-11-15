@@ -189,10 +189,7 @@ class TestReActConverter:
         artifacts = converter.convert(sample_requirement)
 
         # Should be ready if both schema and compliance are valid
-        if (
-            artifacts.validation_report.schema_valid
-            and artifacts.validation_report.compliance_valid
-        ):
+        if artifacts.validation_report.schema_valid and artifacts.validation_report.compliance_valid:
             status = converter._determine_status(artifacts.validation_report)
             assert status == ConversionStatus.READY_FOR_OWNER_REVIEW
 
@@ -210,10 +207,7 @@ class TestReActConverter:
         artifacts = converter.convert(requirement)
 
         # If validation fails, should be blocked
-        if (
-            not artifacts.validation_report.schema_valid
-            or not artifacts.validation_report.compliance_valid
-        ):
+        if not artifacts.validation_report.schema_valid or not artifacts.validation_report.compliance_valid:
             status = converter._determine_status(artifacts.validation_report)
             assert status == ConversionStatus.BLOCKED
 

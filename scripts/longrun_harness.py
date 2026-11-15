@@ -6,6 +6,7 @@ Subcommands:
   next       - show the next pending feature and write runtime progress
   pass       - mark a feature as passed
 """
+
 import argparse
 import json
 import sys
@@ -45,15 +46,10 @@ def bootstrap(workspace: Path, goal: str) -> int:
             },
         ],
     }
-    (lr / "feature_list.json").write_text(
-        json.dumps(feature_list, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    (lr / "feature_list.json").write_text(json.dumps(feature_list, indent=2, ensure_ascii=False), encoding="utf-8")
 
     (lr / "session_progress.md").write_text(
-        "# Session Progress\n\n"
-        f"- Goal: {goal}\n"
-        f"- Started: {datetime.now().isoformat()}\n"
-        "- Status: in_progress\n",
+        f"# Session Progress\n\n- Goal: {goal}\n- Started: {datetime.now().isoformat()}\n- Status: in_progress\n",
         encoding="utf-8",
     )
 
@@ -99,9 +95,7 @@ def next_feature(workspace: Path) -> int:
     runtime_dir = workspace / ".cc-claude-codex"
     runtime_dir.mkdir(parents=True, exist_ok=True)
     (runtime_dir / "codex-progress.md").write_text(
-        f"# Codex Progress\n\n"
-        f"- Next: {nxt['id']} - {nxt['title']}\n"
-        f"- Updated: {datetime.now().isoformat()}\n",
+        f"# Codex Progress\n\n- Next: {nxt['id']} - {nxt['title']}\n- Updated: {datetime.now().isoformat()}\n",
         encoding="utf-8",
     )
 
@@ -136,8 +130,7 @@ def pass_feature(workspace: Path, feature_id: str, note: str) -> int:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("subcommand", nargs="?", default="bootstrap",
-                   choices=["bootstrap", "next", "pass"])
+    p.add_argument("subcommand", nargs="?", default="bootstrap", choices=["bootstrap", "next", "pass"])
     p.add_argument("--workspace", required=True)
     p.add_argument("--goal", default="longrun session")
     p.add_argument("--id")

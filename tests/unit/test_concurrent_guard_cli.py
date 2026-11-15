@@ -170,14 +170,10 @@ class TestSeverityLayering:
         _set_old_mtime(foreign)
         _use_config(monkeypatch, {})
 
-        rc = cli.cmd_concurrent_guard(
-            _args(ws, expected_branch="main", session_started_at=datetime.now().isoformat())
-        )
+        rc = cli.cmd_concurrent_guard(_args(ws, expected_branch="main", session_started_at=datetime.now().isoformat()))
 
         assert rc == 0
-        report = json.loads(
-            (ws / "logs/workspace_forensics/concurrent_guard_latest.json").read_text(encoding="utf-8")
-        )
+        report = json.loads((ws / "logs/workspace_forensics/concurrent_guard_latest.json").read_text(encoding="utf-8"))
         assert report["violations"] == []
         assert report["warnings"]
         assert report["allowed"] is True
@@ -193,9 +189,7 @@ class TestSeverityLayering:
         rc = cli.cmd_concurrent_guard(_args(ws, expected_branch="main"))
 
         assert rc == 2
-        report = json.loads(
-            (ws / "logs/workspace_forensics/concurrent_guard_latest.json").read_text(encoding="utf-8")
-        )
+        report = json.loads((ws / "logs/workspace_forensics/concurrent_guard_latest.json").read_text(encoding="utf-8"))
         assert report["violations"]
         assert report["allowed"] is False
         assert report["risk_level"] == "high"

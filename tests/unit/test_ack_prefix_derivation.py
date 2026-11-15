@@ -63,9 +63,7 @@ def receipt_bridge():
 
 
 @pytest.mark.parametrize("provider,role,expected", DERIVATION_CASES)
-def test_cli_and_bridge_derive_the_same_prefix(
-    receipt_bridge, provider, role, expected
-):
+def test_cli_and_bridge_derive_the_same_prefix(receipt_bridge, provider, role, expected):
     """CLI ACK 路径与回执桥接路径对同一 (provider, role) 必须一致。"""
     cli_line = build_ack_line(
         assignee=provider,
@@ -74,9 +72,7 @@ def test_cli_and_bridge_derive_the_same_prefix(
         assignee_role=role,
         workspace=REPO_ROOT,
     )
-    bridge_prefix = receipt_bridge["ack_prefix_for"](
-        provider, assignee_role=role, workspace=REPO_ROOT
-    )
+    bridge_prefix = receipt_bridge["ack_prefix_for"](provider, assignee_role=role, workspace=REPO_ROOT)
 
     assert cli_line.split(".", 1)[0] == expected
     assert bridge_prefix == expected
@@ -85,24 +81,13 @@ def test_cli_and_bridge_derive_the_same_prefix(
 @pytest.mark.parametrize("provider,role,expected", DERIVATION_CASES)
 def test_bridge_prefix_is_role_first(receipt_bridge, provider, role, expected):
     """带角色时取角色前缀；不带角色时才退到 provider 兜底字母。"""
-    assert (
-        receipt_bridge["ack_prefix_for"](
-            provider, assignee_role=role, workspace=REPO_ROOT
-        )
-        == expected
-    )
+    assert receipt_bridge["ack_prefix_for"](provider, assignee_role=role, workspace=REPO_ROOT) == expected
 
 
-@pytest.mark.parametrize(
-    "provider,expected", [("claude_code", "C"), ("codearts_agent", "A"), ("codex", "O")]
-)
-def test_bridge_prefix_falls_back_to_provider_without_role(
-    receipt_bridge, provider, expected
-):
+@pytest.mark.parametrize("provider,expected", [("claude_code", "C"), ("codearts_agent", "A"), ("codex", "O")])
+def test_bridge_prefix_falls_back_to_provider_without_role(receipt_bridge, provider, expected):
     """没有角色声明时，行为与 provider 兜底表一致（不回归）。"""
-    assert (
-        receipt_bridge["ack_prefix_for"](provider, workspace=REPO_ROOT) == expected
-    )
+    assert receipt_bridge["ack_prefix_for"](provider, workspace=REPO_ROOT) == expected
 
 
 # ---------------------------------------------------------------------------

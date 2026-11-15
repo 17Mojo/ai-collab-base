@@ -65,7 +65,7 @@ class BranchCondition:
     """分支条件定义"""
 
     target_step: str  # 目标步骤 ID (条件满足时跳转) - 必须放在第一个
-    condition_type: str = 'regex_match'  # 'regex_match', 'contains', 'equals', 'threshold', 'exists'
+    condition_type: str = "regex_match"  # 'regex_match', 'contains', 'equals', 'threshold', 'exists'
     target_field: str = "output"  # 检查字段 (output, input, context)
     condition_value: str = ""  # 匹配值/模式 (对于 contains/equals)
     regex_config: RegexPattern | None = None  # 正则配置 (对于 regex_match)
@@ -138,9 +138,7 @@ class QualityMetrics:
             if max_w - min_w == 0:
                 return {name: 1.0 / len(self.metrics) for name in self.metrics}
             # MinMax 归一化到 [0, 1],然后归一化到总和为 1
-            normalized_values = {
-                name: (m.weight - min_w) / (max_w - min_w) for name, m in self.metrics.items()
-            }
+            normalized_values = {name: (m.weight - min_w) / (max_w - min_w) for name, m in self.metrics.items()}
             norm_sum = sum(normalized_values.values())
             if norm_sum == 0:
                 return {name: 1.0 / len(self.metrics) for name in self.metrics}
@@ -181,9 +179,7 @@ class QualityMetrics:
 
         # 计算其他指标需要分配的总权重
         remaining_weight = 1.0 - new_weight
-        current_other_weights = sum(
-            m.weight for name, m in self.metrics.items() if name != metric_name
-        )
+        current_other_weights = sum(m.weight for name, m in self.metrics.items() if name != metric_name)
 
         # 更新目标指标
         self.metrics[metric_name].weight = new_weight
@@ -329,16 +325,11 @@ class ReviewWorkflow:
         """参数合法性校验 - 防止下游 Provider 调度静默异常。"""
         allowed_modes = {"auto", "semi-auto", "manual"}
         if self.mode not in allowed_modes:
-            raise ValueError(
-                f"Invalid ReviewWorkflow.mode={self.mode!r}, "
-                f"expected one of {sorted(allowed_modes)}"
-            )
+            raise ValueError(f"Invalid ReviewWorkflow.mode={self.mode!r}, expected one of {sorted(allowed_modes)}")
         if self.timeout <= 0:
             raise ValueError(f"ReviewWorkflow.timeout must be > 0, got {self.timeout}")
         if self.min_providers < 1:
-            raise ValueError(
-                f"ReviewWorkflow.min_providers must be >= 1, got {self.min_providers}"
-            )
+            raise ValueError(f"ReviewWorkflow.min_providers must be >= 1, got {self.min_providers}")
 
 
 @dataclass
@@ -782,9 +773,7 @@ class PromptPackV2:
         )
 
         example_data = data["example_library"]
-        example_library = ExampleLibrary(
-            few_shot_template=example_data.get("few_shot_template", "")
-        )
+        example_library = ExampleLibrary(few_shot_template=example_data.get("few_shot_template", ""))
         for ex in example_data.get("good_examples", []):
             example_library.add_good_example(
                 PackExample(
@@ -794,9 +783,7 @@ class PromptPackV2:
                     description=ex["description"],
                     score=ex["score"],
                     validation_notes=ex.get("validation_notes", ""),
-                    created_at=datetime.fromisoformat(ex["created_at"])
-                    if "created_at" in ex
-                    else datetime.now(),
+                    created_at=datetime.fromisoformat(ex["created_at"]) if "created_at" in ex else datetime.now(),
                 )
             )
         for ex in example_data.get("bad_examples", []):
@@ -808,9 +795,7 @@ class PromptPackV2:
                     description=ex["description"],
                     score=ex["score"],
                     validation_notes=ex.get("validation_notes", ""),
-                    created_at=datetime.fromisoformat(ex["created_at"])
-                    if "created_at" in ex
-                    else datetime.now(),
+                    created_at=datetime.fromisoformat(ex["created_at"]) if "created_at" in ex else datetime.now(),
                 )
             )
 

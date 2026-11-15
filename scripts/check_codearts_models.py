@@ -161,9 +161,7 @@ def list_models(client, workspace: Path) -> tuple[dict[str, str], str]:
             if isinstance(models, dict):
                 items = list(models.keys())
             elif isinstance(models, list):
-                items = [
-                    str(item.get("id")) for item in models if isinstance(item, dict) and item.get("id")
-                ]
+                items = [str(item.get("id")) for item in models if isinstance(item, dict) and item.get("id")]
             else:
                 items = []
             for model_id in items:
@@ -181,11 +179,7 @@ def list_models(client, workspace: Path) -> tuple[dict[str, str], str]:
                 if isinstance(models, dict):
                     items = list(models.keys())
                 elif isinstance(models, list):
-                    items = [
-                        str(item.get("id"))
-                        for item in models
-                        if isinstance(item, dict) and item.get("id")
-                    ]
+                    items = [str(item.get("id")) for item in models if isinstance(item, dict) and item.get("id")]
                 else:
                     items = []
                 for model_id in items:
@@ -209,9 +203,7 @@ def delete_session(client, session_id: str, workspace: Path) -> bool:
     if not session_id:
         return False
     try:
-        response = client.request(
-            "DELETE", f"/session/{session_id}", query={"directory": str(workspace)}
-        )
+        response = client.request("DELETE", f"/session/{session_id}", query={"directory": str(workspace)})
         status = response.get("http_status")
         return bool(status) and 200 <= int(status) < 300
     except Exception:  # noqa: BLE001 - 清理失败不能影响探测结论
@@ -247,9 +239,7 @@ def probe_model(
     started = time.monotonic()
     session_id = ""
     try:
-        created = client.request(
-            "POST", "/session", query={"directory": str(workspace)}, body={"title": "model-probe"}
-        )
+        created = client.request("POST", "/session", query={"directory": str(workspace)}, body={"title": "model-probe"})
         session_id = _session_id(created)
         result["session_id"] = session_id
         if not session_id:
@@ -297,9 +287,7 @@ def render_table(results: list[dict[str, Any]], default_model: str) -> str:
         if used and used != f"{item['provider']}/{item['model']}":
             note = f"[实际用 {used}] " + note
         used = item.get("used_model") or "-"
-        lines.append(
-            f"{item['model']:<22} {flag:<6} {item['latency_ms']:>7}ms  {used:<34} {note}"
-        )
+        lines.append(f"{item['model']:<22} {flag:<6} {item['latency_ms']:>7}ms  {used:<34} {note}")
     lines.append("-" * 110)
     ok = sum(1 for item in results if item["usable"])
     lines.append(f"可用 {ok}/{len(results)}；kernel 默认模型：{default_model or '未知'}")
@@ -317,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help=(
             "按 --models 的顺序逐个真实探测，返回第一个"
-            "\"实际模型 == 请求模型\"的候选（providerID/modelID）；"
+            '"实际模型 == 请求模型"的候选（providerID/modelID）；'
             "一个都不可用时退出码 1，且不输出任何模型 id"
         ),
     )
@@ -333,8 +321,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.pick and args.watch:
         print(
-            "--pick 与 --watch 互斥：--pick 只做单轮挑选（找到第一个可用即返回），"
-            "--watch 是持续监测；请去掉其中一个",
+            "--pick 与 --watch 互斥：--pick 只做单轮挑选（找到第一个可用即返回），--watch 是持续监测；请去掉其中一个",
             file=sys.stderr,
         )
         return 2

@@ -48,9 +48,7 @@ def test_query_mcp_uses_builtin_ask_question(monkeypatch):
             "session_id": "sess-1",
         }
 
-    monkeypatch.setattr(
-        builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False
-    )
+    monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False)
 
     integration = NotebookLMIntegration(notebook_id="test-notebook")
     result = integration._query_mcp("测试主题")
@@ -74,7 +72,6 @@ def test_query_mcp_falls_back_to_simulated(monkeypatch):
         integration._query_mcp("测试主题")
 
     assert "MCP ask_question 工具不可用" in str(exc_info.value)
-
 
 
 class TestNotebookLMConnect:
@@ -167,7 +164,9 @@ class TestNotebookLMSaveResult:
     def test_save_result_success(self, monkeypatch, capsys):
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "mock")
         integration = NotebookLMIntegration()
-        assert integration.save_result("测试内容", {"topic": "测试主题", "pack_name": "TestPack", "tags": ["t1"]}) is True
+        assert (
+            integration.save_result("测试内容", {"topic": "测试主题", "pack_name": "TestPack", "tags": ["t1"]}) is True
+        )
 
     def test_save_result_even_when_not_connected(self, monkeypatch, capsys):
         """save_result 在未连接时调用 connect,REAL 模式下 connect 返回 False 但 save_result 仍 print"""
@@ -197,16 +196,8 @@ class TestNotebookLMCreateNotebook:
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "mock")
         integration = NotebookLMIntegration()
         pack = {
-            "metadata": {
-                "pack_name": "测试Pack",
-                "description": "测试描述"
-            },
-            "workflow": {
-                "steps": [
-                    {"name": "步骤1", "type": "GENERATION"},
-                    {"name": "步骤2", "type": "LOCAL"}
-                ]
-            }
+            "metadata": {"pack_name": "测试Pack", "description": "测试描述"},
+            "workflow": {"steps": [{"name": "步骤1", "type": "GENERATION"}, {"name": "步骤2", "type": "LOCAL"}]},
         }
         notebook_id = integration.create_notebook_from_pack(pack)
         assert notebook_id.startswith("notebook-")
@@ -215,19 +206,16 @@ class TestNotebookLMCreateNotebook:
 class TestNotebookLMStudioConverter:
     def test_convert_basic(self):
         from ai_collab.integrations.notebooklm import PackToStudioConverter
+
         converter = PackToStudioConverter()
         pack = {
-            "metadata": {
-                "pack_name": "TestPack",
-                "description": "Test Desc",
-                "tags": ["t1"]
-            },
+            "metadata": {"pack_name": "TestPack", "description": "Test Desc", "tags": ["t1"]},
             "workflow": {
                 "steps": [
                     {"name": "S1", "type": "GENERATION", "template": "Hello {name}", "params": {"max_tokens": 100}},
-                    {"name": "S2", "type": "LOCAL", "inputs": [{"key": "name", "required": True, "default": "World"}]}
+                    {"name": "S2", "type": "LOCAL", "inputs": [{"key": "name", "required": True, "default": "World"}]},
                 ]
-            }
+            },
         }
         result = converter.convert(pack)
         assert result["name"] == "TestPack"
@@ -241,6 +229,7 @@ class TestNotebookLMStudioConverter:
 
     def test_extract_prompt_with_no_generation(self):
         from ai_collab.integrations.notebooklm import PackToStudioConverter
+
         converter = PackToStudioConverter()
         pack = {"workflow": {"steps": [{"name": "S1", "type": "LOCAL"}]}}
         prompt = converter._extract_prompt(pack)
@@ -248,6 +237,7 @@ class TestNotebookLMStudioConverter:
 
     def test_extract_variables_empty(self):
         from ai_collab.integrations.notebooklm import PackToStudioConverter
+
         converter = PackToStudioConverter()
         pack = {"workflow": {"steps": [{"name": "S1", "type": "GENERATION"}]}}
         variables = converter._extract_variables(pack)
@@ -255,13 +245,13 @@ class TestNotebookLMStudioConverter:
 
     def test_convert_workflow_with_other_step_types(self):
         from ai_collab.integrations.notebooklm import PackToStudioConverter
+
         converter = PackToStudioConverter()
         workflow = {"steps": [{"name": "S1", "type": "VALIDATION"}]}
         result = converter._convert_workflow(workflow)
         assert len(result) == 1
         assert result[0]["type"] == "VALIDATION"
         assert result[0]["config"] == {}
-
 
 
 class TestNotebookLMCheckMCPHealth:
@@ -272,12 +262,10 @@ class TestNotebookLMCheckMCPHealth:
         import builtins
 
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
         # 设置 builtin 返回 falsy 值(空)
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health", lambda: None,
-            raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__get_health", lambda: None, raising=False)
         integration = NotebookLMIntegration()
         with pytest.raises(ConnectionError) as exc_info:
             integration._check_mcp_health()
@@ -288,11 +276,13 @@ class TestNotebookLMCheckMCPHealth:
         import builtins
 
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
         monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health",
+            builtins,
+            "mcp__plugin_notebooklm__get_health",
             lambda: {"authenticated": False, "active_sessions": 0},
-            raising=False
+            raising=False,
         )
         integration = NotebookLMIntegration()
         with pytest.raises(ConnectionError) as exc_info:
@@ -304,13 +294,13 @@ class TestNotebookLMCheckMCPHealth:
         import builtins
 
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
+
         def raising_func():
             raise RuntimeError("tool failure")
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health", raising_func,
-            raising=False
-        )
+
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__get_health", raising_func, raising=False)
         integration = NotebookLMIntegration()
         with pytest.raises(ConnectionError) as exc_info:
             integration._check_mcp_health()
@@ -321,11 +311,13 @@ class TestNotebookLMCheckMCPHealth:
         import builtins
 
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "fallback")
         monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health",
+            builtins,
+            "mcp__plugin_notebooklm__get_health",
             lambda: {"authenticated": True, "active_sessions": 3},
-            raising=False
+            raising=False,
         )
         integration = NotebookLMIntegration()
         assert integration._check_mcp_health() is True
@@ -339,16 +331,16 @@ class TestNotebookLMQueryMCP:
         import builtins
 
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "real")
         monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health",
-            lambda: {"authenticated": True},
-            raising=False
+            builtins, "mcp__plugin_notebooklm__get_health", lambda: {"authenticated": True}, raising=False
         )
         monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__ask_question",
+            builtins,
+            "mcp__plugin_notebooklm__ask_question",
             lambda **kw: {"sources": []},  # no "answer" key
-            raising=False
+            raising=False,
         )
         integration = NotebookLMIntegration(notebook_id="nb-1")
         with pytest.raises(ConnectionError) as exc_info:
@@ -360,16 +352,16 @@ class TestNotebookLMQueryMCP:
         import builtins
 
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "fallback")
         monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health",
-            lambda: {"authenticated": True},
-            raising=False
+            builtins, "mcp__plugin_notebooklm__get_health", lambda: {"authenticated": True}, raising=False
         )
         monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__ask_question",
+            builtins,
+            "mcp__plugin_notebooklm__ask_question",
             lambda **kw: {},  # empty dict
-            raising=False
+            raising=False,
         )
         integration = NotebookLMIntegration()
         with pytest.raises(ConnectionError):
@@ -381,6 +373,7 @@ class TestNotebookLMGetRecommendedPacks:
 
     def test_analyze_intent_extracts_keywords(self):
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         integration = NotebookLMIntegration()
         intent = integration._analyze_intent("写一篇关于 AI 协作的文章 内容")
         assert intent["type"] == "content_generation"
@@ -391,6 +384,7 @@ class TestNotebookLMGetRecommendedPacks:
         """get_recommended_packs 返回推荐列表"""
         monkeypatch.setenv("AI_INTEGRATION_MODE_NOTEBOOKLM", "mock")
         from ai_collab.integrations.notebooklm import NotebookLMIntegration
+
         integration = NotebookLMIntegration()
         packs = integration.get_recommended_packs("我想了解 AI 协作")
         assert isinstance(packs, list)
@@ -407,6 +401,7 @@ class TestPackToStudioConverterExtra:
     def test_convert_missing_workflow_steps_handles_gracefully(self):
         """缺失 steps 字段 - KeyError 视为预期(代码不防御)"""
         from ai_collab.integrations.notebooklm import PackToStudioConverter
+
         converter = PackToStudioConverter()
         pack = {"metadata": {"pack_name": "Test"}, "workflow": {"steps": []}}
         # 显式提供空 steps,避免 KeyError
@@ -417,6 +412,7 @@ class TestPackToStudioConverterExtra:
     def test_convert_missing_metadata_raises(self):
         """缺失 metadata 字段 → 抛 KeyError（metadata 为必填, 未做兜底）"""
         from ai_collab.integrations.notebooklm import PackToStudioConverter
+
         converter = PackToStudioConverter()
         pack = {"workflow": {"steps": [{"name": "S1", "type": "GENERATION", "template": "Hello"}]}}
         # convert() 直接取 pack["metadata"]["pack_name"], 缺失时抛 KeyError

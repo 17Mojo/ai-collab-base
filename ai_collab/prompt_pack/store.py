@@ -49,9 +49,7 @@ def _normalize_download_events(raw: object) -> list[str]:
     return [item for item in raw if isinstance(item, str)]
 
 
-def _prune_download_events(
-    events: list[str], now: datetime | None = None
-) -> list[str]:
+def _prune_download_events(events: list[str], now: datetime | None = None) -> list[str]:
     """裁剪下载事件，只保留最近 DOWNLOAD_EVENT_RETENTION_DAYS 天内的记录"""
     reference = now or datetime.now()
     if reference.tzinfo is not None:
@@ -67,9 +65,7 @@ def _prune_download_events(
     return kept
 
 
-def _count_events_in_window(
-    events: list[str], window_start: datetime, window_end: datetime
-) -> int:
+def _count_events_in_window(events: list[str], window_start: datetime, window_end: datetime) -> int:
     """统计落在闭区间窗口 [window_start, window_end] 内的下载事件数"""
     count = 0
     for raw in events or []:
@@ -168,9 +164,7 @@ class PackRegistry:
                         rating=entry_data.get("rating", 0.0),
                         review_count=entry_data.get("review_count", 0),
                         tags=entry_data.get("tags", []),
-                        download_events=_normalize_download_events(
-                            entry_data.get("download_events")
-                        ),
+                        download_events=_normalize_download_events(entry_data.get("download_events")),
                     )
             except (json.JSONDecodeError, KeyError, ValueError):
                 # 索引文件损坏，重新构建
@@ -214,11 +208,7 @@ class PackRegistry:
                     rating=carried.rating if carried else 0.0,
                     review_count=carried.review_count if carried else 0,
                     tags=manifest.get("tags", []),
-                    download_events=(
-                        _prune_download_events(list(carried.download_events))
-                        if carried
-                        else []
-                    ),
+                    download_events=(_prune_download_events(list(carried.download_events)) if carried else []),
                 )
 
                 self.index[entry.name] = entry
@@ -287,9 +277,7 @@ class PackRegistry:
         if rating is not None:
             # 计算新的平均评分
             if entry.review_count > 0:
-                entry.rating = ((entry.rating * entry.review_count) + rating) / (
-                    entry.review_count + 1
-                )
+                entry.rating = ((entry.rating * entry.review_count) + rating) / (entry.review_count + 1)
             else:
                 entry.rating = rating
 
@@ -363,9 +351,7 @@ class PackSearchEngine:
         # 限制数量
         return results[:limit]
 
-    def _sort_results(
-        self, results: list[PackIndexEntry], sort_by: PackSortType
-    ) -> list[PackIndexEntry]:
+    def _sort_results(self, results: list[PackIndexEntry], sort_by: PackSortType) -> list[PackIndexEntry]:
         """排序搜索结果"""
         if sort_by == PackSortType.POPULARITY:
             # 热度 = (下载次数 * 0.5 + 评分 * 10 * 0.3 + 评论数 * 0.2)
@@ -456,9 +442,7 @@ class PackSearchEngine:
         ]
 
         # 推荐
-        return sorted(same_category, key=lambda x: x.rating * 10 + x.downloads * 0.1, reverse=True)[
-            :limit
-        ]
+        return sorted(same_category, key=lambda x: x.rating * 10 + x.downloads * 0.1, reverse=True)[:limit]
 
     def browse_by_category(
         self, category: PackCategoryType, sort_by: PackSortType = PackSortType.POPULARITY

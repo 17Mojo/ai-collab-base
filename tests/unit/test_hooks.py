@@ -352,15 +352,10 @@ class TestStopCheckHook:
         assert exc.value.code == 2
         output = mock_stderr.getvalue()
         assert "当前会话显式 ACK 缺失" in output
-        assert (
-            "python3 -m ai_collab.cli ack --task-id TASK-ACK-MISSING-002 --ai claude_code --status ok"
-            in output
-        )
+        assert "python3 -m ai_collab.cli ack --task-id TASK-ACK-MISSING-002 --ai claude_code --status ok" in output
 
     @patch("sys.stderr", new_callable=StringIO)
-    def test_main_ignores_other_assignee_pending_and_missing_ack(
-        self, mock_stderr, tmp_path, monkeypatch
-    ):
+    def test_main_ignores_other_assignee_pending_and_missing_ack(self, mock_stderr, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         hook_input = {"cwd": str(tmp_path), "agent": "codex"}
         monkeypatch.setattr(sys, "stdin", StringIO(json.dumps(hook_input)))
@@ -387,9 +382,7 @@ class TestStopCheckHook:
         result_file = tmp_path / "collaboration" / "results" / "RESULT_TASK-CODEARTS-ACK-001.md"
         result_file.parent.mkdir(parents=True, exist_ok=True)
         result_file.write_text("# done\n", encoding="utf-8")
-        pending_result = (
-            tmp_path / "collaboration" / "results" / "RESULT_TASK-CODEARTS-PENDING-001.md"
-        )
+        pending_result = tmp_path / "collaboration" / "results" / "RESULT_TASK-CODEARTS-PENDING-001.md"
         pending_result.write_text("# done\n", encoding="utf-8")
 
         with pytest.raises(SystemExit) as exc:
@@ -502,9 +495,7 @@ class TestSessionInjectHook:
         try:
             output_data = json.loads(output)
             # Check for any of the expected keys
-            assert any(
-                key in output_data for key in ["session_context", "state", "additionalContext"]
-            )
+            assert any(key in output_data for key in ["session_context", "state", "additionalContext"])
         except json.JSONDecodeError:
             # If not JSON, check for some expected content
             assert "collaboration_state" in output or "TASK" in output or "AI Collab" in output

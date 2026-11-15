@@ -196,9 +196,7 @@ def _collect_activation_candidates(workspace: Path, *, max_age: timedelta) -> li
     return _select_latest(candidates)
 
 
-def _collect_hook_observation_candidates(
-    workspace: Path, *, max_age: timedelta
-) -> list[dict[str, Any]]:
+def _collect_hook_observation_candidates(workspace: Path, *, max_age: timedelta) -> list[dict[str, Any]]:
     observation_file = _observation_file(workspace)
     if not observation_file.exists():
         return []
@@ -210,12 +208,7 @@ def _collect_hook_observation_candidates(
         session_id = str(item.get("session_id") or "").strip()
         observed_at = str(item.get("observed_at") or "").strip()
         seen_at = _parse_iso(observed_at)
-        if (
-            assignee not in SUPPORTED_ASSIGNEES
-            or not session_id
-            or seen_at is None
-            or seen_at < cutoff
-        ):
+        if assignee not in SUPPORTED_ASSIGNEES or not session_id or seen_at is None or seen_at < cutoff:
             continue
         candidates.append(
             {
@@ -231,9 +224,7 @@ def _collect_hook_observation_candidates(
     return _select_latest(candidates)
 
 
-def _collect_codex_runtime_candidates(
-    workspace: Path, *, max_age: timedelta
-) -> list[dict[str, Any]]:
+def _collect_codex_runtime_candidates(workspace: Path, *, max_age: timedelta) -> list[dict[str, Any]]:
     runtime_file = workspace / ".cc-claude-codex" / "runtime.json"
     runtime = load_json(runtime_file, default={})
     observed_at = ""
@@ -294,9 +285,7 @@ def run_session_auto_sync(
     synced: list[dict[str, Any]] = []
     registered_count = 0
     refreshed_count = 0
-    for candidate in sorted(
-        latest_by_assignee.values(), key=lambda item: str(item.get("assignee") or "")
-    ):
+    for candidate in sorted(latest_by_assignee.values(), key=lambda item: str(item.get("assignee") or "")):
         session_id = str(candidate.get("session_id") or "").strip()
         if not session_id:
             continue

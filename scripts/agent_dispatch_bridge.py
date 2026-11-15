@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Agent Dispatch Bridge - 自动派单桥接脚本"""
+
 import argparse
 import copy
 import json
@@ -73,10 +74,7 @@ def write_history(workspace: Path, line: str) -> None:
 def build_update_command(order: dict) -> str:
     task_id = order.get("task_id", "")
     ai = order.get("ai_type", order.get("assignee", "claude_code"))
-    return (
-        f"python3 -m ai_collab.cli tasks update "
-        f"--task-id {task_id} --ai {ai} --status implementing"
-    )
+    return f"python3 -m ai_collab.cli tasks update --task-id {task_id} --ai {ai} --status implementing"
 
 
 DEFAULT_ORDERS_RELPATH = "collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md"
@@ -180,9 +178,7 @@ def write_orders_markdown(
     # 没有这些标题，payload 就会退化成"当前无待派发任务"。
     grouped: dict[str, list[dict]] = {}
     for order in orders:
-        assignee = str(
-            order.get("assignee") or order.get("ai_type") or "claude_code"
-        ).strip().lower()
+        assignee = str(order.get("assignee") or order.get("ai_type") or "claude_code").strip().lower()
         grouped.setdefault(assignee, []).append(order)
 
     for assignee, assignee_orders in grouped.items():
@@ -201,9 +197,7 @@ def write_orders_markdown(
             contract = _task_contract_lines(o, task, workspace)
             if contract:
                 lines.extend(contract)
-            constraints = _execution_constraints_lines(
-                str(o.get("assignee") or o.get("ai_type") or "")
-            )
+            constraints = _execution_constraints_lines(str(o.get("assignee") or o.get("ai_type") or ""))
             if constraints:
                 lines.extend(constraints)
             lines.append("#### 执行步骤")
@@ -238,9 +232,7 @@ def build_order(task: dict) -> dict:
     }
 
 
-def _task_contract_lines(
-    order: dict, task: dict, workspace: Path
-) -> list[str]:
+def _task_contract_lines(order: dict, task: dict, workspace: Path) -> list[str]:
     """渲染任务契约段。
 
     之前 payload 的任务块只有「任务 ID + 改状态的命令 + 验收命令」，
@@ -271,8 +263,7 @@ def _task_contract_lines(
         lines.append(f"**结果文件**（必须写）: `{result_file}`")
         lines.append("")
         lines.append(
-            "  按 PROTOCOL §7.4 结果文件四段契约写入四段："
-            "`## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`。"
+            "  按 PROTOCOL §7.4 结果文件四段契约写入四段：`## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`。"
         )
         lines.append("")
 
@@ -314,13 +305,10 @@ def _execution_constraints_lines(assignee: str) -> list[str]:
         "",
         "本执行环境里有两个工具会把整个会话卡死并中止，**不要用**：",
         "",
-        "- `write` / `edit`：实测会话在 `write` 调用上永久挂起，"
-        "文件没有落盘，会话随后中止。",
-        "- `task`（派生子代理）：实测报 `MessageAbortedError`，"
-        "父会话与子会话一起中止。",
+        "- `write` / `edit`：实测会话在 `write` 调用上永久挂起，文件没有落盘，会话随后中止。",
+        "- `task`（派生子代理）：实测报 `MessageAbortedError`，父会话与子会话一起中止。",
         "",
-        "**写文件一律用 bash（heredoc）**——"
-        "`bash` / `read` / `todowrite` 在真机实测里全部正常完成：",
+        "**写文件一律用 bash（heredoc）**——`bash` / `read` / `todowrite` 在真机实测里全部正常完成：",
         "",
         "```bash",
         "cat > path/to/file.py <<'EOF'",
@@ -516,9 +504,7 @@ def dispatch_once(args) -> int:
         orders = [build_order(task) for task in candidate_tasks]
         # Build task lookup for note extraction
         task_lookup = {tid: task for tid, task in tasks.items()}
-        write_orders_markdown(
-            workspace, orders, previous_items, task_lookup, args.orders
-        )
+        write_orders_markdown(workspace, orders, previous_items, task_lookup, args.orders)
     if args.history and not args.dry_run:
         write_history(workspace, json.dumps({"event": "dispatch", "count": len(dispatched)}))
 
@@ -542,8 +528,7 @@ def dispatch_once(args) -> int:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--workspace", default=".", required=False,
-                   help="Workspace path (default: current directory)")
+    p.add_argument("--workspace", default=".", required=False, help="Workspace path (default: current directory)")
     p.add_argument("--include-pending", action="store_true")
     p.add_argument("--redispatch", action="store_true")
     p.add_argument("--force-workspace", action="store_true")
@@ -552,11 +537,13 @@ def main() -> int:
     p.add_argument("--history")
     p.add_argument("--state")
     p.add_argument("--orders")
-    p.add_argument("--enrich-notebooklm", action="store_true",
-                   help="Enrich dispatch with NotebookLM knowledge")
-    p.add_argument("--notebooklm-mode", default="fallback",
-                   choices=["fallback", "mock", "real"],
-                   help="NotebookLM integration mode")
+    p.add_argument("--enrich-notebooklm", action="store_true", help="Enrich dispatch with NotebookLM knowledge")
+    p.add_argument(
+        "--notebooklm-mode",
+        default="fallback",
+        choices=["fallback", "mock", "real"],
+        help="NotebookLM integration mode",
+    )
     args = p.parse_args()
     return dispatch_once(args)
 

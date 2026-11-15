@@ -487,9 +487,7 @@ class TestPackMarketStore:
         """测试获取评价"""
         store.create_listing(sample_listing)
 
-        rating = PackRating(
-            rating_id="rating_001", pack_id=sample_listing.pack_id, user_id="user1", rating=5
-        )
+        rating = PackRating(rating_id="rating_001", pack_id=sample_listing.pack_id, user_id="user1", rating=5)
 
         store.create_rating(rating)
         result = store.get_rating("rating_001")
@@ -518,12 +516,8 @@ class TestPackMarketStore:
         """测试删除评价更新 Pack 评分"""
         store.create_listing(sample_listing)
 
-        rating1 = PackRating(
-            rating_id="rating_1", pack_id=sample_listing.pack_id, user_id="user1", rating=5
-        )
-        rating2 = PackRating(
-            rating_id="rating_2", pack_id=sample_listing.pack_id, user_id="user2", rating=3
-        )
+        rating1 = PackRating(rating_id="rating_1", pack_id=sample_listing.pack_id, user_id="user1", rating=5)
+        rating2 = PackRating(rating_id="rating_2", pack_id=sample_listing.pack_id, user_id="user2", rating=3)
 
         store.create_rating(rating1)
         updated = store.get_listing(sample_listing.pack_id)

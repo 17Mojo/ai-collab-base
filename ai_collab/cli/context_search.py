@@ -37,7 +37,7 @@ class ContextSearchCLI:
             退出码
         """
         print(f"Searching for: {query}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 解析参数
         method = kwargs.get("method", "semantic")
@@ -70,7 +70,7 @@ class ContextSearchCLI:
         print(f"Scope: {stats.scope.value}")
         print(f"Total results: {stats.total_results}")
         print(f"Filtered out: {stats.filtered_results}")
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         # 显示结果
         if not results:
@@ -78,9 +78,7 @@ class ContextSearchCLI:
             return 0
 
         for i, result in enumerate(results, 1):
-            relevance_emoji = {"very_high": "🔥", "high": "🟢", "medium": "🟡", "low": "🔵"}.get(
-                result.relevance, "⚪"
-            )
+            relevance_emoji = {"very_high": "🔥", "high": "🟢", "medium": "🟡", "low": "🔵"}.get(result.relevance, "⚪")
 
             print(f"{i}. [{result.context_id}] {relevance_emoji} {result.score:.2f}")
             print(f"   {result.content[:100]}{'...' if len(result.content) > 100 else ''}")
@@ -88,7 +86,7 @@ class ContextSearchCLI:
                 print(f"   Matches: {', '.join(result.matches)}")
             print()
 
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
         return 0
 
     def suggest(self, partial: str, limit: int = 5) -> int:
@@ -127,7 +125,7 @@ class ContextSearchCLI:
         search_history = self.search_engine.get_search_history()
 
         print(f"\nSearch History (Last {min(count, len(search_history))}):\n")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         if not search_history:
             print("No search history available.")
@@ -137,7 +135,7 @@ class ContextSearchCLI:
             print(f"{i}. Method: {stats.method.value}, Scope: {stats.scope.value}")
             print(f"   Results: {stats.total_results}, Time: {stats.execution_time_ms:.2f}ms")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
         return 0
 
     def clear_history(self) -> int:
@@ -190,15 +188,11 @@ class ContextSearchCLI:
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         if output_path.suffix == ".json":
-            output_path.write_text(
-                json.dumps(export_data, indent=2, ensure_ascii=False), encoding="utf-8"
-            )
+            output_path.write_text(json.dumps(export_data, indent=2, ensure_ascii=False), encoding="utf-8")
         else:
             # JSON 格式
             output_path = output_path.with_suffix(".json")
-            output_path.write_text(
-                json.dumps(export_data, indent=2, ensure_ascii=False), encoding="utf-8"
-            )
+            output_path.write_text(json.dumps(export_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
         print(f"✓ Exported {stats.total_results} results to {output_path}")
         return 0

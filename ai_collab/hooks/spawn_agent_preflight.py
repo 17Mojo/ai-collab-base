@@ -126,9 +126,7 @@ def _dedupe(items: list[str]) -> list[str]:
 
 
 def _path_tokens(text: str, workspace: Path) -> list[str]:
-    tokens = [
-        _normalize_path(workspace, match.group(0)) for match in PATH_PATTERN.finditer(text or "")
-    ]
+    tokens = [_normalize_path(workspace, match.group(0)) for match in PATH_PATTERN.finditer(text or "")]
     return _dedupe([token for token in tokens if token])
 
 
@@ -172,19 +170,11 @@ def _is_internal_read_only_parent(parent_task_id: str | None, read_only: bool) -
     return any(normalized.startswith(prefix) for prefix in INTERNAL_PARENT_PREFIXES)
 
 
-def _extract_explicit_files(
-    tool_input: dict[str, Any], text: str, workspace: Path
-) -> tuple[list[str], str]:
+def _extract_explicit_files(tool_input: dict[str, Any], text: str, workspace: Path) -> tuple[list[str], str]:
     for key in ("files", "paths", "scope", "write_set", "writeSet"):
         value = tool_input.get(key)
         if isinstance(value, list):
-            files = _dedupe(
-                [
-                    _normalize_path(workspace, item)
-                    for item in value
-                    if _normalize_path(workspace, item)
-                ]
-            )
+            files = _dedupe([_normalize_path(workspace, item) for item in value if _normalize_path(workspace, item)])
             if files:
                 return files, f"tool_input.{key}"
         if isinstance(value, str) and value.strip():
@@ -291,9 +281,7 @@ def build_preflight_request(hook_input: dict[str, Any]) -> dict[str, Any]:
     parent_task_id, parent_task_source = _extract_parent_task(text, runtime)
     files, files_source = _extract_explicit_files(tool_input, text, workspace)
     if not files:
-        progress_scope = _read_progress_scope(
-            workspace / ".cc-claude-codex" / "codex-progress.md", workspace
-        )
+        progress_scope = _read_progress_scope(workspace / ".cc-claude-codex" / "codex-progress.md", workspace)
         if progress_scope:
             files = progress_scope
             files_source = "progress-scope"
@@ -338,9 +326,7 @@ def _build_reason(request: dict[str, Any], report: dict[str, Any]) -> str:
         f"mode={metadata.get('read_only_source', 'unknown')}",
     )
     violations = report.get("violations", [])
-    detail = (
-        "; ".join(str(item) for item in violations[:3]) or "spawn_agent policy denied delegation"
-    )
+    detail = "; ".join(str(item) for item in violations[:3]) or "spawn_agent policy denied delegation"
     return f"AI Collab spawn_agent preflight blocked ({', '.join(sources)}): {detail}"
 
 
@@ -375,11 +361,7 @@ def main() -> None:
     try:
         result = run_preflight(hook_input)
     except Exception as exc:  # noqa: BLE001
-        print(
-            json.dumps(
-                _deny_output(f"AI Collab spawn_agent preflight failed: {exc}"), ensure_ascii=False
-            )
-        )
+        print(json.dumps(_deny_output(f"AI Collab spawn_agent preflight failed: {exc}"), ensure_ascii=False))
         return
 
     if result["hook_output"] is not None:

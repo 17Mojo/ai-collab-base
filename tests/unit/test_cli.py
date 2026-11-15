@@ -89,9 +89,7 @@ class TestCmdActivate:
         }
         mock_handler_cls.return_value = mock_handler
 
-        args = SimpleNamespace(
-            ai="claude", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False
-        )
+        args = SimpleNamespace(ai="claude", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False)
 
         # 执行
         result = cli.cmd_activate(args)
@@ -119,9 +117,7 @@ class TestCmdActivate:
         }
         mock_handler_cls.return_value = mock_handler
 
-        args = SimpleNamespace(
-            ai="copilot", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False
-        )
+        args = SimpleNamespace(ai="copilot", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False)
 
         # 执行
         result = cli.cmd_activate(args)
@@ -159,9 +155,7 @@ class TestCmdActivate:
 
     def test_activate_unknown_ai(self, temp_workspace):
         """测试激活未知的 AI 类型"""
-        args = SimpleNamespace(
-            ai="unknown_ai", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False
-        )
+        args = SimpleNamespace(ai="unknown_ai", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False)
 
         # 执行
         result = cli.cmd_activate(args)
@@ -210,9 +204,7 @@ class TestCmdActivate:
         mock_handler.check_activation.return_value = False
         mock_handler_cls.return_value = mock_handler
 
-        args = SimpleNamespace(
-            ai="claude", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False
-        )
+        args = SimpleNamespace(ai="claude", mode="cli", workspace=str(temp_workspace), input=None, show_rules=False)
 
         # 执行
         result = cli.cmd_activate(args)
@@ -303,9 +295,7 @@ class TestCmdCheck:
         mock_manager.resolve_conflict.return_value = True
         mock_manager_cls.return_value = mock_manager
 
-        args = SimpleNamespace(
-            ai="claude", files=["test.py"], mode="both", resolve=True, workspace=str(temp_workspace)
-        )
+        args = SimpleNamespace(ai="claude", files=["test.py"], mode="both", resolve=True, workspace=str(temp_workspace))
 
         # 执行
         result = cli.cmd_check(args)
@@ -421,9 +411,7 @@ class TestCmdTasks:
         ]
         mock_manager_cls.return_value = mock_manager
 
-        args = SimpleNamespace(
-            subcommand="list", status="in_progress", workspace=str(temp_workspace)
-        )
+        args = SimpleNamespace(subcommand="list", status="in_progress", workspace=str(temp_workspace))
 
         result = cli.cmd_tasks(args)
 
@@ -485,9 +473,7 @@ class TestCmdTasks:
 
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_tasks_update_contract_fields_does_not_change_status(
-        self, mock_set_env, mock_manager_cls, temp_workspace
-    ):
+    def test_tasks_update_contract_fields_does_not_change_status(self, mock_set_env, mock_manager_cls, temp_workspace):
         """只更新契约字段时不得重置任务状态。"""
         mock_manager = Mock()
         mock_manager_cls.return_value = mock_manager
@@ -521,9 +507,7 @@ class TestCmdTasks:
 
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_tasks_update_rejects_list_filter_status(
-        self, mock_set_env, mock_manager_cls, temp_workspace
-    ):
+    def test_tasks_update_rejects_list_filter_status(self, mock_set_env, mock_manager_cls, temp_workspace):
         """--status all/active 是 list 的过滤值，不能被 update 当作任务状态写入。"""
         mock_manager = Mock()
         mock_manager_cls.return_value = mock_manager
@@ -551,9 +535,7 @@ class TestCmdTasks:
 
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_tasks_update_requires_status_or_contract_field(
-        self, mock_set_env, mock_manager_cls, temp_workspace
-    ):
+    def test_tasks_update_requires_status_or_contract_field(self, mock_set_env, mock_manager_cls, temp_workspace):
         """既无状态也无契约字段时应报错，而不是静默重置为 pending。"""
         mock_manager = Mock()
         mock_manager_cls.return_value = mock_manager
@@ -689,9 +671,7 @@ class TestCmdTasks:
     @patch("ai_collab.cli._cli_main.run_terminal_result_consistency_audit")
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_tasks_validate_contract_non_strict(
-        self, mock_set_env, mock_manager_cls, mock_run_audit, temp_workspace
-    ):
+    def test_tasks_validate_contract_non_strict(self, mock_set_env, mock_manager_cls, mock_run_audit, temp_workspace):
         """测试工单契约校验（非严格模式）"""
         mock_manager = Mock()
         mock_manager.validate_task_contracts.return_value = {
@@ -846,9 +826,7 @@ class TestCmdTasks:
     @patch("ai_collab.cli._cli_main.run_terminal_result_consistency_audit")
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_tasks_audit_result_consistency(
-        self, mock_set_env, mock_manager_cls, mock_run_audit, temp_workspace
-    ):
+    def test_tasks_audit_result_consistency(self, mock_set_env, mock_manager_cls, mock_run_audit, temp_workspace):
         """测试终态结果一致性审计命令。"""
         mock_manager_cls.return_value = Mock()
         mock_run_audit.return_value = {
@@ -1117,9 +1095,7 @@ class TestCmdConflicts:
 
     def test_conflicts_resolve_missing_id(self, temp_workspace):
         """测试解决冲突时缺少 conflict_id"""
-        args = SimpleNamespace(
-            subcommand="resolve", conflict_id=None, resolution="", workspace=str(temp_workspace)
-        )
+        args = SimpleNamespace(subcommand="resolve", conflict_id=None, resolution="", workspace=str(temp_workspace))
 
         # 执行
         result = cli.cmd_conflicts(args)
@@ -1181,26 +1157,17 @@ class TestCmdInit:
         assert config["dispatch"]["report"] == "logs/task_dispatch_report.json"
         assert config["dispatch"]["history"] == "logs/task_dispatch_history.jsonl"
         assert config["dispatch"]["state"] == "logs/agent_dispatch_state.json"
-        assert (
-            config["dispatch"]["orders"]
-            == "collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md"
-        )
+        assert config["dispatch"]["orders"] == "collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md"
         assert config["receipt"]["report"] == "logs/task_receipt_report.json"
         assert config["receipt"]["history"] == "logs/task_receipt_history.jsonl"
         assert config["receipt"]["state"] == "logs/agent_receipt_state.json"
-        assert (
-            config["receipt"]["summary"]
-            == "collaboration/monitoring/AGENT_RECEIPT_SUMMARY_latest.md"
-        )
+        assert config["receipt"]["summary"] == "collaboration/monitoring/AGENT_RECEIPT_SUMMARY_latest.md"
         assert config["benefit"]["dispatchHistory"] == ["logs/task_dispatch_history.jsonl"]
         assert config["benefit"]["receiptHistory"] == ["logs/task_receipt_history.jsonl"]
         assert config["benefit"]["targetRatio"] == 3.0
         assert config["benefit"]["window"] == 14
         assert config["benefit"]["report"] == "logs/automation_benefit_report.json"
-        assert (
-            config["benefit"]["output"]
-            == "collaboration/monitoring/AUTOMATION_BENEFIT_DASHBOARD_latest.md"
-        )
+        assert config["benefit"]["output"] == "collaboration/monitoring/AUTOMATION_BENEFIT_DASHBOARD_latest.md"
         assert config["trigger"]["report"] == "logs/task_trigger_report.json"
         assert config["trigger"]["history"] == "logs/task_trigger_history.jsonl"
         assert config["trigger"]["outputDir"] == "collaboration/monitoring"
@@ -1217,14 +1184,8 @@ class TestCmdInit:
         assert config["spawnAgentGuard"]["allowReadOnly"] is True
         assert ".vscode/ai-collab.json" in config["spawnAgentGuard"]["protectedPaths"]
         assert "collaboration/tasks/" in config["spawnAgentGuard"]["protectedPrefixes"]
-        assert (
-            config["spawnAgentGuard"]["report"]
-            == "logs/workspace_forensics/spawn_agent_guard_latest.json"
-        )
-        assert (
-            config["spawnAgentGuard"]["history"]
-            == "logs/workspace_forensics/spawn_agent_guard_history.jsonl"
-        )
+        assert config["spawnAgentGuard"]["report"] == "logs/workspace_forensics/spawn_agent_guard_latest.json"
+        assert config["spawnAgentGuard"]["history"] == "logs/workspace_forensics/spawn_agent_guard_history.jsonl"
 
 
 # ==================== cmd_controller 测试 ====================
@@ -1236,9 +1197,7 @@ class TestCmdController:
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_controller_uses_config_defaults(
-        self, mock_set_env, mock_vscode, mock_run, temp_workspace
-    ):
+    def test_controller_uses_config_defaults(self, mock_set_env, mock_vscode, mock_run, temp_workspace):
         """测试 controller 使用项目配置默认值"""
         mock_vscode.get_project_config.return_value = {
             "controller": {
@@ -1288,9 +1247,7 @@ class TestCmdController:
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_controller_cli_args_override_config(
-        self, mock_set_env, mock_vscode, mock_run, temp_workspace
-    ):
+    def test_controller_cli_args_override_config(self, mock_set_env, mock_vscode, mock_run, temp_workspace):
         """测试 controller 参数覆盖配置值"""
         mock_vscode.get_project_config.return_value = {
             "controller": {
@@ -1345,9 +1302,7 @@ class TestCmdDispatch:
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_dispatch_uses_config_defaults(
-        self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace
-    ):
+    def test_dispatch_uses_config_defaults(self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace):
         """测试 dispatch 使用项目配置默认值"""
         mock_vscode.get_project_config.return_value = {
             "dispatch": {
@@ -1441,12 +1396,7 @@ claude payload new
             encoding="utf-8",
         )
 
-        stale_codearts = (
-            temp_workspace
-            / "collaboration"
-            / "monitoring"
-            / "AGENT_TRIGGER_codearts_agent_latest.md"
-        )
+        stale_codearts = temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_codearts_agent_latest.md"
         stale_codearts.write_text("STALE TASK-OLD", encoding="utf-8")
 
         args = SimpleNamespace(
@@ -1465,15 +1415,8 @@ claude payload new
         assert result == 0
         mock_run.assert_called_once()
 
-        claude_payload = (
-            temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_claude_code_latest.md"
-        )
-        codearts_payload = (
-            temp_workspace
-            / "collaboration"
-            / "monitoring"
-            / "AGENT_TRIGGER_codearts_agent_latest.md"
-        )
+        claude_payload = temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_claude_code_latest.md"
+        codearts_payload = temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_codearts_agent_latest.md"
         assert claude_payload.exists()
         assert codearts_payload.exists()
         assert "TASK-C-NEW" in claude_payload.read_text(encoding="utf-8")
@@ -1485,9 +1428,7 @@ claude payload new
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_dispatch_cli_args_override_config(
-        self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace
-    ):
+    def test_dispatch_cli_args_override_config(self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace):
         """测试 dispatch 参数覆盖配置值"""
         mock_vscode.get_project_config.return_value = {
             "dispatch": {
@@ -1574,9 +1515,7 @@ class TestCmdTrigger:
     @patch("ai_collab.cli._cli_main.cmd_dispatch")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_trigger_generates_agent_payload_files(
-        self, mock_set_env, mock_vscode, mock_dispatch, temp_workspace
-    ):
+    def test_trigger_generates_agent_payload_files(self, mock_set_env, mock_vscode, mock_dispatch, temp_workspace):
         """测试 trigger 生成按 Agent 的派单文件"""
         mock_vscode.get_project_config.return_value = {
             "activationKeyword": "2X",
@@ -1594,9 +1533,7 @@ class TestCmdTrigger:
         }
         mock_dispatch.return_value = 0
 
-        orders_file = (
-            temp_workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_latest.md"
-        )
+        orders_file = temp_workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_latest.md"
         orders_file.parent.mkdir(parents=True, exist_ok=True)
         orders_file.write_text(
             """# Agent Dispatch Orders（自动生成）
@@ -1647,18 +1584,9 @@ codearts payload
         assert result == 0
         mock_dispatch.assert_called_once()
 
-        claude_payload = (
-            temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_claude_code_latest.md"
-        )
-        codex_payload = (
-            temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_codex_latest.md"
-        )
-        codearts_payload = (
-            temp_workspace
-            / "collaboration"
-            / "monitoring"
-            / "AGENT_TRIGGER_codearts_agent_latest.md"
-        )
+        claude_payload = temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_claude_code_latest.md"
+        codex_payload = temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_codex_latest.md"
+        codearts_payload = temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_codearts_agent_latest.md"
         assert claude_payload.exists()
         assert codex_payload.exists()
         assert codearts_payload.exists()
@@ -1666,22 +1594,15 @@ codearts payload
         assert "TASK-X-001" in codex_payload.read_text(encoding="utf-8")
         assert "TASK-A-001" in codearts_payload.read_text(encoding="utf-8")
 
-        trigger_report = json.loads(
-            (temp_workspace / "logs" / "task_trigger_report.json").read_text(encoding="utf-8")
-        )
+        trigger_report = json.loads((temp_workspace / "logs" / "task_trigger_report.json").read_text(encoding="utf-8"))
         assert trigger_report["trigger_phrase"] == "2X DISPATCH"
         assert len(trigger_report["output_files"]) == 3
-        assert (
-            "collaboration/monitoring/AGENT_TRIGGER_codex_latest.md"
-            in trigger_report["output_files"]
-        )
+        assert "collaboration/monitoring/AGENT_TRIGGER_codex_latest.md" in trigger_report["output_files"]
 
     @patch("ai_collab.cli._cli_main.cmd_dispatch")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_trigger_supports_codex_target(
-        self, mock_set_env, mock_vscode, mock_dispatch, temp_workspace
-    ):
+    def test_trigger_supports_codex_target(self, mock_set_env, mock_vscode, mock_dispatch, temp_workspace):
         mock_vscode.get_project_config.return_value = {
             "activationKeyword": "2X",
             "dispatch": {
@@ -1697,9 +1618,7 @@ codearts payload
         }
         mock_dispatch.return_value = 0
 
-        orders_file = (
-            temp_workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_latest.md"
-        )
+        orders_file = temp_workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_latest.md"
         orders_file.parent.mkdir(parents=True, exist_ok=True)
         orders_file.write_text(
             """# Agent Dispatch Orders（自动生成）
@@ -1734,18 +1653,12 @@ codex payload
 
         result = cli.cmd_trigger(args)
         assert result == 0
-        codex_payload = (
-            temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_codex_latest.md"
-        )
+        codex_payload = temp_workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_codex_latest.md"
         assert codex_payload.exists()
         assert "TASK-X-001" in codex_payload.read_text(encoding="utf-8")
-        trigger_report = json.loads(
-            (temp_workspace / "logs" / "task_trigger_report.json").read_text(encoding="utf-8")
-        )
+        trigger_report = json.loads((temp_workspace / "logs" / "task_trigger_report.json").read_text(encoding="utf-8"))
         assert trigger_report["target"] == "codex"
-        assert trigger_report["output_files"] == [
-            "collaboration/monitoring/AGENT_TRIGGER_codex_latest.md"
-        ]
+        assert trigger_report["output_files"] == ["collaboration/monitoring/AGENT_TRIGGER_codex_latest.md"]
 
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main.cmd_dispatch")
@@ -1798,9 +1711,7 @@ codex payload
             encoding="utf-8",
         )
 
-        orders_file = (
-            temp_workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_latest.md"
-        )
+        orders_file = temp_workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_latest.md"
         orders_file.parent.mkdir(parents=True, exist_ok=True)
         orders_file.write_text(
             """# Agent Dispatch Orders（自动生成）
@@ -2033,9 +1944,7 @@ class TestCmd2X:
 
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main.cmd_trigger")
-    def test_2x_claude_auto_enables_redispatch_for_reopened_tasks(
-        self, mock_trigger, mock_state_cls, temp_workspace
-    ):
+    def test_2x_claude_auto_enables_redispatch_for_reopened_tasks(self, mock_trigger, mock_state_cls, temp_workspace):
         mock_state = Mock()
         mock_state.get_all_tasks.return_value = [
             {"task_id": "TASK-C-078", "status": "implementing", "assignee": "claude_code"},
@@ -2112,9 +2021,7 @@ class TestCmd2X:
     @patch("ai_collab.cli._cli_main.cmd_receipt")
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main.cmd_trigger")
-    def test_2x_all_dispatch_only_bypasses_fallback(
-        self, mock_trigger, mock_state_cls, mock_receipt, temp_workspace
-    ):
+    def test_2x_all_dispatch_only_bypasses_fallback(self, mock_trigger, mock_state_cls, mock_receipt, temp_workspace):
         mock_state = Mock()
         mock_state.get_all_tasks.return_value = [{"task_id": "TASK-1", "status": "testing"}]
         mock_state_cls.return_value = mock_state
@@ -2156,9 +2063,7 @@ class TestCmdReceipt:
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_receipt_uses_config_defaults(
-        self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace
-    ):
+    def test_receipt_uses_config_defaults(self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace):
         """测试 receipt 使用项目配置默认值"""
         mock_vscode.get_project_config.return_value = {
             "receipt": {
@@ -2207,9 +2112,7 @@ class TestCmdReceipt:
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_receipt_cli_args_override_config(
-        self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace
-    ):
+    def test_receipt_cli_args_override_config(self, mock_set_env, mock_vscode, mock_run, mock_guard, temp_workspace):
         """测试 receipt 参数覆盖配置值"""
         mock_vscode.get_project_config.return_value = {
             "receipt": {
@@ -2352,9 +2255,7 @@ class TestCmdReceipt:
         assert result == 0
         mock_hygiene.assert_not_called()
 
-        report_json = json.loads(
-            (temp_workspace / "logs" / "daily_report.json").read_text(encoding="utf-8")
-        )
+        report_json = json.loads((temp_workspace / "logs" / "daily_report.json").read_text(encoding="utf-8"))
         assert report_json["ack_stats"]["total_acks"] == 0
         assert report_json["ack_stats"]["failure_count"] == 1
         assert report_json["ack_stats"]["success_rate"] == 0.0
@@ -2362,19 +2263,14 @@ class TestCmdReceipt:
         assert report_json["result_consistency_stats"]["issue_count"] == 0
         assert report_json["pending_tasks"] == ["TASK-PENDING-001"]
 
-        report_md = (
-            temp_workspace / "collaboration" / "monitoring" / "DAILY_REPORT_latest.md"
-        ).read_text(encoding="utf-8")
+        report_md = (temp_workspace / "collaboration" / "monitoring" / "DAILY_REPORT_latest.md").read_text(
+            encoding="utf-8"
+        )
         noop_summary = (
-            temp_workspace
-            / "collaboration"
-            / "monitoring"
-            / "NOOP_PENDING_CONFLICT_SUMMARY_latest.md"
+            temp_workspace / "collaboration" / "monitoring" / "NOOP_PENDING_CONFLICT_SUMMARY_latest.md"
         ).read_text(encoding="utf-8")
         noop_report = json.loads(
-            (temp_workspace / "logs" / "noop_pending_conflict_report.json").read_text(
-                encoding="utf-8"
-            )
+            (temp_workspace / "logs" / "noop_pending_conflict_report.json").read_text(encoding="utf-8")
         )
 
         assert "失败数: `1`" in report_md
@@ -2390,9 +2286,7 @@ class TestCmdRun:
     @patch("ai_collab.cli._cli_main.cmd_benefit")
     @patch("ai_collab.cli._cli_main.cmd_receipt")
     @patch("ai_collab.cli._cli_main.cmd_dispatch")
-    def test_run_executes_three_stages(
-        self, mock_dispatch, mock_receipt, mock_benefit, temp_workspace
-    ):
+    def test_run_executes_three_stages(self, mock_dispatch, mock_receipt, mock_benefit, temp_workspace):
         mock_dispatch.return_value = 0
         mock_receipt.return_value = 0
         mock_benefit.return_value = 0
@@ -2427,9 +2321,7 @@ class TestCmdRun:
     @patch("ai_collab.cli._cli_main.cmd_benefit")
     @patch("ai_collab.cli._cli_main.cmd_receipt")
     @patch("ai_collab.cli._cli_main.cmd_dispatch")
-    def test_run_stops_when_dispatch_fails(
-        self, mock_dispatch, mock_receipt, mock_benefit, temp_workspace
-    ):
+    def test_run_stops_when_dispatch_fails(self, mock_dispatch, mock_receipt, mock_benefit, temp_workspace):
         mock_dispatch.return_value = 2
         mock_receipt.return_value = 0
         mock_benefit.return_value = 0
@@ -2512,9 +2404,7 @@ class TestCmdSpawnAgentGuard:
     @patch("ai_collab.cli._cli_main.run_spawn_agent_guard")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_spawn_agent_guard_uses_config_defaults(
-        self, mock_set_env, mock_vscode, mock_run, temp_workspace
-    ):
+    def test_spawn_agent_guard_uses_config_defaults(self, mock_set_env, mock_vscode, mock_run, temp_workspace):
         mock_vscode.get_project_config.return_value = {
             "spawnAgentGuard": {
                 "enabled": True,
@@ -2552,17 +2442,12 @@ class TestCmdSpawnAgentGuard:
         assert called["actor"] == "codex"
         assert called["parent_task_id"] == "TASK-001"
         assert called["files"] == ["ai_collab/cli.py"]
-        assert (
-            called["config"]["spawnAgentGuard"]["report"]
-            == "logs/workspace_forensics/custom_spawn_guard.json"
-        )
+        assert called["config"]["spawnAgentGuard"]["report"] == "logs/workspace_forensics/custom_spawn_guard.json"
 
     @patch("ai_collab.cli._cli_main.run_spawn_agent_guard")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_spawn_agent_guard_blocks_when_guard_denies(
-        self, mock_set_env, mock_vscode, mock_run, temp_workspace
-    ):
+    def test_spawn_agent_guard_blocks_when_guard_denies(self, mock_set_env, mock_vscode, mock_run, temp_workspace):
         mock_vscode.get_project_config.return_value = {"spawnAgentGuard": {"enabled": True}}
         mock_run.return_value = {
             "allowed": False,
@@ -2631,9 +2516,7 @@ class TestCmdStage:
 
     @patch("ai_collab.cli._cli_main.stage_domain_changes")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_stage_docs_returns_error_when_stage_fails(
-        self, mock_set_env, mock_stage, temp_workspace
-    ):
+    def test_stage_docs_returns_error_when_stage_fails(self, mock_set_env, mock_stage, temp_workspace):
         mock_stage.return_value = {"ok": False, "error": "git add failed"}
         args = SimpleNamespace(workspace=str(temp_workspace), dry_run=False)
         assert cli.cmd_stage_docs(args) == 1
@@ -2759,9 +2642,7 @@ class TestCmdBenefit:
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_benefit_uses_config_defaults(
-        self, mock_set_env, mock_vscode, mock_run, temp_workspace
-    ):
+    def test_benefit_uses_config_defaults(self, mock_set_env, mock_vscode, mock_run, temp_workspace):
         """测试 benefit 使用项目配置默认值"""
         mock_vscode.get_project_config.return_value = {
             "benefit": {
@@ -2801,9 +2682,7 @@ class TestCmdBenefit:
     @patch("ai_collab.cli.subprocess.run")
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_benefit_cli_args_override_config(
-        self, mock_set_env, mock_vscode, mock_run, temp_workspace
-    ):
+    def test_benefit_cli_args_override_config(self, mock_set_env, mock_vscode, mock_run, temp_workspace):
         """测试 benefit 参数覆盖配置值"""
         mock_vscode.get_project_config.return_value = {
             "benefit": {
@@ -2850,9 +2729,7 @@ class TestCmdStatus:
     @patch("ai_collab.cli._cli_main.VSCodeIntegration")
     @patch("ai_collab.cli._cli_main.StateManager")
     @patch("ai_collab.cli._cli_main._set_workspace_env")
-    def test_status_display(
-        self, mock_set_env, mock_manager_cls, mock_vscode, temp_workspace, capsys
-    ):
+    def test_status_display(self, mock_set_env, mock_manager_cls, mock_vscode, temp_workspace, capsys):
         """测试显示系统状态"""
         # 准备
         mock_manager = Mock()
@@ -3111,9 +2988,7 @@ class TestEmitPlanTasks:
         }
 
         # 执行
-        created = cli._emit_plan_tasks(
-            mock_manager, plan, related_files=["test.py"], task_prefix="TEST"
-        )
+        created = cli._emit_plan_tasks(mock_manager, plan, related_files=["test.py"], task_prefix="TEST")
 
         # 验证
         assert len(created) == 2  # user 任务被跳过
@@ -3448,9 +3323,7 @@ class TestEdgeCases:
         (temp_workspace / "test.py").write_text("# test")
         (temp_workspace / "test.js").write_text("// test")
 
-        args = SimpleNamespace(
-            ai="claude", files=[], mode="both", resolve=False, workspace=str(temp_workspace)
-        )
+        args = SimpleNamespace(ai="claude", files=[], mode="both", resolve=False, workspace=str(temp_workspace))
 
         # 执行
         result = cli.cmd_check(args)
@@ -3480,9 +3353,7 @@ class TestEdgeCases:
         modes = ["cli", "command", "event", "on_save"]
 
         for mode in modes:
-            args = SimpleNamespace(
-                ai="claude", mode=mode, workspace=str(temp_workspace), input=None, show_rules=False
-            )
+            args = SimpleNamespace(ai="claude", mode=mode, workspace=str(temp_workspace), input=None, show_rules=False)
 
             # 不应该抛出异常
             try:

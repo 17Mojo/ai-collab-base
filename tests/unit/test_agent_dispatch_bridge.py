@@ -103,9 +103,7 @@ def test_dispatch_skips_already_dispatched_without_redispatch(tmp_path):
     second = _run_dispatch(workspace)
     assert second.returncode == 0, second.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["dispatched_count"] == 0
     assert report["already_dispatched_count"] == 1
@@ -154,16 +152,12 @@ def test_dispatch_dry_run_keeps_candidate_even_if_already_dispatched(tmp_path):
     result = _run_dispatch(workspace, "--dry-run")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["dispatched_count"] == 1
     assert report["already_dispatched_count"] == 0
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
     assert "TASK-DISPATCH-DRY-001" in orders
 
 
@@ -185,16 +179,12 @@ def test_dispatch_include_pending_switch(tmp_path):
 
     result_without_pending = _run_dispatch(workspace, "--dry-run")
     assert result_without_pending.returncode == 0, result_without_pending.stderr
-    report_without = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report_without = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report_without["candidate_count"] == 0
 
     result_with_pending = _run_dispatch(workspace, "--dry-run", "--include-pending")
     assert result_with_pending.returncode == 0, result_with_pending.stderr
-    report_with = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report_with = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report_with["candidate_count"] == 1
     assert report_with["dispatched_count"] == 1
 
@@ -246,17 +236,13 @@ def test_dispatch_redispatch_reopened_implementing_task_with_existing_record(tmp
     result = _run_dispatch(workspace, "--dry-run", "--redispatch")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["dispatched_count"] == 1
     assert report["already_dispatched_count"] == 0
     assert report["candidate_tasks"][0]["status"] == "implementing"
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
     assert "TASK-DISPATCH-004" in orders
     assert "返工重派说明（必须先读）" in orders
     assert "禁止因为 result_file 已存在或任务曾到过 testing 就回复 noop。" in orders
@@ -282,9 +268,7 @@ def test_dispatch_redispatch_does_not_include_new_implementing_task_without_reco
     result = _run_dispatch(workspace, "--dry-run", "--redispatch")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 0
     assert report["dispatched_count"] == 0
 
@@ -357,9 +341,7 @@ def test_dispatch_orders_carry_assignee_section_headings(tmp_path):
     result = _run_dispatch(workspace)
     assert result.returncode == 0, result.stderr
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
     assert "## 发送给 `CodeArts` (`codearts_agent`)" in orders
 
     from ai_collab.dispatch_trigger import split_orders_by_assignee
@@ -398,9 +380,7 @@ def test_dispatch_orders_carry_task_contract(tmp_path):
     result = _run_dispatch(workspace)
     assert result.returncode == 0, result.stderr
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
 
     assert "**任务描述**: 把 consensus_engine 交付到外部系统并把覆盖率提到 80%" in orders
     assert "`external_target/engines/consensus_engine.py`" in orders
@@ -437,9 +417,7 @@ def test_dispatch_orders_contract_survives_trigger_payload(tmp_path):
     result = _run_dispatch(workspace)
     assert result.returncode == 0, result.stderr
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
 
     from ai_collab.dispatch_trigger import build_handoff_payload, split_orders_by_assignee
 
@@ -485,9 +463,7 @@ def test_dispatch_orders_include_codearts_tool_constraints(tmp_path):
     result = _run_dispatch(workspace)
     assert result.returncode == 0, result.stderr
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
 
     assert "#### 执行环境约束（真机实测，必须遵守）" in orders
     assert "cat > path/to/file.py <<'EOF'" in orders
@@ -516,9 +492,7 @@ def test_dispatch_orders_skip_tool_constraints_for_other_assignees(tmp_path):
     result = _run_dispatch(workspace)
     assert result.returncode == 0, result.stderr
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
 
     assert "#### 执行环境约束（真机实测，必须遵守）" not in orders
     assert "评审派单链路" in orders
@@ -546,9 +520,7 @@ def test_tool_constraints_survive_trigger_payload(tmp_path):
     result = _run_dispatch(workspace)
     assert result.returncode == 0, result.stderr
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
 
     from ai_collab.dispatch_trigger import build_handoff_payload, split_orders_by_assignee
 
@@ -562,7 +534,6 @@ def test_tool_constraints_survive_trigger_payload(tmp_path):
 
     assert "#### 执行环境约束（真机实测，必须遵守）" in trigger_payload
     assert "cat > path/to/file.py <<'EOF'" in trigger_payload
-
 
 
 # ---------------------------------------------------------------------------
@@ -599,16 +570,12 @@ def test_dispatch_redispatch_skips_completed_task(tmp_path):
     result = _run_dispatch(workspace, "--redispatch", "--include-pending")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 0
     assert report["dispatched_count"] == 0
     assert "TASK-DONE-001" not in report["dispatched_tasks"]
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
     assert "TASK-DONE-001" not in orders
 
 
@@ -624,9 +591,7 @@ def test_dispatch_include_pending_skips_completed_task(tmp_path):
     result = _run_dispatch(workspace, "--include-pending")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 0
     assert report["dispatched_count"] == 0
 
@@ -643,9 +608,7 @@ def test_dispatch_skips_cancelled_task(tmp_path):
     result = _run_dispatch(workspace, "--redispatch", "--include-pending")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 0
     assert report["dispatched_count"] == 0
 
@@ -663,16 +626,12 @@ def test_dispatch_still_ships_pending_task_alongside_completed_one(tmp_path):
     result = _run_dispatch(workspace, "--redispatch", "--include-pending")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["dispatched_count"] == 1
     assert report["dispatched_tasks"] == ["TASK-LIVE-001"]
 
-    orders = (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    orders = (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
     assert "TASK-LIVE-001" in orders
     assert "TASK-DONE-003" not in orders
 
@@ -689,9 +648,7 @@ def test_dispatch_still_ships_failed_task_for_rework(tmp_path):
     result = _run_dispatch(workspace, "--include-pending")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["dispatched_count"] == 1
     assert report["dispatched_tasks"] == ["TASK-FAIL-001"]
@@ -708,9 +665,7 @@ def test_dispatch_still_ships_failed_task_for_rework(tmp_path):
 
 
 def _orders_text(workspace: Path) -> str:
-    return (
-        workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md"
-    ).read_text(encoding="utf-8")
+    return (workspace / "collaboration" / "monitoring" / "AGENT_DISPATCH_ORDERS_test.md").read_text(encoding="utf-8")
 
 
 def test_completed_task_from_earlier_round_never_reaches_orders(tmp_path):
@@ -799,9 +754,7 @@ def test_rejection_notes_switch_to_rework_notice(tmp_path):
 
     payload = _base_state(workspace)
     payload["tasks"]["TASK-REWORK-001"] = _task("TASK-REWORK-001", "planning")
-    payload["tasks"]["TASK-REWORK-001"]["notes"] = [
-        "[2026-10-23] review 驳回：验收命令缺覆盖率门禁"
-    ]
+    payload["tasks"]["TASK-REWORK-001"]["notes"] = ["[2026-10-23] review 驳回：验收命令缺覆盖率门禁"]
     _write_state(workspace, payload)
 
     first = _run_dispatch(workspace)
@@ -915,9 +868,7 @@ def test_dispatch_enrich_notebooklm_wired_without_nameerror(tmp_path):
     result = _run_dispatch(workspace, "--include-pending", "--enrich-notebooklm")
     assert result.returncode == 0, f"不应 NameError/崩溃：{result.stderr}"
 
-    report = json.loads(
-        (workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_dispatch_report.json").read_text(encoding="utf-8"))
     assert report["notebooklm_enriched"] == 1, report
 
 

@@ -53,9 +53,7 @@ class Permission:
             level=PermissionLevel(data["level"]),
             granted_at=datetime.fromisoformat(data["granted_at"]),
             granted_by=data["granted_by"],
-            expires_at=datetime.fromisoformat(data["expires_at"])
-            if data.get("expires_at")
-            else None,
+            expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
         )
 
 
@@ -204,16 +202,12 @@ class PermissionManager:
         if not self._is_admin(share_info, effective_granted_by):
             raise PermissionError(f"{effective_granted_by} does not have admin permission")
 
-        permission = Permission(
-            user=user, level=level, granted_at=datetime.now(), granted_by=effective_granted_by
-        )
+        permission = Permission(user=user, level=level, granted_at=datetime.now(), granted_by=effective_granted_by)
 
         share_info.permissions[user] = permission
         self._save_share_info(share_info)
 
-    def revoke_permission(
-        self, pack_name: str, user: str, revoked_by: str | None = None
-    ) -> bool:
+    def revoke_permission(self, pack_name: str, user: str, revoked_by: str | None = None) -> bool:
         """
         撤销用户权限
 
@@ -471,9 +465,7 @@ class PermissionManager:
         self._save_share_info(share_info)
 
 
-def create_permission_manager(
-    packs_root: str = ".", workspace: str = ".", user: str = "default"
-) -> PermissionManager:
+def create_permission_manager(packs_root: str = ".", workspace: str = ".", user: str = "default") -> PermissionManager:
     """
     创建权限管理器
 

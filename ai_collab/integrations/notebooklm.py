@@ -295,7 +295,7 @@ class NotebookLMIntegration:
 {context}
 
 ## 来源
-{', '.join(sources)}
+{", ".join(sources)}
 """
 
         return enhanced_prompt
@@ -394,10 +394,10 @@ class NotebookLMIntegration:
         """
         # 构建笔记本内容
         notebook_content = f"""
-# {pack['metadata']['pack_name']}
+# {pack["metadata"]["pack_name"]}
 
 ## 描述
-{pack['metadata'].get('description', '无描述')}
+{pack["metadata"].get("description", "无描述")}
 
 ## 工作流
 
@@ -505,7 +505,8 @@ def integrate_with_notebooklm(pack: dict[str, Any], user_input: dict[str, Any]) 
     # 1. 增强Prompt
     topic = user_input.get("topic", "")
     enhanced_prompt = integration.enhance_prompt(
-        pack["workflow"]["steps"][2].get("template", ""), topic  # GENERATION步骤
+        pack["workflow"]["steps"][2].get("template", ""),
+        topic,  # GENERATION步骤
     )
 
     # 2. 执行Pack（简化版）

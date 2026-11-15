@@ -24,8 +24,7 @@ def test_merge_hooks_replaces_our_entries(tmp_path):
 
     assert sum(1 for entry in stop_entries if integration._entry_is_our_hook(entry)) == 1
     assert any(
-        isinstance(entry, dict)
-        and any(hook.get("command") == "echo external-stop" for hook in entry.get("hooks", []))
+        isinstance(entry, dict) and any(hook.get("command") == "echo external-stop" for hook in entry.get("hooks", []))
         for entry in stop_entries
     )
 
@@ -165,12 +164,8 @@ def test_run_codex_invokes_claude_headless(tmp_path, monkeypatch):
     integration = CodexIntegration(str(tmp_path))
     integration.progress_file.parent.mkdir(parents=True, exist_ok=True)
     integration.progress_file.write_text("- [ ] step-1\n", encoding="utf-8")
-    monkeypatch.setattr(
-        CodexIntegration, "validate_progress", lambda self: {"total_steps": 1}
-    )
-    monkeypatch.setattr(
-        "ai_collab.codex_integration.resolve_executor", lambda: ("claude", "/fake/claude")
-    )
+    monkeypatch.setattr(CodexIntegration, "validate_progress", lambda self: {"total_steps": 1})
+    monkeypatch.setattr("ai_collab.codex_integration.resolve_executor", lambda: ("claude", "/fake/claude"))
     captured: dict = {}
 
     class _FakeProc:

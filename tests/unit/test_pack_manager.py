@@ -201,9 +201,7 @@ class TestPackManager:
     def test_get_packed_context(self, temp_packs_dir, pack_with_dependency):
         """Test getting packed context with dependencies"""
         manager = PackManager(temp_packs_dir)
-        context = manager.get_packed_context(
-            "main-pack", AITool.CLAUDE_CODE, include_dependencies=True
-        )
+        context = manager.get_packed_context("main-pack", AITool.CLAUDE_CODE, include_dependencies=True)
 
         assert "main-pack" in context
         assert "# Main Rules" in context
@@ -255,9 +253,7 @@ class TestPackManager:
         manager = PackManager(temp_packs_dir)
 
         current_context = "This is the existing context."
-        new_context = manager.inject_into_ai_context(
-            "sample-pack", current_context, AITool.CLAUDE_CODE
-        )
+        new_context = manager.inject_into_ai_context("sample-pack", current_context, AITool.CLAUDE_CODE)
 
         assert "This is the existing context." in new_context
         assert "sample-pack" in new_context

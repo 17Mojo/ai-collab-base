@@ -30,9 +30,7 @@ def test_register_session_persists_state_and_history():
         )
 
         state_payload = json.loads((workspace / DEFAULT_STATE_PATH).read_text(encoding="utf-8"))
-        history_lines = (
-            (workspace / DEFAULT_HISTORY_PATH).read_text(encoding="utf-8").strip().splitlines()
-        )
+        history_lines = (workspace / DEFAULT_HISTORY_PATH).read_text(encoding="utf-8").strip().splitlines()
         summary_text = (workspace / DEFAULT_SUMMARY_PATH).read_text(encoding="utf-8")
 
         assert record["session_id"] == "claude-main"
@@ -62,28 +60,20 @@ def test_refresh_session_updates_existing_record():
         )
 
         state_payload = json.loads((workspace / DEFAULT_STATE_PATH).read_text(encoding="utf-8"))
-        history_lines = (
-            (workspace / DEFAULT_HISTORY_PATH).read_text(encoding="utf-8").strip().splitlines()
-        )
+        history_lines = (workspace / DEFAULT_HISTORY_PATH).read_text(encoding="utf-8").strip().splitlines()
 
         assert updated["transport_mode"] == "bridge"
         assert updated["session_status"] == "blocked"
         assert updated["health_status"] == "unhealthy"
-        assert state_payload["sessions"]["codearts-main"]["last_handoff_artifact"].endswith(
-            "codearts_agent_latest.md"
-        )
+        assert state_payload["sessions"]["codearts-main"]["last_handoff_artifact"].endswith("codearts_agent_latest.md")
         assert len(history_lines) == 2
 
 
 def test_inspect_sessions_filters_and_writes_summary():
     with tempfile.TemporaryDirectory() as tmpdir:
         workspace = Path(tmpdir)
-        register_session(
-            workspace=workspace, session_id="x-1", assignee="codex", transport_mode="bridge"
-        )
-        register_session(
-            workspace=workspace, session_id="c-1", assignee="claude_code", transport_mode="manual"
-        )
+        register_session(workspace=workspace, session_id="x-1", assignee="codex", transport_mode="bridge")
+        register_session(workspace=workspace, session_id="c-1", assignee="claude_code", transport_mode="manual")
 
         payload = inspect_sessions(workspace=workspace, assignee="codex")
         summary_text = (workspace / DEFAULT_SUMMARY_PATH).read_text(encoding="utf-8")
@@ -112,9 +102,7 @@ def test_registry_helpers_load_render_and_run_summary():
             health_status="unhealthy",
         )
 
-        state_file, history_file, summary_file, payload, sessions = load_session_registry_state(
-            workspace
-        )
+        state_file, history_file, summary_file, payload, sessions = load_session_registry_state(workspace)
         assert state_file == workspace / DEFAULT_STATE_PATH
         assert history_file == workspace / DEFAULT_HISTORY_PATH
         assert summary_file == workspace / DEFAULT_SUMMARY_PATH

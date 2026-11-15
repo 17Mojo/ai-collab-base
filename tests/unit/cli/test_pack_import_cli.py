@@ -34,9 +34,7 @@ class TestPackImportCLI:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_import_pack_success_dry_run(
-        self, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_import_pack_success_dry_run(self, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试导入 Pack（dry run 模式）"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -87,9 +85,7 @@ class TestPackImportCLI:
 
         mock_path_instance = MagicMock()
         mock_path_instance.suffix = ".json"
-        mock_path_instance.read_text.return_value = (
-            '{"pack": {"pack_name": "Test", "version": "1.0.0"}}'
-        )
+        mock_path_instance.read_text.return_value = '{"pack": {"pack_name": "Test", "version": "1.0.0"}}'
         mock_path_class.return_value = mock_path_instance
 
         mock_importer = MagicMock()
@@ -186,9 +182,7 @@ class TestPackImportCLI:
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
     @patch("ai_collab.cli.pack_import.Path")
-    def test_validate_success(
-        self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_validate_success(self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试验证 Pack（成功）"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -219,9 +213,7 @@ class TestPackImportCLI:
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
     @patch("ai_collab.cli.pack_import.Path")
-    def test_validate_failure(
-        self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_validate_failure(self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试验证 Pack（失败）"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -335,9 +327,7 @@ class TestPackImportCLI:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_bulk_import_directory_not_found(
-        self, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_bulk_import_directory_not_found(self, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试批量导入（目录不存在）- 简化版"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -391,9 +381,7 @@ class TestPackImportCLI:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_bulk_export_invalid_format(
-        self, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_bulk_export_invalid_format(self, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试批量导出（无效格式）"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -434,9 +422,7 @@ class TestPackImportCLIErrorHandling:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_import_pack_with_warnings(
-        self, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_import_pack_with_warnings(self, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试导入 Pack（有警告）"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -464,9 +450,7 @@ class TestPackImportCLIErrorHandling:
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
     @patch("ai_collab.cli.pack_import.Path")
-    def test_import_pack_api_failure(
-        self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_import_pack_api_failure(self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试导入 Pack（API 失败）"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -499,9 +483,7 @@ class TestPackImportCLIErrorHandling:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_bulk_import_with_failures(
-        self, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_bulk_import_with_failures(self, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试批量导入（有失败）- 简化版"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -530,9 +512,7 @@ class TestPackImportCLIErrorHandling:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_bulk_export_with_failures(
-        self, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_bulk_export_with_failures(self, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试批量导出（有失败）- 简化版"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -622,9 +602,7 @@ class TestPackImportCLIValidationDetails:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_validate_with_warnings_only(
-        self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path
-    ):
+    def test_validate_with_warnings_only(self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path):
         """测试验证只有警告（没有错误）"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -783,9 +761,7 @@ class TestPackImportCLIMain:
         mock_cli.bulk_export.return_value = 0
         mock_cli_class.return_value = mock_cli
 
-        with patch(
-            "sys.argv", ["pack_import.py", "bulk-export", "/output/dir", "--format", "json"]
-        ):
+        with patch("sys.argv", ["pack_import.py", "bulk-export", "/output/dir", "--format", "json"]):
             result = main()
 
         assert result == 0
@@ -822,9 +798,7 @@ class TestPackImportCLIValidationErrors:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_import_with_validation_errors(
-        self, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_import_with_validation_errors(self, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试导入有验证错误 - lines 68-71"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -858,9 +832,7 @@ class TestPackImportCLIYAMLImport:
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
     @patch("ai_collab.cli.pack_import.Path")
-    def test_import_yaml_file(
-        self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class
-    ):
+    def test_import_yaml_file(self, mock_path_class, mock_exporter_class, mock_importer_class, mock_api_class):
         """测试导入 YAML 文件 - lines 88-89"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -924,9 +896,7 @@ class TestPackImportCLIBulkImportFiles:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_bulk_import_no_files_found(
-        self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path
-    ):
+    def test_bulk_import_no_files_found(self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path):
         """测试批量导入无文件 - lines 304-305"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -1033,9 +1003,7 @@ class TestPackImportCLIBulkExportDetails:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_bulk_export_no_packs(
-        self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path
-    ):
+    def test_bulk_export_no_packs(self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path):
         """测试批量导出无 Packs - lines 356-357"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 
@@ -1055,9 +1023,7 @@ class TestPackImportCLIExportPackDetails:
     @patch("ai_collab.cli.pack_import.PackMarketAPI")
     @patch("ai_collab.cli.pack_import.PackImporter")
     @patch("ai_collab.cli.pack_import.PackExporter")
-    def test_export_pack_with_value_error(
-        self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path
-    ):
+    def test_export_pack_with_value_error(self, mock_exporter_class, mock_importer_class, mock_api_class, tmp_path):
         """测试导出 Pack 时 ValueError - lines 152-154"""
         from ai_collab.cli.pack_import import PackImportExportCLI
 

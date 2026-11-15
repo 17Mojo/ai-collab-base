@@ -2,12 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
-SCRIPT = (
-    Path(__file__).resolve().parents[2]
-    / "collaboration"
-    / "scripts"
-    / "build_automation_benefit_dashboard.py"
-)
+SCRIPT = Path(__file__).resolve().parents[2] / "collaboration" / "scripts" / "build_automation_benefit_dashboard.py"
 
 
 def _write_jsonl(path: Path, items: list[dict]) -> None:
@@ -67,9 +62,7 @@ def test_benefit_dashboard_generates_report_and_markdown(tmp_path):
     assert result.returncode == 0, result.stderr
 
     report_path = workspace / "logs" / "automation_benefit_report_test.json"
-    output_path = (
-        workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md"
-    )
+    output_path = workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md"
     assert report_path.exists()
     assert output_path.exists()
 
@@ -90,9 +83,7 @@ def test_benefit_dashboard_handles_empty_history(tmp_path):
     result = _run_dashboard(workspace)
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "automation_benefit_report_test.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "automation_benefit_report_test.json").read_text(encoding="utf-8"))
     assert report["day_count"] == 0
     assert report["overall_efficiency_ratio"] == 0.0
     assert report["overall_target_achieved"] is False
@@ -115,6 +106,4 @@ def test_benefit_dashboard_dry_run_does_not_write_files(tmp_path):
     assert result.returncode == 0, result.stderr
     assert "mode=dry-run" in result.stdout
     assert not (workspace / "logs" / "automation_benefit_report_test.json").exists()
-    assert not (
-        workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md"
-    ).exists()
+    assert not (workspace / "collaboration" / "monitoring" / "AUTOMATION_BENEFIT_DASHBOARD_test.md").exists()

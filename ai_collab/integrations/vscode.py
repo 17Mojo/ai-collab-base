@@ -62,9 +62,7 @@ class VSCodeIntegration:
         # 深度限制用于避免误命中文件系统上层无关目录（如工具在 HOME 写入的 .vscode）
         path = cwd
         for _ in range(MAX_WORKSPACE_SEARCH_DEPTH + 1):
-            if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(
-                os.path.join(path, "package.json")
-            ):
+            if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(os.path.join(path, "package.json")):
                 return path
             parent = os.path.dirname(path)
             if parent == path:
@@ -151,9 +149,7 @@ class VSCodeIntegration:
         try:
             global_config_dir = os.path.expanduser("~/.vscode/ai-collab")
             os.makedirs(global_config_dir, exist_ok=True)
-            log_file = os.path.join(
-                global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log"
-            )
+            log_file = os.path.join(global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log")
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"[{datetime.now().isoformat()}] [{channel}] {message}\n")
         except Exception:

@@ -132,8 +132,7 @@ def test_provider_prefix_never_collides_with_unbound_role_prefix():
             if role_prefix != prefix:
                 continue
             assert role in bindings.get(provider, set()), (
-                f"provider {provider} 的兜底前缀 {prefix} 与角色 {role} 撞车，"
-                f"但它并未绑定该角色；ACK 行无法区分发送方"
+                f"provider {provider} 的兜底前缀 {prefix} 与角色 {role} 撞车，但它并未绑定该角色；ACK 行无法区分发送方"
             )
 
 
@@ -252,9 +251,7 @@ def test_derived_role_follows_orchestration_bindings():
     bindings = _role_bindings()
     for provider, roles in bindings.items():
         derived = _derived_role(provider)
-        assert derived in roles, (
-            f"{provider} 在编排配置里占 {roles}，派生角色却是 {derived}"
-        )
+        assert derived in roles, f"{provider} 在编排配置里占 {roles}，派生角色却是 {derived}"
 
 
 def test_unbound_provider_derives_the_static_fallback_seat():

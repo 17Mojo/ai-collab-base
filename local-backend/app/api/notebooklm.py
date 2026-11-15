@@ -132,11 +132,7 @@ async def query_notebooklm(notebook_id: str, query: str) -> dict:
                 response_text = parts[0].strip()
                 if len(parts) > 1:
                     sources_text = parts[1].strip()
-                    sources = [
-                        s.strip()
-                        for s in sources_text.split("\n")
-                        if s.strip() and s.strip() != "None"
-                    ]
+                    sources = [s.strip() for s in sources_text.split("\n") if s.strip() and s.strip() != "None"]
 
             return {"response": response_text, "sources": sources, "mode": "real"}
 

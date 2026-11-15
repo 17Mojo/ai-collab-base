@@ -109,7 +109,9 @@ def collect_ack_watchdog_candidates(
             skipped.append({"task_id": str(task_id), "reason": "task missing from collaboration state"})
             continue
 
-        assignee = str(dispatch_item.get("assignee") or task.get("assignee") or task.get("ai_type") or "").strip().lower()
+        assignee = (
+            str(dispatch_item.get("assignee") or task.get("assignee") or task.get("ai_type") or "").strip().lower()
+        )
         if assignee not in SUPPORTED_ASSIGNEES:
             skipped.append({"task_id": str(task_id), "reason": f"unsupported assignee: {assignee or '<empty>'}"})
             continue
@@ -196,9 +198,7 @@ def _run_hint(
     "用 A.RUN 触发、却要回 C.ACK" 这种自相矛盾的指令。
     """
     if assignee_role or workspace:
-        run_hint, _ = resolve_hints(
-            assignee, assignee_role=assignee_role, workspace=workspace
-        )
+        run_hint, _ = resolve_hints(assignee, assignee_role=assignee_role, workspace=workspace)
         return run_hint
     return RUN_HINT.get(assignee, "RUN")
 
@@ -386,7 +386,9 @@ def run_ack_watchdog(
                 dispatch_item["watchdog_last_action"] = candidate.action
 
                 if candidate.action == "redispatch":
-                    dispatch_item["watchdog_redispatch_count"] = int(dispatch_item.get("watchdog_redispatch_count", 0) or 0) + 1
+                    dispatch_item["watchdog_redispatch_count"] = (
+                        int(dispatch_item.get("watchdog_redispatch_count", 0) or 0) + 1
+                    )
                     dispatch_item["watchdog_last_redispatched_at"] = generated_at
                     dispatch_item["dispatch_count"] = int(dispatch_item.get("dispatch_count", 0) or 0) + 1
                     dispatch_item["dispatched_at"] = generated_at
@@ -426,7 +428,9 @@ def run_ack_watchdog(
                 if rearmed:
                     rearmed_by_assignee[assignee] = rearmed
             except Exception as exc:  # noqa: BLE001
-                errors.append({"task_id": ",".join(x.task_id for x in assignee_candidates), "error": f"rearm failed: {exc}"})
+                errors.append(
+                    {"task_id": ",".join(x.task_id for x in assignee_candidates), "error": f"rearm failed: {exc}"}
+                )
 
         if handled:
             write_json(dispatch_state_file, dispatch_state)

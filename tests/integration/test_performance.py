@@ -116,9 +116,7 @@ class TestConcurrentOperations:
         from ai_collab.context.schema import Context
 
         def create_context(index):
-            return Context(
-                context_id=f"ctx-{index}", scenario="conversation", name=f"Context {index}"
-            )
+            return Context(context_id=f"ctx-{index}", scenario="conversation", name=f"Context {index}")
 
         start_time = time.time()
         with ThreadPoolExecutor(max_workers=4) as executor:
@@ -194,10 +192,7 @@ class TestMemoryEfficiency:
         from ai_collab.context.schema import Context
 
         start_time = time.time()
-        contexts = [
-            Context(context_id=f"ctx-{i}", scenario="conversation", name=f"Content {i}")
-            for i in range(1000)
-        ]
+        contexts = [Context(context_id=f"ctx-{i}", scenario="conversation", name=f"Content {i}") for i in range(1000)]
         elapsed = time.time() - start_time
 
         assert len(contexts) == 1000
@@ -212,8 +207,7 @@ class TestSearchPerformance:
         from ai_collab.context.schema import Context
 
         contexts = [
-            Context(context_id=f"ctx-{i}", scenario="conversation", name=f"Python tutorial {i}")
-            for i in range(500)
+            Context(context_id=f"ctx-{i}", scenario="conversation", name=f"Python tutorial {i}") for i in range(500)
         ]
 
         start_time = time.time()

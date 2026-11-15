@@ -42,9 +42,7 @@ def _prepare_workspace(tmp_path: Path) -> Path:
     (ws / "collaboration" / "AI_BEHAVIOR_CONSTRAINT_FILES.md").write_text("ok", encoding="utf-8")
     (ws / "collaboration" / "COLLABORATION_GUIDELINES.md").write_text("ok", encoding="utf-8")
     (ws / "collaboration" / "PROTOCOL.md").write_text("ok", encoding="utf-8")
-    (ws / "collaboration" / "CROSS_AI_COLLABORATION_STANDARDS.md").write_text(
-        "ok", encoding="utf-8"
-    )
+    (ws / "collaboration" / "CROSS_AI_COLLABORATION_STANDARDS.md").write_text("ok", encoding="utf-8")
     (ws / "collaboration" / "RESOURCE_USAGE_POLICY.md").write_text("ok", encoding="utf-8")
     (ws / "rules" / "AI-COLLABORATION-STANDARDS.md").write_text("ok", encoding="utf-8")
 

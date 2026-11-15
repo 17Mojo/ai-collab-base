@@ -200,9 +200,7 @@ def example_7_custom_pack():
 
     metrics = QualityMetrics(
         metrics={
-            "accuracy": QualityMetric(
-                name="accuracy", description="分析准确度", check_method="validation", weight=0.6
-            ),
+            "accuracy": QualityMetric(name="accuracy", description="分析准确度", check_method="validation", weight=0.6),
             "completeness": QualityMetric(
                 name="completeness", description="分析完整度", check_method="coverage", weight=0.4
             ),

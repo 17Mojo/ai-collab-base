@@ -125,21 +125,15 @@ def collect_missing_ack_candidates(
             continue
 
         existing_bridge_raw = bridged_items.get(task_id)
-        existing_bridge: dict[str, Any] = (
-            existing_bridge_raw if isinstance(existing_bridge_raw, dict) else {}
-        )
+        existing_bridge: dict[str, Any] = existing_bridge_raw if isinstance(existing_bridge_raw, dict) else {}
         if requires_explicit_ack(assignee):
-            if has_ack_evidence(
-                bridged_items, task_id=str(task_id), assignee=assignee, require_explicit=True
-            ):
+            if has_ack_evidence(bridged_items, task_id=str(task_id), assignee=assignee, require_explicit=True):
                 already_bridged.append(str(task_id))
             else:
                 source = str(existing_bridge.get("source") or "").strip()
                 remediation_status = str(existing_bridge.get("remediation_status") or "").strip()
                 source_suffix = f" (current_source={source})" if source else ""
-                remediation_suffix = (
-                    f" remediation_status={remediation_status}" if remediation_status else ""
-                )
+                remediation_suffix = f" remediation_status={remediation_status}" if remediation_status else ""
                 stale_explicit_ack.append(
                     {
                         "task_id": str(task_id),

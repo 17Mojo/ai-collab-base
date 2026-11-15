@@ -66,15 +66,11 @@ class PackVersion:
             raise ValueError(f"Invalid version format: {version_str}")
 
         major, minor, patch, prerelease, build = match.groups()
-        return cls(
-            major=int(major), minor=int(minor), patch=int(patch), prerelease=prerelease, build=build
-        )
+        return cls(major=int(major), minor=int(minor), patch=int(patch), prerelease=prerelease, build=build)
 
     def bump(self, bump_type: VersionBumpType) -> PackVersion:
         """升级版本"""
-        new_version = PackVersion(
-            major=self.major, minor=self.minor, patch=self.patch, prerelease=None, build=None
-        )
+        new_version = PackVersion(major=self.major, minor=self.minor, patch=self.patch, prerelease=None, build=None)
 
         if bump_type == VersionBumpType.MAJOR:
             new_version.major += 1
@@ -267,9 +263,7 @@ class PackVersionManager:
 
         # 记录当前版本的文件列表
         current_files: list[str] = [
-            f.name
-            for f in self.pack_dir.glob("*")
-            if f.is_file() and not f.name.startswith(".")
+            f.name for f in self.pack_dir.glob("*") if f.is_file() and not f.name.startswith(".")
         ]
 
         history_entry = PackVersionHistory(
@@ -325,9 +319,7 @@ class PackVersionManager:
             "current_version": str(current),
             "latest_version": str(latest),
             "breaking_changes": metadata.get("breaking_changes", []),
-            "changelog": metadata.get("history", [])[-1].get("changelog", "")
-            if metadata.get("history")
-            else "",
+            "changelog": metadata.get("history", [])[-1].get("changelog", "") if metadata.get("history") else "",
         }
 
     def rollback_to_version(self, version: PackVersion, skip_migration: bool = False) -> bool:

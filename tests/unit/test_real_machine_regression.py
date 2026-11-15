@@ -161,7 +161,9 @@ def test_record_updates_instead_of_duplicating(tmp_path):
         )
         == 0
     )
-    run = json.loads((tmp_path / "collaboration" / "results" / "real-machine-runs" / "RMR-TEST-001.json").read_text(encoding="utf-8"))
+    run = json.loads(
+        (tmp_path / "collaboration" / "results" / "real-machine-runs" / "RMR-TEST-001.json").read_text(encoding="utf-8")
+    )
     assert len(run["records"]) == 1
     assert run["records"][0]["status"] == "unverified"
 

@@ -76,15 +76,9 @@ def make_quality_metrics():
 
     return QualityMetrics(
         metrics={
-            "accuracy": QualityMetric(
-                name="accuracy", description="准确性", check_method="auto", weight=0.4
-            ),
-            "completeness": QualityMetric(
-                name="completeness", description="完整性", check_method="auto", weight=0.3
-            ),
-            "relevance": QualityMetric(
-                name="relevance", description="相关性", check_method="auto", weight=0.3
-            ),
+            "accuracy": QualityMetric(name="accuracy", description="准确性", check_method="auto", weight=0.4),
+            "completeness": QualityMetric(name="completeness", description="完整性", check_method="auto", weight=0.3),
+            "relevance": QualityMetric(name="relevance", description="相关性", check_method="auto", weight=0.3),
         }
     )
 
@@ -131,9 +125,7 @@ def make_collaboration():
     return CollaborationConfig()
 
 
-def make_full_pack(
-    pack_id: str, pack_name: str, description: str = "Test pack", steps: list | None = None
-):
+def make_full_pack(pack_id: str, pack_name: str, description: str = "Test pack", steps: list | None = None):
     """创建完整的 PromptPackV2 对象"""
     from ai_collab.pack.schema_v2 import PromptPackV2
 

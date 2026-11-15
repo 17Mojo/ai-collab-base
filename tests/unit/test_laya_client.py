@@ -60,11 +60,16 @@ class TestDetectModel:
 
 class TestLayaClientPredict:
     def test_explicit_model_in_payload(self, monkeypatch):
-        mock_post = MagicMock(return_value=_mock_response(200, {
-            "answers": {"dept": {"choice": "billing", "probs": {"billing": 0.9, "tech": 0.1}}},
-            "latency_ms": 22,
-            "model": "multilingual",
-        }))
+        mock_post = MagicMock(
+            return_value=_mock_response(
+                200,
+                {
+                    "answers": {"dept": {"choice": "billing", "probs": {"billing": 0.9, "tech": 0.1}}},
+                    "latency_ms": 22,
+                    "model": "multilingual",
+                },
+            )
+        )
         monkeypatch.setattr("ai_collab.laya_client.requests.post", mock_post)
         result = LayaClient().predict(
             state="any",
@@ -119,6 +124,7 @@ class TestLayaClientErrors:
     def test_connection_error_raises_laya_connection_error(self, monkeypatch):
         def raise_conn(*args, **kwargs):
             raise requests.ConnectionError("refused")
+
         monkeypatch.setattr("ai_collab.laya_client.requests.post", raise_conn)
         with pytest.raises(LayaConnectionError):
             LayaClient().predict(state="x", questions={})
@@ -126,6 +132,7 @@ class TestLayaClientErrors:
     def test_timeout_raises_laya_connection_error(self, monkeypatch):
         def raise_timeout(*args, **kwargs):
             raise requests.Timeout("timed out")
+
         monkeypatch.setattr("ai_collab.laya_client.requests.post", raise_timeout)
         with pytest.raises(LayaConnectionError):
             LayaClient().predict(state="x", questions={})
@@ -171,21 +178,29 @@ class TestLayaClientHealth:
     def test_health_false_on_connection_error(self, monkeypatch):
         def raise_conn(*args, **kwargs):
             raise requests.ConnectionError()
+
         monkeypatch.setattr("ai_collab.laya_client.requests.get", raise_conn)
         assert LayaClient().health() is False
 
     def test_health_false_on_timeout(self, monkeypatch):
         def raise_timeout(*args, **kwargs):
             raise requests.Timeout()
+
         monkeypatch.setattr("ai_collab.laya_client.requests.get", raise_timeout)
         assert LayaClient().health() is False
 
 
 class TestDecideFunction:
     def test_delegates_to_client(self, monkeypatch):
-        mock_post = MagicMock(return_value=_mock_response(200, {
-            "answers": {"x": {"noul": 0.8}}, "latency_ms": 15,
-        }))
+        mock_post = MagicMock(
+            return_value=_mock_response(
+                200,
+                {
+                    "answers": {"x": {"noul": 0.8}},
+                    "latency_ms": 15,
+                },
+            )
+        )
         monkeypatch.setattr("ai_collab.laya_client.requests.post", mock_post)
         result = decide(state="hi", questions={"x": {"type": "noul", "instructions": "?"}})
         assert result["answers"]["x"]["noul"] == 0.8
@@ -210,6 +225,7 @@ class TestDecideFunction:
     def test_propagates_connection_error(self, monkeypatch):
         def raise_conn(*args, **kwargs):
             raise requests.ConnectionError()
+
         monkeypatch.setattr("ai_collab.laya_client.requests.post", raise_conn)
         with pytest.raises(LayaConnectionError):
             decide(state="x", questions={"q": {"type": "noul", "instructions": "?"}})

@@ -73,11 +73,7 @@ class BulkOperation:
         """反序列化"""
         created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None
         updated_at_raw = data.get("updated_at")
-        updated_at = (
-            datetime.fromisoformat(str(updated_at_raw))
-            if updated_at_raw
-            else None
-        )
+        updated_at = datetime.fromisoformat(str(updated_at_raw)) if updated_at_raw else None
 
         return cls(
             operation_id=data["operation_id"],
@@ -179,9 +175,7 @@ class BulkOperationEngine:
         """
         return self._operations.get(operation_id)
 
-    def bulk_create(
-        self, pack_specs: list[dict[str, Any]], parallel: bool = True
-    ) -> BulkOperationResult:
+    def bulk_create(self, pack_specs: list[dict[str, Any]], parallel: bool = True) -> BulkOperationResult:
         """批量创建 Pack
 
         Args:
@@ -215,9 +209,7 @@ class BulkOperationEngine:
 
         return result
 
-    def bulk_update_version(
-        self, pack_ids: list[str], version_bump: str, parallel: bool = True
-    ) -> BulkOperationResult:
+    def bulk_update_version(self, pack_ids: list[str], version_bump: str, parallel: bool = True) -> BulkOperationResult:
         """批量更新版本
 
         Args:
@@ -324,9 +316,7 @@ class BulkOperationEngine:
 
         return result
 
-    def bulk_delete(
-        self, pack_ids: list[str], confirm_token: str, parallel: bool = True
-    ) -> BulkOperationResult:
+    def bulk_delete(self, pack_ids: list[str], confirm_token: str, parallel: bool = True) -> BulkOperationResult:
         """批量删除 Pack
 
         Args:
@@ -383,9 +373,7 @@ class BulkOperationEngine:
 
         return result
 
-    def _execute_bulk_operation(
-        self, operation: BulkOperation, parallel: bool
-    ) -> list[dict[str, Any]]:
+    def _execute_bulk_operation(self, operation: BulkOperation, parallel: bool) -> list[dict[str, Any]]:
         """执行批量操作（内部方法）"""
         if operation.operation_type != OperationType.CREATE:
             raise ValueError(f"Not implemented for {operation.operation_type}")

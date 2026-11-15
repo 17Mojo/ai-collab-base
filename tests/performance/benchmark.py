@@ -63,15 +63,17 @@ def benchmark_api_endpoints(base_url: str = "http://127.0.0.1:8000") -> dict:
 
             print(f"  {status} {description}: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms")
 
-            results.append({
-                "endpoint": endpoint,
-                "description": description,
-                "avg_ms": avg_time,
-                "min_ms": min_time,
-                "max_ms": max_time,
-                "passed": passed,
-                "target": 50,
-            })
+            results.append(
+                {
+                    "endpoint": endpoint,
+                    "description": description,
+                    "avg_ms": avg_time,
+                    "min_ms": min_time,
+                    "max_ms": max_time,
+                    "passed": passed,
+                    "target": 50,
+                }
+            )
 
             if not passed:
                 all_passed = False

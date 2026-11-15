@@ -190,18 +190,14 @@ class TestVSCodeIntegration:
 
     def test_get_rule_files_for_claude(self, tmp_path):
         """Test get_rule_files includes governance quickstart for claude."""
-        with patch.object(
-            VSCodeIntegration, "get_project_config", return_value={"rulesDir": "./rules"}
-        ):
+        with patch.object(VSCodeIntegration, "get_project_config", return_value={"rulesDir": "./rules"}):
             files = VSCodeIntegration.get_rule_files("claude_code")
         assert any("claude_code_memory.md" in path for path in files)
         assert any("agent_governance_quickstart.md" in path for path in files)
 
     def test_get_rule_files_for_codearts(self, tmp_path):
         """Test get_rule_files returns codearts rule chain."""
-        with patch.object(
-            VSCodeIntegration, "get_project_config", return_value={"rulesDir": "./rules"}
-        ):
+        with patch.object(VSCodeIntegration, "get_project_config", return_value={"rulesDir": "./rules"}):
             files = VSCodeIntegration.get_rule_files("codearts_agent")
         assert any("codearts_agent_rules.md" in path for path in files)
         assert any("agent_governance_quickstart.md" in path for path in files)

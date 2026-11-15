@@ -124,10 +124,7 @@ class TestCheckPayloadFreshness:
 
         assert result["is_fresh"] is False
         assert "缺少 generated_at" in result["warning"]
-        assert (
-            result["fix_command"]
-            == "python3 -m ai_collab.cli trigger --phrase '2X DISPATCH CODEX' --target codex"
-        )
+        assert result["fix_command"] == "python3 -m ai_collab.cli trigger --phrase '2X DISPATCH CODEX' --target codex"
 
     def test_dispatch_report_with_only_timestamp_is_accepted(self, tmp_path):
         """只写 `timestamp` 的旧报告也必须能判新鲜度（向后兼容兜底）。

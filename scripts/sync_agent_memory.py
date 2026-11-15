@@ -4,6 +4,7 @@
 Source: ~/.codeartsdoer/memory/<slug>/ (CodeArts-managed, treated read-only)
 Dest:   <repo>/memory/ (mirror, consumed by Claude Code via CLAUDE.md @import)
 """
+
 import argparse
 import json
 import subprocess
@@ -93,11 +94,9 @@ def collect_source_files(source):
     if not source.is_dir():
         return []
     return sorted(
-        p for p in source.iterdir()
-        if p.is_file()
-        and p.suffix == ".md"
-        and not p.name.startswith(".")
-        and p.name != INDEX_NAME
+        p
+        for p in source.iterdir()
+        if p.is_file() and p.suffix == ".md" and not p.name.startswith(".") and p.name != INDEX_NAME
     )
 
 
@@ -199,9 +198,7 @@ def main():
         "files": sorted(desired),
         "count": len(desired),
     }
-    (dest / MANIFEST_NAME).write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    (dest / MANIFEST_NAME).write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     if not args.quiet:
         print(f"synced {len(desired)} file(s) -> {dest}")

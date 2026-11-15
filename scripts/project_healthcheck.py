@@ -21,10 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 def run(cmd, cwd=None, timeout=60):
     """Run shell command, return (returncode, stdout, stderr)"""
     try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True,
-            cwd=cwd or REPO_ROOT, timeout=timeout
-        )
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd or REPO_ROOT, timeout=timeout)
         return result.returncode, result.stdout.strip(), result.stderr.strip()
     except subprocess.TimeoutExpired:
         return -1, "", "timeout"
@@ -41,12 +38,13 @@ def check_tests():
     rc, out, err = run(
         "python -m pytest tests/unit -q --no-header -p no:warnings "
         "--cov=ai_collab --cov-report= --no-cov-on-fail 2>&1 | tail -3",
-        timeout=180
+        timeout=180,
     )
     lines = out.split("\n") if out else []
     last = lines[-1] if lines else ""
     passed, skipped, failed = 0, 0, 0
     import re
+
     for pattern, attr in [
         (r"(\d+)\s*passed", "passed"),
         (r"(\d+)\s*failed", "failed"),
@@ -71,9 +69,12 @@ def check_tests():
                 cov_pct = parts[-1].rstrip("%")
                 cov_miss = parts[-2]
     return {
-        "passed": passed, "skipped": skipped, "failed": failed,
-        "coverage_pct": cov_pct, "miss_lines": cov_miss,
-        "last_line": last
+        "passed": passed,
+        "skipped": skipped,
+        "failed": failed,
+        "coverage_pct": cov_pct,
+        "miss_lines": cov_miss,
+        "last_line": last,
     }
 
 
@@ -85,13 +86,9 @@ def check_git():
     # 本脚本自身的产出（当日体检报告）不计入未跟踪文件，
     # 否则同日第二次运行必然比第一次少 20 分，评分与代码状态脱钩。
     untracked = [
-        l for l in (out or "").split("\n")
-        if l.startswith("??") and "collaboration/results/HEALTH_CHECK_" not in l
+        l for l in (out or "").split("\n") if l.startswith("??") and "collaboration/results/HEALTH_CHECK_" not in l
     ]
-    modified = [
-        l for l in (out or "").split("\n")
-        if l.startswith(" M") or l.startswith("M ")
-    ]
+    modified = [l for l in (out or "").split("\n") if l.startswith(" M") or l.startswith("M ")]
     rc, out, _ = run("git remote -v")
     remotes = out
     rc, out, _ = run("git rev-parse --verify origin/main 2>/dev/null")
@@ -111,38 +108,28 @@ def check_git():
 
 def check_code_health():
     """3. 代码健康 (行数、文件数)"""
-    rc, out, _ = run(
-        "find ai_collab -name '*.py' -not -path '*/__pycache__/*' | wc -l"
-    )
+    rc, out, _ = run("find ai_collab -name '*.py' -not -path '*/__pycache__/*' | wc -l")
     py_files = int(out) if out.isdigit() else 0
-    rc, out, _ = run(
-        "find ai_collab -name '*.py' -not -path '*/__pycache__/*' "
-        "-exec wc -l {} + | tail -1"
-    )
+    rc, out, _ = run("find ai_collab -name '*.py' -not -path '*/__pycache__/*' -exec wc -l {} + | tail -1")
     parts = out.split() if out else []
     py_lines = int(parts[0]) if parts and parts[0].isdigit() else 0
-    rc, out, _ = run(
-        "find tests/unit -name 'test_*.py' | wc -l"
-    )
+    rc, out, _ = run("find tests/unit -name 'test_*.py' | wc -l")
     test_files = int(out) if out.isdigit() else 0
-    rc, out, _ = run(
-        "find tests/unit -name 'test_*.py' -exec wc -l {} + | tail -1"
-    )
+    rc, out, _ = run("find tests/unit -name 'test_*.py' -exec wc -l {} + | tail -1")
     parts = out.split() if out else []
     test_lines = int(parts[0]) if parts and parts[0].isdigit() else 0
     return {
-        "py_files": py_files, "py_lines": py_lines,
-        "test_files": test_files, "test_lines": test_lines,
+        "py_files": py_files,
+        "py_lines": py_lines,
+        "test_files": test_files,
+        "test_lines": test_lines,
         "test_to_code_ratio": round(test_lines / py_lines, 2) if py_lines else 0,
     }
 
 
 def check_coverage_breakdown():
     """4. 关键模块覆盖率分解"""
-    rc, out, _ = run(
-        "coverage report 2>&1 | grep -E '^ai_collab' "
-        "| awk '{print $1, $NF}' | sort -k2 -n | head -10"
-    )
+    rc, out, _ = run("coverage report 2>&1 | grep -E '^ai_collab' | awk '{print $1, $NF}' | sort -k2 -n | head -10")
     low_modules = []
     for line in (out or "").split("\n"):
         parts = line.split()
@@ -214,10 +201,8 @@ def render_markdown(data):
     lines.append(section("测试"))
     t = data["tests"]
     status = "✅" if t["failed"] == 0 else "🔴"
-    lines.append(f"- {status} **测试结果**: {t['passed']} passed, "
-                 f"{t['failed']} failed, {t['skipped']} skipped")
-    lines.append(f"- **覆盖率**: {t['coverage_pct']}% "
-                 f"(miss {t['miss_lines']} 行)")
+    lines.append(f"- {status} **测试结果**: {t['passed']} passed, {t['failed']} failed, {t['skipped']} skipped")
+    lines.append(f"- **覆盖率**: {t['coverage_pct']}% (miss {t['miss_lines']} 行)")
     if t["last_line"]:
         lines.append(f"```\n{t['last_line']}\n```")
 
@@ -244,8 +229,9 @@ def render_markdown(data):
     c = data["code_health"]
     lines.append(f"- **生产代码**: {c['py_files']} 文件 / {c['py_lines']} 行")
     lines.append(f"- **测试代码**: {c['test_files']} 文件 / {c['test_lines']} 行")
-    lines.append(f"- **测试/代码比**: {c['test_to_code_ratio']} "
-                 f"({'✅ 健康' if c['test_to_code_ratio'] >= 0.5 else '⚠️ 偏低'})")
+    lines.append(
+        f"- **测试/代码比**: {c['test_to_code_ratio']} ({'✅ 健康' if c['test_to_code_ratio'] >= 0.5 else '⚠️ 偏低'})"
+    )
 
     # 4. 覆盖率分解
     lines.append(section("覆盖率分解（<80% 模块）"))
@@ -261,10 +247,10 @@ def render_markdown(data):
     # 5. 静态检查
     lines.append(section("静态检查"))
     s = data["static_analysis"]
-    lines.append(f"- **ruff** (`ruff check .`): {s['ruff_errors']} 个问题 "
-                 f"({'✅' if s['ruff_errors'] == 0 else '🔴'})")
-    lines.append(f"- **mypy** (`mypy ai_collab`): {s['mypy_errors']} 个错误 "
-                 f"({'✅' if s['mypy_errors'] == 0 else '🔴'})")
+    lines.append(f"- **ruff** (`ruff check .`): {s['ruff_errors']} 个问题 ({'✅' if s['ruff_errors'] == 0 else '🔴'})")
+    lines.append(
+        f"- **mypy** (`mypy ai_collab`): {s['mypy_errors']} 个错误 ({'✅' if s['mypy_errors'] == 0 else '🔴'})"
+    )
 
     # 6. 依赖
     lines.append(section("依赖安全"))
@@ -274,10 +260,11 @@ def render_markdown(data):
     # 7. 健康规则
     lines.append(section("项目健康规则"))
     h = data["health_rules"]
-    lines.append(f"- **CLAUDE.md 含 {h.get('claude_md_rules_count', 0)} 条长期经验**: "
-                 f"{'✅' if h['claude_md_has_rules'] else '🔴'}")
-    lines.append(f"- **.gitignore 存在**: "
-                 f"{'✅' if h['gitignore_present'] else '🔴'}")
+    lines.append(
+        f"- **CLAUDE.md 含 {h.get('claude_md_rules_count', 0)} 条长期经验**: "
+        f"{'✅' if h['claude_md_has_rules'] else '🔴'}"
+    )
+    lines.append(f"- **.gitignore 存在**: {'✅' if h['gitignore_present'] else '🔴'}")
 
     # 总评
     lines.append(section("总评"))

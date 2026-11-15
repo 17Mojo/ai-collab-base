@@ -45,10 +45,10 @@ class PackExecutorMVP:
         Returns:
             执行结果
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"执行 Pack: {self.metadata.get('pack_name', 'Unknown')}")
         print(f"版本: {self.metadata.get('version', 'N/A')}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 1. 初始化上下文
         self.context = {
@@ -60,7 +60,7 @@ class PackExecutorMVP:
         # 2. 执行工作流步骤
         steps = self.workflow.get("steps", [])
         for i, step in enumerate(steps):
-            print(f"\n[步骤 {i+1}/{len(steps)}] {step.get('name', 'Unknown')}")
+            print(f"\n[步骤 {i + 1}/{len(steps)}] {step.get('name', 'Unknown')}")
             print(f"  类型: {step.get('type', 'Unknown')}")
 
             result = self._execute_step(step)
@@ -75,9 +75,9 @@ class PackExecutorMVP:
         # 3. 生成最终结果
         final_result = self._generate_final_result()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("执行完成")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return final_result
 
@@ -123,10 +123,7 @@ class PackExecutorMVP:
         # 两种都收，避免 Pack 从 v1 迁到 v2 之后执行器就哑了。
         inputs = step.get("inputs")
         if not inputs:
-            inputs = [
-                {"key": field, "source": "user_input"}
-                for field in step.get("input_fields", [])
-            ]
+            inputs = [{"key": field, "source": "user_input"} for field in step.get("input_fields", [])]
         for inp in inputs:
             key = inp.get("key")
             source = inp.get("source", "user_input")
@@ -139,9 +136,7 @@ class PackExecutorMVP:
         return {
             "status": "success",
             "step_type": "LOCAL",
-            "outputs": {
-                k: v for k, v in self.context.items() if k in [i.get("key") for i in inputs]
-            },
+            "outputs": {k: v for k, v in self.context.items() if k in [i.get("key") for i in inputs]},
         }
 
     def _execute_analysis(self, step: dict[str, Any]) -> dict[str, Any]:
@@ -198,14 +193,14 @@ class PackExecutorMVP:
             generated_content = f"""
 # 生成内容
 
-基于输入: {self.context.get('topic', '未知主题')}
+基于输入: {self.context.get("topic", "未知主题")}
 
-内容: {self.context.get('content', '无内容')}
+内容: {self.context.get("content", "无内容")}
 
-关键词: {self.context.get('analysis_result', {}).get('keywords', [])}
+关键词: {self.context.get("analysis_result", {}).get("keywords", [])}
 
 ---
-生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
 
         self.context["generated_content"] = generated_content
@@ -235,9 +230,21 @@ class PackExecutorMVP:
         consensus_config = step.get("consensus_config", {})
 
         # 从配置中获取参数
-        timeout = consensus_config.get("timeout", 30.0) if isinstance(consensus_config, dict) else getattr(consensus_config, "timeout", 30.0)
-        fusion_strategy = consensus_config.get("fusion_strategy", "concat") if isinstance(consensus_config, dict) else getattr(consensus_config, "fusion_strategy", "concat")
-        min_providers = consensus_config.get("min_providers", 2) if isinstance(consensus_config, dict) else getattr(consensus_config, "min_providers", 2)
+        timeout = (
+            consensus_config.get("timeout", 30.0)
+            if isinstance(consensus_config, dict)
+            else getattr(consensus_config, "timeout", 30.0)
+        )
+        fusion_strategy = (
+            consensus_config.get("fusion_strategy", "concat")
+            if isinstance(consensus_config, dict)
+            else getattr(consensus_config, "fusion_strategy", "concat")
+        )
+        min_providers = (
+            consensus_config.get("min_providers", 2)
+            if isinstance(consensus_config, dict)
+            else getattr(consensus_config, "min_providers", 2)
+        )
 
         topic = self.context.get("topic", self.context.get("content", "通用主题"))
         print(f"     - 主题: {topic}")
@@ -269,9 +276,7 @@ class PackExecutorMVP:
                 print(f"     - ⚠️ 响应数 ({source_count}) 低于最低要求 ({min_providers})")
 
             # 根据融合策略处理结果
-            generated_content = self._apply_fusion_strategy(
-                consensus_result, fusion_strategy
-            )
+            generated_content = self._apply_fusion_strategy(consensus_result, fusion_strategy)
 
             self.context["generated_content"] = generated_content
             self.context["consensus_result"] = consensus_result
@@ -300,7 +305,7 @@ class PackExecutorMVP:
 注意: 共识引擎执行失败 ({type(e).__name__}), 已回退到模板生成。
 
 ---
-生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
             self.context["generated_content"] = generated_content
             return {
@@ -340,9 +345,7 @@ class PackExecutorMVP:
 
         elif strategy == "weighted":
             # 按置信度加权拼接（置信度高的排在前面）
-            sorted_sources = sorted(
-                sources, key=lambda s: s.get("confidence", 0), reverse=True
-            )
+            sorted_sources = sorted(sources, key=lambda s: s.get("confidence", 0), reverse=True)
             parts: list[str] = []
             for s in sorted_sources:
                 weight = s.get("confidence", 0)

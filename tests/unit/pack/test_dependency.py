@@ -37,9 +37,7 @@ class TestPackDependency:
 
     def test_dependency_to_dict(self):
         """测试序列化为字典"""
-        dep = PackDependency(
-            name="test-pack", version_range="~1.5.0", optional=False, reason="Test dependency"
-        )
+        dep = PackDependency(name="test-pack", version_range="~1.5.0", optional=False, reason="Test dependency")
 
         data = dep.to_dict()
 

@@ -200,9 +200,7 @@ class AgentOrchestrator:
             return operator
         return available[0] if available else "user"
 
-    def _build_utilization_plan(
-        self, category: str, lead: str, support: list[str]
-    ) -> list[dict[str, Any]]:
+    def _build_utilization_plan(self, category: str, lead: str, support: list[str]) -> list[dict[str, Any]]:
         role_tasks = {
             "architecture": {
                 "codex": "输出架构方案与边界",

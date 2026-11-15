@@ -360,9 +360,7 @@ class ReActConverter:
             ],
         }
 
-    def _build_change_manifest(
-        self, requirement: dict[str, Any], draft_pack: dict[str, Any]
-    ) -> ChangeManifest:
+    def _build_change_manifest(self, requirement: dict[str, Any], draft_pack: dict[str, Any]) -> ChangeManifest:
         """Build change manifest"""
         manifest = ChangeManifest()
 

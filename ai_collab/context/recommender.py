@@ -230,12 +230,8 @@ class ContextRecommender:
         recommendations = []
 
         # Get patterns for scenario
-        patterns = self.SCENARIO_PATTERNS.get(
-            scenario, self.SCENARIO_PATTERNS[ScenarioType.UNKNOWN]
-        )
-        extensions = self.EXTENSION_RELEVANCE.get(
-            scenario, self.EXTENSION_RELEVANCE[ScenarioType.UNKNOWN]
-        )
+        patterns = self.SCENARIO_PATTERNS.get(scenario, self.SCENARIO_PATTERNS[ScenarioType.UNKNOWN])
+        extensions = self.EXTENSION_RELEVANCE.get(scenario, self.EXTENSION_RELEVANCE[ScenarioType.UNKNOWN])
 
         # Score each file
         file_scores: dict[str, float] = {}
@@ -380,9 +376,7 @@ class ContextRecommender:
         recommendations = {}
 
         # File recommendations
-        recommendations["files"] = self.recommend_files(
-            scenario, active_files, project_files, top_n
-        )
+        recommendations["files"] = self.recommend_files(scenario, active_files, project_files, top_n)
 
         # Context recommendations
         if user_history:

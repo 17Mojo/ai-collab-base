@@ -64,9 +64,7 @@ def inspect_git_context(workspace: Path) -> dict[str, Any]:
     upstream_result = _run_git(workspace, ["rev-parse", "--abbrev-ref", "@{u}"])
     if upstream_result.returncode == 0:
         upstream = upstream_result.stdout.strip() or None
-        count_result = _run_git(
-            workspace, ["rev-list", "--left-right", "--count", "@{u}...HEAD"]
-        )
+        count_result = _run_git(workspace, ["rev-list", "--left-right", "--count", "@{u}...HEAD"])
         if count_result.returncode == 0:
             parts = count_result.stdout.strip().split()
             if len(parts) >= 2:
@@ -76,9 +74,7 @@ def inspect_git_context(workspace: Path) -> dict[str, Any]:
                 except ValueError:
                     pass
 
-    status_result = _run_git(
-        workspace, ["status", "--porcelain=v1", "--untracked-files=all"]
-    )
+    status_result = _run_git(workspace, ["status", "--porcelain=v1", "--untracked-files=all"])
     dirty_paths: list[str] = []
     dirty_total = 0
     if status_result.returncode == 0:
@@ -102,9 +98,7 @@ def inspect_git_context(workspace: Path) -> dict[str, Any]:
     }
 
 
-def detect_branch_drift(
-    workspace: Path, expected_branch: str | None
-) -> dict[str, Any]:
+def detect_branch_drift(workspace: Path, expected_branch: str | None) -> dict[str, Any]:
     """Detect whether HEAD branch matches the expected branch (G1, git hard evidence)."""
     if expected_branch is None:
         return {"drifted": False, "expected": None, "actual": None, "severity": "none"}
@@ -133,19 +127,14 @@ def detect_baseline_staleness(
             ["rev-list", "--count", f"{baseline_commit}..HEAD", "--", path],
         )
         if result.returncode != 0:
-            changed.append(
-                {"path": path, "commits_since": None, "error": result.stderr.strip()}
-            )
+            changed.append({"path": path, "commits_since": None, "error": result.stderr.strip()})
             continue
         try:
             count = int(result.stdout.strip())
         except ValueError:
             count = 0
         changed.append({"path": path, "commits_since": count})
-    stale = any(
-        item.get("commits_since") is not None and item["commits_since"] > 0
-        for item in changed
-    )
+    stale = any(item.get("commits_since") is not None and item["commits_since"] > 0 for item in changed)
     return {
         "stale": stale,
         "baseline_commit": baseline_commit,
@@ -172,9 +161,7 @@ def detect_foreign_changes(
     session_epoch = session_dt.timestamp()
     tracked_set = set(tracked_paths or [])
 
-    status_result = _run_git(
-        workspace, ["status", "--porcelain=v1", "--untracked-files=all"]
-    )
+    status_result = _run_git(workspace, ["status", "--porcelain=v1", "--untracked-files=all"])
     if status_result.returncode != 0:
         return {
             "foreign_count": 0,
@@ -231,21 +218,16 @@ def assess_concurrent_risk(
     signals["branch_drift"] = branch_signal
     if branch_signal.get("drifted"):
         violations.append(
-            f"branch drift: expected={branch_signal.get('expected')} "
-            f"actual={branch_signal.get('actual')}"
+            f"branch drift: expected={branch_signal.get('expected')} actual={branch_signal.get('actual')}"
         )
 
     if baseline_commit is not None and watch_paths:
-        baseline_signal = detect_baseline_staleness(
-            workspace, baseline_commit, watch_paths
-        )
+        baseline_signal = detect_baseline_staleness(workspace, baseline_commit, watch_paths)
         signals["baseline_stale"] = baseline_signal
         if baseline_signal.get("stale"):
             changed = baseline_signal.get("changed_watch_paths", [])
             changed_count = sum(
-                1
-                for item in changed
-                if item.get("commits_since") is not None and item["commits_since"] > 0
+                1 for item in changed if item.get("commits_since") is not None and item["commits_since"] > 0
             )
             violations.append(
                 f"baseline stale: {baseline_commit}.."
@@ -256,9 +238,7 @@ def assess_concurrent_risk(
         signals["baseline_stale"] = {"stale": False, "severity": "none"}
 
     if session_started_at is not None:
-        foreign_signal = detect_foreign_changes(
-            workspace, session_started_at, tracked_paths
-        )
+        foreign_signal = detect_foreign_changes(workspace, session_started_at, tracked_paths)
         signals["foreign_changes"] = foreign_signal
         foreign_count = int(foreign_signal.get("foreign_count", 0))
         if foreign_count > 0:
@@ -272,9 +252,7 @@ def assess_concurrent_risk(
 
     ahead = int(git_context.get("ahead", 0))
     if ahead > ahead_warn_threshold:
-        warnings.append(
-            f"ahead of upstream by {ahead} commits (threshold={ahead_warn_threshold})"
-        )
+        warnings.append(f"ahead of upstream by {ahead} commits (threshold={ahead_warn_threshold})")
 
     has_high = len(violations) > 0
     has_medium = len(warnings) > 0
@@ -349,12 +327,8 @@ def run_concurrent_guard(
         },
     }
 
-    report_rel = str(
-        cfg.get("report", "logs/workspace_forensics/concurrent_guard_latest.json")
-    )
-    history_rel = str(
-        cfg.get("history", "logs/workspace_forensics/concurrent_guard_history.jsonl")
-    )
+    report_rel = str(cfg.get("report", "logs/workspace_forensics/concurrent_guard_latest.json"))
+    history_rel = str(cfg.get("history", "logs/workspace_forensics/concurrent_guard_history.jsonl"))
     report_file = workspace / report_rel
     history_file = workspace / history_rel
     _write_json(report_file, report)

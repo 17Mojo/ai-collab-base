@@ -78,9 +78,19 @@ class TestMigration:
             db,
             [
                 (
-                    "p1", "P One", "1.0.0", "desc", "tester", "general",
-                    json.dumps(["t"]), 3, 4.5, 2, "approved",
-                    "2026-11-01T00:00:00", "2026-11-02T00:00:00",
+                    "p1",
+                    "P One",
+                    "1.0.0",
+                    "desc",
+                    "tester",
+                    "general",
+                    json.dumps(["t"]),
+                    3,
+                    4.5,
+                    2,
+                    "approved",
+                    "2026-11-01T00:00:00",
+                    "2026-11-02T00:00:00",
                 )
             ],
         )
@@ -103,8 +113,23 @@ class TestMigration:
         db = tmp_path / "packs.db"
         _make_old_db(
             db,
-            [("p1", "P", "1.0.0", "d", "a", "c", "[]", 0, 0.0, 0, "pending",
-              "2026-11-01T00:00:00", "2026-11-01T00:00:00")],
+            [
+                (
+                    "p1",
+                    "P",
+                    "1.0.0",
+                    "d",
+                    "a",
+                    "c",
+                    "[]",
+                    0,
+                    0.0,
+                    0,
+                    "pending",
+                    "2026-11-01T00:00:00",
+                    "2026-11-01T00:00:00",
+                )
+            ],
         )
         PackMarketStore(str(db))
         store2 = PackMarketStore(str(db))  # 二次打开不再 ALTER
@@ -201,9 +226,23 @@ class TestVersionHistory:
         db = tmp_path / "packs.db"
         _make_old_db(
             db,
-            [("p1", "P One", "1.0.0", "legacy", "tester", "general",
-              json.dumps(["t"]), 0, 0.0, 0, "pending",
-              "2026-11-01T00:00:00", "2026-11-01T00:00:00")],
+            [
+                (
+                    "p1",
+                    "P One",
+                    "1.0.0",
+                    "legacy",
+                    "tester",
+                    "general",
+                    json.dumps(["t"]),
+                    0,
+                    0.0,
+                    0,
+                    "pending",
+                    "2026-11-01T00:00:00",
+                    "2026-11-01T00:00:00",
+                )
+            ],
         )
         store = PackMarketStore(str(db))
 
@@ -224,9 +263,7 @@ class TestMarketAPIWiring:
     def test_create_pack_with_dependencies(self, tmp_path):
         api = PackMarketAPI(str(tmp_path / "packs.db"))
         deps = [{"name": "base", "version": "^1.0.0", "optional": False}]
-        result = api.create_pack(
-            "Demo", "1.0.0", "d", "tester", "general", dependencies=deps
-        )
+        result = api.create_pack("Demo", "1.0.0", "d", "tester", "general", dependencies=deps)
         assert result["success"] is True
 
         got = api.get_pack(result["pack_id"])

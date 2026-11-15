@@ -78,7 +78,13 @@ def client():
 @pytest.fixture
 def bridge_js_path():
     """Bridge JS 文件路径"""
-    path = Path(__file__).resolve().parents[2] / "chrome-extension" / "src" / "background" / "notebooklm-packexecutor-bridge.js"
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "chrome-extension"
+        / "src"
+        / "background"
+        / "notebooklm-packexecutor-bridge.js"
+    )
     if not path.exists():
         pytest.skip("Bridge JS file not found")
     return path
@@ -172,10 +178,7 @@ class TestBridgeRealCall:
         assert "/api/notebooklm/download-url/" in content
 
 
-@pytest.mark.skipif(
-    not BACKEND_REACHABLE or not BACKEND_AVAILABLE,
-    reason="Backend not running on 127.0.0.1:8000"
-)
+@pytest.mark.skipif(not BACKEND_REACHABLE or not BACKEND_AVAILABLE, reason="Backend not running on 127.0.0.1:8000")
 class TestStudioAPIEndpoints:
     """测试 Studio API 端点（需要 Backend 运行）"""
 

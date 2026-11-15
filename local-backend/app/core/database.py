@@ -124,8 +124,7 @@ def optimize_database() -> dict:
                 logger.info("SQLite WAL 模式已成功启用")
             else:
                 logger.warning(
-                    "SQLite WAL 模式启用失败，当前模式: %s。"
-                    "这在只读文件系统或某些网络共享上可能发生。",
+                    "SQLite WAL 模式启用失败，当前模式: %s。这在只读文件系统或某些网络共享上可能发生。",
                     journal_mode,
                 )
 
@@ -150,17 +149,9 @@ def optimize_database() -> dict:
             result["pragmas"]["foreign_keys"] = fk_result[0] if fk_result else None
 
             # 补齐关键索引（兼容已有数据库）
+            conn.execute(text("CREATE INDEX IF NOT EXISTS idx_packs_active_category ON packs (is_active, category)"))
             conn.execute(
-                text(
-                    "CREATE INDEX IF NOT EXISTS idx_packs_active_category "
-                    "ON packs (is_active, category)"
-                )
-            )
-            conn.execute(
-                text(
-                    "CREATE INDEX IF NOT EXISTS idx_packs_active_created_at "
-                    "ON packs (is_active, created_at)"
-                )
+                text("CREATE INDEX IF NOT EXISTS idx_packs_active_created_at ON packs (is_active, created_at)")
             )
             conn.execute(
                 text(

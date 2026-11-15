@@ -88,8 +88,7 @@ def get_mode(module_name: str) -> IntegrationMode:
     # Use default configuration
     if module_name not in DEFAULT_INTEGRATION_MODES:
         raise ValueError(
-            f"Unknown integration module: '{module_name}'. "
-            f"Configured modules: {list(DEFAULT_INTEGRATION_MODES.keys())}"
+            f"Unknown integration module: '{module_name}'. Configured modules: {list(DEFAULT_INTEGRATION_MODES.keys())}"
         )
 
     return DEFAULT_INTEGRATION_MODES[module_name]

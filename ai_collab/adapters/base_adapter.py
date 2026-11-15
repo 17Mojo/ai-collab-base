@@ -18,9 +18,7 @@ class BaseAIAdapter(ABC):
         """Connect to platform."""
 
     @abstractmethod
-    def send_message(
-        self, message: str, context: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def send_message(self, message: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Send a message to platform."""
 
     @abstractmethod

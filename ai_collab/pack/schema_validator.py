@@ -44,9 +44,7 @@ class ValidationResult:
 
     def add_error(self, path: str, message: str, suggestion: str | None = None):
         self.issues.append(
-            ValidationIssue(
-                path=path, message=message, severity=ValidationSeverity.ERROR, suggestion=suggestion
-            )
+            ValidationIssue(path=path, message=message, severity=ValidationSeverity.ERROR, suggestion=suggestion)
         )
         self.is_valid = False
 
@@ -61,9 +59,7 @@ class ValidationResult:
         )
 
     def add_info(self, path: str, message: str):
-        self.issues.append(
-            ValidationIssue(path=path, message=message, severity=ValidationSeverity.INFO)
-        )
+        self.issues.append(ValidationIssue(path=path, message=message, severity=ValidationSeverity.INFO))
 
     def summary(self) -> str:
         """生成摘要"""
@@ -297,9 +293,7 @@ class PackSchemaValidator:
         # 验证 tags 是列表
         if "tags" in metadata:
             if not isinstance(metadata["tags"], list):
-                result.add_error(
-                    "$.metadata.tags", f"tags must be a list, got {type(metadata['tags']).__name__}"
-                )
+                result.add_error("$.metadata.tags", f"tags must be a list, got {type(metadata['tags']).__name__}")
 
         # 验证 datetime 合理性：created_at <= updated_at
         if "created_at" in metadata and "updated_at" in metadata:
@@ -359,9 +353,7 @@ class PackSchemaValidator:
 
         # steps 必须是列表
         if not isinstance(steps, list):
-            result.add_error(
-                "$.workflow.steps", f"steps must be a list, got {type(steps).__name__}"
-            )
+            result.add_error("$.workflow.steps", f"steps must be a list, got {type(steps).__name__}")
             return
 
         # steps 不能为空
@@ -394,9 +386,7 @@ class PackSchemaValidator:
                             f"Branch target_step '{target}' not found in step ids",
                         )
 
-    def _validate_step(
-        self, step: dict[str, Any], path: str, result: ValidationResult, seen_ids: set
-    ):
+    def _validate_step(self, step: dict[str, Any], path: str, result: ValidationResult, seen_ids: set):
         """验证单个 workflow step"""
         # 检查必需字段
         for field in self.REQUIRED_STEP_FIELDS:
@@ -439,9 +429,7 @@ class PackSchemaValidator:
         # 验证 estimated_time 是数字
         if "estimated_time" in step:
             if not isinstance(step["estimated_time"], (int, float)):
-                result.add_warning(
-                    f"{path}.estimated_time", "estimated_time should be a number (seconds)"
-                )
+                result.add_warning(f"{path}.estimated_time", "estimated_time should be a number (seconds)")
 
     def _validate_quality_metrics(self, metrics: dict[str, Any], result: ValidationResult):
         """验证 quality_metrics 字段"""
@@ -470,9 +458,7 @@ class PackSchemaValidator:
         total_weight = 0.0
         for name, metric in metrics["metrics"].items():
             if not isinstance(metric, dict):
-                result.add_error(
-                    f"$.quality_metrics.metrics.{name}", "metric must be an object"
-                )
+                result.add_error(f"$.quality_metrics.metrics.{name}", "metric must be an object")
                 continue
 
             for req_field in required_metric_fields:
@@ -515,16 +501,12 @@ class PackSchemaValidator:
         # good_examples 应该是列表
         if "good_examples" in library:
             if not isinstance(library["good_examples"], list):
-                result.add_error(
-                    "$.example_library.good_examples", "good_examples must be a list"
-                )
+                result.add_error("$.example_library.good_examples", "good_examples must be a list")
 
         # bad_examples 应该是列表
         if "bad_examples" in library:
             if not isinstance(library["bad_examples"], list):
-                result.add_error(
-                    "$.example_library.bad_examples", "bad_examples must be a list"
-                )
+                result.add_error("$.example_library.bad_examples", "bad_examples must be a list")
 
         # few_shot_template 应该是字符串
         if "few_shot_template" in library:
@@ -538,9 +520,7 @@ class PackSchemaValidator:
         has_good = bool(library.get("good_examples"))
         has_bad = bool(library.get("bad_examples"))
         if not has_good and not has_bad:
-            result.add_info(
-                "$.example_library", "No examples defined (good_examples/bad_examples empty or absent)"
-            )
+            result.add_info("$.example_library", "No examples defined (good_examples/bad_examples empty or absent)")
 
 
 def validate_pack(file_path: str, strict: bool = True) -> ValidationResult:
@@ -585,9 +565,7 @@ def is_pack_file(source: str | Path | dict[str, Any]) -> bool:
     return isinstance(meta, dict) and bool(meta.get("pack_id"))
 
 
-def validate_all_packs(
-    directory: str = "packs/examples", strict: bool = True
-) -> dict[str, ValidationResult]:
+def validate_all_packs(directory: str = "packs/examples", strict: bool = True) -> dict[str, ValidationResult]:
     """
     验证目录下所有 Pack 文件（按 is_pack_file 判据过滤）
 

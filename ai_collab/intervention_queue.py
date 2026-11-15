@@ -84,11 +84,7 @@ def _normalize_delivery_mode(value: object) -> str:
 
 
 def _default_delivery_status_for_mode(delivery_mode: str) -> str:
-    return (
-        DEFAULT_MANUAL_DELIVERY_STATUS
-        if delivery_mode == "manual"
-        else DEFAULT_BRIDGE_DELIVERY_STATUS
-    )
+    return DEFAULT_MANUAL_DELIVERY_STATUS if delivery_mode == "manual" else DEFAULT_BRIDGE_DELIVERY_STATUS
 
 
 def _ensure_payload_shape(payload: dict[str, Any]) -> dict[str, Any]:
@@ -198,9 +194,7 @@ def read_intervention_items(
         history_path=history_path,
         summary_path=summary_path,
     )
-    return _sort_interventions(
-        [item for item in items.values() if isinstance(item, dict)]
-    )
+    return _sort_interventions([item for item in items.values() if isinstance(item, dict)])
 
 
 def inspect_interventions(
@@ -229,22 +223,12 @@ def inspect_interventions(
     normalized_delivery_status = str(delivery_status or "").strip().lower()
 
     if normalized_session_id:
-        records = [
-            item
-            for item in records
-            if str(item.get("session_id") or "").strip() == normalized_session_id
-        ]
+        records = [item for item in records if str(item.get("session_id") or "").strip() == normalized_session_id]
     if normalized_assignee:
-        records = [
-            item
-            for item in records
-            if str(item.get("assignee") or "").strip().lower() == normalized_assignee
-        ]
+        records = [item for item in records if str(item.get("assignee") or "").strip().lower() == normalized_assignee]
     if normalized_reason_code:
         records = [
-            item
-            for item in records
-            if str(item.get("reason_code") or "").strip().lower() == normalized_reason_code
+            item for item in records if str(item.get("reason_code") or "").strip().lower() == normalized_reason_code
         ]
     if normalized_delivery_status:
         records = [
@@ -256,8 +240,7 @@ def inspect_interventions(
         records = [
             item
             for item in records
-            if str(item.get("delivery_status") or "").strip().lower()
-            not in TERMINAL_DELIVERY_STATUSES
+            if str(item.get("delivery_status") or "").strip().lower() not in TERMINAL_DELIVERY_STATUSES
         ]
 
     stats = summarize_intervention_items(
@@ -327,13 +310,8 @@ def build_summary_markdown(*, report: dict[str, Any], items: list[dict[str, Any]
     lines.append(f"- open: `{report.get('open_count', 0)}`")
     lines.append(f"- manual: `{report.get('manual_count', 0)}`")
     lines.append(f"- bridge: `{report.get('bridge_count', 0)}`")
-    lines.append(
-        "- pending_operator_delivery: "
-        f"`{report.get('pending_operator_delivery_count', 0)}`"
-    )
-    lines.append(
-        f"- queued_for_delivery: `{report.get('queued_for_delivery_count', 0)}`"
-    )
+    lines.append(f"- pending_operator_delivery: `{report.get('pending_operator_delivery_count', 0)}`")
+    lines.append(f"- queued_for_delivery: `{report.get('queued_for_delivery_count', 0)}`")
     lines.append(f"- delivered: `{report.get('delivered_count', 0)}`")
     lines.append(f"- failed: `{report.get('failed_count', 0)}`")
     lines.append(f"- resolved: `{report.get('resolved_count', 0)}`")
@@ -344,8 +322,7 @@ def build_summary_markdown(*, report: dict[str, Any], items: list[dict[str, Any]
     pending_items = [
         item
         for item in items
-        if str(item.get("delivery_status") or "").strip().lower()
-        == DEFAULT_MANUAL_DELIVERY_STATUS
+        if str(item.get("delivery_status") or "").strip().lower() == DEFAULT_MANUAL_DELIVERY_STATUS
     ]
     if not pending_items:
         lines.append("- 无")
@@ -392,13 +369,7 @@ def _build_summary_payload(
     summary_file: Path,
 ) -> dict[str, Any]:
     items_dict = payload.get("items", {})
-    interventions = _sort_interventions(
-        [
-            item
-            for item in items_dict.values()
-            if isinstance(item, dict)
-        ]
-    )
+    interventions = _sort_interventions([item for item in items_dict.values() if isinstance(item, dict)])
     stats = summarize_intervention_items(items_dict)
     report = {
         "generated_at": _now_iso(),
@@ -680,23 +651,17 @@ def resolve_dispatch_intervention_for_ack(
         if status in TERMINAL_DELIVERY_STATUSES:
             continue
 
-        round_tasks = [
-            str(t).strip() for t in (record.get("task_ids") or []) if str(t).strip()
-        ]
+        round_tasks = [str(t).strip() for t in (record.get("task_ids") or []) if str(t).strip()]
         if round_tasks:
             outstanding = [
-                tid
-                for tid in round_tasks
-                if not dispatch_round_is_complete(workspace=workspace, task_ids=[tid])
+                tid for tid in round_tasks if not dispatch_round_is_complete(workspace=workspace, task_ids=[tid])
             ]
             if outstanding:
                 kept_open.append(intervention_id)
                 continue
         else:
             # 老记录没有任务清单：兜底按「该执行方有 ACK 就算这一轮结束」
-            if not dispatch_round_is_complete(
-                workspace=workspace, assignee=normalized_assignee
-            ):
+            if not dispatch_round_is_complete(workspace=workspace, assignee=normalized_assignee):
                 kept_open.append(intervention_id)
                 continue
 

@@ -34,9 +34,7 @@ def _write_task_state(workspace: Path) -> None:
                 "description": "Claude closeout follow-up",
                 "result_file": "collaboration/results/RESULT_TASK-TD-20260328-GOVERNANCE-STATE-CLI-HEALTH-SEMANTICS-CLAUDE-146.md",
                 "updated_at": "2026-03-29T09:10:00",
-                "notes": [
-                    "[2026-03-29T09:10:00] reviewer reopen: refresh result scope and emit fresh C.ACK"
-                ],
+                "notes": ["[2026-03-29T09:10:00] reviewer reopen: refresh result scope and emit fresh C.ACK"],
             },
             "TASK-TD-20260328-SESSION-INTERVENTION-QUEUE-AUDIT-CODEARTS-149": {
                 "status": "pending",

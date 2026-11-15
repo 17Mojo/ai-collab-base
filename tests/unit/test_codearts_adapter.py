@@ -76,8 +76,7 @@ def test_codearts_adapter_generates_artifact_only_when_bridge_disabled(tmp_path:
     delivery = report["deliveries"][0]
     assert delivery["action"] == "artifact_only"
     assert delivery["event_file"] == (
-        "collaboration/monitoring/codearts_pull_events/"
-        "CODEARTS_PULL_EVENT_intervention-codearts-001_latest.md"
+        "collaboration/monitoring/codearts_pull_events/CODEARTS_PULL_EVENT_intervention-codearts-001_latest.md"
     )
     event_text = (workspace / delivery["event_file"]).read_text(encoding="utf-8")
     assert "请先拉取并补发 ACK。" in event_text
@@ -97,7 +96,7 @@ def test_codearts_adapter_queues_delivery_when_bridge_command_succeeds(tmp_path:
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/codearts_bridge_delivery.txt\"",
+            "bridgeCommand": 'cp "{event_file}" "{workspace}/codearts_bridge_delivery.txt"',
         },
     )
 
@@ -141,7 +140,7 @@ def test_codearts_adapter_does_not_redeliver_in_flight_intervention(tmp_path: Pa
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/codearts_bridge_delivery.txt\"",
+            "bridgeCommand": 'cp "{event_file}" "{workspace}/codearts_bridge_delivery.txt"',
         },
     )
 
@@ -177,7 +176,7 @@ def test_codearts_adapter_force_redeliver_requeues_in_flight_intervention(tmp_pa
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/codearts_bridge_delivery.txt\"",
+            "bridgeCommand": 'cp "{event_file}" "{workspace}/codearts_bridge_delivery.txt"',
         },
     )
 
@@ -309,8 +308,7 @@ def test_codearts_adapter_marks_failed_when_artifact_is_missing(tmp_path: Path):
 
 def _enqueue_one(workspace: Path, *, intervention_id: str, message: str) -> None:
     artifact_relpath = (
-        "collaboration/monitoring/session_interventions/"
-        f"SESSION_INTERVENTION_{intervention_id}_latest.md"
+        f"collaboration/monitoring/session_interventions/SESSION_INTERVENTION_{intervention_id}_latest.md"
     )
     _write_intervention_artifact(workspace, artifact_relpath, message)
     enqueue_intervention(
@@ -333,8 +331,8 @@ def test_codearts_adapter_pins_model_into_bridge_command(tmp_path: Path):
         {
             "enabled": True,
             "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\"; "
-                "printf '%s' \"{channel}\" > \"{workspace}/channel.txt\""
+                'printf \'%s\' "{model}" > "{workspace}/model.txt"; '
+                'printf \'%s\' "{channel}" > "{workspace}/channel.txt"'
             ),
             "models": ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"],
             "modelPolicy": "round_robin",
@@ -366,8 +364,8 @@ def test_codearts_adapter_renders_explicit_provider_model_form(tmp_path: Path):
         {
             "enabled": True,
             "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\"; "
-                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\""
+                'printf \'%s\' "{model}" > "{workspace}/model.txt"; '
+                'printf \'%s\' "{model_fallback}" > "{workspace}/fallback.txt"'
             ),
             "models": [
                 {"providerID": "inferhub-provider", "modelID": "glm-5.3"},
@@ -387,9 +385,7 @@ def test_codearts_adapter_renders_explicit_provider_model_form(tmp_path: Path):
     ]
     assert report["deliveries"][0]["model"] == "inferhub-provider/glm-5.3"
     assert (workspace / "model.txt").read_text(encoding="utf-8") == "inferhub-provider/glm-5.3"
-    assert (
-        workspace / "fallback.txt"
-    ).read_text(encoding="utf-8") == "inferhub-provider/kimi-k3"
+    assert (workspace / "fallback.txt").read_text(encoding="utf-8") == "inferhub-provider/kimi-k3"
 
 
 def test_repo_model_pool_pins_provider_explicitly():
@@ -410,9 +406,7 @@ def test_repo_model_pool_pins_provider_explicitly():
 
     assert models, "派单模型池不能为空"
     for item in models:
-        assert isinstance(item, dict), (
-            f"模型池条目必须显式写 providerID（不能只给 modelID）：{item!r}"
-        )
+        assert isinstance(item, dict), f"模型池条目必须显式写 providerID（不能只给 modelID）：{item!r}"
         assert item.get("providerID"), f"模型池条目缺 providerID：{item!r}"
         assert item.get("modelID"), f"模型池条目缺 modelID：{item!r}"
     # 降级链也要一起有 provider：模板渲染成逗号分隔的候选串，缺一个就少一个候选。
@@ -429,9 +423,7 @@ def test_codearts_adapter_rotates_model_pool_across_rounds(tmp_path: Path):
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s\\n' \"{model}\" >> \"{workspace}/models.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\\n\' "{model}" >> "{workspace}/models.txt"'),
             "models": ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"],
             "modelPolicy": "round_robin",
         },
@@ -459,8 +451,8 @@ def test_codearts_adapter_without_model_pool_keeps_cron_channel(tmp_path: Path):
         {
             "enabled": True,
             "bridgeCommand": (
-                "printf '%s' \"{channel}\" > \"{workspace}/channel.txt\"; "
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+                'printf \'%s\' "{channel}" > "{workspace}/channel.txt"; '
+                'printf \'%s\' "{model}" > "{workspace}/model.txt"'
             ),
         },
     )
@@ -485,7 +477,7 @@ def test_codearts_adapter_warns_when_bridge_command_has_no_model_placeholder(
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/out.txt\"",
+            "bridgeCommand": 'cp "{event_file}" "{workspace}/out.txt"',
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
         },
@@ -506,7 +498,7 @@ def test_codearts_adapter_fixed_policy_always_uses_first_model(tmp_path: Path):
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": "printf '%s\\n' \"{model}\" >> \"{workspace}/models.txt\"",
+            "bridgeCommand": 'printf \'%s\\n\' "{model}" >> "{workspace}/models.txt"',
             "models": ["glm-5.3", "kimi-k3"],
             "modelPolicy": "fixed",
         },
@@ -545,9 +537,7 @@ def test_codearts_adapter_reads_model_used_from_delivery_receipt(tmp_path: Path)
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3", "kimi-k3"],
             "modelPolicy": "round_robin",
         },
@@ -595,9 +585,7 @@ def test_codearts_adapter_ignores_receipt_for_other_intervention(tmp_path: Path)
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
         },
@@ -635,9 +623,7 @@ def test_codearts_adapter_leaves_model_used_empty_without_receipt(tmp_path: Path
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
         },
@@ -662,9 +648,7 @@ def test_codearts_adapter_tolerates_corrupt_receipt(tmp_path: Path):
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
         },
@@ -672,9 +656,7 @@ def test_codearts_adapter_tolerates_corrupt_receipt(tmp_path: Path):
     _enqueue_one(workspace, intervention_id="int-corrupt", message="请执行。")
     receipt_dir = workspace / "logs"
     receipt_dir.mkdir(parents=True, exist_ok=True)
-    (receipt_dir / "codearts_delivery_receipt.json").write_text(
-        "not a json {{{", encoding="utf-8"
-    )
+    (receipt_dir / "codearts_delivery_receipt.json").write_text("not a json {{{", encoding="utf-8")
 
     report = run_codearts_pull_adapter(workspace=workspace)
 
@@ -693,9 +675,7 @@ def test_codearts_adapter_receipt_model_applied_null_is_kept_verbatim(tmp_path: 
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
         },
@@ -710,9 +690,7 @@ def test_codearts_adapter_receipt_model_applied_null_is_kept_verbatim(tmp_path: 
             "model_used": "",
             "model_applied": None,
             "fallback_used": False,
-            "model_attempts": [
-                {"model": "inferhub-provider/glm-5.3", "ok": True, "error": ""}
-            ],
+            "model_attempts": [{"model": "inferhub-provider/glm-5.3", "ok": True, "error": ""}],
             "generated_at": "2026-10-23T18:00:00",
         },
     )
@@ -739,8 +717,8 @@ def test_codearts_adapter_renders_model_fallback_placeholder(tmp_path: Path):
         {
             "enabled": True,
             "bridgeCommand": (
-                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\"; "
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+                'printf \'%s\' "{model_fallback}" > "{workspace}/fallback.txt"; '
+                'printf \'%s\' "{model}" > "{workspace}/model.txt"'
             ),
             "models": ["glm-5.3", "deepseek-v4.1-flash", "kimi-k3"],
             "modelPolicy": "round_robin",
@@ -751,9 +729,7 @@ def test_codearts_adapter_renders_model_fallback_placeholder(tmp_path: Path):
     report = run_codearts_pull_adapter(workspace=workspace)
 
     assert report["queued_count"] == 1
-    assert (workspace / "fallback.txt").read_text(encoding="utf-8") == (
-        "deepseek-v4.1-flash,kimi-k3"
-    )
+    assert (workspace / "fallback.txt").read_text(encoding="utf-8") == ("deepseek-v4.1-flash,kimi-k3")
 
 
 def test_codearts_adapter_renders_empty_model_fallback_without_model(tmp_path: Path):
@@ -765,8 +741,8 @@ def test_codearts_adapter_renders_empty_model_fallback_without_model(tmp_path: P
         {
             "enabled": True,
             "bridgeCommand": (
-                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\"; "
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+                'printf \'%s\' "{model_fallback}" > "{workspace}/fallback.txt"; '
+                'printf \'%s\' "{model}" > "{workspace}/model.txt"'
             ),
         },
     )
@@ -789,8 +765,8 @@ def test_codearts_adapter_renders_empty_model_fallback_for_single_model_pool(
         {
             "enabled": True,
             "bridgeCommand": (
-                "printf '%s' \"{model_fallback}\" > \"{workspace}/fallback.txt\"; "
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
+                'printf \'%s\' "{model_fallback}" > "{workspace}/fallback.txt"; '
+                'printf \'%s\' "{model}" > "{workspace}/model.txt"'
             ),
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
@@ -812,9 +788,7 @@ def test_codearts_adapter_model_fallback_placeholder_is_optional(tmp_path: Path)
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3", "kimi-k3"],
             "modelPolicy": "round_robin",
         },
@@ -840,9 +814,7 @@ def test_codearts_adapter_reads_accepted_without_receipt_from_receipt(tmp_path: 
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
         },
@@ -894,9 +866,7 @@ def test_codearts_adapter_leaves_accepted_without_receipt_empty_without_receipt(
         workspace,
         {
             "enabled": True,
-            "bridgeCommand": (
-                "printf '%s' \"{model}\" > \"{workspace}/model.txt\""
-            ),
+            "bridgeCommand": ('printf \'%s\' "{model}" > "{workspace}/model.txt"'),
             "models": ["glm-5.3"],
             "modelPolicy": "round_robin",
         },

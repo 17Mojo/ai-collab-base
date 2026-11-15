@@ -89,9 +89,7 @@ class GraphContextManager:
             node = self._graph.get_node(node_id)
             if node:
                 key_nodes_list: list[dict[str, Any]] = cast(list[dict[str, Any]], enriched_data["key_nodes"])
-                key_nodes_list.append(
-                    {"node_id": node_id, "content": node.content, "importance": score}
-                )
+                key_nodes_list.append({"node_id": node_id, "content": node.content, "importance": score})
 
         # 添加节点关系
         enriched_data["relations"] = []
@@ -112,9 +110,7 @@ class GraphContextManager:
 
         return enriched_data
 
-    def find_relevant_knowledge(
-        self, query: str, context: Any, max_depth: int = 2
-    ) -> list[dict[str, Any]]:
+    def find_relevant_knowledge(self, query: str, context: Any, max_depth: int = 2) -> list[dict[str, Any]]:
         """
         查找相关知识
 
@@ -149,9 +145,7 @@ class GraphContextManager:
 
         return results
 
-    def build_from_documents(
-        self, documents: list[dict[str, Any]], extract_entities: bool = True
-    ) -> KnowledgeGraph:
+    def build_from_documents(self, documents: list[dict[str, Any]], extract_entities: bool = True) -> KnowledgeGraph:
         """
         从文档构建知识图谱
 
@@ -210,9 +204,7 @@ class GraphContextManager:
         context_id = self._generate_context_id(query)
 
         # 创建上下文
-        context = GraphContext(
-            context_id=context_id, query=query, relevant_nodes=[n.node_id for n in relevant_nodes]
-        )
+        context = GraphContext(context_id=context_id, query=query, relevant_nodes=[n.node_id for n in relevant_nodes])
 
         self._contexts[context_id] = context
 

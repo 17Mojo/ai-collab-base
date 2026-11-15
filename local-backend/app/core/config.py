@@ -4,7 +4,6 @@
 统一管理应用配置，支持环境变量覆盖
 """
 
-
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -128,7 +127,7 @@ if __name__ == "__main__":
     print(f"  应用名称: {settings.app_name}")
     print(f"  版本: {settings.app_version}")
     print(f"  调试模式: {settings.debug}")
-    print(f"  最大请求大小: {settings.max_request_body_size // (1024*1024)}MB")
+    print(f"  最大请求大小: {settings.max_request_body_size // (1024 * 1024)}MB")
     print(f"  CORS 来源: {len(settings.cors_origins)} 个")
     print(f"  数据库 URL: {settings.database_url}")
     print(f"  日志级别: {settings.log_level}")

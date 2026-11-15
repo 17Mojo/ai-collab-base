@@ -90,9 +90,7 @@ def _is_internal_read_only_parent(*, actor: str, parent_task: str, read_only: bo
     if actor != "codex":
         return False
     normalized_parent = str(parent_task or "").strip().upper()
-    return any(
-        normalized_parent.startswith(prefix) for prefix in INTERNAL_READ_ONLY_PARENT_PREFIXES
-    )
+    return any(normalized_parent.startswith(prefix) for prefix in INTERNAL_READ_ONLY_PARENT_PREFIXES)
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -119,9 +117,7 @@ def _load_state(workspace: Path, state_rel: str) -> tuple[dict[str, Any], str | 
     return payload if isinstance(payload, dict) else {}, None
 
 
-def resolve_spawn_agent_guard_config(
-    config: dict[str, Any] | None, *, workspace: Path
-) -> dict[str, Any]:
+def resolve_spawn_agent_guard_config(config: dict[str, Any] | None, *, workspace: Path) -> dict[str, Any]:
     resolved = deepcopy(DEFAULT_SPAWN_AGENT_GUARD)
     raw = {}
     if isinstance(config, dict) and isinstance(config.get("spawnAgentGuard"), dict):
@@ -142,9 +138,7 @@ def resolve_spawn_agent_guard_config(
             resolved[key] = [str(item) for item in value if str(item).strip()]
 
     _allowed_lead: list[object] = list(cast(list[object], resolved["allowedLeadAgents"]))
-    _allowed_lead = [
-        _normalize_actor(item) for item in _allowed_lead if _normalize_actor(item)
-    ]
+    _allowed_lead = [_normalize_actor(item) for item in _allowed_lead if _normalize_actor(item)]
     resolved["allowedLeadAgents"] = _allowed_lead
     _protected_paths_raw: list[object] = list(cast(list[object], resolved["protectedPaths"]))
     resolved["protectedPaths"] = [
@@ -154,9 +148,7 @@ def resolve_spawn_agent_guard_config(
     ]
     _protected_prefixes_raw: list[object] = list(cast(list[object], resolved["protectedPrefixes"]))
     resolved["protectedPrefixes"] = [
-        _normalize_prefix(workspace, item)
-        for item in _protected_prefixes_raw
-        if _normalize_prefix(workspace, item)
+        _normalize_prefix(workspace, item) for item in _protected_prefixes_raw if _normalize_prefix(workspace, item)
     ]
     return resolved
 
@@ -198,9 +190,7 @@ def run_spawn_agent_guard(
         warnings.append("spawn agent guard disabled by config")
     else:
         if actor_normalized not in set(resolved["allowedLeadAgents"]):
-            violations.append(
-                f"actor '{actor_normalized or 'unknown'}' is not allowed for spawn_agent delegation"
-            )
+            violations.append(f"actor '{actor_normalized or 'unknown'}' is not allowed for spawn_agent delegation")
 
         if resolved["requireParentTask"] and not parent_task:
             violations.append("parent_task_id is required for spawn_agent delegation")
@@ -215,20 +205,14 @@ def run_spawn_agent_guard(
             for path in declared_files:
                 if path in set(resolved["protectedPaths"]):
                     protected_hits.append(path)
-                if any(
-                    prefix and path.startswith(prefix) for prefix in resolved["protectedPrefixes"]
-                ):
+                if any(prefix and path.startswith(prefix) for prefix in resolved["protectedPrefixes"]):
                     protected_prefix_hits.append(path)
 
             if protected_hits:
-                violations.append(
-                    "declared files include protected paths: "
-                    + ", ".join(sorted(set(protected_hits)))
-                )
+                violations.append("declared files include protected paths: " + ", ".join(sorted(set(protected_hits))))
             if protected_prefix_hits:
                 violations.append(
-                    "declared files include protected path prefixes: "
-                    + ", ".join(sorted(set(protected_prefix_hits)))
+                    "declared files include protected path prefixes: " + ", ".join(sorted(set(protected_prefix_hits)))
                 )
 
         state_rel = str(effective_config.get("stateFile", "./logs/collaboration_state.json"))
@@ -239,9 +223,7 @@ def run_spawn_agent_guard(
             tasks = state_payload.get("tasks", {})
             if isinstance(tasks, dict):
                 if parent_task and parent_task not in tasks and not internal_read_only_parent:
-                    warnings.append(
-                        f"parent_task_id '{parent_task}' not found in collaboration state"
-                    )
+                    warnings.append(f"parent_task_id '{parent_task}' not found in collaboration state")
 
                 if not read_only and declared_files:
                     declared_set = set(declared_files)
@@ -269,12 +251,9 @@ def run_spawn_agent_guard(
 
                     if active_conflicts:
                         summaries = [
-                            f"{item['task_id']} ({', '.join(item['overlapping_files'])})"
-                            for item in active_conflicts
+                            f"{item['task_id']} ({', '.join(item['overlapping_files'])})" for item in active_conflicts
                         ]
-                        violations.append(
-                            "declared files overlap active task write sets: " + "; ".join(summaries)
-                        )
+                        violations.append("declared files overlap active task write sets: " + "; ".join(summaries))
 
     allowed = not violations
     timestamp = datetime.now().isoformat()

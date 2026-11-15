@@ -170,9 +170,7 @@ def build_handoff_payload(
     timestamp = generated_at or datetime.now().isoformat(timespec="seconds")
     name = DISPLAY_NAME.get(assignee, assignee)
     refresh_command = build_payload_refresh_command(assignee)
-    run_hint, ack_hint = resolve_hints(
-        assignee, assignee_role=assignee_role, workspace=workspace
-    )
+    run_hint, ack_hint = resolve_hints(assignee, assignee_role=assignee_role, workspace=workspace)
     lines: list[str] = []
     lines.append("# Agent Session Dispatch Payload（自动生成）")
     lines.append("")
@@ -381,16 +379,8 @@ class FreshnessStats:
             "fresh_count": self.fresh_count,
             "stale_count": self.stale_count,
             "error_count": self.error_count,
-            "fresh_rate": (
-                round(self.fresh_count / self.total_checks * 100, 2)
-                if self.total_checks > 0
-                else 0.0
-            ),
-            "stale_rate": (
-                round(self.stale_count / self.total_checks * 100, 2)
-                if self.total_checks > 0
-                else 0.0
-            ),
+            "fresh_rate": (round(self.fresh_count / self.total_checks * 100, 2) if self.total_checks > 0 else 0.0),
+            "stale_rate": (round(self.stale_count / self.total_checks * 100, 2) if self.total_checks > 0 else 0.0),
             "stale_events": self.stale_events,
         }
 
