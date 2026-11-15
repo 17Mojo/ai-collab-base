@@ -122,6 +122,22 @@ jobs:
               print(f"::error::{len(new)} new Bandit finding(s) not in baseline. "
                     f"Fix them, or regenerate the baseline with an explicit justification.")
               sys.exit(1)
+
+          # 2026-11-15 补总数闸门。bandit 原生 -b 的 Issue.__eq__ 只比较
+          # text/severity/cwe/confidence/fname/test/test_id 七元组，不含
+          # lineno / code / linerange。实测：在同一文件新增一条与存量
+          # 完全同构的 B110，完整报告 44 条而 baseline-gated 报告 0 条
+          # ——新 finding 命中了基线里已有的同一七元组，被当成已知。
+          # 因此再用「完整报告总数 > baseline 总数」兜一层。
+          full_count = len(full.get("results", []))
+          known_count = len(baseline["results"])
+          print(f"::notice::Bandit findings count: current={full_count} baseline={known_count}")
+          if full_count > known_count:
+              print(f"::error::Bandit findings 比 baseline 多 {full_count - known_count} 条，"
+                    f"但原生 baseline 未判为新增（同构 finding 命中同一七元组）。"
+                    f"请核对完整报告，或带显式理由重生成 baseline。")
+              sys.exit(1)
+
           print("::notice::Bandit gate: 0 new findings - PASS")
           PY
 
