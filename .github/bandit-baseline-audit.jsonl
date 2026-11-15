@@ -1,0 +1,1 @@
+{"at": "2026-11-15T13:01:56Z", "bandit_version": "1.9.4", "commit": "f2854d01b51a0c02841f32ebc4b115f61ca52598", "reason": "初始登记 43 条存量 findings（PR #66 baseline 门禁升级，补强制审计元数据）", "result_count": 43, "results_sha256": "b7b2dcfae3e09fbaf84ec7cc8347ae65c6d4035f940413b20b11ba21a449e43c", "scan_path": "ai_collab/"}
