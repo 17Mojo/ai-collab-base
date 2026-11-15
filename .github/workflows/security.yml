@@ -38,18 +38,50 @@ jobs:
         run: pip install bandit==1.9.4
 
       - name: Run Bandit
+        # 2026-11-15 清吞错：摘掉 `|| true`。bandit 1.9.4（与 CI 同版本）实测退出码：
+        #   exit 0 = 无 findings，或**空扫描**（路径不存在时也返回 0，报告带 errors）
+        #   exit 1 = 有 findings（生产日志 HIGH=0 MEDIUM=1 LOW=42，报告照常写出）
+        #   exit 2 = 参数/执行错误（报告可能是 0 字节非法 JSON）
+        # exit 1 是设计内的「只警告」结果，交下一步按 severity 裁决；
+        # exit >= 2 是工具没跑起来，必须挡 CI。原 `|| true` 把三者一起吞了。
         run: |
-          # 跑全量扫描，JSON 留底供下载
-          bandit -r ai_collab/ -f json -o bandit-report.json || true
+          set +e
+          bandit -r ai_collab/ -f json -o bandit-report.json
+          EXIT_CODE=$?
+          set -e
+          if [ "$EXIT_CODE" -ge 2 ]; then
+            echo "::error::bandit 执行失败 (exit $EXIT_CODE)，扫描结果不可信。"
+            exit 1
+          fi
+          if [ "$EXIT_CODE" -eq 1 ]; then
+            echo "::notice::bandit 报告了 findings (exit 1)，交由 Evaluate severity 按级别裁决。"
+          fi
 
       - name: Evaluate severity
+        # 2026-11-15 补空扫描兜底：bandit 对不存在的路径返回 0 且照样写报告，
+        # 报告里 `errors` 非空、metrics 只有 `_totals`；只查「文件存在」会让
+        # 「ai_collab/ 被改名 / 扫描链路断了」静默输出全 0 并全绿。
         run: |
           python - <<'PY'
           import json, sys, os
           if not os.path.exists("bandit-report.json"):
               print("::error::Bandit did not produce a report")
               sys.exit(1)
-          data = json.load(open("bandit-report.json"))
+          try:
+              data = json.load(open("bandit-report.json"))
+          except (ValueError, OSError) as e:
+              print(f"::error::Bandit report is not valid JSON: {e}")
+              sys.exit(1)
+          errors = data.get("errors", [])
+          if errors:
+              print(f"::error::Bandit reported {len(errors)} execution error(s): {errors[:3]}")
+              sys.exit(1)
+          metrics = data.get("metrics", {})
+          scanned = [k for k in metrics if k != "_totals"]
+          if not scanned:
+              print("::error::Bandit scanned 0 files; the scan path may be missing.")
+              sys.exit(1)
+          print(f"::notice::Bandit scanned {len(scanned)} files")
           counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
           for r in data.get("results", []):
               sev = r.get("issue_severity", "")
