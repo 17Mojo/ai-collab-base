@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import os
 import subprocess
@@ -58,6 +59,13 @@ REQUIRED_READS = (
     "collaboration/PROTOCOL.md",
     "rules/AI-COLLABORATION-STANDARDS.md",
 )
+
+# 会话级状态一律放不受跟踪的落点：受跟踪配置会随提交分发给所有人，
+# 把会话基线写进去等于给每个后续提交埋硬阻断（见 close-governance-gaps 缺口 B）。
+SESSION_REL = ".ai_collab_session.json"
+TRACKED_CONFIG_REL = ".vscode/ai-collab.json"
+LOCAL_CONFIG_REL = ".vscode/ai-collab.local.json"
+SESSION_VERSION = "2.0"
 
 T = TypeVar("T")
 
@@ -569,11 +577,37 @@ def input_contract_complete(expected_branch: Any, baseline_commit: Any, watch_pa
     return bool(expected_branch) and bool(baseline_commit) and bool(watch_paths)
 
 
+def _merge_guard_config(workspace: Path) -> tuple[dict[str, Any], dict[str, str]]:
+    """读取并发守护配置：受跟踪配置打底，会话级覆盖层同名字段优先。
+
+    返回 (合并后的 concurrentGuard, 每个字段的来源)。来源只标三个硬门禁输入，
+    目的是让「这个值是谁给的」在 preflight 输出里可复核，而不是黑箱合并。
+    """
+    tracked = read_json(workspace / TRACKED_CONFIG_REL, {})
+    local = read_json(workspace / LOCAL_CONFIG_REL, {})
+
+    def _guard(payload: Any) -> dict[str, Any]:
+        guard = payload.get("concurrentGuard") if isinstance(payload, dict) else {}
+        return guard if isinstance(guard, dict) else {}
+
+    tracked_guard = _guard(tracked)
+    local_guard = _guard(local)
+    merged: dict[str, Any] = dict(tracked_guard)
+    merged.update(local_guard)
+
+    sources: dict[str, str] = {}
+    for name in ("expectedBranch", "baselineCommit", "watchPaths"):
+        if local_guard.get(name):
+            sources[name] = LOCAL_CONFIG_REL
+        elif tracked_guard.get(name):
+            sources[name] = TRACKED_CONFIG_REL
+        else:
+            sources[name] = ""
+    return merged, sources
+
+
 def guard_input_report(workspace: Path) -> dict[str, Any]:
-    config_path = workspace / ".vscode" / "ai-collab.json"
-    config = read_json(config_path, {})
-    guard = config.get("concurrentGuard") if isinstance(config, dict) else {}
-    guard = guard if isinstance(guard, dict) else {}
+    guard, sources = _merge_guard_config(workspace)
     expected = guard.get("expectedBranch")
     baseline = guard.get("baselineCommit")
     watch = guard.get("watchPaths")
@@ -585,6 +619,117 @@ def guard_input_report(workspace: Path) -> dict[str, Any]:
     return {
         "complete": input_contract_complete(expected, baseline, watch),
         "missing": missing,
+        "sources": sources,
+        "values": {"expectedBranch": expected, "baselineCommit": baseline, "watchPaths": watch},
+    }
+
+
+# --------------------------------------------------------------------------
+# 必读清单：把「已读」从路径名列表升级为可核验声明
+# --------------------------------------------------------------------------
+def _sha256_of(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def ack_required_reads(workspace: Path, *, session_id: str, acknowledged_by: str = "") -> dict[str, Any]:
+    """唯一写入方：记录每个必读文件的当前哈希。文件改了，声明自动失效。"""
+    entries: list[dict[str, Any]] = []
+    missing: list[str] = []
+    for rel in REQUIRED_READS:
+        target = workspace / rel
+        if not target.is_file():
+            missing.append(rel)
+            continue
+        entries.append({"path": rel, "sha256": _sha256_of(target), "bytes": target.stat().st_size})
+    if missing:
+        raise GovernanceError(f"必读文件不存在，无法声明: {missing}")
+
+    record = {
+        "version": SESSION_VERSION,
+        "session_id": session_id,
+        "acknowledged_by": acknowledged_by,
+        "acknowledged_at": datetime.now().isoformat(),
+        "required_reads": entries,
+        # 保留旧字段供既有读取方过渡；核验只认哈希，不认这张名单。
+        "required_reads_acknowledged": [entry["path"] for entry in entries],
+    }
+
+    def mutate(payload: dict[str, Any]) -> None:
+        payload.update(record)
+
+    payload, _ = locked_json_update(workspace / SESSION_REL, {}, mutate)
+    return payload
+
+
+def verify_required_reads(workspace: Path) -> dict[str, Any]:
+    """重算哈希逐条比对。旧格式（只有路径名）判为 legacy，不是「通过」。"""
+    session = read_json(workspace / SESSION_REL, {})
+    if not isinstance(session, dict) or not session:
+        return {
+            "ok": False,
+            "legacy": True,
+            "declared": 0,
+            "verified": 0,
+            "stale": [],
+            "missing": list(REQUIRED_READS),
+            "detail": f"{SESSION_REL} 缺失或为空，无法核验必读清单",
+        }
+
+    entries = session.get("required_reads")
+    if not isinstance(entries, list) or not entries:
+        return {
+            "ok": False,
+            "legacy": True,
+            "declared": 0,
+            "verified": 0,
+            "stale": [],
+            "missing": list(REQUIRED_READS),
+            "detail": "声明缺少哈希字段（旧格式），请经 sessions ack-reads 重新生成",
+        }
+
+    declared: dict[str, str] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        rel = str(entry.get("path") or "")
+        digest = str(entry.get("sha256") or "")
+        if rel and digest:
+            declared[rel] = digest
+
+    stale: list[str] = []
+    missing: list[str] = []
+    verified = 0
+    for rel in REQUIRED_READS:
+        target = workspace / rel
+        if not target.is_file():
+            missing.append(rel)
+            continue
+        if rel not in declared:
+            missing.append(rel)
+            continue
+        if _sha256_of(target) != declared[rel]:
+            stale.append(rel)
+        else:
+            verified += 1
+
+    ok = not stale and not missing and verified == len(REQUIRED_READS)
+    parts = [f"已声明 {len(declared)} 条，核验通过 {verified}/{len(REQUIRED_READS)}"]
+    if stale:
+        parts.append(f"内容已变更（需重读）: {stale}")
+    if missing:
+        parts.append(f"未声明或文件缺失: {missing}")
+    return {
+        "ok": ok,
+        "legacy": False,
+        "declared": len(declared),
+        "verified": verified,
+        "stale": stale,
+        "missing": missing,
+        "detail": "；".join(parts),
     }
 
 
@@ -592,16 +737,14 @@ def preflight(workspace: Path) -> dict[str, Any]:
     """开工前一次机器检查：五项可判定结论 + 总 PASS/FAIL。"""
     checks: list[dict[str, Any]] = []
 
-    session_path = workspace / ".ai_collab_session.json"
-    session = read_json(session_path, {})
-    acknowledged = session.get("required_reads_acknowledged") if isinstance(session, dict) else None
-    reads = set(acknowledged) if isinstance(acknowledged, list) else set()
-    missing_reads = [p for p in REQUIRED_READS if p not in reads]
+    reads = verify_required_reads(workspace)
     checks.append(
         {
             "name": "必读清单声明",
-            "pass": not missing_reads,
-            "detail": "齐全" if not missing_reads else f"缺: {missing_reads}",
+            "pass": reads["ok"],
+            "detail": reads["detail"],
+            "legacy": reads["legacy"],
+            "stale": reads["stale"],
         }
     )
 
@@ -612,11 +755,18 @@ def preflight(workspace: Path) -> dict[str, Any]:
     )
 
     guard = guard_input_report(workspace)
+    if guard["complete"]:
+        origin = ", ".join(
+            f"{name}←{guard['sources'][name]}" for name in ("expectedBranch", "baselineCommit", "watchPaths")
+        )
+        guard_detail = f"三个输入齐全（{origin}）"
+    else:
+        guard_detail = f"未装备，缺: {guard['missing']}"
     checks.append(
         {
             "name": "门禁输入完整性",
             "pass": guard["complete"],
-            "detail": "三个输入齐全" if guard["complete"] else f"未装备，缺: {guard['missing']}",
+            "detail": guard_detail,
         }
     )
 

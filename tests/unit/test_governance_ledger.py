@@ -373,7 +373,12 @@ def test_guard_input_report_names_missing_inputs(tmp_path: Path):
         ),
         encoding="utf-8",
     )
-    assert guard_input_report(ws) == {"complete": True, "missing": []}
+    # close-governance-gaps 之后报告新增 sources / values 两个字段（字段来源可复核），
+    # 因此这里断言关键结论而不是整字典相等——整字典相等会把「新增可观测字段」误判成回归。
+    report = guard_input_report(ws)
+    assert report["complete"] is True
+    assert report["missing"] == []
+    assert set(report["sources"].values()) == {governance.TRACKED_CONFIG_REL}
 
 
 def test_preflight_fails_when_guard_not_equipped(tmp_path: Path):
@@ -688,9 +693,13 @@ def test_acceptance_a6_preflight_passes_with_all_inputs(tmp_path: Path):
     repo = _prepare_workspace(tmp_path)
     boundary = _git(repo, "rev-parse", "HEAD")
     _write_ledger(repo, [_enforcement(boundary)])
-    (repo / ".ai_collab_session.json").write_text(
-        json.dumps({"required_reads_acknowledged": list(governance.REQUIRED_READS)}), encoding="utf-8"
-    )
+    # close-governance-gaps 之后，必读清单声明必须带哈希（旧格式按不合法处理），
+    # 所以这里走统一入口生成，而不是手写一份路径名列表。
+    for rel in governance.REQUIRED_READS:
+        target = repo / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(f"# {rel}\n", encoding="utf-8")
+    governance.ack_required_reads(repo, session_id="a6")
     (repo / ".vscode").mkdir(exist_ok=True)
     (repo / ".vscode" / "ai-collab.json").write_text(
         json.dumps(
