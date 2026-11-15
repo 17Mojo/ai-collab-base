@@ -126,3 +126,13 @@ ignore = ["E402", "E501", "F402", "F821", "B008"]
 # B017 assert Exception - pytest.raises 使用
 # E741 变量名 l - 测试代码
 extend-ignore = ["B904", "E722", "F811", "N802", "N803", "N806", "N817", "E741", "B017"]
+
+# 2026-11-15：显式声明包发现范围。此前 setuptools 在 flat-layout 下扫到
+# 8 个顶层包目录（packs/rules/memory/config/products/openspec/ai_collab/
+# collaboration）而拒绝构建，`pip install -e .` 从未成功（见 PR #61）。
+# 隔离 venv 实测：加本段后 editable install 成功、import ai_collab 可用、
+# ai-collab 入口注册且 --help exit 0。
+# **不恢复** CI 里的可编辑安装：PR #61 删除 4 处静默失败的裁定不变，
+# 全仓 workflow 仍零 `pip install -e` 引用。本段只让项目本身可被安装。
+[tool.setuptools.packages.find]
+include = ["ai_collab*"]
