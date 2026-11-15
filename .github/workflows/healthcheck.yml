@@ -89,10 +89,21 @@ jobs:
 
       - name: Parse score
         id: parse
+        # 2026-11-15 清假绿：`$(grep ... | head -1)` 在默认 bash -e {0} 下
+        # 退出码来自 head，报告格式失配时 SCORE/GRADE 为空却仍 success，
+        # PR 评论会静默显示「Score: **/100** ()」。
+        # 此处**不能**加 set -o pipefail：赋值语句整体非零会被 set -e
+        # 立即掐断，下面的 ::error:: 诊断不可达（同 PR #52 修过的
+        # mypy-gate 死分支）。本地对照：无 pipefail + 校验 → exit 1 且
+        # ::error:: 可达；pipefail + 校验 → exit 1 但诊断丢失。
+        # 口径与 fail-on-low-score 的 Check score（本文件下方）一致。
         run: |
-          # 从报告里提取总分
           SCORE=$(grep -oP "总分: \K[0-9]+" health_output.md | head -1)
           GRADE=$(grep -oP "总分: [0-9]+/100 \(\K[A-D][+]?" health_output.md | head -1)
+          if [ -z "$SCORE" ] || [ -z "$GRADE" ]; then
+            echo "::error::health_output.md 解析失败：SCORE='$SCORE' GRADE='$GRADE'，报告格式可能已变更。"
+            exit 1
+          fi
           echo "score=$SCORE" >> $GITHUB_OUTPUT
           echo "grade=$GRADE" >> $GITHUB_OUTPUT
 
