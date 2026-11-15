@@ -591,7 +591,7 @@ python3 -m ai_collab.cli sessions handoff
 > **违规列表**并按违规阻断（此时风险级别为 `high`、放行结论为假）。
 > 也就是说「G3 不可阻断」说的是**默认配置**下的行为。
 
-### 14.7 工作树分支冲突（G11）
+### 14.6 工作树分支冲突（G11）
 
 **现象**：`git worktree list` 里两个及以上工作树签出同一个分支。
 
@@ -612,6 +612,20 @@ python3 -m ai_collab.cli sessions handoff
 解析 `git worktree list --porcelain`，只读。detached HEAD 的工作树没有
 `branch` 行，不参与计数（也不会掩盖真冲突）。
 
+**两个接入点**（缺一不可）：
+
+| 接入点 | 何时拦 | 取值 |
+|--------|--------|------|
+| `concurrent guard` | 显式跑并发门禁时 | 默认硬门禁，退出码 `2` |
+| `governance preflight` 第六项 | 每次开工检查时 | 冲突即该项 FAIL、总 `FAIL`、退出码 `1` |
+
+`preflight` 那一项是**开工即拦**的关键：只挂 `concurrent guard` 时，从不跑该命令的人
+完全绕得过去。接进 `preflight` 后它与其他五项同在一条命令里，无法被单独跳过。
+
+**「查不到」的口径**：`git worktree list` 失败（非 git 目录、git 不在 PATH）时，
+该项判 **PASS 但 detail 明写「无法判定…未据此判违规」**——查不到不等于有冲突，
+可也不能据此判违规；detail 披露保证这个绿不是静默的。
+
 **修法**：冲突不能靠 `--force-workspace` 覆盖解决——覆盖只是让门禁闭嘴，
 失真仍在那里。先让多余的工作树脱离该分支：
 
@@ -622,11 +636,11 @@ git -C <多余工作树> checkout --detach
 若只想移动引用、不碰任何工作树，用 `git update-ref refs/heads/<branch> <commit>`，
 不要用 `-B` / `-C`。
 
-**降级开关**：`concurrentGuard.worktreeCollisionSeverity: "warning"` 可把它降为
-软警告（仍进 `warnings`，不静默）。默认 `high`。
+**降级开关**：`concurrentGuard.worktreeCollisionSeverity: "warning"` 可把
+`concurrent guard` 侧的判定降为软警告（仍进 `warnings`，不静默）。默认 `high`。
+`preflight` 侧不读这个开关——开工检查只回答「有没有冲突」，不做分级。
 
-
-### 14.6 综合风险评级
+### 14.7 综合风险评级
 
 `concurrent_guard.assess_concurrent_risk()` 综合四信号输出风险等级：
 

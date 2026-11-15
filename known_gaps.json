@@ -526,28 +526,31 @@
     {
       "id": "N28",
       "priority": "P1",
-      "status": "open",
+      "status": "closed",
       "title": "worktree 里对已被签出的分支用大写 -B / -C 会连带改掉主工作区，且 status 会把基线漂移报成假改动",
       "reader": "任何在本仓开 worktree 做事、需要在合入后切回 main 的人——本仓主工作区长期停在 main 且带 150+ 条未提交改动，一次 `checkout -B main origin/main` 就会把它的 HEAD 前移、索引留在旧基线，status 从 153 条涨到 424 条（含 D 型「删除」假象）；以及看 diff 的评审——那多出来的 271 条看起来像真实改动，实际是引用被移动的副产品。",
       "where": [
-        "collaboration/PROTOCOL.md:14.5（门禁分层表，新增 G11 行）",
-        "collaboration/PROTOCOL.md:14.7（G11 现象 / 危害 / 检出手法 / 修法）",
+        "collaboration/PROTOCOL.md:14.5（门禁分层表，G11 行）",
+        "collaboration/PROTOCOL.md:14.6（现象 / 为何硬门禁 / 危害 / 检出手法 / 两个接入点 / 修法）",
         "ai_collab/concurrent_guard.py:detect_worktree_branch_collisions（解析 git worktree list --porcelain）",
+        "ai_collab/governance.py:preflight（第六项「工作树分支冲突」，开工即拦）",
         "ai_collab/cli/_cli_main.py:cmd_concurrent_guard（worktrees 行 + 冲突修法提示）",
         ".vscode/ai-collab.json（concurrentGuard.worktreeCollisionSeverity 默认 high）",
         "tests/unit/test_worktree_collision_guard.py（9 条检测/分级用例）",
-        "tests/unit/test_concurrent_guard_cli.py::TestWorktreeCollision（3 条 CLI 用例）"
+        "tests/unit/test_concurrent_guard_cli.py::TestWorktreeCollision（3 条 CLI 用例）",
+        "tests/unit/test_preflight_worktree_gate.py（9 条 preflight 用例，含「不挤歪既有五项」）"
       ],
       "detail": "worktree 共享同一份 `.git`（对象库 + `refs/`），各自独立的只有 HEAD / 索引 / 工作树。HEAD 文件内容是 `ref: refs/heads/<branch>`，所以移动 ref 等于**同时移动所有指向它的 HEAD**，但索引不跟着走：`git status` = 工作树 vs 索引 + 索引 vs HEAD，后一项在 HEAD 被动前移后会把基线漂移全部吐出来。正常 git 造不出「同一分支被两个 worktree 签出」：`worktree add` 拒绝重复，`checkout <branch>` / `switch <branch>` 都以 `fatal: already checked out at ...` 拦住；**只有大写 `-B` / `-C`（语义为强制重置分支）或手工 update-ref 能绕过**。2026-11-16 现场实测：在 `/tmp/wt-gov-identity` 执行 `git checkout -q main 2>/dev/null || git checkout -q -B main origin/main`，主工作区 HEAD 由 36d9ec2 前移到 2cc2790，status 153 → 424 条（`36d9ec2..2cc2790` 漂移 273 条路径，与脏集交集 3 条）。已用 `checkout --detach` + `update-ref refs/heads/main 36d9ec2` 复原，工作树文件全程未被改写，无数据丢失。",
       "impact": "① 主工作区 HEAD 被动前移，工作树与索引脱节，git status 大面积失真，容易误提交或误 revert；② 那个「D 型删除」会让人以为文件被删，实际是索引里没有而新 HEAD 有；③ 若此时在主工作区跑 pytest 或打包，得到的是旧树跑新代码的混合结果；④ 两个 worktree 同时持有同一分支时，无论哪边提交都会让另一边的 HEAD 静默前移，问题会反复出现而不是一次性的。",
-      "fix": "已做：① `concurrent_guard.detect_worktree_branch_collisions()` 只读解析 `git worktree list --porcelain`，重复分支即判违规（G11 硬门禁，默认 high，可经 `worktreeCollisionSeverity: warning` 降级但仍进 warnings 不静默）；② `concurrent` CLI 增加 `worktrees: N (collisions: ...)` 行，阻断时给出正确修法（`checkout --detach` 或 `update-ref`，明确说覆盖不是解）；③ PROTOCOL §14.5 加 G11 行 + §14.7 写清现象/危害/检出手法/修法；④ 12 条新用例（9 检测分级 + 3 CLI），正反两侧含「单工作树 / 不同分支 / detached 不误报」。待做：⑤ 检测目前只在 `concurrent guard` 被调用时生效，若希望开工即拦，需把 G11 接进 `governance preflight`（会改变 preflight 项数，需同步既有断言）；⑥ 操作层面的人工前置检查（`git worktree list`）仍是第一道，代码守卫是第二道。",
+      "fix": "已闭环，两个接入点都生效：\n① `concurrent guard`：`detect_worktree_branch_collisions()` 只读解析 `git worktree list --porcelain`，重复分支即判违规（默认 high，可经 `worktreeCollisionSeverity: warning` 降级但仍进 warnings）；CLI 增加 `worktrees: N (collisions: ...)` 行并在阻断时给出 `checkout --detach` / `update-ref` 的正确修法。\n② `governance preflight` 第六项「工作树分支冲突」：冲突即该项 FAIL、总 FAIL、退出码 1。这一项才是「开工即拦」——只挂 concurrent guard 时，从不跑该命令的人完全绕得过去。新项**追加在末位**，既有五项的顺序与结论不变（由 `test_collision_does_not_disturb_other_checks` 逐项断言守住）。\n③ `detect_worktree_branch_collisions()` 加固对 `git` 不可用的处理：接进 preflight 后它会在更多环境里跑，`OSError` 不再逃逸（否则「开工检查」自己先崩）。\n④ PROTOCOL §14.6 写明两个接入点的分工，以及「查不到」的口径：非 git 目录 / git 不在 PATH 时该项判 PASS 但 detail 明写「无法判定…未据此判违规」，绿色不静默。\n顺带修正：上一轮把 G11 小节插在「综合风险评级」之前，编号出现 14.7 在 14.6 之前；本次按语义重排为 §14.5 门禁分层 → §14.6 G11 → §14.7 综合风险评级。\n残留限制（不构成待修项）：这是**事后检出而非事前阻止**——git 没有能拦住工作树操作的前置钩子，`-B` 一旦执行，失真就已经发生；守卫的价值在于下一次 preflight 必然抓到（该状态不会自愈）。",
       "found_at": "2026-11-16",
-      "closed_at": null,
+      "closed_at": "2026-11-16",
       "appended_evidence": [
         "对照实验（可复现）：`git checkout main` → `fatal: 'main' is already checked out at '...'`；`git checkout -B main feat` → `Switched to and reset branch 'main'`（放行）。`git switch` 与 `git switch -C` 行为一致。结论：大写 -B/-C 跳过占用检查。",
         "现场数字：主工作区 status 153 → 424；`git diff --name-only 36d9ec2 2cc2790` 273 条（新增 25 / 修改 248 / 删除 0），与 153 条脏集交集 3 条，153+273-3=423，实测 424（差 1 条未逐条对账，疑为重命名在 porcelain 占两行）。",
         "复原实测：`checkout --detach` 后 `git update-ref refs/heads/main 36d9ec2`，主工作区回到 HEAD=36d9ec2 / 在途 153 / 账本 sha256 62d92b34…f1b5d4 未变。",
-        "守卫落地后对本仓实跑：`concurrent guard` → `worktrees: 7 (collisions: none)`，7 个 worktree 各在不同分支或 detached，无误报。"
+        "守卫落地后对本仓实跑：`concurrent guard` → `worktrees: 7 (collisions: none)`，7 个 worktree 各在不同分支或 detached，无误报。",
+        "2026-11-16 接入 preflight：六项实测 —— `[FAIL] 必读清单声明 / [FAIL] 状态机时效 / [FAIL] 门禁输入完整性 / [PASS] HEAD 治理登记 / [FAIL] 显式 ACK 证据 / [PASS] 工作树分支冲突: 8 个工作树，无重复分支`。前五项仍按各自原口径判定，新项只追加在末位。"
       ]
     }
   ]

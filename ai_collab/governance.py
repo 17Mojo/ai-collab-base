@@ -734,7 +734,7 @@ def verify_required_reads(workspace: Path) -> dict[str, Any]:
 
 
 def preflight(workspace: Path) -> dict[str, Any]:
-    """开工前一次机器检查：五项可判定结论 + 总 PASS/FAIL。"""
+    """开工前一次机器检查：六项可判定结论 + 总 PASS/FAIL。"""
     checks: list[dict[str, Any]] = []
 
     reads = verify_required_reads(workspace)
@@ -791,5 +791,26 @@ def preflight(workspace: Path) -> dict[str, Any]:
     checks.append(
         {"name": "显式 ACK 证据", "pass": bool(explicit), "detail": f"{len(explicit)} 条" if explicit else "无显式 ACK"}
     )
+
+    # G11：同一分支被多个工作树签出。正常 git 造不出该状态（checkout/switch 会拦住，
+    # 只有大写 -B / -C 或手工 update-ref 能绕过），因此出现即事故痕迹，开工时就该拦。
+    # 延迟导入：concurrent_guard 在 run_concurrent_guard 内反向依赖 governance，模块级导入虽可行，
+    # 但保持在调用点导入可让两模块的依赖方向单向且显式。
+    from .concurrent_guard import detect_worktree_branch_collisions
+
+    collision_signal = detect_worktree_branch_collisions(workspace)
+    collisions = collision_signal.get("collisions") or []
+    if collision_signal.get("error"):
+        # 查不到不等于无冲突，但也不能据此判违规——detail 显式披露，让绿色不静默。
+        collision_pass = True
+        collision_detail = f"无法判定（{collision_signal['error']}），未据此判违规"
+    elif collisions:
+        collision_pass = False
+        described = "；".join(f"{item['branch']} 被 {len(item['paths'])} 个工作树签出" for item in collisions)
+        collision_detail = f"{len(collisions)} 个分支冲突: {described}（正常 git 造不出该状态，见 PROTOCOL §14.6）"
+    else:
+        collision_pass = True
+        collision_detail = f"{collision_signal.get('worktree_count', 0)} 个工作树，无重复分支"
+    checks.append({"name": "工作树分支冲突", "pass": collision_pass, "detail": collision_detail})
 
     return {"checks": checks, "pass": all(c["pass"] for c in checks)}
