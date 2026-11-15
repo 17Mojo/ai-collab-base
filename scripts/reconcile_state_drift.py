@@ -6,6 +6,12 @@ import json
 import sys
 from pathlib import Path
 
+# 受管账本写入必须走 ai_collab.governance 的统一互斥原子入口；
+# 从仓库根以外启动脚本时也要能找到包。
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 RECONCILEABLE_TASK_STATUSES = {"deferred", "in_progress", "planning", "implementing", "testing"}
 RECONCILEABLE_PATCH_STATUSES = {"blocked", "in_progress", "planning"}
 
@@ -244,8 +250,11 @@ def reconcile(args):
         report["applied_count"] = len(applied)
         report["error_count"] = len(errors)
         report["errors"] = errors
-        state_file = workspace / "logs" / "collaboration_state.json"
-        state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+        # 不整体覆写：在统一入口里锁内重读最新账本，再合并本轮 drift 修正，
+        # 避免抹掉并发执行主体刚写入的任务或补丁。
+        from ai_collab.governance import merge_state_write
+
+        merge_state_write(workspace / "logs" / "collaboration_state.json", state)
 
     if args.report:
         report_path = workspace / args.report

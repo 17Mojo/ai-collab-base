@@ -746,8 +746,12 @@ class StateManager:
         stale_sec: float = 120.0,
         poll_interval: float = 0.05,
     ):
-        """通过 lock 文件提供跨进程互斥，避免并发写冲突。"""
-        lock_file = f"{target_file}.lock"
+        """通过 lock 文件提供跨进程互斥，避免并发写冲突。
+
+        锁文件路径用 realpath 归一化，确保与 ai_collab.governance.file_lock
+        对同一账本拿到的是同一把锁（治理覆盖层 D5：所有写入共用互斥入口）。
+        """
+        lock_file = f"{os.path.realpath(target_file)}.lock"
         start = time.time()
         fd = None
         token = uuid.uuid4().hex

@@ -1106,6 +1106,7 @@ def cmd_tasks(args):
             print("  无契约问题")
 
         audit_issue_count = 0
+        coverage_applied = False
         if strict:
             workspace = Path(os.path.abspath(args.workspace or os.getcwd()))
             audit_report = run_terminal_result_consistency_audit(workspace=workspace)
@@ -1120,6 +1121,31 @@ def cmd_tasks(args):
                 f"missing_result={audit_report.get('missing_result_count', 0)}"
             )
             print(f"  report={audit_report.get('report_file', '')} summary={audit_report.get('summary_file', '')}")
+
+            # 治理覆盖率判定（Phase 4 已翻闸）：applied=True 时才影响退出码，
+            # 并逐条点名未登记提交；事实源不可用时点名原因而非静默放过。
+            from ai_collab import governance as gov
+
+            coverage = gov.evaluate_coverage(
+                workspace,
+                {"invalid_count": report["invalid_count"], "valid": report["invalid_count"] == 0},
+            )
+            cov = coverage["coverage"]
+            coverage_applied = bool(coverage["applied"])
+            print(
+                "[governance] 治理覆盖率: "
+                f"available={cov['available']} merge_count={cov.get('merge_count', 0)} "
+                f"gap_count={len(cov['gaps'])} would_fail={coverage['would_fail']} "
+                f"applied={coverage_applied}"
+            )
+            if coverage_applied:
+                if cov.get("error"):
+                    print(f"::error::治理覆盖率不可用: {cov['error']}", file=sys.stderr)
+                for sha in cov["gaps"]:
+                    print(
+                        f"::error::未登记合并提交: {sha}（缺 change_id 或 exemption 声明）",
+                        file=sys.stderr,
+                    )
             if audit_report.get("issues"):
                 for item in audit_report["issues"][:10]:
                     print(
@@ -1130,7 +1156,7 @@ def cmd_tasks(args):
                         f"result={item.get('result_header_status', '') or '<unparseable>'}"
                     )
 
-        if strict and (report["invalid_count"] > 0 or audit_issue_count > 0):
+        if strict and (report["invalid_count"] > 0 or audit_issue_count > 0 or coverage_applied):
             return 1
     elif cmd == "audit-result-consistency":
         workspace = Path(os.path.abspath(args.workspace or os.getcwd()))
@@ -3451,6 +3477,79 @@ def cmd_run(args):
     return 0
 
 
+def cmd_governance(args):
+    """治理覆盖层：一致性校验、开工检查、登记表声明、覆盖率观测。
+
+    事实源是磁盘上的普通文件，不识别会话或模型身份；多执行主体共用同一套入口。
+    """
+    from ai_collab import governance as gov
+
+    workspace = Path(os.path.abspath(args.workspace or os.getcwd()))
+    sub = args.subcommand
+    as_json = bool(getattr(args, "json", False))
+
+    if sub == "check-writes":
+        report = gov.check_direct_writes(workspace)
+        if as_json:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        if not report["pass"]:
+            for hit in report["hits"]:
+                print(f"::error::绕过统一账本写入入口: {hit}", file=sys.stderr)
+            print(
+                f"检出 {report['checked']} 处受管账本直写；移除前不得声明多执行主体模式可启用",
+                file=sys.stderr,
+            )
+            return 1
+        if not as_json:
+            print("✓ 一致性校验通过：受管账本写入路径 0 处绕过统一入口")
+        return 0
+
+    if sub == "preflight":
+        report = gov.preflight(workspace)
+        if as_json:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            for item in report["checks"]:
+                mark = "PASS" if item["pass"] else "FAIL"
+                print(f"[{mark}] {item['name']}: {item['detail']}")
+            print(f"preflight: {'PASS' if report['pass'] else 'FAIL'}")
+        return 0 if report["pass"] else 1
+
+    if sub in {"declare-enforcement", "declare-commit"}:
+        commit_sha = str(args.commit_sha or "").strip()
+        reason = str(args.reason or "")
+        declared_by = str(args.declared_by or "cli")
+        try:
+            if sub == "declare-enforcement":
+                record = gov.declare_enforcement(workspace, commit_sha, reason, declared_by)
+            else:
+                record = gov.declare_commit(
+                    workspace,
+                    commit_sha=commit_sha,
+                    change_id=str(args.change_id or ""),
+                    exemption=str(args.exemption or ""),
+                    reason=reason,
+                    declared_by=declared_by,
+                )
+        except gov.GovernanceError as exc:
+            print(f"::error::{exc}", file=sys.stderr)
+            return 1
+        print(json.dumps(record, ensure_ascii=False, indent=2))
+        return 0
+
+    if sub == "observe":
+        base = {
+            "invalid_count": int(args.base_invalid_count or 0),
+            "valid": bool(args.base_valid),
+        }
+        report = gov.evaluate_coverage(workspace, base)
+        print(json.dumps(report["observe"], ensure_ascii=False, indent=2))
+        return 0
+
+    print(f"::error::未知 governance 子命令: {sub}", file=sys.stderr)
+    return 2
+
+
 def cmd_workspace_guard(args):
     """工作区门禁诊断命令。"""
     _set_workspace_env(args.workspace)
@@ -5295,6 +5394,23 @@ def main():
     concurrent_guard_parser.add_argument("--force-workspace", action="store_true", help="模拟强制覆盖门禁")
 
     # hygiene 命令
+    governance_parser = subparsers.add_parser(
+        "governance", help="治理覆盖层（一致性校验 / 开工检查 / 登记表 / 覆盖率观测）"
+    )
+    governance_parser.add_argument(
+        "subcommand",
+        choices=["check-writes", "preflight", "declare-commit", "declare-enforcement", "observe"],
+        help="治理动作",
+    )
+    governance_parser.add_argument("--commit-sha", help="合并提交标识")
+    governance_parser.add_argument("--change-id", help="OpenSpec change_id")
+    governance_parser.add_argument("--exemption", help="显式豁免标签（与 --change-id 二选一）")
+    governance_parser.add_argument("--reason", help="声明理由（至少 10 字符）")
+    governance_parser.add_argument("--declared-by", default="cli", help="声明主体")
+    governance_parser.add_argument("--base-invalid-count", type=int, default=0, help="观测用：既有校验 invalid_count")
+    governance_parser.add_argument("--base-valid", action="store_true", help="观测用：既有校验 valid 结论")
+    governance_parser.add_argument("--json", action="store_true", help="以 JSON 输出")
+
     hygiene_parser = subparsers.add_parser("hygiene", help="工作区/暂存区自动治理（可一次执行或轮询）")
     hygiene_parser.add_argument("--dry-run", action="store_true", help="仅预览治理结果，不执行暂存")
     hygiene_parser.add_argument("--loop", action="store_true", help="进入周期轮询模式")
@@ -5552,6 +5668,8 @@ def main():
         return cmd_spawn_agent_guard(args)
     elif args.command == "concurrent":
         return cmd_concurrent_guard(args)
+    elif args.command == "governance":
+        return cmd_governance(args)
     elif args.command == "hygiene":
         return cmd_hygiene(args)
     elif args.command == "stage-source":

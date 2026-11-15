@@ -16,6 +16,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+# 受管账本写入必须走 ai_collab.governance 的统一互斥原子入口；
+# 从仓库根以外启动脚本时也要能找到包。
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 DEFAULT_HISTORY = "logs/task_controller_history.jsonl"
 DEFAULT_REPORT = "logs/task_controller_report.json"
 
@@ -60,9 +66,10 @@ def read_state(workspace: Path) -> dict[str, Any]:
 
 
 def write_state(workspace: Path, state: dict[str, Any]) -> None:
-    path = workspace / "logs" / "collaboration_state.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    """锁内重读 + 合并式写回，不整体覆写受管账本。"""
+    from ai_collab.governance import merge_state_write
+
+    merge_state_write(workspace / "logs" / "collaboration_state.json", state)
 
 
 def read_ack_state(workspace: Path, state_path: str = "logs/agent_ack_bridge_state.json") -> dict[str, Any]:
