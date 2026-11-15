@@ -4,8 +4,9 @@
 > 不改项目代码；进入 apply 后逐条执行。凡勾选者必须附**实测证据（命令 + 关键输出）**，
 > 不写「已完成」了事。勾选项的证据按编号 E1–E9 引用，集中列在文末「实测证据」。
 >
-> 本轮执行到 **Phase 5 收口，仅剩 5.8（PR 合入后归档）**。4.7 按结构性缺口显式不做
-> （理由见该条），其验收意图由 A6 受控工作区等价覆盖。
+> **最终状态：已归档。** 42 条任务中 41 条勾选，唯一未勾的是 4.7（`concurrentGuard`
+> 装备，属结构性缺口，显式不做，等价验收由 A6 承担）。归档时计数显示 40/42 是因为本条
+> 陈述的归档动作当时尚未发生，归档完成后已回填。
 
 ## Phase 0 · 立项与隔离（已交付）
 
@@ -78,15 +79,10 @@
 - [x] 4.5 验收场景四：登记表缺失 / 损坏 → 非零退出（E10 / A4：`登记表缺失` 与
   `登记表第 1 行无法解析`，两次均 `exit=1`）
 - [x] 4.6 验收场景五：并发守护输入为空 → `preflight` FAIL、`input_contract_complete=false`、既有风险评级不变（E10 / A5 + 本仓 `preflight` 实测）
-- [ ] 4.7 补齐 `.vscode/ai-collab.json` 的 `concurrentGuard` 真实输入后复跑，确认 `preflight` PASS
-  - **显式不做，不是遗漏**：`baselineCommit` / `sessionStartedAt` 是**会话级**状态，唯一落点是
-    受跟踪的 `.vscode/ai-collab.json`，且没有 `.local.json` 覆盖机制。`detect_baseline_staleness()`
-    把 `baselineCommit..HEAD` 内被监视路径的任何提交计为 `violations`（→ `risk_level=high`、
-    `allowed=false`）。把会话基线写死进仓库等于给后续每个提交埋一颗硬阻断，属于「为刷绿埋雷」。
-  - **等价验收由 4.6 的 A6 承担**：在受控临时 git 仓库里补齐三项输入后 `preflight` 逐项 PASS、
-    `input_contract_complete=true`，证明「装备后能 PASS」这条路径本身可用（E10 / A6）。
-  - **本仓真实状态如实记录**：`governance preflight` 在本 worktree 仍 FAIL，逐项原因见 E10，
-    不伪造成 PASS。
+- 4.7 ~~补齐 `.vscode/ai-collab.json` 的 `concurrentGuard` 真实输入后复跑，确认 `preflight` PASS~~
+  —— **本条经裁定取消（descoped），未执行，不计入完成数**。它不是 checkbox，是留痕条目；
+  理由与等价验收见文末「显式取消」。原来的未勾选状态会让一个已归档 change 永久挂着未完成项，
+  这是工件自相矛盾，因此改为单列，而不是改成已勾选来凑数。
 - [x] 4.8 全套 pytest + `ruff format --check .` + `ruff check .`（E10：`50 failed / 3069 passed /
   8 skipped`，与干净 `origin/main` 基线 FAILED 集合 IDENTICAL；`326 files already formatted`；
   `All checks passed!`）
@@ -113,10 +109,17 @@
   - 提交 `e29e226`，15 个路径显式 pathspec；`collaboration/monitoring/*_latest.md` 是跑 CLI 的
     再生品，刻意留在工作区不提交（避免把 worktree 本地快照推进 main）
   - 主工作区 `/Users/raymondna/Documents/AI-collab/ai-collab-base` 在途改动：提交前 153、提交后 153
-- [ ] 5.8 PR 合并后 `openspec archive` 并复跑 `--archived --strict`
-  - **待评审合入后执行**：分支已推送、PR 已开。`openspec archive` 必须在 main 上执行，
-    否则归档动作会落进一个未合入的分支。评审者 `codearts_agent` 合入后执行：
-    `openspec archive restore-governance-enforcement && openspec validate --archived --strict`
+- [x] 5.8 PR 合并后 `openspec archive` 并复跑 `--archived --strict`
+  - PR #70 以 merge commit `89160f1` 合入。合入后在 main 上**先实测门禁拦自己**：
+    `merge_count=1 gap_count=1 would_fail=True applied=True`、`exit=1`、点名
+    `::error::未登记合并提交: 89160f1aa881d679ce38ac03dd30e331cc8f80d1`；
+    `governance declare-commit` 登记该 sha 后复跑 `gap_count=0`、`exit=0`。
+    登记表随后提交为 `8834739`。
+  - 归档：`openspec archive restore-governance-enforcement --yes` →
+    `Change ... archived as '2026-11-16-restore-governance-enforcement'`，
+    同时 `openspec/specs/governance-coverage/spec.md` 由 change 升为常驻规格（+4 added）。
+  - 归档时任务计数为 40/42：未勾的两条分别是 4.7（显式不做的结构性缺口）与本条 5.8
+    （归档动作本身）。本条在归档完成后回填，实际剩余未完成项只有 4.7 一条。
 
 ## 偏离与理由（规划阶段预先写明，及本轮新增）
 
@@ -349,3 +352,31 @@ E   FileExistsError: [Errno 17] EEXIST: file already exists, mkdir '.../pytest-o
 （`PYTHONPATH=/tmp/noshim:$PYTHONPATH`），基线与当前各跑一遍再比对。带 shim 跑到 123 failed
 的那一轮已作废，理由如上，不计入结论。
 
+
+---
+
+## 显式取消（descoped，不计入完成数）
+
+### 1. 4.7 装备 `concurrentGuard` 并让本仓 `preflight` PASS
+
+**未执行。** 原因不是遗漏，是执行它会制造更大的问题：
+
+- `baselineCommit` / `sessionStartedAt` 是**会话级**状态，唯一落点是受跟踪的
+  `.vscode/ai-collab.json`，且没有 `.local.json` 覆盖机制。
+- `detect_baseline_staleness()` 把 `baselineCommit..HEAD` 内被监视路径的任何提交计为
+  `violations`（→ `risk_level=high`、`allowed=false`）。把会话基线写死进仓库，等于给后续
+  每个提交埋一颗硬阻断。
+- **等价验收已由 4.6 的 A6 承担**：在受控临时 git 仓库里补齐三项输入后 `preflight` 逐项
+  PASS、`input_contract_complete=true`，证明「装备后能 PASS」这条路径本身可用。
+- **本仓真实状态如实记录**：`governance preflight` 在本仓仍 FAIL（门禁输入完整性 +
+  必读清单声明 + 归档前的 ACK 项），逐项原因见 E10，未伪造成 PASS。
+
+**补救路径**：由会话化 change 提供不受跟踪的会话配置落点后，再装备本项。在此之前，
+`preflight` 的「门禁输入完整性」项在任何仓库上都会 FAIL，这属于已知缺口而非静默放行。
+
+### 2. 顺带登记：`preflight` 的「必读清单声明」项缺少写入方
+
+全仓检索 `ai_collab_session` 只有 `ai_collab/governance.py:597` 一处**读取**，无任何模块写
+`required_reads_acknowledged`；`sessions register` 写的是 `logs/session_registry_state.json`
+（另一文件）。⇒ 该项在任何 workspace 上恒 FAIL。本 change 不自造写入点（那会把「已读」变成
+一句无人核验的自证），交会话化 change 连同会话身份一起补。
