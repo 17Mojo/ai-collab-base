@@ -44,6 +44,15 @@ def load_json(path: Path, default: dict[str, Any]) -> dict[str, Any]:
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
+    """只写报告类文件；受管账本一律拒绝，必须走统一互斥原子入口。
+
+    这是运行时守卫：静态一致性扫描只覆盖能静态判定的路径，动态拼出来的
+    账本路径由这里 fail-loud 接住，不允许静默退化成裸写。
+    """
+    from .governance import GovernanceError, is_managed_ledger
+
+    if is_managed_ledger(path):
+        raise GovernanceError(f"受管账本禁止直接覆写，请走 locked_json_update: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -343,26 +352,38 @@ def record_ack_bridge(
     dry_run: bool = False,
     assignee_role: str | None = None,
 ) -> dict[str, Any]:
-    state_file, payload, items = load_ack_bridge_state(workspace, state_path=state_path)
-    record = upsert_ack_bridge_item(
-        items,
-        task_id=task_id,
-        assignee=assignee,
-        result_file=result_file,
-        completed_at=completed_at,
-        source=source,
-        bridged_at=bridged_at,
-        status=status,
-        result_synced_from=result_synced_from,
-        increment_count=increment_count,
-        assignee_role=assignee_role,
-        workspace=workspace,
-    )
-    if not dry_run:
-        write_json(state_file, payload)
-        _resolve_dispatch_intervention_on_ack(
-            workspace=workspace,
+    def _upsert(payload: dict[str, Any]) -> dict[str, Any]:
+        items = payload.get("items")
+        if not isinstance(items, dict):
+            items = {}
+            payload["items"] = items
+        return upsert_ack_bridge_item(
+            items,
             task_id=task_id,
             assignee=assignee,
+            result_file=result_file,
+            completed_at=completed_at,
+            source=source,
+            bridged_at=bridged_at,
+            status=status,
+            result_synced_from=result_synced_from,
+            increment_count=increment_count,
+            assignee_role=assignee_role,
+            workspace=workspace,
         )
+
+    state_file = workspace / state_path
+    default = {"version": "1.0.0", "items": {}}
+    if dry_run:
+        return _upsert(load_json(state_file, default))
+
+    # 读-改-写全部在同一把跨进程锁内，且以锁内重读的最新内容为准。
+    from .governance import locked_json_update
+
+    _, record = locked_json_update(state_file, default, _upsert)
+    _resolve_dispatch_intervention_on_ack(
+        workspace=workspace,
+        task_id=task_id,
+        assignee=assignee,
+    )
     return record

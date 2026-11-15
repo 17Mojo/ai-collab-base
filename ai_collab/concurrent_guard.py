@@ -286,6 +286,9 @@ def run_concurrent_guard(
     force: bool = False,
 ) -> dict[str, Any]:
     """Run concurrent guard assessment and persist latest + history reports."""
+    # 观测信号独立存放：不改写 allowed / risk_level / violations / warnings 的既有语义。
+    from .governance import input_contract_complete
+
     cfg = guard_config if isinstance(guard_config, dict) else {}
     enabled = bool(cfg.get("enabled", True))
     foreign_change_severity = str(cfg.get("foreignChangeSeverity", "warning"))
@@ -325,6 +328,7 @@ def run_concurrent_guard(
             "aheadWarnThreshold": ahead_warn_threshold,
             "foreignChangeSeverity": foreign_change_severity,
         },
+        "input_contract_complete": input_contract_complete(expected_branch, baseline_commit, watch_paths),
     }
 
     report_rel = str(cfg.get("report", "logs/workspace_forensics/concurrent_guard_latest.json"))

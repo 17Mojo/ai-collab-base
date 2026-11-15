@@ -1,0 +1,1 @@
+{"commit_sha": "4d04acda3fa9ec8218a3d1a6323bd2fac25eac75", "declared_at": "2026-11-15T23:46:13.010423", "declared_by": "claude_code", "kind": "enforcement", "reason": "以 origin/main 4d04acd 为生效边界：此前的合并提交不参与覆盖率判定，仅判定其后新增的合并提交"}

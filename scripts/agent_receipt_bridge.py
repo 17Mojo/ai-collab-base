@@ -131,7 +131,20 @@ def read_json(path: Path, default: Any) -> Any:
         return default
 
 
+# 与 ai_collab/governance.py 的 LEDGER_FILENAMES 同源；
+# tests/unit/test_governance_ledger.py 强制两者一致（沿用 ack_prefix 的一致性测试模式）。
+# 本脚本可被单独拷走执行，所以运行时守卫用本地表而不硬依赖 ai_collab 包。
+_MANAGED_LEDGER_FILENAMES = (
+    "collaboration_state.json",
+    "agent_ack_bridge_state.json",
+    "agent_receipt_state.json",
+)
+
+
 def write_json(path: Path, data: Any) -> None:
+    """只写报告类文件；受管账本必须走 locked_json_update，禁止直接覆写。"""
+    if path.name in _MANAGED_LEDGER_FILENAMES:
+        raise RuntimeError(f"受管账本禁止直接覆写，请走 locked_json_update: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -258,6 +271,7 @@ def run_receipt(args) -> int:
     tasks = state.get("tasks", {})
     candidate_count = 0
     completed: list[str] = []
+    completed_meta: dict[str, dict[str, Any]] = {}
     skipped: list[dict[str, Any]] = []
     errors: list[dict[str, Any]] = []
 
@@ -306,41 +320,85 @@ def run_receipt(args) -> int:
             )
             continue
 
-        # 5. 收口
+        # 5. 收口：只收集本轮变更，不在此处改内存里的整份状态。
+        # 真正写回在最后的统一入口里，基于锁内重读的最新内容合并。
         completed.append(tid)
         if not args.dry_run:
-            task["status"] = "completed"
-            task["completed_at"] = task.get("updated_at")
-            # 更新 ACK bridge 状态
             rel = task.get("result_file", "")
             # 角色决定 ACK 前缀：同一个 provider 可以占多个席位
             # （claude_code 同时是 AGENT_ARCH 与 AGENT_TEST），
             # 不带角色就只能落到 provider 兜底字母上。
             assignee_role = str(task.get("assignee_role") or "").strip()
             prefix = ack_prefix_for(assignee, assignee_role=assignee_role or None, workspace=workspace)
-            ack_state.setdefault("items", {})[tid] = {
-                "task_id": tid,
-                "assignee": assignee,
-                "assignee_role": assignee_role or None,
-                "result_file": rel,
-                "ack_line": f"{prefix}.ACK|task={tid}|status={ack_status_for(assignee)}|result={rel}",
-                "receipt_completed_at": task.get("updated_at"),
-                "bridged_at": task.get("updated_at"),
-                "bridge_count": 1,
-                "source": "cli-ack",
+            completed_meta[tid] = {
+                "completed_at": task.get("updated_at"),
+                "ack_item": {
+                    "task_id": tid,
+                    "assignee": assignee,
+                    "assignee_role": assignee_role or None,
+                    "result_file": rel,
+                    "ack_line": f"{prefix}.ACK|task={tid}|status={ack_status_for(assignee)}|result={rel}",
+                    "receipt_completed_at": task.get("updated_at"),
+                    "bridged_at": task.get("updated_at"),
+                    "bridge_count": 1,
+                    "source": "cli-ack",
+                },
             }
 
     state_updated = False
     if not args.dry_run and completed:
-        write_json(workspace / "logs" / "collaboration_state.json", state)
-        write_json(workspace / "logs" / "agent_ack_bridge_state.json", ack_state)
-        receipt_state = read_json(workspace / args.state, {"version": "1.0.0", "items": {}})
-        for tid in completed:
-            receipt_state.setdefault("items", {})[tid] = {
-                "task_id": tid,
-                "completed_at": tasks[tid].get("completed_at"),
-            }
-        write_json(workspace / args.state, receipt_state)
+        from ai_collab.governance import locked_json_update
+
+        def _mutate_state(latest: Any) -> None:
+            if not isinstance(latest, dict):
+                return
+            latest_tasks = latest.get("tasks")
+            if not isinstance(latest_tasks, dict):
+                return
+            for tid in completed:
+                task = latest_tasks.get(tid)
+                if isinstance(task, dict):
+                    task["status"] = "completed"
+                    task["completed_at"] = completed_meta[tid]["completed_at"]
+
+        def _mutate_ack(latest: Any) -> None:
+            if not isinstance(latest, dict):
+                return
+            items = latest.get("items")
+            if not isinstance(items, dict):
+                items = {}
+                latest["items"] = items
+            for tid in completed:
+                items[tid] = completed_meta[tid]["ack_item"]
+
+        def _mutate_receipt(latest: Any) -> None:
+            if not isinstance(latest, dict):
+                return
+            items = latest.get("items")
+            if not isinstance(items, dict):
+                items = {}
+                latest["items"] = items
+            for tid in completed:
+                items[tid] = {
+                    "task_id": tid,
+                    "completed_at": completed_meta[tid]["completed_at"],
+                }
+
+        locked_json_update(
+            workspace / "logs" / "collaboration_state.json",
+            {"tasks": {}, "patches": {}},
+            _mutate_state,
+        )
+        locked_json_update(
+            workspace / "logs" / "agent_ack_bridge_state.json",
+            {"items": {}},
+            _mutate_ack,
+        )
+        locked_json_update(
+            workspace / args.state,
+            {"version": "1.0.0", "items": {}},
+            _mutate_receipt,
+        )
         state_updated = True
 
     report = {

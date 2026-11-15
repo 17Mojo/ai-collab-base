@@ -148,29 +148,40 @@ def run_ack_remediation(
     summary_path: str = DEFAULT_SUMMARY_PATH,
     state_path: str = DEFAULT_STATE_PATH,
 ) -> dict[str, Any]:
-    state_file, payload, items = load_ack_bridge_state(workspace, state_path=state_path)
+    state_file, payload, _ = load_ack_bridge_state(workspace, state_path=state_path)
     candidates, already_flagged = collect_ack_remediation_candidates(
         ack_bridge_state=payload,
         task_id=task_id,
     )
 
     generated_at = datetime.now().isoformat()
-    flagged_tasks: list[dict[str, Any]] = []
-    errors: list[dict[str, Any]] = []
 
-    for candidate in candidates:
-        raw_item = items.get(candidate.task_id)
-        if not isinstance(raw_item, dict):
-            errors.append({"task_id": candidate.task_id, "error": "ack bridge item missing during remediation"})
-            continue
-        updated = dict(raw_item)
-        _flag_candidate(item=updated, generated_at=generated_at)
-        if not dry_run:
+    def _apply(latest: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        items = latest.get("items")
+        if not isinstance(items, dict):
+            items = {}
+            latest["items"] = items
+        flagged: list[dict[str, Any]] = []
+        errs: list[dict[str, Any]] = []
+        for candidate in candidates:
+            raw_item = items.get(candidate.task_id)
+            if not isinstance(raw_item, dict):
+                errs.append({"task_id": candidate.task_id, "error": "ack bridge item missing during remediation"})
+                continue
+            updated = dict(raw_item)
+            _flag_candidate(item=updated, generated_at=generated_at)
             items[candidate.task_id] = updated
-        flagged_tasks.append(updated)
+            flagged.append(updated)
+        return flagged, errs
 
-    if not dry_run:
-        write_json(state_file, payload)
+    if dry_run:
+        # 只算假想结果，不写盘；用独立副本避免污染调用方看到的状态。
+        _, dry_payload, _ = load_ack_bridge_state(workspace, state_path=state_path)
+        flagged_tasks, errors = _apply(dry_payload)
+    else:
+        from .governance import locked_json_update
+
+        _, (flagged_tasks, errors) = locked_json_update(state_file, {"version": "1.0.0", "items": {}}, _apply)
 
     report = {
         "generated_at": generated_at,

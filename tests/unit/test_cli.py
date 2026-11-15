@@ -818,7 +818,24 @@ class TestCmdTasks:
             workspace=str(temp_workspace),
         )
 
-        result = cli.cmd_tasks(args)
+        # 本用例只验证 CLI 分支：契约与结果都干净时退出 0。
+        # 覆盖率门禁另由 tests/unit/test_governance_ledger.py 的 A1-A6 集成场景守护，
+        # 这里 mock 成「已登记且无未登记合并提交」，避免把两颗门禁耦合进同一条单测。
+        with patch("ai_collab.governance.evaluate_coverage") as mock_coverage:
+            mock_coverage.return_value = {
+                "coverage": {
+                    "available": True,
+                    "error": None,
+                    "boundary": "0" * 40,
+                    "merge_count": 0,
+                    "declared_count": 1,
+                    "gaps": [],
+                },
+                "would_fail": False,
+                "applied": False,
+                "observe": {},
+            }
+            result = cli.cmd_tasks(args)
 
         assert result == 0
         mock_run_audit.assert_called_once()
