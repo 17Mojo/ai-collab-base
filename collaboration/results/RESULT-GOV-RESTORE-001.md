@@ -232,6 +232,14 @@ All checks passed!
    本 change 不自行造一个写入点（那会让「已读」变成一句无人核验的自证），
    须由会话化 change 连同会话身份一起提供可核验的写入方。
 
+8. **本 change 自身的合入会短暂让 main 上的严格校验变红。**
+   生效边界之后出现的**合并提交**必须登记（这正是门禁要拦的东西）。因此 PR 用 merge commit
+   合入后、在 main 上追加登记之前，`validate-contract --strict` 会以「未登记合并提交」非零退出。
+   这是设计意图不是缺陷，但顺序必须写清，否则会有人误判成回归：
+   `merge → governance declare-commit --commit-sha <merge-sha> --change-id restore-governance-enforcement
+   → 提交登记表 → 复跑 --strict 应 gap_count=0`。
+   若改用 squash / rebase 合入（不产生合并提交），则门禁不会拦，但会丢失本次合入的合并语义。
+
 ## 回滚
 
 - **整体回退**：`git revert <本 change 的提交>`。新增测试文件、登记表、`governance.py` 均为
