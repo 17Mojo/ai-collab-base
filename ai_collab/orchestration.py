@@ -20,6 +20,7 @@ from typing import Any
 
 class BindingStatus(Enum):
     """Orchestration binding status levels"""
+
     UNINITIALIZED = "uninitialized"
     MINIMAL = "minimal"
     PARTIAL = "partial"
@@ -28,6 +29,7 @@ class BindingStatus(Enum):
 
 class StartupMode(Enum):
     """Startup mode options"""
+
     SINGLE_AGENT = "single_agent"
     SUB_AGENT = "sub_agent"
     MULTI_AGENT = "multi_agent"
@@ -35,6 +37,7 @@ class StartupMode(Enum):
 
 class RoleStatus(Enum):
     """Role activation status"""
+
     ACTIVE = "active"
     DORMANT = "dormant"
     DISABLED = "disabled"
@@ -42,6 +45,7 @@ class RoleStatus(Enum):
 
 class ProviderConnectionStatus(Enum):
     """Provider connection status"""
+
     CONNECTED = "connected"
     DETECTED = "detected"
     UNAVAILABLE = "unavailable"
@@ -56,21 +60,21 @@ class AgentProvider:
             "check_command": None,  # CLI integrated, always available when running
             "supports_sub_agent": True,
             "model_variants": ["opus", "sonnet", "haiku"],
-            "capabilities": ["implementation", "refactoring", "testing", "architecture", "documentation"]
+            "capabilities": ["implementation", "refactoring", "testing", "architecture", "documentation"],
         },
         "codex_cli": {
             "name": "Codex CLI",
             "check_command": "which codex",
             "supports_sub_agent": False,
             "model_variants": [],
-            "capabilities": ["architecture", "research", "implementation"]
+            "capabilities": ["architecture", "research", "implementation"],
         },
         "gemini_cli": {
             "name": "Gemini CLI",
             "check_command": "which gemini",
             "supports_sub_agent": False,
             "model_variants": [],
-            "capabilities": ["research", "testing"]
+            "capabilities": ["research", "testing"],
         },
         "codearts_agent": {
             "name": "CodeArts Agent",
@@ -83,8 +87,8 @@ class AgentProvider:
                 "testing",
                 "documentation",
                 "validation",
-            ]
-        }
+            ],
+        },
     }
 
     def __init__(self, provider_id: str, config: dict[str, Any]):
@@ -107,9 +111,7 @@ class AgentProvider:
             "capabilities",
             "last_check",
         }
-        self.extra: dict[str, Any] = {
-            key: value for key, value in config.items() if key not in known_keys
-        }
+        self.extra: dict[str, Any] = {key: value for key, value in config.items() if key not in known_keys}
 
     def check_availability(self) -> bool:
         """Check if provider is available"""
@@ -141,12 +143,7 @@ class AgentProvider:
                 # check_command 来源是硬编码常量（见 ProviderConfig），无注入风险
                 # 但仍用 shlex 拆分并 shell=False 以彻底消除 B602 告警
                 cmd_parts = shlex.split(check_command)
-                result = subprocess.run(
-                    cmd_parts,
-                    shell=False,
-                    capture_output=True,
-                    timeout=5
-                )
+                result = subprocess.run(cmd_parts, shell=False, capture_output=True, timeout=5)
                 if result.returncode == 0:
                     self.connection_status = ProviderConnectionStatus.DETECTED
                     self.last_check = datetime.now()
@@ -183,18 +180,14 @@ class OrchestrationRole:
         duties: list[str],
         required_capabilities: list[str],
         raci_role: str = "C",
-        binding: dict[str, Any] | None = None
+        binding: dict[str, Any] | None = None,
     ):
         self.role_id = role_id
         self.display_name = display_name
         self.duties = duties
         self.required_capabilities = required_capabilities
         self.raci_role = raci_role
-        self.binding = binding or {
-            "provider": None,
-            "model_variant": None,
-            "status": RoleStatus.DORMANT.value
-        }
+        self.binding = binding or {"provider": None, "model_variant": None, "status": RoleStatus.DORMANT.value}
         self.created_at: datetime | None = None
         self.activated_at: datetime | None = None
 
@@ -223,7 +216,7 @@ class OrchestrationRole:
             "binding": self.binding,
             "raci_role": self.raci_role,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "activated_at": self.activated_at.isoformat() if self.activated_at else None
+            "activated_at": self.activated_at.isoformat() if self.activated_at else None,
         }
 
 
@@ -235,20 +228,20 @@ class OrchestrationConfig:
             "display_name": "主执行者",
             "duties": ["代码实现", "重构", "Bug修复"],
             "required_capabilities": ["implementation", "refactoring"],
-            "raci_role": "R"
+            "raci_role": "R",
         },
         "AGENT_ARCH": {
             "display_name": "架构师",
             "duties": ["架构设计", "技术选型", "代码审查"],
             "required_capabilities": ["architecture", "design"],
-            "raci_role": "A"
+            "raci_role": "A",
         },
         "AGENT_TEST": {
             "display_name": "测试验证",
             "duties": ["单元测试", "集成测试", "质量保证"],
             "required_capabilities": ["testing", "validation"],
-            "raci_role": "C"
-        }
+            "raci_role": "C",
+        },
     }
 
     # 角色 → 命令前缀的权威映射。
@@ -257,11 +250,7 @@ class OrchestrationConfig:
     # 这里的内置默认值和 config/agent-orchestration.template.json 仍是旧映射。
     # 结果：任何新工作区从模板冷启动，都会拿回 A.RUN→AGENT_ARCH / X.RUN→AGENT_EXEC
     # 的倒挂版本 —— 正好把 229062d 想修掉的那个语义又装回去。
-    DEFAULT_COMMAND_PREFIXES = {
-        "A.RUN": "AGENT_EXEC",
-        "X.RUN": "AGENT_ARCH",
-        "C.RUN": "AGENT_TEST"
-    }
+    DEFAULT_COMMAND_PREFIXES = {"A.RUN": "AGENT_EXEC", "X.RUN": "AGENT_ARCH", "C.RUN": "AGENT_TEST"}
 
     # provider → ACK 前缀的兜底映射。
     # ACK 前缀的权威来源应是角色的 command_prefix（如 A.RUN → AGENT_EXEC），
@@ -325,7 +314,7 @@ class OrchestrationConfig:
                 duties=role_data.get("duties", []),
                 required_capabilities=role_data.get("required_capabilities", []),
                 raci_role=role_data.get("raci_role", "C"),
-                binding=role_data.get("binding")
+                binding=role_data.get("binding"),
             )
             if role_data.get("created_at"):
                 role.created_at = datetime.fromisoformat(role_data["created_at"])
@@ -337,25 +326,19 @@ class OrchestrationConfig:
             provider = AgentProvider(provider_id, provider_data)
             if provider_data.get("last_check"):
                 provider.last_check = datetime.fromisoformat(provider_data["last_check"])
-            provider.connection_status = ProviderConnectionStatus(
-                provider_data.get("connection_status", "unavailable")
-            )
+            provider.connection_status = ProviderConnectionStatus(provider_data.get("connection_status", "unavailable"))
             self.providers[provider_id] = provider
 
     def save(self) -> bool:
         """Save orchestration configuration"""
         try:
             # Update config dict from objects
-            self.config["roles"] = {
-                role_id: role.to_dict()
-                for role_id, role in self.roles.items()
-            }
+            self.config["roles"] = {role_id: role.to_dict() for role_id, role in self.roles.items()}
             # self.providers 为空时不要清空已有注册表，否则 provider 元数据
             # （display_name / capabilities / fallback_ack_prefix）会被静默抹掉。
             if self.providers:
                 self.config["provider_registry"] = {
-                    provider_id: provider.to_dict()
-                    for provider_id, provider in self.providers.items()
+                    provider_id: provider.to_dict() for provider_id, provider in self.providers.items()
                 }
             else:
                 self.config.setdefault("provider_registry", {})
@@ -377,7 +360,7 @@ class OrchestrationConfig:
                 display_name=role_def["display_name"],
                 duties=role_def["duties"],
                 required_capabilities=role_def["required_capabilities"],
-                raci_role=role_def["raci_role"]
+                raci_role=role_def["raci_role"],
             )
             role.created_at = datetime.now()
             roles[role_id] = role
@@ -393,7 +376,7 @@ class OrchestrationConfig:
                 **self.DEFAULT_COMMAND_PREFIXES,
                 "custom_prefixes": {},
                 "custom_allowed": True,
-                "history_compatible": True
+                "history_compatible": True,
             },
             "provider_registry": self._default_provider_registry(),
             "runtime_policy": {
@@ -401,7 +384,7 @@ class OrchestrationConfig:
                 "require_confirmation": True,
                 "snapshot_before_change": True,
                 "max_roles": 10,
-                "auto_activate_dormant": False
+                "auto_activate_dormant": False,
             },
             "snapshots": [],
             "history": [],
@@ -409,8 +392,8 @@ class OrchestrationConfig:
                 "initialized_at": None,
                 "initial_provider": None,
                 "initial_mode": None,
-                "wizard_completed": False
-            }
+                "wizard_completed": False,
+            },
         }
 
         # 先按刚生成的配置重建对象，再落盘：
@@ -462,8 +445,9 @@ class OrchestrationConfig:
     def is_cold_start_needed(self) -> bool:
         """Check if cold start is needed"""
         status = self.get_binding_status()
-        return status == BindingStatus.UNINITIALIZED or \
-               not self.config.get("cold_start_config", {}).get("wizard_completed", False)
+        return status == BindingStatus.UNINITIALIZED or not self.config.get("cold_start_config", {}).get(
+            "wizard_completed", False
+        )
 
     def detect_providers(self) -> dict[str, AgentProvider]:
         """Detect available agent providers"""
@@ -480,20 +464,14 @@ class OrchestrationConfig:
     def get_available_providers(self) -> list[AgentProvider]:
         """Get list of available providers"""
         return [
-            provider for provider in self.providers.values()
-            if provider.connection_status in [
-                ProviderConnectionStatus.CONNECTED,
-                ProviderConnectionStatus.DETECTED
-            ]
+            provider
+            for provider in self.providers.values()
+            if provider.connection_status in [ProviderConnectionStatus.CONNECTED, ProviderConnectionStatus.DETECTED]
         ]
 
     def add_history_event(self, event: str, details: dict[str, Any]):
         """Add event to history"""
-        self.config["history"].append({
-            "timestamp": datetime.now().isoformat(),
-            "event": event,
-            "details": details
-        })
+        self.config["history"].append({"timestamp": datetime.now().isoformat(), "event": event, "details": details})
 
     def create_snapshot(self, trigger: str = "manual", note: str = "") -> str:
         """Create configuration snapshot"""
@@ -501,18 +479,14 @@ class OrchestrationConfig:
 
         # 快照不复制 snapshots / history 自身：否则每次快照都会把上一次的快照
         # 再嵌一层，配置文件体积随变更次数指数膨胀。
-        snapshot_source = {
-            key: value
-            for key, value in self.config.items()
-            if key not in {"snapshots", "history"}
-        }
+        snapshot_source = {key: value for key, value in self.config.items() if key not in {"snapshots", "history"}}
 
         snapshot = {
             "snapshot_id": snapshot_id,
             "timestamp": datetime.now().isoformat(),
             "trigger": trigger,
             "note": note,
-            "config_copy": json.loads(json.dumps(snapshot_source))  # Deep copy
+            "config_copy": json.loads(json.dumps(snapshot_source)),  # Deep copy
         }
 
         self.config.setdefault("snapshots", []).append(snapshot)
@@ -619,12 +593,7 @@ class OrchestrationConfig:
         return sorted(role_id for role_id, _ in matched)[0]
 
     def add_role(
-        self,
-        role_id: str,
-        display_name: str,
-        duties: list[str],
-        required_capabilities: list[str],
-        raci_role: str = "C"
+        self, role_id: str, display_name: str, duties: list[str], required_capabilities: list[str], raci_role: str = "C"
     ) -> OrchestrationRole:
         """Add a new role"""
         role = OrchestrationRole(
@@ -632,7 +601,7 @@ class OrchestrationConfig:
             display_name=display_name,
             duties=duties,
             required_capabilities=required_capabilities,
-            raci_role=raci_role
+            raci_role=raci_role,
         )
         role.created_at = datetime.now()
 
@@ -654,11 +623,9 @@ class OrchestrationConfig:
         role.activate(provider, model_variant)
         self.update_binding_status()
 
-        self.add_history_event("role_activated", {
-            "role_id": role_id,
-            "provider": provider,
-            "model_variant": model_variant
-        })
+        self.add_history_event(
+            "role_activated", {"role_id": role_id, "provider": provider, "model_variant": model_variant}
+        )
 
     def set_startup_mode(self, mode: StartupMode):
         """Set startup mode"""
@@ -671,13 +638,10 @@ class OrchestrationConfig:
             "initialized_at": datetime.now().isoformat(),
             "initial_provider": initial_provider,
             "initial_mode": mode.value,
-            "wizard_completed": True
+            "wizard_completed": True,
         }
 
-        self.add_history_event("cold_start", {
-            "initial_provider": initial_provider,
-            "mode": mode.value
-        })
+        self.add_history_event("cold_start", {"initial_provider": initial_provider, "mode": mode.value})
 
         self.save()
 
@@ -696,7 +660,7 @@ class ColdStartWizard:
 
         # Step 1: Detect providers
         print("\n[步骤 1] 检测可用 Agent 服务商...")
-# providers detection moved to available
+        # providers detection moved to available
 
         available = self.config.get_available_providers()
 
@@ -724,11 +688,7 @@ class ColdStartWizard:
 
         mode_choice = input("\n请选择模式 (1-3): ").strip()
 
-        mode_map = {
-            "1": StartupMode.SINGLE_AGENT,
-            "2": StartupMode.SUB_AGENT,
-            "3": StartupMode.MULTI_AGENT
-        }
+        mode_map = {"1": StartupMode.SINGLE_AGENT, "2": StartupMode.SUB_AGENT, "3": StartupMode.MULTI_AGENT}
 
         selected_mode = mode_map.get(mode_choice)
         if not selected_mode:
@@ -762,11 +722,7 @@ class ColdStartWizard:
                     print(f"  - {variant}")
 
                 # Map roles to variants
-                default_mapping = {
-                    "AGENT_ARCH": "opus",
-                    "AGENT_EXEC": "sonnet",
-                    "AGENT_TEST": "haiku"
-                }
+                default_mapping = {"AGENT_ARCH": "opus", "AGENT_EXEC": "sonnet", "AGENT_TEST": "haiku"}
 
                 for role_id in ["AGENT_EXEC", "AGENT_ARCH", "AGENT_TEST"]:
                     variant = default_mapping.get(role_id, provider.model_variants[0])
@@ -831,11 +787,9 @@ class ColdStartWizard:
 
             if new_mapping and new_mapping in roles:
                 prefixes[prefix] = new_mapping
-                self.config.add_history_event("command_redefined", {
-                    "prefix": prefix,
-                    "old_mapping": current,
-                    "new_mapping": new_mapping
-                })
+                self.config.add_history_event(
+                    "command_redefined", {"prefix": prefix, "old_mapping": current, "new_mapping": new_mapping}
+                )
 
         # Ask for custom prefixes
         add_custom = input("\n是否添加自定义命令前缀? (y/n): ").strip().lower()
@@ -850,10 +804,9 @@ class ColdStartWizard:
 
                 if role_mapping in roles:
                     prefixes.setdefault("custom_prefixes", {})[custom_prefix] = role_mapping
-                    self.config.add_history_event("command_redefined", {
-                        "prefix": custom_prefix,
-                        "mapping": role_mapping
-                    })
+                    self.config.add_history_event(
+                        "command_redefined", {"prefix": custom_prefix, "mapping": role_mapping}
+                    )
 
 
 def check_cold_start(workspace_path: str | None = None) -> ColdStartWizard | None:

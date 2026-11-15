@@ -49,18 +49,11 @@ def test_classifiers_do_not_claim_versions_below_requires_python():
     text = _read_pyproject_text()
     major, minor = _requires_python_tuple()
 
-    claimed = [
-        (int(a), int(b))
-        for a, b in re.findall(
-            r'"Programming Language :: Python :: (\d+)\.(\d+)"', text
-        )
-    ]
+    claimed = [(int(a), int(b)) for a, b in re.findall(r'"Programming Language :: Python :: (\d+)\.(\d+)"', text)]
     assert claimed, "pyproject.toml 未声明任何具体 Python 版本 classifier"
 
     too_old = [f"{a}.{b}" for a, b in claimed if (a, b) < (major, minor)]
-    assert not too_old, (
-        f"classifiers 声称支持 {too_old}，低于 requires-python >={major}.{minor}"
-    )
+    assert not too_old, f"classifiers 声称支持 {too_old}，低于 requires-python >={major}.{minor}"
 
 
 def test_ruff_target_version_matches_requires_python():
@@ -70,8 +63,7 @@ def test_ruff_target_version_matches_requires_python():
     m = re.search(r'^target-version\s*=\s*"py(\d)(\d+)"', text, re.MULTILINE)
     assert m, "pyproject.toml 里没找到 ruff 的 target-version"
     assert (int(m.group(1)), int(m.group(2))) == (major, minor), (
-        f"ruff target-version=py{m.group(1)}{m.group(2)} 与 requires-python "
-        f">={major}.{minor} 不一致"
+        f"ruff target-version=py{m.group(1)}{m.group(2)} 与 requires-python >={major}.{minor} 不一致"
     )
 
 

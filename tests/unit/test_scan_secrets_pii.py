@@ -78,9 +78,7 @@ def test_password_short_fixture_not_flagged(tmp_path: Path) -> None:
 def test_password_placeholder_literal_not_flagged(tmp_path: Path) -> None:
     module = _load_module()
     (tmp_path / "settings.py").write_text(
-        'password = resolve_credentials()\n'
-        'password="from-file"\n'
-        'password="your-secret-here"\n',
+        'password = resolve_credentials()\npassword="from-file"\npassword="your-secret-here"\n',
         encoding="utf-8",
     )
 
@@ -114,15 +112,11 @@ def test_bare_numeric_password_detected(tmp_path: Path) -> None:
     """
     module = _load_module()
     # 字面量拆开写，避免本文件自身被密钥扫描器命中（扫描面包含测试源码）
-    (tmp_path / "config.py").write_text(
-        "pass" + "word = " + "12345678" + "\n", encoding="utf-8"
-    )
+    (tmp_path / "config.py").write_text("pass" + "word = " + "12345678" + "\n", encoding="utf-8")
 
     report = module.scan_workspace(tmp_path)
     assert report["has_findings"] is True
-    assert any(
-        item["rule_id"] == "password_literal_bare_numeric" for item in report["findings"]
-    )
+    assert any(item["rule_id"] == "password_literal_bare_numeric" for item in report["findings"])
 
 
 def test_bare_short_password_detected(tmp_path: Path) -> None:
@@ -132,15 +126,11 @@ def test_bare_short_password_detected(tmp_path: Path) -> None:
     由 `password_literal_bare_short` 补回。
     """
     module = _load_module()
-    (tmp_path / "config.py").write_text(
-        "pass" + "word = " + "hunter2" + "\n", encoding="utf-8"
-    )
+    (tmp_path / "config.py").write_text("pass" + "word = " + "hunter2" + "\n", encoding="utf-8")
 
     report = module.scan_workspace(tmp_path)
     assert report["has_findings"] is True
-    assert any(
-        item["rule_id"] == "password_literal_bare_short" for item in report["findings"]
-    )
+    assert any(item["rule_id"] == "password_literal_bare_short" for item in report["findings"])
 
 
 def test_bare_identifier_still_not_flagged(tmp_path: Path) -> None:
@@ -150,10 +140,7 @@ def test_bare_identifier_still_not_flagged(tmp_path: Path) -> None:
     """
     module = _load_module()
     (tmp_path / "config.py").write_text(
-        "pass" + "word = resolve_credentials(...)\n"
-        "pass" + "word: str\n"
-        "pass" + "word = None\n"
-        "pass" + "word = sha1\n",
+        "pass" + "word = resolve_credentials(...)\npass" + "word: str\npass" + "word = None\npass" + "word = sha1\n",
         encoding="utf-8",
     )
 
@@ -164,14 +151,8 @@ def test_bare_identifier_still_not_flagged(tmp_path: Path) -> None:
 def test_long_bare_password_not_double_reported(tmp_path: Path) -> None:
     """12 位以上裸值只由 `password_literal_bare` 记一条，不重复计两条。"""
     module = _load_module()
-    (tmp_path / "config.py").write_text(
-        "pass" + "word = " + "abcdefghij12" + "\n", encoding="utf-8"
-    )
+    (tmp_path / "config.py").write_text("pass" + "word = " + "abcdefghij12" + "\n", encoding="utf-8")
 
     report = module.scan_workspace(tmp_path)
-    password_rules = [
-        item["rule_id"]
-        for item in report["findings"]
-        if item["rule_id"].startswith("password")
-    ]
+    password_rules = [item["rule_id"] for item in report["findings"] if item["rule_id"].startswith("password")]
     assert password_rules == ["password_literal_bare"]

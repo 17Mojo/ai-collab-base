@@ -235,9 +235,7 @@ class TestBudgetEnforcement:
         expensive = manager.load_pack("expensive-pack")
 
         # Test over budget
-        is_valid = manager.validate_token_budget(
-            [expensive, expensive, expensive], budget_limit=100
-        )
+        is_valid = manager.validate_token_budget([expensive, expensive, expensive], budget_limit=100)
         assert is_valid is False
 
     def test_get_remaining_budget(self, temp_packs_dir, base_pack, medium_pack):
@@ -257,9 +255,7 @@ class TestBudgetEnforcement:
 class TestBudgetAwareSelection:
     """Test budget-aware pack selection strategies"""
 
-    def test_select_packs_within_budget(
-        self, temp_packs_dir, base_pack, medium_pack, expensive_pack
-    ):
+    def test_select_packs_within_budget(self, temp_packs_dir, base_pack, medium_pack, expensive_pack):
         """Test selecting packs that fit within budget"""
         manager = PackManager(temp_packs_dir)
 

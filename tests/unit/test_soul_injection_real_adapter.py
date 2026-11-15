@@ -173,9 +173,7 @@ class TestFallbackBehavior:
                 # Simulate timeout
                 mock_call.side_effect = SoulServiceError("Timeout", SoulServiceErrorCode.TIMEOUT)
 
-                result = await engine.inject_soul_real(
-                    "test content", "luoyonghao", timeout=1.0, max_retries=1
-                )
+                result = await engine.inject_soul_real("test content", "luoyonghao", timeout=1.0, max_retries=1)
 
                 # Should have fallen back to strategy chain
                 assert result["success"] is True
@@ -198,9 +196,7 @@ class TestFallbackBehavior:
                     "Service unavailable", SoulServiceErrorCode.SERVICE_UNAVAILABLE
                 )
 
-                result = await engine.inject_soul_real(
-                    "test content", "luoyonghao", timeout=1.0, max_retries=1
-                )
+                result = await engine.inject_soul_real("test content", "luoyonghao", timeout=1.0, max_retries=1)
 
                 # Should have fallen back to strategy chain
                 assert result["success"] is True
@@ -218,14 +214,10 @@ class TestFallbackBehavior:
         ):
             with patch.object(engine, "_call_external_ai_service") as mock_call:
                 # Simulate connection error
-                mock_call.side_effect = SoulServiceError(
-                    "Connection error", SoulServiceErrorCode.CONNECTION_ERROR
-                )
+                mock_call.side_effect = SoulServiceError("Connection error", SoulServiceErrorCode.CONNECTION_ERROR)
 
                 with pytest.raises(SoulServiceError):
-                    await engine.inject_soul_real(
-                        "test content", "luoyonghao", timeout=1.0, max_retries=1
-                    )
+                    await engine.inject_soul_real("test content", "luoyonghao", timeout=1.0, max_retries=1)
 
 
 class TestRetryLogic:
@@ -305,9 +297,7 @@ class TestSuccessfulServiceCall:
         with patch.dict("os.environ", {"SOUL_AI_SERVICE_URL": "http://test-service"}):
             mock_response = AsyncMock()
             mock_response.status = 200
-            mock_response.json = AsyncMock(
-                return_value={"personalized_content": "Personalized test content"}
-            )
+            mock_response.json = AsyncMock(return_value={"personalized_content": "Personalized test content"})
 
             mock_post = AsyncMock()
             mock_post.__aenter__ = AsyncMock(return_value=mock_response)

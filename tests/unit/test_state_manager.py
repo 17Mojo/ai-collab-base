@@ -783,9 +783,7 @@ def test_migrate_task_contracts_upgrades_legacy_tasks(tmp_path: Path, monkeypatc
     assert task["reviewer"] == "codex"
     assert task["primary_skill"] == "api-test-pro"
     assert task["support_skills"] == ["legacy-contract-migration"]
-    assert task["acceptance_commands"] == [
-        "python3 -m ai_collab.cli tasks validate-contract --scope all --strict"
-    ]
+    assert task["acceptance_commands"] == ["python3 -m ai_collab.cli tasks validate-contract --scope all --strict"]
     assert task["result_file"] == "collaboration/results/RESULT_TASK-MIGRATE-LEGACY-001.md"
 
 

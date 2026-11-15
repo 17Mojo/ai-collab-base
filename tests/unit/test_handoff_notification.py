@@ -241,6 +241,7 @@ class TestConfirmHandoff:
 class TestGetPendingHandoffs:
     def test_lists_only_for_target_ai_in_pending_states(self, fresh_manager):
         import time
+
         # 间隔 1.1s 避免 timestamp-based ID 冲突（生产 bug：同秒会覆盖）
         h_b1 = fresh_manager.create_handoff("a", "b", "task_handoff", "t1", "d")
         time.sleep(1.1)

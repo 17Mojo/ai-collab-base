@@ -315,9 +315,7 @@ class TestMain:
 
         state_file = tmp_path / "logs" / "collaboration_state.json"
         state_file.parent.mkdir(parents=True)
-        state_data = {
-            "tasks": {"task1": {"status": "completed"}, "task2": {"status": "in_progress"}}
-        }
+        state_data = {"tasks": {"task1": {"status": "completed"}, "task2": {"status": "in_progress"}}}
         state_file.write_text(json.dumps(state_data))
 
         config_file = tmp_path / ".vscode" / "ai-collab.json"

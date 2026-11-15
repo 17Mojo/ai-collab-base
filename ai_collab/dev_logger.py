@@ -82,9 +82,7 @@ class VSCodeOutputLogger:
     def log_progress(task_id: str, stage: str, message: str):
         """记录进度日志"""
         timestamp = datetime.now().strftime("%H:%M:%S")
-        VSCodeOutputLogger.log(
-            f"[{timestamp}] TASK: {task_id}, Stage: {stage}, {message}", "AI Collab Progress"
-        )
+        VSCodeOutputLogger.log(f"[{timestamp}] TASK: {task_id}, Stage: {stage}, {message}", "AI Collab Progress")
 
 
 class DevLogger:
@@ -262,9 +260,7 @@ class DevLogger:
 
         # 记录到 VSCode 输出
         if self.enable_vsc_log:
-            VSCodeOutputLogger.log(
-                f"日志已创建: {filename} (ID: {task_id or f'TASK-{timestamp}'})", "AI Collab Logs"
-            )
+            VSCodeOutputLogger.log(f"日志已创建: {filename} (ID: {task_id or f'TASK-{timestamp}'})", "AI Collab Logs")
 
         return filepath
 
@@ -315,9 +311,7 @@ class DevLogger:
                 # 找到下一个章节或文件末尾
                 next_section_idx = parts[1].find("\n## ")
                 if next_section_idx == -1:
-                    log_content = (
-                        parts[0] + section_pattern + parts[1].rstrip() + f"\n\n{content}\n"
-                    )
+                    log_content = parts[0] + section_pattern + parts[1].rstrip() + f"\n\n{content}\n"
                 else:
                     before = parts[0] + section_pattern + parts[1][:next_section_idx]
                     after = parts[1][next_section_idx:]
@@ -440,20 +434,14 @@ class DevLogger:
         if month:
             month_dir = os.path.join(self.log_dir, month)
             if os.path.exists(month_dir):
-                logs = [
-                    os.path.join(month_dir, f) for f in os.listdir(month_dir) if f.endswith(".md")
-                ]
+                logs = [os.path.join(month_dir, f) for f in os.listdir(month_dir) if f.endswith(".md")]
         else:
             if os.path.exists(self.log_dir):
                 for subdir in os.listdir(self.log_dir):
                     subdir_path = os.path.join(self.log_dir, subdir)
                     if os.path.isdir(subdir_path):
                         logs.extend(
-                            [
-                                os.path.join(subdir_path, f)
-                                for f in os.listdir(subdir_path)
-                                if f.endswith(".md")
-                            ]
+                            [os.path.join(subdir_path, f) for f in os.listdir(subdir_path) if f.endswith(".md")]
                         )
 
         return sorted(logs)
@@ -471,8 +459,6 @@ class DevLogger:
                 try:
                     os.remove(log_path)
                     if self.enable_vsc_log:
-                        VSCodeOutputLogger.log(
-                            f"已删除旧日志: {os.path.basename(log_path)}", "AI Collab Logs"
-                        )
+                        VSCodeOutputLogger.log(f"已删除旧日志: {os.path.basename(log_path)}", "AI Collab Logs")
                 except OSError:
                     pass

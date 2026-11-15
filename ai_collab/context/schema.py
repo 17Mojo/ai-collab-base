@@ -196,9 +196,7 @@ class Context:
             "name": self.name,
             "file_contexts": [f.to_dict() for f in self.file_contexts],
             "ai_sessions": [s.to_dict() for s in self.ai_sessions],
-            "notebooklm_context": self.notebooklm_context.to_dict()
-            if self.notebooklm_context
-            else None,
+            "notebooklm_context": self.notebooklm_context.to_dict() if self.notebooklm_context else None,
             "user_context": self.user_context,
             "metadata": {
                 "created_at": self.metadata.created_at.isoformat(),

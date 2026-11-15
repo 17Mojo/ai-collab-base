@@ -77,8 +77,7 @@ def test_claude_adapter_generates_artifact_only_when_bridge_disabled(tmp_path: P
     delivery = report["deliveries"][0]
     assert delivery["action"] == "artifact_only"
     assert delivery["event_file"] == (
-        "collaboration/monitoring/claude_push_events/"
-        "CLAUDE_PUSH_EVENT_intervention-claude-001_latest.md"
+        "collaboration/monitoring/claude_push_events/CLAUDE_PUSH_EVENT_intervention-claude-001_latest.md"
     )
     event_text = (workspace / delivery["event_file"]).read_text(encoding="utf-8")
     assert "请补发 ACK。" in event_text
@@ -99,7 +98,7 @@ def test_claude_adapter_queues_delivery_when_bridge_command_succeeds(tmp_path: P
         {
             "enabled": True,
             "channel": "claude-main",
-            "bridgeCommand": "cp \"{event_file}\" \"{workspace}/bridge_delivery.txt\"",
+            "bridgeCommand": 'cp "{event_file}" "{workspace}/bridge_delivery.txt"',
         },
     )
 

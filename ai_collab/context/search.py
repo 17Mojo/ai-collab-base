@@ -174,9 +174,7 @@ class ContextSearchEngine:
 
         return candidates
 
-    def _semantic_search(
-        self, query: SearchQuery, candidates: dict[str, ContextItem]
-    ) -> list[SearchResult]:
+    def _semantic_search(self, query: SearchQuery, candidates: dict[str, ContextItem]) -> list[SearchResult]:
         """语义搜索
 
         Args:
@@ -214,9 +212,7 @@ class ContextSearchEngine:
 
         return results
 
-    def _keyword_search(
-        self, query: SearchQuery, candidates: dict[str, ContextItem]
-    ) -> list[SearchResult]:
+    def _keyword_search(self, query: SearchQuery, candidates: dict[str, ContextItem]) -> list[SearchResult]:
         """关键词搜索
 
         Args:
@@ -258,9 +254,7 @@ class ContextSearchEngine:
 
         return results
 
-    def _hybrid_search(
-        self, query: SearchQuery, candidates: dict[str, ContextItem]
-    ) -> list[SearchResult]:
+    def _hybrid_search(self, query: SearchQuery, candidates: dict[str, ContextItem]) -> list[SearchResult]:
         """混合搜索（语义 + 关键词）
 
         Args:
@@ -311,9 +305,7 @@ class ContextSearchEngine:
 
         return results
 
-    def _graph_search(
-        self, query: SearchQuery, candidates: dict[str, ContextItem]
-    ) -> list[SearchResult]:
+    def _graph_search(self, query: SearchQuery, candidates: dict[str, ContextItem]) -> list[SearchResult]:
         """图谱搜索（通过知识图谱关联）
 
         .. deprecated::
@@ -329,6 +321,7 @@ class ContextSearchEngine:
             等同于 ``_hybrid_search(query, candidates)`` 的结果
         """
         import warnings
+
         warnings.warn(
             "_graph_search is deprecated and will be removed in a future version. "
             "It currently delegates to _hybrid_search.",
@@ -336,7 +329,6 @@ class ContextSearchEngine:
             stacklevel=2,
         )
         return self._hybrid_search(query, candidates)
-
 
     def _filter_by_scope(
         self,
@@ -388,7 +380,7 @@ class ContextSearchEngine:
 
         elif scope == SearchScope.BY_SOURCE:
             # query 可能是 None (兜底), 取 filters 安全
-            target_sources = (query.filters.get("sources", []) if query is not None else [])
+            target_sources = query.filters.get("sources", []) if query is not None else []
             if target_sources:
                 filtered = []
                 for r in results:
@@ -466,9 +458,7 @@ class ContextSearchEngine:
                 all_words.update(words)
 
         # 过滤包含部分查询的词
-        suggestions = [
-            word for word in all_words if len(word) > 3 and partial_query.lower() in word
-        ]
+        suggestions = [word for word in all_words if len(word) > 3 and partial_query.lower() in word]
 
         # 按词频排序（需要额外的统计）
         return suggestions[:limit]

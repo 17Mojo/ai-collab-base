@@ -169,7 +169,6 @@ class TestOrchestrationConfig:
         assert "C.RUN" in prefixes
 
 
-
 class TestAgentProviderCheckAvailability:
     def test_claude_code_always_available(self):
         p_obj = AgentProvider("claude_code", {})
@@ -194,10 +193,8 @@ class TestAgentProviderCheckAvailability:
             returncode = 0
             stdout = b"/usr/bin/codex"
             stderr = b""
-        monkeypatch.setattr(
-            "ai_collab.orchestration.subprocess.run",
-            lambda *a, **kw: FakeResult()
-        )
+
+        monkeypatch.setattr("ai_collab.orchestration.subprocess.run", lambda *a, **kw: FakeResult())
         p_obj = AgentProvider("codex_cli", {})
         assert p_obj.check_availability() is True
         assert p_obj.connection_status.value == "detected"
@@ -207,17 +204,17 @@ class TestAgentProviderCheckAvailability:
             returncode = 1
             stdout = b""
             stderr = b"not found"
-        monkeypatch.setattr(
-            "ai_collab.orchestration.subprocess.run",
-            lambda *a, **kw: FakeResult()
-        )
+
+        monkeypatch.setattr("ai_collab.orchestration.subprocess.run", lambda *a, **kw: FakeResult())
         p_obj = AgentProvider("codex_cli", {})
         assert p_obj.check_availability() is False
 
     def test_cli_provider_handles_timeout(self, monkeypatch):
         import subprocess as sp_mod
+
         def fake_run(*a, **kw):
             raise sp_mod.TimeoutExpired(cmd="x", timeout=5)
+
         monkeypatch.setattr("ai_collab.orchestration.subprocess.run", fake_run)
         p_obj = AgentProvider("codex_cli", {})
         assert p_obj.check_availability() is False
@@ -271,8 +268,11 @@ class TestOrchestrationConfigStatus:
     def test_update_binding_status_minimal(self, tmp_path):
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.roles["R1"] = OrchestrationRole(
-            role_id="R1", display_name="d", duties=["d"],
-            required_capabilities=["d"], raci_role="R",
+            role_id="R1",
+            display_name="d",
+            duties=["d"],
+            required_capabilities=["d"],
+            raci_role="R",
         )
         cfg.roles["R1"].activate("claude_code")
         cfg.update_binding_status()
@@ -283,8 +283,11 @@ class TestOrchestrationConfigStatus:
         for i in range(3):
             rid = f"R{i}"
             cfg.roles[rid] = OrchestrationRole(
-                role_id=rid, display_name="d", duties=["d"],
-                required_capabilities=["d"], raci_role="R",
+                role_id=rid,
+                display_name="d",
+                duties=["d"],
+                required_capabilities=["d"],
+                raci_role="R",
             )
         cfg.roles["R0"].activate("claude_code")
         cfg.roles["R1"].activate("claude_code")
@@ -295,8 +298,11 @@ class TestOrchestrationConfigStatus:
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         for rid in ["R1", "R2"]:
             cfg.roles[rid] = OrchestrationRole(
-                role_id=rid, display_name="d", duties=["d"],
-                required_capabilities=["d"], raci_role="R",
+                role_id=rid,
+                display_name="d",
+                duties=["d"],
+                required_capabilities=["d"],
+                raci_role="R",
             )
             cfg.roles[rid].activate("claude_code")
         cfg.update_binding_status()
@@ -342,8 +348,11 @@ class TestOrchestrationConfigHistory:
 class TestOrchestrationRoleActivate:
     def test_activate_sets_timestamp(self):
         role = OrchestrationRole(
-            role_id="R", display_name="d", duties=["d"],
-            required_capabilities=["d"], raci_role="R",
+            role_id="R",
+            display_name="d",
+            duties=["d"],
+            required_capabilities=["d"],
+            raci_role="R",
         )
         assert role.activated_at is None
         role.activate("claude_code")
@@ -351,19 +360,22 @@ class TestOrchestrationRoleActivate:
 
     def test_to_dict_with_none_timestamps(self):
         role = OrchestrationRole(
-            role_id="R", display_name="d", duties=["d"],
-            required_capabilities=["d"], raci_role="R",
+            role_id="R",
+            display_name="d",
+            duties=["d"],
+            required_capabilities=["d"],
+            raci_role="R",
         )
         d = role.to_dict()
         assert d["created_at"] is None
         assert d["activated_at"] is None
 
 
-
 class TestOrchestrationConfigSnapshots:
     def test_create_snapshot_default(self, tmp_path):
         """默认 create_snapshot"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []  # init history list
         sid = cfg.create_snapshot()
@@ -374,6 +386,7 @@ class TestOrchestrationConfigSnapshots:
     def test_create_snapshot_custom_trigger(self, tmp_path):
         """自定义 trigger"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
         # create_snapshot 有副作用(写入 snapshots), 返回的 id 本用例不需要
@@ -385,6 +398,7 @@ class TestOrchestrationConfigSnapshots:
     def test_rollback_to_snapshot_success(self, tmp_path):
         """成功回滚"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
         cfg.config["custom_field"] = "original"
@@ -397,6 +411,7 @@ class TestOrchestrationConfigSnapshots:
     def test_rollback_nonexistent_snapshot(self, tmp_path):
         """回滚不存在的快照"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         assert cfg.rollback_to_snapshot("snap_999") is False
 
@@ -405,6 +420,7 @@ class TestOrchestrationConfigRoleCommands:
     def test_get_role_for_command(self, tmp_path):
         """通过命令前缀获取 role"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.roles["AGENT_EXEC"] = type("Role", (), {"role_id": "AGENT_EXEC"})()
         # Default prefixes include A.RUN
@@ -416,17 +432,16 @@ class TestOrchestrationConfigRoleCommands:
     def test_get_role_for_command_custom(self, tmp_path):
         """自定义命令前缀"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
-        cfg.config["command_prefixes"] = {
-            "A.RUN": "AGENT_EXEC",
-            "custom_prefixes": {"MY.CMD": "AGENT_TEST"}
-        }
+        cfg.config["command_prefixes"] = {"A.RUN": "AGENT_EXEC", "custom_prefixes": {"MY.CMD": "AGENT_TEST"}}
         # AGENT_TEST not in roles, returns None
         assert cfg.get_role_for_command("MY.CMD") is None
 
     def test_add_role(self, tmp_path):
         """添加 role"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
         role = cfg.add_role(
@@ -443,12 +458,16 @@ class TestOrchestrationConfigRoleCommands:
     def test_activate_role(self, tmp_path):
         """激活 role"""
         from ai_collab.orchestration import OrchestrationConfig, OrchestrationRole
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
         # Use real OrchestrationRole instead of mock
         role_obj = OrchestrationRole(
-            role_id="R1", display_name="test", duties=["d"],
-            required_capabilities=["d"], raci_role="R",
+            role_id="R1",
+            display_name="test",
+            duties=["d"],
+            required_capabilities=["d"],
+            raci_role="R",
         )
         cfg.roles["R1"] = role_obj
         # Should not raise
@@ -457,6 +476,7 @@ class TestOrchestrationConfigRoleCommands:
     def test_activate_role_not_found(self, tmp_path):
         """激活不存在的 role"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         with __import__("pytest").raises(ValueError):
             cfg.activate_role("NONEXISTENT", "claude_code")
@@ -466,6 +486,7 @@ class TestOrchestrationColdStartWizard:
     def test_cold_start_wizard_basic(self, tmp_path):
         """ColdStartWizard 基本构造"""
         from ai_collab.orchestration import ColdStartWizard, OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         wizard = ColdStartWizard(cfg)
         assert wizard is not None
@@ -475,6 +496,7 @@ class TestOrchestrationColdStartWizard:
     def test_cold_start_wizard_run_returns_bool(self, tmp_path):
         """ColdStartWizard.run 返回 bool"""
         from ai_collab.orchestration import ColdStartWizard, OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         wizard = ColdStartWizard(cfg)
         # run() 可能返回 True/False(取决于环境),只要不抛异常
@@ -484,6 +506,7 @@ class TestOrchestrationColdStartWizard:
     def test_complete_cold_start_via_config(self, tmp_path):
         """通过 config 完成冷启动状态设置"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.config["history"] = []
         cfg.update_binding_status()
@@ -495,13 +518,13 @@ class TestOrchestrationColdStartWizard:
         assert cfg.get_binding_status().value in ("active", "minimal", "partial", "uninitialized")
 
 
-
 class TestOrchestrationSaveDefaultConfig:
     """_create_default_config + load full paths 覆盖"""
 
     def test_create_default_config_then_load(self, tmp_path):
         """create_default_config 创建默认配置 + load 读取"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         # 强制创建默认配置(无文件存在)
         cfg._create_default_config()
@@ -513,6 +536,7 @@ class TestOrchestrationSaveDefaultConfig:
         import json
 
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         # 手动写一个完整的 config 文件
         config_data = {
@@ -521,10 +545,10 @@ class TestOrchestrationSaveDefaultConfig:
                 "test_provider": {
                     "name": "TestProvider",
                     "connection_status": "connected",
-                    "last_check": "2026-01-01T00:00:00"
+                    "last_check": "2026-01-01T00:00:00",
                 }
             },
-            "binding_status": "active"
+            "binding_status": "active",
         }
         cfg_file = cfg.config_file
         with open(cfg_file, "w", encoding="utf-8") as f:
@@ -537,6 +561,7 @@ class TestOrchestrationSaveDefaultConfig:
     def test_load_handles_OSError(self, tmp_path, monkeypatch):
         """load() 文件读取异常"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         # write OK first
         with open(cfg.config_file, "w") as f:
@@ -544,6 +569,7 @@ class TestOrchestrationSaveDefaultConfig:
 
         def broken_open(*args, **kwargs):
             raise OSError("disk failure")
+
         monkeypatch.setattr("builtins.open", broken_open)
         # Should return False
         assert cfg.load() is False
@@ -551,10 +577,12 @@ class TestOrchestrationSaveDefaultConfig:
     def test_save_OSError_returns_false(self, tmp_path, monkeypatch):
         """save() 写入异常"""
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
 
         def broken_open(*args, **kwargs):
             raise OSError("disk full")
+
         monkeypatch.setattr("builtins.open", broken_open)
         # Should return False on error
         assert cfg.save() is False
@@ -563,6 +591,7 @@ class TestOrchestrationSaveDefaultConfig:
         """save() 序列化 providers"""
 
         from ai_collab.orchestration import OrchestrationConfig
+
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
         cfg.providers["test_p"] = type("P", (), {})()
         cfg.providers["test_p"].to_dict = lambda: {"name": "test"}

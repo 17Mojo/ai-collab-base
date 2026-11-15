@@ -94,9 +94,7 @@ class TokenManager:
                     "description": "客户端 Token 存储文件",
                 },
             }
-            self.storage_path.write_text(
-                json.dumps(default_data, indent=2, ensure_ascii=False), encoding="utf-8"
-            )
+            self.storage_path.write_text(json.dumps(default_data, indent=2, ensure_ascii=False), encoding="utf-8")
             return
 
         try:
@@ -122,9 +120,7 @@ class TokenManager:
             },
         }
 
-        self.storage_path.write_text(
-            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        self.storage_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
     def generate_token(
         self,
@@ -326,7 +322,9 @@ def create_initial_tokens():
 
     # 管理员令牌 (永久有效期)
     admin_token = manager.generate_token(
-        client_name="admin", permissions=["*"], expires_hours=None  # 所有权限
+        client_name="admin",
+        permissions=["*"],
+        expires_hours=None,  # 所有权限
     )
 
     print("初始令牌已创建:")

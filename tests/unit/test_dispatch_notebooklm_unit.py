@@ -4,7 +4,6 @@
 测试 NotebookLM 与派单流程集成功能
 """
 
-
 from ai_collab.integrations.dispatch_notebooklm import (
     _build_queries_for_task,
     _infer_task_type,
@@ -343,9 +342,7 @@ class TestQueryNotebooklmViaCliEnv:
         monkeypatch.setattr(sp, "run", fake_run)
         monkeypatch.setattr(dnl.subprocess, "run", fake_run)
 
-        result = dnl._query_notebooklm_via_cli(
-            "测试问题", "nb-123", proxy="http://proxy.local:7890"
-        )
+        result = dnl._query_notebooklm_via_cli("测试问题", "nb-123", proxy="http://proxy.local:7890")
 
         assert result["mode"] == "real"
         assert result["answer"] == "ok"

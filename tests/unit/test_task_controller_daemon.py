@@ -534,7 +534,9 @@ def test_controller_apply_prewarning_before_timeout(tmp_path):
         "logs/controller_prewarn_apply_second.json",
     )
     assert result_second.returncode == 0, result_second.stderr
-    second_report = json.loads((workspace / "logs" / "controller_prewarn_apply_second.json").read_text(encoding="utf-8"))
+    second_report = json.loads(
+        (workspace / "logs" / "controller_prewarn_apply_second.json").read_text(encoding="utf-8")
+    )
     assert second_report["prewarning_detected"] == 1
     assert second_report["prewarning_applied"] == 0
 

@@ -66,12 +66,7 @@ def collect_task_files(tasks_dir: Path, only: list[str] | None) -> list[Path]:
     """
     if only:
         return [tasks_dir / f"{task_id}.md" for task_id in only]
-    found = {
-        p
-        for pattern in ("TASK-*.md", "TASK_*.md")
-        for p in tasks_dir.glob(pattern)
-        if p.is_file()
-    }
+    found = {p for pattern in ("TASK-*.md", "TASK_*.md") for p in tasks_dir.glob(pattern) if p.is_file()}
     return sorted(found)
 
 
@@ -137,9 +132,7 @@ def main() -> int:
         # 2026-10-27 实测：脚本原先在第一个不合规工单上直接抛异常退出，
         # 后面 20 来个工单一条都没验到——「只报第一个错」等于「只看了第一个」。
         try:
-            state.update_task_status(
-                task_id=task_id, status=TaskStatus.COMPLETED, actor="claude_code"
-            )
+            state.update_task_status(task_id=task_id, status=TaskStatus.COMPLETED, actor="claude_code")
         except ValueError as exc:
             close_failures.append(f"{task_id}: {exc}")
             print(f"[门禁未过] {task_id}：{exc}")
@@ -174,11 +167,7 @@ def main() -> int:
     for item in audit.get("issues", [])[:10]:
         print("  issue:", item)
 
-    bad = (
-        bool(report.get("issues"))
-        or int(audit.get("issue_count", 0)) > 0
-        or bool(close_failures)
-    )
+    bad = bool(report.get("issues")) or int(audit.get("issue_count", 0)) > 0 or bool(close_failures)
     print()
     if close_failures:
         print(f"收口失败 {len(close_failures)} 个工单（结果文件门禁没过）：")

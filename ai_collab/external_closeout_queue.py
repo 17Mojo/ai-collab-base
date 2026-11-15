@@ -198,8 +198,7 @@ def _recommended_order(
     lines: list[str] = []
     blocker_assignees = {str(item.get("assignee") or "") for item in blockers}
     tasks_by_assignee = {
-        assignee: [item for item in tasks if item.get("assignee") == assignee]
-        for assignee in EXTERNAL_ASSIGNEES
+        assignee: [item for item in tasks if item.get("assignee") == assignee] for assignee in EXTERNAL_ASSIGNEES
     }
 
     if "codearts_agent" in blocker_assignees:
@@ -225,8 +224,7 @@ def _recommended_order(
             if not pending:
                 continue
             needs_registration = any(
-                str(item.get("session_id") or "").strip().lower().startswith("unregistered:")
-                for item in pending
+                str(item.get("session_id") or "").strip().lower().startswith("unregistered:") for item in pending
             )
             index = len(lines) + 1
             pack = pack_by_assignee.get(assignee, "")
@@ -355,9 +353,7 @@ def render_external_closeout_queue(
     blockers = _build_blockers(open_interventions)
 
     relevant_assignees = {
-        str(item.get("assignee") or "")
-        for item in open_interventions
-        if str(item.get("assignee") or "")
+        str(item.get("assignee") or "") for item in open_interventions if str(item.get("assignee") or "")
     }
     tasks = project_state.get("tasks", {})
     active_ids = project_state.get("active_tasks", [])
@@ -391,8 +387,7 @@ def render_external_closeout_queue(
         blockers_by_assignee=blockers_by_assignee,
     )
     ready_packs = [
-        {"assignee": assignee, "pack_file": pack_file}
-        for assignee, pack_file in sorted(pack_by_assignee.items())
+        {"assignee": assignee, "pack_file": pack_file} for assignee, pack_file in sorted(pack_by_assignee.items())
     ]
 
     report = {

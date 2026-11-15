@@ -256,10 +256,7 @@ def _discover_kernel() -> tuple[str, int, int]:
     """
     candidates = _kernel_config_files()
     if not candidates:
-        raise BridgeError(
-            "找不到 CodeArts Doer kernel 的 server_config.properties，"
-            f"查找路径：{KERNEL_CONFIG_ROOT}"
-        )
+        raise BridgeError(f"找不到 CodeArts Doer kernel 的 server_config.properties，查找路径：{KERNEL_CONFIG_ROOT}")
     parsed: list[tuple[Path, int, int]] = []
     for path in candidates:
         try:
@@ -320,9 +317,7 @@ def resolve_credentials(
         or ""
     ).strip()
     username = (
-        os.environ.get("OPENCODE_SERVER_USERNAME")
-        or file_values.get("OPENCODE_SERVER_USERNAME")
-        or DEFAULT_USERNAME
+        os.environ.get("OPENCODE_SERVER_USERNAME") or file_values.get("OPENCODE_SERVER_USERNAME") or DEFAULT_USERNAME
     ).strip()
     if password:
         return username, password
@@ -490,9 +485,7 @@ def _provider_mapping(payload: dict[str, Any]) -> dict[str, str]:
             if isinstance(models, dict):
                 items = list(models.keys())
             elif isinstance(models, list):
-                items = [
-                    str(item.get("id")) for item in models if isinstance(item, dict) and item.get("id")
-                ]
+                items = [str(item.get("id")) for item in models if isinstance(item, dict) and item.get("id")]
             else:
                 items = []
             for model_id in items:
@@ -500,9 +493,7 @@ def _provider_mapping(payload: dict[str, Any]) -> dict[str, str]:
     return mapping
 
 
-def resolve_model(
-    client: KernelClient, *, spec: str
-) -> tuple[dict[str, str] | None, str, str]:
+def resolve_model(client: KernelClient, *, spec: str) -> tuple[dict[str, str] | None, str, str]:
     """解析模型规格。
 
     返回 `(model_payload, resolved, warning)`：
@@ -638,9 +629,7 @@ class KernelClient:
         except TimeoutError as exc:
             # socket.timeout 就是 TimeoutError（Python 3.10+ 起是别名），
             # 所以这一句同时接住了 socket 超时与 urllib 抛出的读超时。
-            raise BridgeTimeoutError(
-                f"{method} {path} 等待超时（{wait}s）: {exc}", method=method, path=path
-            ) from exc
+            raise BridgeTimeoutError(f"{method} {path} 等待超时（{wait}s）: {exc}", method=method, path=path) from exc
         except ConnectionError as exc:
             raise BridgeError(f"与 kernel {self.base_url} 的连接中断: {exc}") from exc
         except http.client.HTTPException as exc:
@@ -678,14 +667,10 @@ class KernelClient:
         kernel 的 cron 路由自己建会话，但**模型由 kernel 决定**；要钉死模型
         只能自己建会话，再用带 model 的消息体投递。
         """
-        payload = self.request(
-            "POST", "/session", query={"directory": str(workspace)}, body={"title": title}
-        )
+        payload = self.request("POST", "/session", query={"directory": str(workspace)}, body={"title": title})
         session_id = extract_session_id(payload)
         if not session_id:
-            raise BridgeError(
-                f"创建会话失败: {json.dumps(payload, ensure_ascii=False)[:300]}"
-            )
+            raise BridgeError(f"创建会话失败: {json.dumps(payload, ensure_ascii=False)[:300]}")
         return session_id
 
     def send_message(
@@ -738,13 +723,9 @@ class KernelClient:
 
     def register_project_path(self, workspace: Path) -> Any:
         """cron 路由要求 project path 先注册（有效期 10 分钟）。"""
-        return self.request(
-            "GET", "/cag/cron/tasks", query={"directory": str(workspace)}
-        )
+        return self.request("GET", "/cag/cron/tasks", query={"directory": str(workspace)})
 
-    def create_cron_task(
-        self, *, workspace: Path, prompt: str, cron: str
-    ) -> dict[str, Any]:
+    def create_cron_task(self, *, workspace: Path, prompt: str, cron: str) -> dict[str, Any]:
         body = {
             "tasks": [
                 {
@@ -783,9 +764,7 @@ class KernelClient:
             return [dict(item) for item in items if isinstance(item, dict)]
         return []
 
-    def delete_cron_task(
-        self, *, workspace: Path, task_ids: list[str]
-    ) -> dict[str, Any]:
+    def delete_cron_task(self, *, workspace: Path, task_ids: list[str]) -> dict[str, Any]:
         """永久删除本工作区下的 cron 任务（kernel 的 `POST /cag/cron/tasks/delete`）。
 
         kernel 的删除路由会先查调度器的 in-flight 集合：
@@ -799,7 +778,6 @@ class KernelClient:
             query={"directory": str(workspace)},
             body={"ids": list(task_ids)},
         )
-
 
 
 # --------------------------------------------------------------------------
@@ -856,13 +834,9 @@ def deliver_with_model_fallback(
     first_requested = ""
     for index, spec in enumerate(candidates):
         try:
-            model_payload, model_resolved, model_warning = resolve_model(
-                client, spec=spec
-            )
+            model_payload, model_resolved, model_warning = resolve_model(client, spec=spec)
         except BridgeError as exc:
-            attempts.append(
-                {"model": spec, "ok": False, "error": f"解析模型失败: {exc}"}
-            )
+            attempts.append({"model": spec, "ok": False, "error": f"解析模型失败: {exc}"})
             continue
         if index == 0:
             first_requested = model_resolved or spec
@@ -884,24 +858,16 @@ def deliver_with_model_fallback(
                 model=model_payload,
             )
         except BridgeError as exc:
-            attempts.append(
-                {"model": model_resolved, "ok": False, "error": str(exc)}
-            )
+            attempts.append({"model": model_resolved, "ok": False, "error": str(exc)})
             continue
         accepted_without_receipt = bool(delivery.get("accepted_without_receipt"))
         model_used = extract_used_model(delivery.get("response"))
-        if (
-            model_used
-            and model_used != model_resolved
-            and not accepted_without_receipt
-        ):
+        if model_used and model_used != model_resolved and not accepted_without_receipt:
             attempts.append(
                 {
                     "model": model_resolved,
                     "ok": False,
-                    "error": (
-                        f"静默回落：请求 {model_resolved}，实际用了 {model_used}"
-                    ),
+                    "error": (f"静默回落：请求 {model_resolved}，实际用了 {model_used}"),
                 }
             )
             continue
@@ -920,9 +886,7 @@ def deliver_with_model_fallback(
         else:
             delivery["model_applied"] = model_used == delivery["model_requested"]
         delivery["fallback_used"] = bool(
-            model_used
-            and delivery["model_requested"]
-            and model_used != delivery["model_requested"]
+            model_used and delivery["model_requested"] and model_used != delivery["model_requested"]
         )
         delivery["model_attempts"] = attempts
         return delivery, attempts
@@ -949,9 +913,7 @@ def write_delivery_receipt(*, workspace: Path, delivery: dict[str, Any]) -> str:
     }
     target = workspace / DELIVERY_RECEIPT_RELATIVE
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    target.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return str(target.relative_to(workspace))
 
 
@@ -1030,9 +992,7 @@ def _message_matches(sent_text: str, candidate_text: str) -> bool:
     return len(prefix) >= 20 and prefix in candidate
 
 
-def _assistant_messages_after(
-    messages: list[dict[str, Any]], index: int
-) -> list[dict[str, Any]]:
+def _assistant_messages_after(messages: list[dict[str, Any]], index: int) -> list[dict[str, Any]]:
     """某条用户消息之后的 assistant 消息（agent 已经在跑的证据）。"""
     result: list[dict[str, Any]] = []
     for other in messages[index + 1 :]:
@@ -1086,9 +1046,7 @@ def verify_message_accepted(
             if attempt < 2:
                 time.sleep(1.0)
     else:
-        raise BridgeError(
-            f"等回执超时后核实失败（无法确认消息是否被 kernel 接受）: {last_error}"
-        )
+        raise BridgeError(f"等回执超时后核实失败（无法确认消息是否被 kernel 接受）: {last_error}")
 
     sent_text = str(message or "")
     matched_recent: list[int] = []  # 内容匹配 **且** 时间确认是发送之后
@@ -1156,9 +1114,7 @@ def send_message_awaiting_receipt(
             sent_at_ms=sent_at_ms,
         )
         if not accepted:
-            raise BridgeError(
-                f"等回执超时（{client.receipt_timeout}s）且核实未发现消息被 kernel 接受: {exc}"
-            ) from exc
+            raise BridgeError(f"等回执超时（{client.receipt_timeout}s）且核实未发现消息被 kernel 接受: {exc}") from exc
         used_info = _first_assistant_model_info(assistants)
         receipt: dict[str, Any] = {"info": used_info} if used_info else {}
         return {
@@ -1174,29 +1130,21 @@ def send_message_awaiting_receipt(
 # --------------------------------------------------------------------------
 
 
-def deliver_via_cron(
-    client: KernelClient, *, workspace: Path, message: str
-) -> dict[str, Any]:
+def deliver_via_cron(client: KernelClient, *, workspace: Path, message: str) -> dict[str, Any]:
     """主通道：建一次性 cron 任务并立即触发，kernel 自建会话。"""
     client.register_project_path(workspace)
-    created = client.create_cron_task(
-        workspace=workspace, prompt=message, cron=_next_minute_cron()
-    )
+    created = client.create_cron_task(workspace=workspace, prompt=message, cron=_next_minute_cron())
     results = created.get("results") if isinstance(created, dict) else None
     first = results[0] if isinstance(results, list) and results else {}
     task_id = str((first or {}).get("taskId") or "").strip()
     if not task_id:
         raise BridgeError(f"创建 cron 任务失败: {json.dumps(created, ensure_ascii=False)[:500]}")
     if (first or {}).get("success") is False:
-        raise BridgeError(
-            f"创建 cron 任务被拒绝: {(first or {}).get('message', 'unknown')}"
-        )
+        raise BridgeError(f"创建 cron 任务被拒绝: {(first or {}).get('message', 'unknown')}")
     fired = client.fire_cron_task(workspace=workspace, task_ids=[task_id])
     fired_count = int(fired.get("firedCount", 0)) if isinstance(fired, dict) else 0
     if fired_count < 1:
-        raise BridgeError(
-            f"触发 cron 任务失败: {json.dumps(fired, ensure_ascii=False)[:500]}"
-        )
+        raise BridgeError(f"触发 cron 任务失败: {json.dumps(fired, ensure_ascii=False)[:500]}")
     return {
         "channel": "cron",
         "task_id": task_id,
@@ -1317,8 +1265,7 @@ def inspect_cron_residue(client: KernelClient, *, workspace: Path) -> dict[str, 
                     # nextFireTime 停在过去 = 手动触发没走完成回调的残留，
                     # 不是待触发的计划（真机实测：9 小时没有复发）。
                     "staleNextFire": bool(
-                        next_fire_iso is not None
-                        and datetime.fromisoformat(next_fire_iso) < datetime.now()
+                        next_fire_iso is not None and datetime.fromisoformat(next_fire_iso) < datetime.now()
                     ),
                 }
             )
@@ -1412,9 +1359,7 @@ def _remove_from_cron_store(task_ids: list[str]) -> dict[str, Any]:
     payload["tasks"] = kept
     tmp_path = CRON_STORE_PATH.with_name(f"{CRON_STORE_PATH.name}.{os.getpid()}.tmp")
     try:
-        tmp_path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         tmp_path.replace(CRON_STORE_PATH)
     except OSError as exc:
         try:
@@ -1425,9 +1370,7 @@ def _remove_from_cron_store(task_ids: list[str]) -> dict[str, Any]:
     return {"ok": True, "removed": removed, "kept": len(kept), "lock_conflict": lock_conflict}
 
 
-def purge_cron_residue(
-    client: KernelClient, *, workspace: Path, dry_run: bool = False
-) -> dict[str, Any]:
+def purge_cron_residue(client: KernelClient, *, workspace: Path, dry_run: bool = False) -> dict[str, Any]:
     """清理本工作区下的僵尸投递任务。
 
     两条路：
@@ -1486,24 +1429,21 @@ def purge_cron_residue(
     }
 
 
-def resolve_direct_session(
-    client: KernelClient, *, workspace: Path, explicit: str
-) -> str | None:
+def resolve_direct_session(client: KernelClient, *, workspace: Path, explicit: str) -> str | None:
     """挑一个可用的 CodeArts 会话（优先显式指定，其次工作区最近更新的）。"""
     if explicit and SESSION_ID_PATTERN.match(explicit.strip()):
         return explicit.strip()
     if explicit.strip():
         # 显式给了但不是 ses_ 形态 —— 可能是我们自己的内部会话 ID，不能直接用
         print(
-            f"[codearts-bridge] 提示: 会话 ID {explicit.strip()!r} 不是 kernel 的 "
-            "ses_ 形态，改用 cron 通道。",
+            f"[codearts-bridge] 提示: 会话 ID {explicit.strip()!r} 不是 kernel 的 ses_ 形态，改用 cron 通道。",
             file=sys.stderr,
         )
         return None
     for session in client.list_sessions(workspace):
-            session_id = str(session.get("id") or session.get("sessionID") or "").strip()
-            if SESSION_ID_PATTERN.match(session_id):
-                return session_id
+        session_id = str(session.get("id") or session.get("sessionID") or "").strip()
+        if SESSION_ID_PATTERN.match(session_id):
+            return session_id
     return None
 
 
@@ -1512,9 +1452,7 @@ def resolve_direct_session(
 # --------------------------------------------------------------------------
 
 
-def write_inbox_copy(
-    *, workspace: Path, intervention_id: str, message: str, payload: dict[str, Any]
-) -> str:
+def write_inbox_copy(*, workspace: Path, intervention_id: str, message: str, payload: dict[str, Any]) -> str:
     """落一份审计/兜底副本到 codearts_inbox。"""
     inbox = workspace / INBOX_DIR
     inbox.mkdir(parents=True, exist_ok=True)
@@ -1586,9 +1524,7 @@ def _setup_credentials(*, kernel_url: str) -> int:
 # --------------------------------------------------------------------------
 
 
-def _check_residue_only(
-    *, workspace: Path, kernel_url: str, purge: bool = False, dry_run: bool = False
-) -> int:
+def _check_residue_only(*, workspace: Path, kernel_url: str, purge: bool = False, dry_run: bool = False) -> int:
     """残留体检（--check-residue）；带 --purge-residue 时顺便清理。"""
     resolved_url = kernel_url
     if not resolved_url:
@@ -1599,9 +1535,7 @@ def _check_residue_only(
             return _fail(str(exc))
     try:
         username, password = resolve_credentials(kernel_url=resolved_url)
-        client = KernelClient(
-            base_url=resolved_url, username=username, password=password
-        )
+        client = KernelClient(base_url=resolved_url, username=username, password=password)
         if purge:
             result = purge_cron_residue(client, workspace=workspace, dry_run=dry_run)
         else:
@@ -1613,9 +1547,7 @@ def _check_residue_only(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="把控制面 payload 投递到 CodeArts Doer (opencode kernel)"
-    )
+    parser = argparse.ArgumentParser(description="把控制面 payload 投递到 CodeArts Doer (opencode kernel)")
     parser.add_argument("--workspace", required=True, help="工作区根目录")
     parser.add_argument("--event-file", help="pull event 工件路径")
     parser.add_argument("--artifact-file", help="干预工件路径")
@@ -1714,9 +1646,7 @@ def main(argv: list[str] | None = None) -> int:
     # 模型降级链候选：首选 + fallback（去重、保持原序）。
     fallback_models = parse_fallback_models(args.model_fallback)
     if fallback_models and not args.model:
-        return _fail(
-            "--model-fallback 需要与 --model 一起使用：没有首选模型就谈不上降级链"
-        )
+        return _fail("--model-fallback 需要与 --model 一起使用：没有首选模型就谈不上降级链")
     candidates = build_model_candidates(args.model, fallback_models)
 
     # 通道选择：默认保持旧行为（cron），只有钉了模型才走 new_session。
@@ -1727,10 +1657,7 @@ def main(argv: list[str] | None = None) -> int:
             "请改用 --channel new_session（自建会话 + 消息体带模型）"
         )
     if fallback_models and channel != "new_session":
-        return _fail(
-            "--model-fallback 只支持 new_session 通道"
-            f"（降级重试必须用全新会话），当前通道: {channel}"
-        )
+        return _fail(f"--model-fallback 只支持 new_session 通道（降级重试必须用全新会话），当前通道: {channel}")
 
     kernel_url = args.kernel_url
     if not kernel_url:
@@ -1790,13 +1717,11 @@ def main(argv: list[str] | None = None) -> int:
         if delivery is None:
             for attempt in attempts:
                 print(
-                    "[codearts-bridge] 候选模型 "
-                    f"{attempt['model']} 失败: {attempt['error']}",
+                    f"[codearts-bridge] 候选模型 {attempt['model']} 失败: {attempt['error']}",
                     file=sys.stderr,
                 )
             return _fail(
-                f"全部 {len(candidates)} 个候选模型都失败，未做任何投递；"
-                "拒绝降级成不指定模型（那等于假装钉住了模型）"
+                f"全部 {len(candidates)} 个候选模型都失败，未做任何投递；拒绝降级成不指定模型（那等于假装钉住了模型）"
             )
     else:
         # 解析模型：查不到就如实降级并告警（不静默假装钉住了）。
@@ -1805,9 +1730,7 @@ def main(argv: list[str] | None = None) -> int:
         model_warning = ""
         if args.model:
             try:
-                model_payload, model_resolved, model_warning = resolve_model(
-                    client, spec=args.model
-                )
+                model_payload, model_resolved, model_warning = resolve_model(client, spec=args.model)
             except BridgeError as exc:
                 return _fail(f"解析模型失败: {exc}")
             except (TimeoutError, ConnectionError) as exc:
@@ -1815,13 +1738,9 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             if channel == "session":
-                session_id = resolve_direct_session(
-                    client, workspace=workspace, explicit=args.session_id
-                )
+                session_id = resolve_direct_session(client, workspace=workspace, explicit=args.session_id)
                 if not session_id:
-                    return _fail(
-                        "未找到可用的 CodeArts 会话，且指定了 --channel session"
-                    )
+                    return _fail("未找到可用的 CodeArts 会话，且指定了 --channel session")
                 delivery = deliver_via_session(
                     client,
                     workspace=workspace,
@@ -1839,13 +1758,9 @@ def main(argv: list[str] | None = None) -> int:
                     model=model_payload,
                 )
             elif channel == "cron":
-                delivery = deliver_via_cron(
-                    client, workspace=workspace, message=message
-                )
+                delivery = deliver_via_cron(client, workspace=workspace, message=message)
             else:  # auto
-                session_id = resolve_direct_session(
-                    client, workspace=workspace, explicit=args.session_id
-                )
+                session_id = resolve_direct_session(client, workspace=workspace, explicit=args.session_id)
                 if session_id:
                     delivery = deliver_via_session(
                         client,
@@ -1864,9 +1779,7 @@ def main(argv: list[str] | None = None) -> int:
                         model=model_payload,
                     )
                 else:
-                    delivery = deliver_via_cron(
-                        client, workspace=workspace, message=message
-                    )
+                    delivery = deliver_via_cron(client, workspace=workspace, message=message)
         except BridgeError as exc:
             return _fail(str(exc))
         except (TimeoutError, ConnectionError) as exc:
@@ -1901,14 +1814,8 @@ def main(argv: list[str] | None = None) -> int:
             if model_payload is None:
                 attempt_error = model_warning
             elif delivery["model_applied"] is False:
-                attempt_error = (
-                    f"静默回落：请求 {model_resolved}，"
-                    f"实际用了 {delivery['model_used']}"
-                )
-            attempt_ok = (
-                delivery["model_applied"] is not False
-                and model_payload is not None
-            )
+                attempt_error = f"静默回落：请求 {model_resolved}，实际用了 {delivery['model_used']}"
+            attempt_ok = delivery["model_applied"] is not False and model_payload is not None
             attempt_item: dict[str, Any] = {
                 "model": model_resolved or args.model,
                 "ok": attempt_ok,
@@ -1927,9 +1834,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[codearts-bridge] 警告: {model_warning}", file=sys.stderr)
     if delivery.get("model_applied") is False:
         print(
-            "[codearts-bridge] 警告: 请求模型 "
-            f"{delivery['model_requested']} 未生效，实际用了 "
-            f"{delivery['model_used']}",
+            f"[codearts-bridge] 警告: 请求模型 {delivery['model_requested']} 未生效，实际用了 {delivery['model_used']}",
             file=sys.stderr,
         )
     if delivery.get("fallback_used"):
@@ -1942,9 +1847,7 @@ def main(argv: list[str] | None = None) -> int:
     # 投递回执落盘（R4）：调用方按 intervention_id 对单，从这里读
     # "实际用的模型"。写失败只告警，不影响投递成功（与 inbox 副本口径一致）。
     try:
-        delivery["receipt_file"] = write_delivery_receipt(
-            workspace=workspace, delivery=delivery
-        )
+        delivery["receipt_file"] = write_delivery_receipt(workspace=workspace, delivery=delivery)
     except OSError as exc:
         print(
             f"[codearts-bridge] 警告: 写投递回执失败（不影响本次投递）: {exc}",

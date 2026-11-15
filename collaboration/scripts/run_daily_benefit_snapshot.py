@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run daily benefit snapshot - aggregate dispatch/receipt history into daily reports."""
+
 import argparse
 import json
 import sys

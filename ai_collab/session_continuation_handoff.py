@@ -51,10 +51,7 @@ def _resolve_paths(
     resolved_history = workspace / str(history_path or config.get("history", DEFAULT_HISTORY_PATH))
     resolved_summary = workspace / str(summary_path or config.get("summary", DEFAULT_SUMMARY_PATH))
     resolved_output_dir = workspace / str(output_dir or config.get("outputDir", DEFAULT_OUTPUT_DIR))
-    filename_prefix = (
-        str(config.get("filenamePrefix") or DEFAULT_FILENAME_PREFIX).strip()
-        or DEFAULT_FILENAME_PREFIX
-    )
+    filename_prefix = str(config.get("filenamePrefix") or DEFAULT_FILENAME_PREFIX).strip() or DEFAULT_FILENAME_PREFIX
     return resolved_report, resolved_history, resolved_summary, resolved_output_dir, filename_prefix
 
 
@@ -114,9 +111,7 @@ def _unique_output_file(*, output_dir: Path, filename_prefix: str, generated_at:
         return candidate
 
     for index in range(1, 100):
-        suffixed = (
-            output_dir / f"{filename_prefix}_{generated_at.date().isoformat()}_{index:02d}.md"
-        )
+        suffixed = output_dir / f"{filename_prefix}_{generated_at.date().isoformat()}_{index:02d}.md"
         if not suffixed.exists():
             return suffixed
     raise RuntimeError("unable to allocate a unique continuation handoff output file")
@@ -144,9 +139,7 @@ def _incident_lines(health_report: dict[str, Any], limit: int = 5) -> list[str]:
 
 def build_next_conversation_prompt(*, report: dict[str, Any]) -> str:
     handoff_file = str(report.get("output_file") or "")
-    closeout_queue_file = str(
-        report.get("closeout_queue_snapshot", {}).get("output_file") or ""
-    ).strip()
+    closeout_queue_file = str(report.get("closeout_queue_snapshot", {}).get("output_file") or "").strip()
     lines = [
         "继续 ai-collab-system 的 session-orchestration 控制面工作。",
         "",
@@ -364,12 +357,8 @@ def run_session_continuation_handoff(
         },
         "closeout_queue_snapshot": {
             "active_task_count": int(closeout_queue_report.get("active_task_count", 0) or 0),
-            "open_intervention_count": int(
-                closeout_queue_report.get("open_intervention_count", 0) or 0
-            ),
-            "blocking_intervention_count": int(
-                closeout_queue_report.get("blocking_intervention_count", 0) or 0
-            ),
+            "open_intervention_count": int(closeout_queue_report.get("open_intervention_count", 0) or 0),
+            "blocking_intervention_count": int(closeout_queue_report.get("blocking_intervention_count", 0) or 0),
             "ready_pack_count": int(closeout_queue_report.get("ready_pack_count", 0) or 0),
             "output_file": closeout_queue_file,
         },

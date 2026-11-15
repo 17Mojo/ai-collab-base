@@ -216,9 +216,7 @@ class SoulInjectionEngine:
             result["mode"] = "mock"
         else:
             try:
-                result = await self.inject_soul_real(
-                    consensus, profile_name, timeout=timeout, max_retries=max_retries
-                )
+                result = await self.inject_soul_real(consensus, profile_name, timeout=timeout, max_retries=max_retries)
                 result["mode"] = "real"
             except Exception as exc:
                 if self._mode == IntegrationMode.FALLBACK:
@@ -482,9 +480,7 @@ class SoulInjectionEngine:
                 # 继续执行其他策略
         return content
 
-    def add_custom_profile(
-        self, name: str, style: str, method: str, viewpoint: str, keywords: list[str]
-    ) -> bool:
+    def add_custom_profile(self, name: str, style: str, method: str, viewpoint: str, keywords: list[str]) -> bool:
         try:
             self.profiles[name] = SoulProfile(name, style, method, viewpoint, keywords)
             return True

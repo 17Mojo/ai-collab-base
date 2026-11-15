@@ -61,9 +61,7 @@ def _adapter_mode(workspace: Path) -> tuple[bool, str, str]:
     config = _load_codearts_adapter_config(workspace)
     enabled = bool(config.get("enabled", False))
     bridge_command = str(config.get("bridgeCommand") or "").strip()
-    delivery_status = (
-        str(config.get("deliveryStatusOnSuccess") or DEFAULT_BRIDGE_DELIVERY_STATUS).strip().lower()
-    )
+    delivery_status = str(config.get("deliveryStatusOnSuccess") or DEFAULT_BRIDGE_DELIVERY_STATUS).strip().lower()
     return enabled, bridge_command, delivery_status
 
 
@@ -123,9 +121,7 @@ def _prior_model_pinned_count(history_file: Path) -> int:
     return total
 
 
-def select_delivery_model(
-    *, models: list[str], policy: str, prior_count: int
-) -> str:
+def select_delivery_model(*, models: list[str], policy: str, prior_count: int) -> str:
     """按策略挑一个模型；返回空串表示"不钉模型，由 kernel 决定"。"""
     if not models:
         return ""
@@ -289,17 +285,9 @@ def build_summary_markdown(*, report: dict[str, Any]) -> str:
             else:
                 applied_note = "（无回执）"
             fallback = item.get("fallback_used")
-            fallback_note = (
-                "true" if fallback is True else "false" if fallback is False else "（无回执）"
-            )
+            fallback_note = "true" if fallback is True else "false" if fallback is False else "（无回执）"
             accepted_flag = item.get("accepted_without_receipt")
-            accepted_note = (
-                "true"
-                if accepted_flag is True
-                else "false"
-                if accepted_flag is False
-                else "（无回执）"
-            )
+            accepted_note = "true" if accepted_flag is True else "false" if accepted_flag is False else "（无回执）"
             lines.append(
                 f"- `{item.get('intervention_id', '')}` action=`{item.get('action', '')}` "
                 f"status=`{item.get('delivery_status', '')}` "
@@ -355,9 +343,7 @@ def run_codearts_pull_adapter(
     model_pinned_count = 0
     model_wiring_warning = ""
     if model_pool and not model_wired:
-        model_wiring_warning = (
-            "bridgeCommand 未包含 {model} 占位符，模型池未接线（本次投递不钉模型）"
-        )
+        model_wiring_warning = "bridgeCommand 未包含 {model} 占位符，模型池未接线（本次投递不钉模型）"
 
     # 在途（已投递、等 ACK）的 intervention 不重复投递——否则每轮轮询都会在
     # 对方那边新建一个会话，两个会话并发改同一个工作区。
@@ -407,9 +393,7 @@ def run_codearts_pull_adapter(
                     workspace=workspace,
                     intervention_id=intervention_id,
                     delivery_status="failed",
-                    delivery_mode="bridge"
-                    if enabled and bridge_command and allow_delivery
-                    else None,
+                    delivery_mode="bridge" if enabled and bridge_command and allow_delivery else None,
                 )
                 updated = ack_report.get("intervention", {})
                 delivery["delivery_status"] = str(updated.get("delivery_status") or "failed")
@@ -443,9 +427,7 @@ def run_codearts_pull_adapter(
         # 默认仍是 cron（kernel 自建会话）；只有真的钉上模型才切 new_session。
         channel = "cron"
         if model_pool and model_wired:
-            model = select_delivery_model(
-                models=model_pool, policy=model_policy, prior_count=model_pointer
-            )
+            model = select_delivery_model(models=model_pool, policy=model_policy, prior_count=model_pointer)
             if model:
                 # 钉了模型就必须走 new_session —— cron 通道由 kernel 决定模型。
                 channel = "new_session"
@@ -492,9 +474,7 @@ def run_codearts_pull_adapter(
             )
             updated = ack_report.get("intervention", {})
             delivery["action"] = "queued"
-            delivery["delivery_status"] = str(
-                updated.get("delivery_status") or delivery_status_on_success
-            )
+            delivery["delivery_status"] = str(updated.get("delivery_status") or delivery_status_on_success)
             queued_count += 1
         else:
             ack_report = ack_intervention(

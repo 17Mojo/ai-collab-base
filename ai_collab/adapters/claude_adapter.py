@@ -60,9 +60,7 @@ def _adapter_mode(workspace: Path) -> tuple[bool, str, str, str]:
     enabled = bool(config.get("enabled", False))
     bridge_command = str(config.get("bridgeCommand") or "").strip()
     channel = str(config.get("channel") or "").strip()
-    delivery_status = (
-        str(config.get("deliveryStatusOnSuccess") or DEFAULT_BRIDGE_DELIVERY_STATUS).strip().lower()
-    )
+    delivery_status = str(config.get("deliveryStatusOnSuccess") or DEFAULT_BRIDGE_DELIVERY_STATUS).strip().lower()
     return enabled, bridge_command, channel, delivery_status
 
 
@@ -230,9 +228,7 @@ def run_claude_push_adapter(
                     workspace=workspace,
                     intervention_id=intervention_id,
                     delivery_status="failed",
-                    delivery_mode="bridge"
-                    if enabled and bridge_command and allow_delivery
-                    else None,
+                    delivery_mode="bridge" if enabled and bridge_command and allow_delivery else None,
                 )
                 updated = ack_report.get("intervention", {})
                 delivery["delivery_status"] = str(updated.get("delivery_status") or "failed")
@@ -278,9 +274,7 @@ def run_claude_push_adapter(
             )
             updated = ack_report.get("intervention", {})
             delivery["action"] = "queued"
-            delivery["delivery_status"] = str(
-                updated.get("delivery_status") or delivery_status_on_success
-            )
+            delivery["delivery_status"] = str(updated.get("delivery_status") or delivery_status_on_success)
             queued_count += 1
         else:
             ack_report = ack_intervention(

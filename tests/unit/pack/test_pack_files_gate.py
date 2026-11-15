@@ -60,12 +60,8 @@ class TestPackFileCriterion:
         assert not is_pack_file({"no_metadata": 1})
 
     def test_validate_all_packs_skips_non_pack_json(self, tmp_path):
-        (tmp_path / "real-pack.json").write_text(
-            json.dumps({"metadata": {"pack_id": "p1"}}), encoding="utf-8"
-        )
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"metadata": {"name": "not-a-pack"}}), encoding="utf-8"
-        )
+        (tmp_path / "real-pack.json").write_text(json.dumps({"metadata": {"pack_id": "p1"}}), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(json.dumps({"metadata": {"name": "not-a-pack"}}), encoding="utf-8")
         results = validate_all_packs(str(tmp_path))
         assert [Path(k).name for k in results] == ["real-pack.json"]
 

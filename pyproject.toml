@@ -102,6 +102,11 @@ warn_unused_ignores = false
 [tool.ruff]
 target-version = "py310"
 line-length = 120
+# 2026-11-15：ruff 0.16.8+ 会格式化 .md 里的 Python fenced code block。
+# 文档代码块是对外示例，由人维护，不由格式化器改写。显式排除后，
+# 本地 `ruff format .` 与 CI 的 `ruff format --check .` 口径一致，
+# 全库格式化范围收敛到 229 个 .py（零 .md）。
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 # 选集说明:

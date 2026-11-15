@@ -59,14 +59,10 @@ def _env_positive_int(name: str, default: int) -> int:
 # 条目数上限：超过后按 last_sync 淘汰最旧的（当前正在写的条目永不被淘汰）。
 GLOBAL_STATE_MAX_ENTRIES = _env_positive_int("AI_COLLAB_GLOBAL_STATE_MAX_ENTRIES", 200)
 # 体积上限（字节）：超过后同样按 last_sync 淘汰最旧的。
-GLOBAL_STATE_MAX_BYTES = _env_positive_int(
-    "AI_COLLAB_GLOBAL_STATE_MAX_BYTES", 4 * 1024 * 1024
-)
+GLOBAL_STATE_MAX_BYTES = _env_positive_int("AI_COLLAB_GLOBAL_STATE_MAX_BYTES", 4 * 1024 * 1024)
 # 死条目宽限期（天）：路径已消失但**不在**临时目录下的条目，宽限期内不回收。
 # 专门保护「磁盘临时未挂载 / 目录刚被移动」的真实工作区。
-GLOBAL_STATE_DEAD_GRACE_DAYS = _env_positive_int(
-    "AI_COLLAB_GLOBAL_STATE_DEAD_GRACE_DAYS", 7
-)
+GLOBAL_STATE_DEAD_GRACE_DAYS = _env_positive_int("AI_COLLAB_GLOBAL_STATE_DEAD_GRACE_DAYS", 7)
 
 
 class TaskStatus(str, Enum):
@@ -258,9 +254,7 @@ class VSCodeIntegration:
         if cwd:
             path = cwd
             while path and path != os.path.dirname(path):
-                if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(
-                    os.path.join(path, "package.json")
-                ):
+                if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(os.path.join(path, "package.json")):
                     return path
                 path = os.path.dirname(path)
         return cwd
@@ -285,9 +279,7 @@ class VSCodeIntegration:
         try:
             global_config_dir = os.path.expanduser("~/.vscode/ai-collab")
             os.makedirs(global_config_dir, exist_ok=True)
-            log_file = os.path.join(
-                global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log"
-            )
+            log_file = os.path.join(global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log")
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"[{datetime.now().isoformat()}] [{channel}] {message}\n")
         except Exception:
@@ -496,9 +488,7 @@ class StateManager:
         task_ids = set(normalized["tasks"].keys())
 
         active_list = [task_id for task_id in normalized["active_tasks"] if task_id in task_ids]
-        completed_list = [
-            task_id for task_id in normalized["completed_tasks"] if task_id in task_ids
-        ]
+        completed_list = [task_id for task_id in normalized["completed_tasks"] if task_id in task_ids]
 
         active_set = set(active_list)
         completed_set = set(completed_list)
@@ -514,19 +504,11 @@ class StateManager:
                 task["completed_at"] = None
 
         # 去重并保持原有顺序
-        normalized["active_tasks"] = [
-            task_id for task_id in active_list if task_id in active_set
-        ] + [
-            task_id
-            for task_id in normalized["tasks"]
-            if task_id in active_set and task_id not in active_list
+        normalized["active_tasks"] = [task_id for task_id in active_list if task_id in active_set] + [
+            task_id for task_id in normalized["tasks"] if task_id in active_set and task_id not in active_list
         ]
-        normalized["completed_tasks"] = [
-            task_id for task_id in completed_list if task_id in completed_set
-        ] + [
-            task_id
-            for task_id in normalized["tasks"]
-            if task_id in completed_set and task_id not in completed_list
+        normalized["completed_tasks"] = [task_id for task_id in completed_list if task_id in completed_set] + [
+            task_id for task_id in normalized["tasks"] if task_id in completed_set and task_id not in completed_list
         ]
 
         return normalized
@@ -671,9 +653,7 @@ class StateManager:
         except (TypeError, ValueError):
             return -1.0
 
-    def _pick_newer_task(
-        self, latest_task: dict[str, Any], local_task: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _pick_newer_task(self, latest_task: dict[str, Any], local_task: dict[str, Any]) -> dict[str, Any]:
         """按 updated_at/created_at 选择更新的任务版本。"""
         latest_ts = self._to_epoch(latest_task.get("updated_at") or latest_task.get("created_at"))
         local_ts = self._to_epoch(local_task.get("updated_at") or local_task.get("created_at"))
@@ -711,24 +691,15 @@ class StateManager:
 
         merged = dict(latest_norm)
         merged["version"] = local_norm.get("version") or latest_norm.get("version") or "2.0.0"
-        merged["workspace"] = (
-            self.workspace_path
-            or local_norm.get("workspace")
-            or latest_norm.get("workspace")
-            or ""
-        )
+        merged["workspace"] = self.workspace_path or local_norm.get("workspace") or latest_norm.get("workspace") or ""
         merged["file_status"] = {
             **(latest_norm.get("file_status") or {}),
             **(local_norm.get("file_status") or {}),
         }
-        merged["conflicts"] = self._merge_conflicts(
-            latest_norm.get("conflicts"), local_norm.get("conflicts")
-        )
+        merged["conflicts"] = self._merge_conflicts(latest_norm.get("conflicts"), local_norm.get("conflicts"))
 
         merged_tasks: dict[str, dict[str, Any]] = {}
-        all_task_ids = set((latest_norm.get("tasks") or {}).keys()) | set(
-            (local_norm.get("tasks") or {}).keys()
-        )
+        all_task_ids = set((latest_norm.get("tasks") or {}).keys()) | set((local_norm.get("tasks") or {}).keys())
         for task_id in all_task_ids:
             latest_task = (latest_norm.get("tasks") or {}).get(task_id)
             local_task = (local_norm.get("tasks") or {}).get(task_id)
@@ -741,9 +712,7 @@ class StateManager:
 
         merged["tasks"] = merged_tasks
         merged_patches: dict[str, dict[str, Any]] = {}
-        all_patch_ids = set((latest_norm.get("patches") or {}).keys()) | set(
-            (local_norm.get("patches") or {}).keys()
-        )
+        all_patch_ids = set((latest_norm.get("patches") or {}).keys()) | set((local_norm.get("patches") or {}).keys())
         for patch_id in all_patch_ids:
             latest_patch = (latest_norm.get("patches") or {}).get(patch_id)
             local_patch = (local_norm.get("patches") or {}).get(patch_id)
@@ -952,9 +921,7 @@ class StateManager:
             return True
         return self._global_entry_is_stale(value)
 
-    def _reclaim_dead_global_entries(
-        self, global_state: dict[str, Any], current_key: str
-    ) -> list[str]:
+    def _reclaim_dead_global_entries(self, global_state: dict[str, Any], current_key: str) -> list[str]:
         """回收可以回收的全局状态条目，返回被回收的 key 列表。
 
         当前正在写的条目（current_key）永不被回收——哪怕它自己的路径不存在，
@@ -969,14 +936,13 @@ class StateManager:
                 reclaimed.append(key)
         return reclaimed
 
-    def _global_eviction_order(
-        self, global_state: dict[str, Any], current_key: str
-    ) -> list[tuple[str, Any]]:
+    def _global_eviction_order(self, global_state: dict[str, Any], current_key: str) -> list[tuple[str, Any]]:
         """给出容量淘汰的候选顺序：按 last_sync 从旧到新。
 
         last_sync 解析不出来的条目按「最旧」处理（_to_epoch 返回 -1.0）。
         当前正在写的条目排在最后，且永不被淘汰。
         """
+
         def sort_key(item: tuple[str, Any]) -> tuple[float, float]:
             key, value = item
             if key == current_key:
@@ -986,9 +952,7 @@ class StateManager:
 
         return sorted(global_state.items(), key=sort_key)
 
-    def _evict_global_entries_over_count_cap(
-        self, global_state: dict[str, Any], current_key: str
-    ) -> list[str]:
+    def _evict_global_entries_over_count_cap(self, global_state: dict[str, Any], current_key: str) -> list[str]:
         """条目数兜底：超过上限就按 last_sync 淘汰最旧的。"""
         evicted: list[str] = []
         overflow = len(global_state) - GLOBAL_STATE_MAX_ENTRIES
@@ -1077,9 +1041,7 @@ class StateManager:
             # ③ 保存全局状态
             self._atomic_write_json(global_state_file, global_state)
             # ④ 体积兜底（写后量，正常路径零开销）
-            evicted += self._enforce_global_byte_cap(
-                global_state_file, global_state, workspace_key
-            )
+            evicted += self._enforce_global_byte_cap(global_state_file, global_state, workspace_key)
 
             if reclaimed or evicted:
                 VSCodeIntegration.update_vscode_output(
@@ -1135,13 +1097,9 @@ class StateManager:
             ),
             reviewer=reviewer,
             primary_skill=primary_skill,
-            support_skills=[
-                item for item in (support_skills or []) if isinstance(item, str) and item.strip()
-            ],
+            support_skills=[item for item in (support_skills or []) if isinstance(item, str) and item.strip()],
             acceptance_commands=[
-                item
-                for item in (acceptance_commands or [])
-                if isinstance(item, str) and item.strip()
+                item for item in (acceptance_commands or []) if isinstance(item, str) and item.strip()
             ],
             result_file=result_file,
             contract_required=contract_required,
@@ -1386,9 +1344,7 @@ class StateManager:
                 if not contract_check.get("valid", True):
                     missing = ",".join(contract_check.get("missing_fields", []))
                     invalid = ",".join(contract_check.get("invalid_fields", []))
-                    raise ValueError(
-                        f"任务契约校验失败: {task_id}; missing=[{missing}] invalid=[{invalid}]"
-                    )
+                    raise ValueError(f"任务契约校验失败: {task_id}; missing=[{missing}] invalid=[{invalid}]")
             if status == TaskStatus.COMPLETED:
                 self._validate_result_artifact_for_completion(task_id, task)
 
@@ -1626,9 +1582,7 @@ class StateManager:
             patches = [p for p in patches if str(p.get("task_id")) == task_id]
         return patches
 
-    def check_conflicts(
-        self, ai_type: str, files: list[str], check_mode: str = "both"
-    ) -> list[dict[str, Any]]:
+    def check_conflicts(self, ai_type: str, files: list[str], check_mode: str = "both") -> list[dict[str, Any]]:
         """
         检查文件冲突
 
@@ -1690,9 +1644,7 @@ class StateManager:
         self._save_state()
         return conflicts
 
-    def _record_conflict(
-        self, task_id: str, conflicting_ai: str, files: list[str], check_mode: str
-    ):
+    def _record_conflict(self, task_id: str, conflicting_ai: str, files: list[str], check_mode: str):
         """记录冲突到问题文件"""
         task = self.state["tasks"].get(task_id)
         if not task:
@@ -1885,9 +1837,7 @@ class StateManager:
             with open(resolved_path, encoding="utf-8") as f:
                 content = f.read()
         except OSError as exc:
-            raise ValueError(
-                f"任务结果门禁失败: {task_id}; unable to read result_file: {result_file}"
-            ) from exc
+            raise ValueError(f"任务结果门禁失败: {task_id}; unable to read result_file: {result_file}") from exc
 
         if not content.strip():
             raise ValueError(f"任务结果门禁失败: {task_id}; result_file is empty: {result_file}")
@@ -1908,9 +1858,7 @@ class StateManager:
                 negative_hits.append(marker)
         if negative_hits:
             negative_label = ",".join(negative_hits)
-            raise ValueError(
-                f"任务结果门禁失败: {task_id}; result_file contains_negative_signals=[{negative_label}]"
-            )
+            raise ValueError(f"任务结果门禁失败: {task_id}; result_file contains_negative_signals=[{negative_label}]")
 
         acceptance_commands = task.get("acceptance_commands")
         if isinstance(acceptance_commands, list):
@@ -2038,18 +1986,12 @@ class StateManager:
         if scope not in {"active", "all"}:
             raise ValueError(f"不支持的 scope: {scope}")
 
-        change_id_fallback = (
-            self._normalize_non_empty_str(default_change_id) or self.TASK_CONTRACT_DEFAULT_CHANGE_ID
-        )
-        reviewer_fallback = (
-            self._normalize_non_empty_str(reviewer) or self.TASK_CONTRACT_DEFAULT_REVIEWER
-        )
+        change_id_fallback = self._normalize_non_empty_str(default_change_id) or self.TASK_CONTRACT_DEFAULT_CHANGE_ID
+        reviewer_fallback = self._normalize_non_empty_str(reviewer) or self.TASK_CONTRACT_DEFAULT_REVIEWER
 
         if scope == "active":
             candidate_ids = [
-                task_id
-                for task_id in self.state.get("active_tasks", [])
-                if task_id in self.state.get("tasks", {})
+                task_id for task_id in self.state.get("active_tasks", []) if task_id in self.state.get("tasks", {})
             ]
         else:
             candidate_ids = list(self.state.get("tasks", {}).keys())
@@ -2083,42 +2025,32 @@ class StateManager:
             )
 
             task["task_id"] = normalized_task_id
-            task["change_id"] = (
-                self._normalize_non_empty_str(task.get("change_id")) or change_id_fallback
-            )
+            task["change_id"] = self._normalize_non_empty_str(task.get("change_id")) or change_id_fallback
             task["assignee"] = self._normalize_non_empty_str(task.get("assignee")) or ai_type
             task["assignee_role"] = (
                 self._normalize_non_empty_str(task.get("assignee_role"))
                 or self._default_assignee_role(ai_type)
                 or self.TASK_CONTRACT_DEFAULT_ASSIGNEE_ROLE
             )
-            task["reviewer"] = (
-                self._normalize_non_empty_str(task.get("reviewer")) or reviewer_fallback
-            )
+            task["reviewer"] = self._normalize_non_empty_str(task.get("reviewer")) or reviewer_fallback
             task["primary_skill"] = self._normalize_non_empty_str(
                 task.get("primary_skill")
             ) or self._default_primary_skill(ai_type)
 
             support_skills = self._normalize_non_empty_list(task.get("support_skills"))
-            task["support_skills"] = support_skills or list(
-                self.TASK_CONTRACT_DEFAULT_SUPPORT_SKILLS
-            )
+            task["support_skills"] = support_skills or list(self.TASK_CONTRACT_DEFAULT_SUPPORT_SKILLS)
 
             acceptance_commands = self._normalize_non_empty_list(task.get("acceptance_commands"))
-            task["acceptance_commands"] = acceptance_commands or list(
-                self.TASK_CONTRACT_DEFAULT_ACCEPTANCE_COMMANDS
-            )
+            task["acceptance_commands"] = acceptance_commands or list(self.TASK_CONTRACT_DEFAULT_ACCEPTANCE_COMMANDS)
 
-            task["result_file"] = self._normalize_non_empty_str(
-                task.get("result_file")
-            ) or self._default_result_file(normalized_task_id)
+            task["result_file"] = self._normalize_non_empty_str(task.get("result_file")) or self._default_result_file(
+                normalized_task_id
+            )
             task["contract_required"] = True
             task.setdefault("notes", [])
             if not isinstance(task.get("notes"), list):
                 task["notes"] = []
-            task["notes"].append(
-                f"[{datetime.now().isoformat()}] migrated task contract to eliminate legacy path"
-            )
+            task["notes"].append(f"[{datetime.now().isoformat()}] migrated task contract to eliminate legacy path")
             task["updated_at"] = datetime.now().isoformat()
 
             check_after = self._evaluate_task_contract(task)
@@ -2171,9 +2103,7 @@ class StateManager:
     def get_active_tasks(self) -> list[dict[str, Any]]:
         """获取所有活跃任务"""
         return [
-            self.state["tasks"][task_id]
-            for task_id in self.state["active_tasks"]
-            if task_id in self.state["tasks"]
+            self.state["tasks"][task_id] for task_id in self.state["active_tasks"] if task_id in self.state["tasks"]
         ]
 
     def get_all_tasks(self) -> list[dict[str, Any]]:

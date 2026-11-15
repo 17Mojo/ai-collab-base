@@ -162,4 +162,3 @@ async def test_generate_consensus_uses_cache():
     first = await engine.generate_consensus("缓存主题")
     second = await engine.generate_consensus("缓存主题")
     assert first is second
-

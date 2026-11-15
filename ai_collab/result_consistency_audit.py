@@ -15,6 +15,7 @@ from .state_manager import StateManager
 def _sort_by_task_id(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(items, key=lambda entry: str(entry.get("task_id") or ""))
 
+
 DEFAULT_REPORT_PATH = "logs/task_result_consistency_report.json"
 DEFAULT_SUMMARY_PATH = "collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md"
 TERMINAL_STATUSES = {"completed", "failed", "blocked", "cancelled"}

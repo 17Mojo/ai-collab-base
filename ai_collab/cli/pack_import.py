@@ -178,9 +178,9 @@ class PackImportExportCLI:
 
         validation_errors = self.importer.validate_import(data)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Validation Results")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # Schema 信息
         print(f"Schema Version: {data.get('schema_version', 'N/A')}")
@@ -219,9 +219,9 @@ class PackImportExportCLI:
             error_count = sum(1 for ve in validation_errors if ve.severity == "error")
             warning_count = sum(1 for ve in validation_errors if ve.severity == "warning")
 
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print("Field Validation")
-            print(f"{'='*60}\n")
+            print(f"{'=' * 60}\n")
 
             # 按类型分组
             errors = [ve for ve in validation_errors if ve.severity == "error"]
@@ -237,7 +237,7 @@ class PackImportExportCLI:
                 for ve in warnings:
                     print(f"  - [{ve.field}] {ve.message}")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
 
         if result.success and not any(ve.severity == "error" for ve in validation_errors):
             print("✓ Validation PASSED")
@@ -259,9 +259,9 @@ class PackImportExportCLI:
 
         packs = result.get("packs", [])
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Available Packs for Export")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         if not packs:
             print("No packs found.")
@@ -274,9 +274,9 @@ class PackImportExportCLI:
             print(f"   Status: {pack.get('status', 'N/A')}")
             print()
 
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Total: {len(packs)} packs")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return 0
 
@@ -297,11 +297,7 @@ class PackImportExportCLI:
             return 1
 
         # 查找所有支持的文件
-        files = (
-            list(dir_path.glob("*.json"))
-            + list(dir_path.glob("*.yaml"))
-            + list(dir_path.glob("*.yml"))
-        )
+        files = list(dir_path.glob("*.json")) + list(dir_path.glob("*.yaml")) + list(dir_path.glob("*.yml"))
 
         if not files:
             print(f"✗ No import files found in {directory}")
@@ -316,9 +312,9 @@ class PackImportExportCLI:
         success_count = sum(1 for r in results if r.success)
         error_count = len(results) - success_count
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Bulk Import Results")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
         print(f"Total: {len(results)}")
         print(f"Success: {success_count}")
         print(f"Failed: {error_count}")
@@ -331,7 +327,7 @@ class PackImportExportCLI:
                     for err in result.errors:
                         print(f"      {err}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0 if error_count == 0 else 1
 
@@ -376,9 +372,9 @@ class PackImportExportCLI:
         success_count = sum(1 for success in export_results.values() if success)
         error_count = len(export_results) - success_count
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Bulk Export Results")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
         print(f"Total: {len(packs)}")
         print(f"Success: {success_count}")
         print(f"Failed: {error_count}")
@@ -393,7 +389,7 @@ class PackImportExportCLI:
         print(f"  Directory: {output_dir}")
         print(f"  Format: {fmt.value}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0 if error_count == 0 else 1
 

@@ -528,9 +528,7 @@ class TestPackSearchEngine:
         registry = PackRegistry(temp_packs_dir)
         search_engine = PackSearchEngine(registry)
 
-        domain_packs = search_engine.browse_by_category(
-            PackCategoryType.DOMAIN, sort_by=PackSortType.RATING
-        )
+        domain_packs = search_engine.browse_by_category(PackCategoryType.DOMAIN, sort_by=PackSortType.RATING)
 
         ratings = [p.rating for p in domain_packs]
         assert ratings == sorted(ratings, reverse=True)

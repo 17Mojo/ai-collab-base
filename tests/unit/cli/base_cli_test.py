@@ -2,6 +2,7 @@
 Base CLI Test Framework - Fixture-Based Version
 Modular base class for standardized CLI testing across all Pack CLI modules
 """
+
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -127,18 +128,12 @@ class BaseEngineCLITestFixture:
     def mock_engine(self):
         """Setup standard engine mock for CLI tests"""
         mock = MagicMock()
-        mock.bulk_create.return_value = MagicMock(
-            total=1, succeeded=1, failed=0, success_rate=100.0, results=[]
-        )
+        mock.bulk_create.return_value = MagicMock(total=1, succeeded=1, failed=0, success_rate=100.0, results=[])
         mock.bulk_update_version.return_value = MagicMock(
             total=1, succeeded=1, failed=0, success_rate=100.0, results=[]
         )
-        mock.bulk_archive.return_value = MagicMock(
-            total=1, succeeded=1, failed=0, success_rate=100.0, results=[]
-        )
-        mock.bulk_delete.return_value = MagicMock(
-            total=1, succeeded=1, failed=0, success_rate=100.0, results=[]
-        )
+        mock.bulk_archive.return_value = MagicMock(total=1, succeeded=1, failed=0, success_rate=100.0, results=[])
+        mock.bulk_delete.return_value = MagicMock(total=1, succeeded=1, failed=0, success_rate=100.0, results=[])
         mock.get_operation_status.return_value = MagicMock(
             total=1,
             succeeded=1,

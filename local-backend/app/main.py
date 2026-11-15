@@ -137,12 +137,10 @@ async def validate_request_size(request: Request, call_next):
             if length > MAX_REQUEST_BODY_SIZE:
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"请求体过大（最大 {MAX_REQUEST_BODY_SIZE // (1024*1024)}MB）",
+                    detail=f"请求体过大（最大 {MAX_REQUEST_BODY_SIZE // (1024 * 1024)}MB）",
                 )
         except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="无效的 Content-Length 头"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="无效的 Content-Length 头")
 
     # 安全头配置
     response = await call_next(request)
@@ -152,9 +150,9 @@ async def validate_request_size(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers[
-        "Content-Security-Policy"
-    ] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    )
 
     return response
 
@@ -206,12 +204,8 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(consensus.router, tags=["Consensus"])
 app.include_router(soul.router, tags=["Soul"])
 app.include_router(notebooklm.router, prefix="/api/notebooklm", tags=["NotebookLM"])
-app.include_router(
-    notebooklm_auth_monitor.router, prefix="/api/notebooklm/auth", tags=["NotebookLM Auth Monitor"]
-)
-app.include_router(
-    notebooklm_sync.router, prefix="/api/notebooklm/sync", tags=["NotebookLM Knowledge Sync"]
-)
+app.include_router(notebooklm_auth_monitor.router, prefix="/api/notebooklm/auth", tags=["NotebookLM Auth Monitor"])
+app.include_router(notebooklm_sync.router, prefix="/api/notebooklm/sync", tags=["NotebookLM Knowledge Sync"])
 app.include_router(context.router)
 
 

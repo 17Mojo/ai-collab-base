@@ -8,6 +8,7 @@
 - 自动执行 testing -> completed（支持 dry-run）
 - 写入回执报告、历史、回执状态与摘要
 """
+
 import argparse
 import json
 import sys
@@ -27,6 +28,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 class ReceiptErrorCategory(Enum):
     """回执错误分类。"""
+
     RESULT_FILE_NOT_FOUND = "result_file_not_found"
     RESULT_FILE_EMPTY = "result_file_empty"
     RESULT_FILE_INVALID = "result_file_invalid"
@@ -41,17 +43,20 @@ class ReceiptErrorCategory(Enum):
     UNKNOWN = "unknown"
 
 
-RETRYABLE_CATEGORIES = frozenset({
-    ReceiptErrorCategory.RESULT_FILE_NOT_FOUND,
-    ReceiptErrorCategory.RESULT_FILE_MISSING_SECTIONS,
-    ReceiptErrorCategory.STATE_MANAGER_REJECTED,
-    ReceiptErrorCategory.VALIDATION_FAILED,
-})
+RETRYABLE_CATEGORIES = frozenset(
+    {
+        ReceiptErrorCategory.RESULT_FILE_NOT_FOUND,
+        ReceiptErrorCategory.RESULT_FILE_MISSING_SECTIONS,
+        ReceiptErrorCategory.STATE_MANAGER_REJECTED,
+        ReceiptErrorCategory.VALIDATION_FAILED,
+    }
+)
 
 
 @dataclass
 class ReceiptRetryConfig:
     """回执重试配置。"""
+
     retryable_categories: frozenset = field(default_factory=lambda: RETRYABLE_CATEGORIES)
     max_attempts: int = 3
     backoff_seconds: float = 1.0
@@ -132,6 +137,7 @@ def write_json(path: Path, data: Any) -> None:
 
 
 # ---------------- 门禁 ----------------
+
 
 def check_result_file(workspace: Path, task: dict[str, Any]) -> str | None:
     """检查结果文件；返回错误消息（None 表示通过）。"""
@@ -243,6 +249,7 @@ def ack_status_for(assignee: str) -> str:
 
 # ---------------- 主流程 ----------------
 
+
 def run_receipt(args) -> int:
     workspace = Path(args.workspace)
     state = read_json(workspace / "logs" / "collaboration_state.json", {"tasks": {}, "patches": {}})
@@ -278,21 +285,25 @@ def run_receipt(args) -> int:
         # 3. 结果文件门禁
         gate_error = check_result_file(workspace, task)
         if gate_error:
-            errors.append({
-                "task_id": tid,
-                "error": gate_error,
-                "category": classify_receipt_error(ValueError(gate_error)).value,
-            })
+            errors.append(
+                {
+                    "task_id": tid,
+                    "error": gate_error,
+                    "category": classify_receipt_error(ValueError(gate_error)).value,
+                }
+            )
             continue
 
         # 4. acceptance_commands 一致性检查
         mismatch = check_acceptance_mismatch(workspace, task)
         if mismatch:
-            errors.append({
-                "task_id": tid,
-                "error": mismatch,
-                "category": ReceiptErrorCategory.MISSING_ACCEPTANCE_COMMANDS.value,
-            })
+            errors.append(
+                {
+                    "task_id": tid,
+                    "error": mismatch,
+                    "category": ReceiptErrorCategory.MISSING_ACCEPTANCE_COMMANDS.value,
+                }
+            )
             continue
 
         # 5. 收口
@@ -306,9 +317,7 @@ def run_receipt(args) -> int:
             # （claude_code 同时是 AGENT_ARCH 与 AGENT_TEST），
             # 不带角色就只能落到 provider 兜底字母上。
             assignee_role = str(task.get("assignee_role") or "").strip()
-            prefix = ack_prefix_for(
-                assignee, assignee_role=assignee_role or None, workspace=workspace
-            )
+            prefix = ack_prefix_for(assignee, assignee_role=assignee_role or None, workspace=workspace)
             ack_state.setdefault("items", {})[tid] = {
                 "task_id": tid,
                 "assignee": assignee,

@@ -30,28 +30,20 @@ def orchestration_payload():
 
 class TestResolution:
     def test_role_drives_both_hints(self):
-        run_hint, ack_hint = resolve_hints(
-            "codearts_agent", assignee_role="AGENT_EXEC", workspace=str(REPO_ROOT)
-        )
+        run_hint, ack_hint = resolve_hints("codearts_agent", assignee_role="AGENT_EXEC", workspace=str(REPO_ROOT))
         assert run_hint == "A.RUN"
         assert ack_hint == "A.ACK"
 
     def test_claude_code_arch_and_test_seats_differ(self):
-        arch = resolve_hints(
-            "claude_code", assignee_role="AGENT_ARCH", workspace=str(REPO_ROOT)
-        )
-        test_seat = resolve_hints(
-            "claude_code", assignee_role="AGENT_TEST", workspace=str(REPO_ROOT)
-        )
+        arch = resolve_hints("claude_code", assignee_role="AGENT_ARCH", workspace=str(REPO_ROOT))
+        test_seat = resolve_hints("claude_code", assignee_role="AGENT_TEST", workspace=str(REPO_ROOT))
         assert arch == ("X.RUN", "X.ACK")
         assert test_seat == ("C.RUN", "C.ACK")
 
     def test_run_and_ack_hints_always_come_from_the_same_prefix(self):
         for assignee in ("claude_code", "codearts_agent", "codex"):
             for role in (None, "AGENT_EXEC", "AGENT_ARCH", "AGENT_TEST"):
-                run_hint, ack_hint = resolve_hints(
-                    assignee, assignee_role=role, workspace=str(REPO_ROOT)
-                )
+                run_hint, ack_hint = resolve_hints(assignee, assignee_role=role, workspace=str(REPO_ROOT))
                 assert run_hint.split(".", 1)[0] == ack_hint.split(".", 1)[0]
 
     def test_unknown_provider_falls_back(self):
@@ -86,9 +78,7 @@ class TestOrchestrationCoherence:
         assert prefixes.get("A.RUN") == "AGENT_EXEC"
         assert roles["AGENT_EXEC"]["binding"]["provider"] == "codearts_agent"
 
-    def test_provider_fallback_prefix_matches_bound_exec_seat(
-        self, orchestration_payload
-    ):
+    def test_provider_fallback_prefix_matches_bound_exec_seat(self, orchestration_payload):
         prefixes = orchestration_payload.get("command_prefixes", {})
         registry = orchestration_payload.get("provider_registry", {})
         for role_id, role in orchestration_payload.get("roles", {}).items():
@@ -97,9 +87,7 @@ class TestOrchestrationCoherence:
                 continue
             if role_id != "AGENT_EXEC":
                 continue
-            role_prefix = next(
-                (key for key, value in prefixes.items() if value == role_id), ""
-            )
+            role_prefix = next((key for key, value in prefixes.items() if value == role_id), "")
             expected = registry.get(provider, {}).get("fallback_ack_prefix")
             assert role_prefix.split(".", 1)[0] == expected
 
@@ -241,9 +229,7 @@ class TestAssigneeRoleResolution:
             },
         )
         role = resolve_assignee_roles(tmp_path).get("claude_code")
-        run_hint, ack_hint = resolve_hints(
-            "claude_code", assignee_role=role, workspace=str(tmp_path)
-        )
+        run_hint, ack_hint = resolve_hints("claude_code", assignee_role=role, workspace=str(tmp_path))
         assert run_hint == "X.RUN"
         assert ack_hint == "X.ACK"
 

@@ -66,4 +66,3 @@ async def test_inject_soul_real_returns_error_when_unavailable(monkeypatch):
     assert result["success"] is False
     assert result["mode"] == "real"
     assert "unavailable" in result["error"].lower()
-

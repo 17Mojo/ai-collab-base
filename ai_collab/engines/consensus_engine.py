@@ -125,9 +125,7 @@ class ConsensusEngine:
                 succeeded = {r.get("provider") for r in responses}
                 failed_providers = [n for n in attempted if n not in succeeded]
                 if failed_providers:
-                    self._logger.warning(
-                        f"[Consensus] REAL 部分降级，失败 provider: {failed_providers}"
-                    )
+                    self._logger.warning(f"[Consensus] REAL 部分降级，失败 provider: {failed_providers}")
             except Exception as exc:
                 if self._mode == IntegrationMode.FALLBACK:
                     self._logger.warning(f"[Consensus] REAL失败,回退到Mock: {exc}")
@@ -249,28 +247,22 @@ class ConsensusEngine:
         for attempt in range(provider.max_retries):
             try:
                 # 使用 provider 特定的超时
-                result = await asyncio.wait_for(
-                    self._call_provider_api(topic, provider), timeout=provider.timeout
-                )
+                result = await asyncio.wait_for(self._call_provider_api(topic, provider), timeout=provider.timeout)
                 return result
             except asyncio.TimeoutError:
                 self._logger.warning(
-                    f"[Consensus] Provider {provider.name} 超时 "
-                    f"(attempt {attempt + 1}/{provider.max_retries})"
+                    f"[Consensus] Provider {provider.name} 超时 (attempt {attempt + 1}/{provider.max_retries})"
                 )
                 if attempt == provider.max_retries - 1:
                     raise
             except Exception as e:
                 self._logger.warning(
-                    f"[Consensus] Provider {provider.name} 失败: {e} "
-                    f"(attempt {attempt + 1}/{provider.max_retries})"
+                    f"[Consensus] Provider {provider.name} 失败: {e} (attempt {attempt + 1}/{provider.max_retries})"
                 )
                 if attempt == provider.max_retries - 1:
                     raise
 
-        raise ConnectionError(
-            f"Provider {provider.name} failed after {provider.max_retries} retries"
-        )
+        raise ConnectionError(f"Provider {provider.name} failed after {provider.max_retries} retries")
 
     async def _call_provider_api(self, topic: str, provider: AIProvider) -> dict[str, Any]:
         """
@@ -389,14 +381,14 @@ class ConsensusEngine:
         summary = f"""
 # 通识摘要
 
-**主题**: {result['topic']}
-**时间**: {result['timestamp']}
-**版本**: {result['version']}
-**模式**: {result.get('mode', 'unknown')}
+**主题**: {result["topic"]}
+**时间**: {result["timestamp"]}
+**版本**: {result["version"]}
+**模式**: {result.get("mode", "unknown")}
 
 ## 核心共识
 
-{result['consensus']}
+{result["consensus"]}
 
 ## 来源
 

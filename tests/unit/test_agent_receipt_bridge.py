@@ -128,26 +128,18 @@ def test_receipt_completes_testing_task(tmp_path):
     result = _run_receipt(workspace)
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["completed_count"] == 1
     assert report["error_count"] == 0
 
-    state = json.loads(
-        (workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8")
-    )
+    state = json.loads((workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8"))
     assert state["tasks"]["TASK-RECEIPT-001"]["status"] == "completed"
 
-    receipt_state = json.loads(
-        (workspace / "logs" / "agent_receipt_state.json").read_text(encoding="utf-8")
-    )
+    receipt_state = json.loads((workspace / "logs" / "agent_receipt_state.json").read_text(encoding="utf-8"))
     assert "TASK-RECEIPT-001" in receipt_state["items"]
 
-    ack_bridge_state = json.loads(
-        (workspace / "logs" / "agent_ack_bridge_state.json").read_text(encoding="utf-8")
-    )
+    ack_bridge_state = json.loads((workspace / "logs" / "agent_ack_bridge_state.json").read_text(encoding="utf-8"))
     # PROTOCOL.md：ACK 行 status 只能是 ok / blocked / noop。
     # codearts_agent 之前默认发 "completed"，不在协议枚举内。
     assert ack_bridge_state["items"]["TASK-RECEIPT-001"]["ack_line"] == (
@@ -176,17 +168,13 @@ def test_receipt_skips_claude_without_explicit_ack(tmp_path):
     result = _run_receipt(workspace)
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 0
     assert report["completed_count"] == 0
     assert report["skipped_count"] == 1
     assert report["skipped_tasks"][0]["reason"] == "explicit ACK required before receipt close"
 
-    state = json.loads(
-        (workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8")
-    )
+    state = json.loads((workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8"))
     assert state["tasks"]["TASK-RECEIPT-CLAUDE-001"]["status"] == "testing"
     assert not (workspace / "logs" / "agent_ack_bridge_state.json").exists()
 
@@ -236,15 +224,11 @@ def test_receipt_allows_claude_after_explicit_cli_ack(tmp_path):
     result = _run_receipt(workspace)
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["completed_count"] == 1
 
-    ack_bridge_state = json.loads(
-        (workspace / "logs" / "agent_ack_bridge_state.json").read_text(encoding="utf-8")
-    )
+    ack_bridge_state = json.loads((workspace / "logs" / "agent_ack_bridge_state.json").read_text(encoding="utf-8"))
     assert ack_bridge_state["items"]["TASK-RECEIPT-CLAUDE-002"]["source"] == "cli-ack"
 
 
@@ -275,16 +259,12 @@ def test_receipt_dry_run_does_not_update_status_or_state(tmp_path):
     result = _run_receipt(workspace, "--dry-run")
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["completed_count"] == 1
     assert report["state_updated"] is False
 
-    state = json.loads(
-        (workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8")
-    )
+    state = json.loads((workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8"))
     assert state["tasks"]["TASK-RECEIPT-002"]["status"] == "testing"
     assert not (workspace / "logs" / "agent_receipt_state.json").exists()
 
@@ -315,16 +295,12 @@ def test_receipt_skips_task_with_open_patch(tmp_path):
     result = _run_receipt(workspace)
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 0
     assert report["completed_count"] == 0
     assert report["skipped_count"] == 1
 
-    state = json.loads(
-        (workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8")
-    )
+    state = json.loads((workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8"))
     assert state["tasks"]["TASK-RECEIPT-003"]["status"] == "testing"
 
 
@@ -355,17 +331,13 @@ def test_receipt_reports_gate_error_for_invalid_result_file(tmp_path):
     result = _run_receipt(workspace)
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["completed_count"] == 0
     assert report["error_count"] == 1
     assert "missing sections" in report["errors"][0]["error"]
 
-    state = json.loads(
-        (workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8")
-    )
+    state = json.loads((workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8"))
     assert state["tasks"]["TASK-RECEIPT-004"]["status"] == "testing"
 
 
@@ -415,17 +387,13 @@ def test_receipt_reports_gate_error_for_mismatched_acceptance_command(tmp_path):
     result = _run_receipt(workspace)
     assert result.returncode == 0, result.stderr
 
-    report = json.loads(
-        (workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((workspace / "logs" / "task_receipt_report.json").read_text(encoding="utf-8"))
     assert report["candidate_count"] == 1
     assert report["completed_count"] == 0
     assert report["error_count"] == 1
     assert "missing acceptance_commands" in report["errors"][0]["error"]
 
-    state = json.loads(
-        (workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8")
-    )
+    state = json.loads((workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8"))
     assert state["tasks"]["TASK-RECEIPT-005"]["status"] == "testing"
 
 
@@ -463,9 +431,7 @@ def test_receipt_can_close_takeover_locked_task(tmp_path):
     result = _run_receipt(workspace)
     assert result.returncode == 0, result.stderr
 
-    state = json.loads(
-        (workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8")
-    )
+    state = json.loads((workspace / "logs" / "collaboration_state.json").read_text(encoding="utf-8"))
     assert state["tasks"]["TASK-RECEIPT-006"]["status"] == "completed"
 
 

@@ -348,9 +348,7 @@ class ContextLearner:
     def _get_context_relevance(self, item_id: str, context: ScenarioType) -> float:
         """Get context relevance score."""
         # Count actions for this item in this context
-        context_actions = [
-            a for a in self._actions if a.item_id == item_id and a.context == context
-        ]
+        context_actions = [a for a in self._actions if a.item_id == item_id and a.context == context]
 
         if not context_actions:
             return 0.0
@@ -360,9 +358,7 @@ class ContextLearner:
         context_ratio = len(context_actions) / total_actions if total_actions > 0 else 0.0
 
         # Consider recency
-        recent_actions = [
-            a for a in context_actions if (datetime.now() - a.timestamp) < timedelta(days=7)
-        ]
+        recent_actions = [a for a in context_actions if (datetime.now() - a.timestamp) < timedelta(days=7)]
         recency_boost = len(recent_actions) / len(context_actions) if context_actions else 0.0
 
         return min(context_ratio * 0.7 + recency_boost * 0.3, 1.0)

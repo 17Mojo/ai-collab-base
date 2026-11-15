@@ -35,9 +35,7 @@ class TestStrictMCPMode:
         def fake_health():
             return None
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False)
 
         integration = NotebookLMIntegration()
 
@@ -54,9 +52,7 @@ class TestStrictMCPMode:
         def fake_health():
             return {"authenticated": False, "error": "Not logged in"}
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False)
 
         integration = NotebookLMIntegration()
 
@@ -86,9 +82,7 @@ class TestStrictMCPMode:
         def fake_ask_question(*, question, notebook_id):
             return None
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False)
 
         integration = NotebookLMIntegration()
 
@@ -105,9 +99,7 @@ class TestStrictMCPMode:
         def fake_ask_question(*, question, notebook_id):
             return {"invalid_key": "invalid_value"}
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False)
 
         integration = NotebookLMIntegration()
 
@@ -131,12 +123,8 @@ class TestStrictMCPMode:
                 "session_id": "sess-1",
             }
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False
-        )
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False)
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False)
 
         integration = NotebookLMIntegration(notebook_id="test-notebook")
 
@@ -169,9 +157,7 @@ class TestFallbackMCPMode:
         def fake_health():
             return {"authenticated": False}
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False)
 
         integration = NotebookLMIntegration()
 
@@ -200,9 +186,7 @@ class TestFallbackMCPMode:
         def fake_ask_question(*, question, notebook_id):
             return {"invalid_key": "invalid_value"}
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False)
 
         integration = NotebookLMIntegration()
 
@@ -228,12 +212,8 @@ class TestFallbackMCPMode:
                 "session_id": "sess-1",
             }
 
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False
-        )
-        monkeypatch.setattr(
-            builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False
-        )
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__get_health", fake_health, raising=False)
+        monkeypatch.setattr(builtins, "mcp__plugin_notebooklm__ask_question", fake_ask_question, raising=False)
 
         integration = NotebookLMIntegration(notebook_id="test-notebook")
 

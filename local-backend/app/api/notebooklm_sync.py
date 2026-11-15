@@ -86,9 +86,7 @@ def get_sync_status() -> SyncStatus:
                 status="idle",
             )
     except Exception:
-        return SyncStatus(
-            last_sync="Error", files_synced=0, files_pending=0, total_sources=0, status="error"
-        )
+        return SyncStatus(last_sync="Error", files_synced=0, files_pending=0, total_sources=0, status="error")
 
 
 def count_pending_files() -> int:
@@ -279,9 +277,7 @@ async def set_sync_schedule(interval_hours: int = 24):
         "enabled": True,
         "interval_hours": interval_hours,
         "last_scheduled": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "next_sync": (datetime.now() + timedelta(hours=interval_hours)).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        ),
+        "next_sync": (datetime.now() + timedelta(hours=interval_hours)).strftime("%Y-%m-%d %H:%M:%S"),
         "directories": KNOWLEDGE_DIRS,
     }
 

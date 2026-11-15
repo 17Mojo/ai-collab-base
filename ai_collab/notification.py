@@ -176,9 +176,7 @@ class NotificationQueue:
         except (OSError, json.JSONDecodeError):
             history = {"history": []}
 
-        history["history"].append(
-            {"message_id": message_id, "read_by": ai, "read_at": datetime.now().isoformat()}
-        )
+        history["history"].append({"message_id": message_id, "read_by": ai, "read_at": datetime.now().isoformat()})
 
         with open(self.history_file, "w") as f:
             json.dump(history, f, indent=2)
@@ -203,9 +201,7 @@ class NotificationAPI:
         模式1: 广播 - 发消息给所有人
         对应微信群聊：发消息到群里
         """
-        notification = Notification(
-            content=content, mode=NotificationMode.BROADCAST, priority=priority
-        )
+        notification = Notification(content=content, mode=NotificationMode.BROADCAST, priority=priority)
         message_id = self.queue.emit(notification)
         for ai in self.queue.BROADCAST_TARGETS:
             self._write_to_target(ai, notification, message_id)

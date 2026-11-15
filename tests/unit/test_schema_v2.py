@@ -108,9 +108,7 @@ class TestWorkflowStep:
         ]
 
         for step_type in step_types:
-            step = WorkflowStep(
-                id=f"step_{step_type.value}", name=f"{step_type.value}步骤", type=step_type
-            )
+            step = WorkflowStep(id=f"step_{step_type.value}", name=f"{step_type.value}步骤", type=step_type)
             assert step.type == step_type
 
 
@@ -160,9 +158,7 @@ class TestQualityMetrics:
         """测试创建质量指标"""
         metrics = QualityMetrics(
             metrics={
-                "accuracy": QualityMetric(
-                    name="accuracy", description="准确性", check_method="fact_check", weight=0.5
-                ),
+                "accuracy": QualityMetric(name="accuracy", description="准确性", check_method="fact_check", weight=0.5),
                 "fluency": QualityMetric(
                     name="fluency", description="流畅性", check_method="fluency_check", weight=0.5
                 ),
@@ -176,12 +172,8 @@ class TestQualityMetrics:
         """测试权重总和验证"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.3
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.3
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.3),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.3),
             }
         )
 
@@ -192,12 +184,8 @@ class TestQualityMetrics:
         """测试权重总和验证 - 有效"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.5
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.5
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.5),
             }
         )
 
@@ -207,12 +195,8 @@ class TestQualityMetrics:
         """测试权重总和验证 - 无效"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.3
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.3
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.3),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.3),
             }
         )
 
@@ -222,15 +206,9 @@ class TestQualityMetrics:
         """测试线性归一化"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.5
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.2
-                ),
-                "m3": QualityMetric(
-                    name="m3", description="指标3", check_method="check3", weight=0.3
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.2),
+                "m3": QualityMetric(name="m3", description="指标3", check_method="check3", weight=0.3),
             },
             normalization_method="linear",
         )
@@ -242,15 +220,9 @@ class TestQualityMetrics:
         """测试 MinMax 归一化"""
         metrics = QualityMetrics(
             metrics={
-                "low": QualityMetric(
-                    name="low", description="低", check_method="check1", weight=0.1
-                ),
-                "mid": QualityMetric(
-                    name="mid", description="中", check_method="check2", weight=0.5
-                ),
-                "high": QualityMetric(
-                    name="high", description="高", check_method="check3", weight=0.9
-                ),
+                "low": QualityMetric(name="low", description="低", check_method="check1", weight=0.1),
+                "mid": QualityMetric(name="mid", description="中", check_method="check2", weight=0.5),
+                "high": QualityMetric(name="high", description="高", check_method="check3", weight=0.9),
             },
             normalization_method="minmax",
         )
@@ -262,12 +234,8 @@ class TestQualityMetrics:
         """测试 MinMax 归一化 - 权重相等"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.5
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.5
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.5),
             },
             normalization_method="minmax",
         )
@@ -280,15 +248,9 @@ class TestQualityMetrics:
         """测试 Z-score 归一化"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.3
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.5
-                ),
-                "m3": QualityMetric(
-                    name="m3", description="指标3", check_method="check3", weight=0.7
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.3),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.5),
+                "m3": QualityMetric(name="m3", description="指标3", check_method="check3", weight=0.7),
             },
             normalization_method="zscore",
         )
@@ -300,12 +262,8 @@ class TestQualityMetrics:
         """zscore 归一化 - 所有权重相等（std=0 边界）"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.5
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.5
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.5),
             },
             normalization_method="zscore",
         )
@@ -317,12 +275,8 @@ class TestQualityMetrics:
         """未知 normalization_method → 回退到 total 归一化"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.4
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.6
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.4),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.6),
             },
             normalization_method="unknown",
         )
@@ -335,9 +289,7 @@ class TestQualityMetrics:
         """测试零总权重归一化"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.0
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.0),
             }
         )
 
@@ -348,12 +300,8 @@ class TestQualityMetrics:
         """测试权重调整 - 成功"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.3
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.7
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.3),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.7),
             }
         )
 
@@ -365,9 +313,7 @@ class TestQualityMetrics:
     def test_adjust_weight_invalid_metric(self):
         """测试权重调整 - 无效指标"""
         metrics = QualityMetrics(
-            metrics={
-                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)
-            }
+            metrics={"m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)}
         )
 
         result = metrics.adjust_weight("nonexistent", 0.5)
@@ -376,9 +322,7 @@ class TestQualityMetrics:
     def test_adjust_weight_invalid_range(self):
         """测试权重调整 - 超出范围"""
         metrics = QualityMetrics(
-            metrics={
-                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)
-            }
+            metrics={"m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)}
         )
 
         result = metrics.adjust_weight("m1", 1.5)
@@ -387,9 +331,7 @@ class TestQualityMetrics:
     def test_add_metric(self):
         """测试添加指标"""
         metrics = QualityMetrics(
-            metrics={
-                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5)
-            }
+            metrics={"m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5)}
         )
 
         new_metric = QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.3)
@@ -401,9 +343,7 @@ class TestQualityMetrics:
     def test_add_metric_duplicate(self):
         """测试添加重复指标"""
         metrics = QualityMetrics(
-            metrics={
-                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)
-            }
+            metrics={"m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)}
         )
 
         duplicate = QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5)
@@ -415,12 +355,8 @@ class TestQualityMetrics:
         """测试移除指标"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.5
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.5
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.5),
             }
         )
 
@@ -433,9 +369,7 @@ class TestQualityMetrics:
     def test_remove_metric_nonexistent(self):
         """测试移除不存在的指标"""
         metrics = QualityMetrics(
-            metrics={
-                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)
-            }
+            metrics={"m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=1.0)}
         )
 
         result = metrics.remove_metric("nonexistent", redistribute=False)
@@ -492,12 +426,8 @@ class TestQualityMetrics:
         """测试质量分数计算 - 缺指标给0分"""
         metrics = QualityMetrics(
             metrics={
-                "m1": QualityMetric(
-                    name="m1", description="指标1", check_method="check1", weight=0.5
-                ),
-                "m2": QualityMetric(
-                    name="m2", description="指标2", check_method="check2", weight=0.5
-                ),
+                "m1": QualityMetric(name="m1", description="指标1", check_method="check1", weight=0.5),
+                "m2": QualityMetric(name="m2", description="指标2", check_method="check2", weight=0.5),
             }
         )
 
@@ -818,7 +748,10 @@ class TestBoundaryScenarios:
         metrics = QualityMetrics(
             metrics={
                 "negative": QualityMetric(
-                    name="negative", description="负权重指标", check_method="check", weight=-0.5  # 负权重
+                    name="negative",
+                    description="负权重指标",
+                    check_method="check",
+                    weight=-0.5,  # 负权重
                 )
             }
         )
@@ -831,7 +764,10 @@ class TestBoundaryScenarios:
         metrics = QualityMetrics(
             metrics={
                 "large": QualityMetric(
-                    name="large", description="大权重指标", check_method="check", weight=1.5  # 超过1
+                    name="large",
+                    description="大权重指标",
+                    check_method="check",
+                    weight=1.5,  # 超过1
                 )
             }
         )
@@ -993,7 +929,7 @@ class TestPerformance:
         avg_time = sum(times) / len(times)
 
         # 性能验证：每次计算应该在合理时间内完成 (<10ms)
-        assert avg_time < 0.01, f"平均计算耗时 {avg_time*1000:.2f}ms，超过预期"
+        assert avg_time < 0.01, f"平均计算耗时 {avg_time * 1000:.2f}ms，超过预期"
 
     def test_weight_adjustment_time(self):
         """测试权重调整 - 验证性能可接受"""
@@ -1002,9 +938,7 @@ class TestPerformance:
 
         metrics = QualityMetrics(
             metrics={
-                f"m{i}": QualityMetric(
-                    name=f"m{i}", description=f"指标{i}", check_method="check", weight=1.0 / 50
-                )
+                f"m{i}": QualityMetric(name=f"m{i}", description=f"指标{i}", check_method="check", weight=1.0 / 50)
                 for i in range(50)
             }
         )
@@ -1020,7 +954,7 @@ class TestPerformance:
         assert abs(metrics.get_total_weight() - 1.0) < 0.01
 
         # 性能验证：调整50个权重应该在合理时间内完成 (<100ms)
-        assert elapsed < 0.1, f"权重调整耗时 {elapsed*1000:.2f}ms，超过预期"
+        assert elapsed < 0.1, f"权重调整耗时 {elapsed * 1000:.2f}ms，超过预期"
 
 
 class TestValidateEnhancedChecks:
@@ -1029,9 +963,7 @@ class TestValidateEnhancedChecks:
     def _make_valid_pack(self) -> PromptPackV2:
         """创建一个通过所有检查的合法 pack"""
         pack = create_xiaohongshu_base()
-        pack.workflow.steps.append(
-            WorkflowStep(id="s1", name="step1", type=StepType.LOCAL)
-        )
+        pack.workflow.steps.append(WorkflowStep(id="s1", name="step1", type=StepType.LOCAL))
         return pack
 
     def test_invalid_semver_fails(self):
@@ -1074,9 +1006,7 @@ class TestValidateEnhancedChecks:
     def test_dangling_branch_target_fails(self):
         """branches[].target_step 指向不存在的 step → validate() False"""
         pack = self._make_valid_pack()
-        pack.workflow.steps[0].branches = [
-            BranchCondition(target_step="ghost", condition_type="contains")
-        ]
+        pack.workflow.steps[0].branches = [BranchCondition(target_step="ghost", condition_type="contains")]
         assert pack.validate() is False
 
     def test_valid_step_references_pass(self):
@@ -1084,15 +1014,9 @@ class TestValidateEnhancedChecks:
         pack = self._make_valid_pack()
         pack.workflow.steps[0].next_step = "s2"
         pack.workflow.steps[0].on_error = "err"
-        pack.workflow.steps[0].branches = [
-            BranchCondition(target_step="s2", condition_type="contains")
-        ]
-        pack.workflow.steps.append(
-            WorkflowStep(id="s2", name="step2", type=StepType.LOCAL)
-        )
-        pack.workflow.steps.append(
-            WorkflowStep(id="err", name="error", type=StepType.LOCAL)
-        )
+        pack.workflow.steps[0].branches = [BranchCondition(target_step="s2", condition_type="contains")]
+        pack.workflow.steps.append(WorkflowStep(id="s2", name="step2", type=StepType.LOCAL))
+        pack.workflow.steps.append(WorkflowStep(id="err", name="error", type=StepType.LOCAL))
         assert pack.validate() is True
 
     def test_negative_weight_fails(self):
@@ -1263,11 +1187,7 @@ class TestWorkflowStepReviewWorkflow:
             domain=DomainPack(primary_domain="x"),
             workflow=WorkflowDefinition(steps=[step]),
             quality_metrics=QualityMetrics(
-                metrics={
-                    "a": QualityMetric(
-                        name="a", description="d", check_method="c", weight=1.0
-                    )
-                }
+                metrics={"a": QualityMetric(name="a", description="d", check_method="c", weight=1.0)}
             ),
             example_library=ExampleLibrary(),
             generation_params=GenerationParams(),
@@ -1309,9 +1229,7 @@ class TestWorkflowStepReviewWorkflow:
                     }
                 ]
             },
-            "quality_metrics": {
-                "metrics": {"a": {"description": "d", "check_method": "c", "weight": 1.0}}
-            },
+            "quality_metrics": {"metrics": {"a": {"description": "d", "check_method": "c", "weight": 1.0}}},
             "example_library": {"good_examples": [], "bad_examples": []},
         }
 

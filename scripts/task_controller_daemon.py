@@ -8,6 +8,7 @@
 - 复核结论驱动的 patch 创建
 - 结果一致性审计
 """
+
 import argparse
 import json
 import sys
@@ -92,6 +93,7 @@ def result_file_exists(workspace: Path, task: dict[str, Any]) -> bool:
 
 # ---------------- 契约检查 ----------------
 
+
 def check_task_contract(task: dict[str, Any]) -> bool:
     """任务契约是否完整（含 acceptance_commands 与 result_file）。"""
     has_commands = bool(task.get("acceptance_commands"))
@@ -100,6 +102,7 @@ def check_task_contract(task: dict[str, Any]) -> bool:
 
 
 # ---------------- drift ----------------
+
 
 def detect_drifts(workspace: Path, state: dict[str, Any], ack_state: dict[str, Any]) -> list[dict[str, Any]]:
     """检测 drift：结果文件存在但状态未闭环。"""
@@ -114,17 +117,20 @@ def detect_drifts(workspace: Path, state: dict[str, Any], ack_state: dict[str, A
         if not result_file_exists(workspace, task):
             continue
         # 所有 drift 收口都需要显式 ACK（无论 AI 类型）
-        drifts.append({
-            "kind": "task",
-            "item_id": tid,
-            "current_status": status,
-            "needs_explicit_ack": True,
-            "has_explicit_ack": has_explicit_ack(tid, ack_state),
-        })
+        drifts.append(
+            {
+                "kind": "task",
+                "item_id": tid,
+                "current_status": status,
+                "needs_explicit_ack": True,
+                "has_explicit_ack": has_explicit_ack(tid, ack_state),
+            }
+        )
     return drifts
 
 
 # ---------------- stale ----------------
+
 
 def detect_stale(state: dict[str, Any], *, pending_timeout: int, blocked_timeout: int) -> list[dict[str, Any]]:
     """检测超时任务。"""
@@ -150,6 +156,7 @@ def detect_stale(state: dict[str, Any], *, pending_timeout: int, blocked_timeout
 
 # ---------------- prewarning ----------------
 
+
 def detect_prewarning(
     workspace: Path,
     state: dict[str, Any],
@@ -172,17 +179,20 @@ def detect_prewarning(
         if age >= threshold and age < active_timeout:
             alerts = task.get("controller_alerts") or {}
             already = bool(alerts.get("prewarning"))
-            out.append({
-                "kind": "task",
-                "item_id": tid,
-                "age_seconds": age,
-                "threshold": threshold,
-                "already_applied": already,
-            })
+            out.append(
+                {
+                    "kind": "task",
+                    "item_id": tid,
+                    "age_seconds": age,
+                    "threshold": threshold,
+                    "already_applied": already,
+                }
+            )
     return out
 
 
 # ---------------- patch candidates ----------------
+
 
 def detect_patch_candidates(state: dict[str, Any]) -> list[dict[str, Any]]:
     """检测需要跟进 patch 的复核结论。"""
@@ -196,7 +206,8 @@ def detect_patch_candidates(state: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         # 是否已有 open patch
         existing = [
-            p for p in patches.values()
+            p
+            for p in patches.values()
             if p.get("task_id") == tid and p.get("status") not in {"completed", "merged", "cancelled"}
         ]
         if existing:
@@ -206,6 +217,7 @@ def detect_patch_candidates(state: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 # ---------------- 结果一致性审计 ----------------
+
 
 def audit_result_consistency(
     workspace: Path,
@@ -230,6 +242,7 @@ def audit_result_consistency(
 # ---------------- 主流程 ----------------
 
 # ---------------- 模块级接口（供集成测试与外部调用） ----------------
+
 
 class StateManager:
     """StateManager 适配器（供外部/测试注入替换）。"""
@@ -272,7 +285,8 @@ def detect_prewarning_tasks(
     prewarn_ratio: float,
 ) -> list[dict[str, Any]]:
     return detect_prewarning(
-        Path(workspace), state,
+        Path(workspace),
+        state,
         active_timeout=active_timeout_sec,
         prewarn_ratio=prewarn_ratio,
     )
@@ -393,10 +407,13 @@ def run_controller_once(
         if dry_run:
             continue
         if d.get("needs_explicit_ack") and not d.get("has_explicit_ack"):
-            errors.append({
-                "kind": d["kind"], "item_id": d["item_id"],
-                "error": "explicit ACK required before auto-complete",
-            })
+            errors.append(
+                {
+                    "kind": d["kind"],
+                    "item_id": d["item_id"],
+                    "error": "explicit ACK required before auto-complete",
+                }
+            )
             continue
         tid = d["item_id"]
         state["tasks"][tid]["status"] = "completed"
@@ -406,8 +423,10 @@ def run_controller_once(
 
     # prewarning
     prewarns = detect_prewarning_tasks(
-        workspace=workspace, state=state,
-        active_timeout_sec=active_timeout_sec, prewarn_ratio=prewarn_ratio,
+        workspace=workspace,
+        state=state,
+        active_timeout_sec=active_timeout_sec,
+        prewarn_ratio=prewarn_ratio,
     )
     prewarning_applied = 0
     for p in prewarns:
@@ -417,7 +436,8 @@ def run_controller_once(
         task = state["tasks"][tid]
         task.setdefault("notes", []).append(f"[prewarning] near timeout (age={p['age_seconds']:.0f}s)")
         task.setdefault("controller_alerts", {})["prewarning"] = {
-            "at": _now().isoformat(), "age_seconds": p["age_seconds"],
+            "at": _now().isoformat(),
+            "age_seconds": p["age_seconds"],
         }
         prewarning_applied += 1
 
@@ -453,11 +473,16 @@ def run_controller_once(
             continue
         task = state["tasks"][tid]
         state["patches"][pid] = {
-            "patch_id": pid, "task_id": tid, "title": f"Follow-up for {tid}",
+            "patch_id": pid,
+            "task_id": tid,
+            "title": f"Follow-up for {tid}",
             "assignee": default_assignee or task.get("assignee", "codex"),
-            "status": "pending", "created_at": _now().isoformat(),
-            "updated_at": _now().isoformat(), "completed_at": None,
-            "result_file": None, "notes": [],
+            "status": "pending",
+            "created_at": _now().isoformat(),
+            "updated_at": _now().isoformat(),
+            "completed_at": None,
+            "result_file": None,
+            "notes": [],
         }
         patches_created += 1
 
@@ -522,11 +547,13 @@ def run_once(args) -> int:
         if dry_run:
             continue
         if d["needs_explicit_ack"] and not d["has_explicit_ack"]:
-            errors.append({
-                "kind": d["kind"],
-                "item_id": d["item_id"],
-                "error": "explicit ACK required before auto-complete",
-            })
+            errors.append(
+                {
+                    "kind": d["kind"],
+                    "item_id": d["item_id"],
+                    "error": "explicit ACK required before auto-complete",
+                }
+            )
             continue
         tid = d["item_id"]
         state["tasks"][tid]["status"] = "completed"
@@ -556,7 +583,8 @@ def run_once(args) -> int:
 
     # 3. prewarning
     prewarns = detect_prewarning(
-        workspace, state,
+        workspace,
+        state,
         active_timeout=args.active_timeout_sec,
         prewarn_ratio=args.prewarn_ratio,
     )
@@ -691,8 +719,6 @@ def main() -> int:
     p.add_argument("--report")
     args = p.parse_args()
     return run_once(args)
-
-
 
 
 if __name__ == "__main__":

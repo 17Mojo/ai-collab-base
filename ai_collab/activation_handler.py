@@ -63,9 +63,7 @@ class VSCodeIntegration:
             # 向上查找包含 .vscode 或 package.json 的目录
             path = cwd
             while path and path != os.path.dirname(path):
-                if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(
-                    os.path.join(path, "package.json")
-                ):
+                if os.path.exists(os.path.join(path, ".vscode")) or os.path.exists(os.path.join(path, "package.json")):
                     return path
                 path = os.path.dirname(path)
         return cwd
@@ -118,9 +116,7 @@ class VSCodeIntegration:
         try:
             global_config_dir = os.path.expanduser("~/.vscode/ai-collab")
             os.makedirs(global_config_dir, exist_ok=True)
-            log_file = os.path.join(
-                global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log"
-            )
+            log_file = os.path.join(global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log")
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"[{datetime.now().isoformat()}] [{channel}] {message}\n")
         except Exception:
@@ -231,9 +227,7 @@ class ActivationHandler:
             # 保存触发：检查文件扩展名是否在白名单
             file_ext = os.path.splitext(user_input)[1].lower()
             project_config = VSCodeIntegration.get_project_config()
-            watch_extensions = project_config.get(
-                "watchExtensions", [".ts", ".js", ".py", ".go", ".rs"]
-            )
+            watch_extensions = project_config.get("watchExtensions", [".ts", ".js", ".py", ".go", ".rs"])
             return file_ext in watch_extensions
         elif mode == ActivationMode.EVENT or mode == ActivationMode.COMMAND:
             # 事件或命令模式：总是激活
@@ -273,9 +267,7 @@ class ActivationHandler:
         self._log_activation(rules, ack_message, mode, context)
 
         # 更新 VSCode 输出面板
-        VSCodeIntegration.update_vscode_output(
-            f"{self.ai_type.value} ACTIVATED: {ack_message}", "AI Collab"
-        )
+        VSCodeIntegration.update_vscode_output(f"{self.ai_type.value} ACTIVATED: {ack_message}", "AI Collab")
 
         # 调用回调函数
         if self.on_activated:
@@ -427,9 +419,7 @@ class ActivationHandler:
         rules_str = ", ".join(rules) if rules else "无规则文件"
         return template.format(rules=rules_str)
 
-    def _log_activation(
-        self, rules: list[str], ack_message: str, mode: ActivationMode, context: dict[str, Any]
-    ):
+    def _log_activation(self, rules: list[str], ack_message: str, mode: ActivationMode, context: dict[str, Any]):
         """记录激活日志"""
         activation_time = self.activation_time or datetime.now()
         log_entry = {
@@ -451,9 +441,7 @@ class ActivationHandler:
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
         # 写入 .git/ai-collab/ （Git 追踪）
-        git_log_file = os.path.join(
-            base_dir, self.GIT_AI_COLLAB_DIR, "activations", f"{date_str}.jsonl"
-        )
+        git_log_file = os.path.join(base_dir, self.GIT_AI_COLLAB_DIR, "activations", f"{date_str}.jsonl")
         with open(git_log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
@@ -497,8 +485,4 @@ class ActivationHandler:
             return []
 
         active_tasks = state.get("active_tasks", [])
-        return [
-            state["tasks"].get(task_id, {})
-            for task_id in active_tasks
-            if task_id in state.get("tasks", {})
-        ]
+        return [state["tasks"].get(task_id, {}) for task_id in active_tasks if task_id in state.get("tasks", {})]

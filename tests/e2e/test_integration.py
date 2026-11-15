@@ -235,9 +235,15 @@ class TestChromeExtensionFiles:
         assert "function getAdapter" in content, "缺少 getAdapter(url) 函数"
         # 守护实际注册的 10 个平台
         for platform in (
-            "claude.ai", "chat.openai.com", "gemini.google.com",
-            "qianwen.aliyun.com", "chatglm.cn", "kimi.moonshot.cn",
-            "yiyan.baidu.com", "yuanbao.tencent.com", "longcat.ai",
+            "claude.ai",
+            "chat.openai.com",
+            "gemini.google.com",
+            "qianwen.aliyun.com",
+            "chatglm.cn",
+            "kimi.moonshot.cn",
+            "yiyan.baidu.com",
+            "yuanbao.tencent.com",
+            "longcat.ai",
             "chat.deepseek.com",
         ):
             assert platform in content, f"缺少平台适配器: {platform}"
@@ -308,21 +314,15 @@ class TestLocalBackendFiles:
 
     def test_main_app_exists(self):
         """测试主应用文件存在"""
-        main_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "local-backend", "app", "main.py"
-        )
+        main_path = os.path.join(os.path.dirname(__file__), "..", "..", "local-backend", "app", "main.py")
 
         assert os.path.exists(main_path), "main.py 不存在"
 
     def test_docker_config_exists(self):
         """测试 Docker 配置存在"""
-        dockerfile_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "local-backend", "Dockerfile"
-        )
+        dockerfile_path = os.path.join(os.path.dirname(__file__), "..", "..", "local-backend", "Dockerfile")
 
-        compose_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "local-backend", "docker-compose.yml"
-        )
+        compose_path = os.path.join(os.path.dirname(__file__), "..", "..", "local-backend", "docker-compose.yml")
 
         assert os.path.exists(dockerfile_path), "Dockerfile 不存在"
         assert os.path.exists(compose_path), "docker-compose.yml 不存在"

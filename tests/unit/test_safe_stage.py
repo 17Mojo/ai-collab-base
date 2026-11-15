@@ -63,7 +63,7 @@ def test_stage_domain_changes_other_domain(tmp_path):
     _init_repo(workspace)
 
     (workspace / ".vscode").mkdir(parents=True, exist_ok=True)
-    (workspace / ".vscode" / "tasks.json").write_text("{\"version\":\"2.0.0\"}\n", encoding="utf-8")
+    (workspace / ".vscode" / "tasks.json").write_text('{"version":"2.0.0"}\n', encoding="utf-8")
     (workspace / "docs").mkdir(parents=True, exist_ok=True)
     (workspace / "docs" / "c.md").write_text("# c\n", encoding="utf-8")
 

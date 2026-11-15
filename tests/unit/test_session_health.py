@@ -232,16 +232,12 @@ def test_session_health_detects_ack_silence_and_missing_explicit_ack(tmp_path: P
     queue = inspect_interventions(workspace=workspace, only_open=True)
     assert queue["intervention_count"] == 2
 
-    missing_ack_incident = next(
-        item for item in report["incidents"] if item["reason_code"] == "missing_explicit_ack"
-    )
+    missing_ack_incident = next(item for item in report["incidents"] if item["reason_code"] == "missing_explicit_ack")
     artifact_text = (workspace / missing_ack_incident["message_artifact"]).read_text(encoding="utf-8")
     assert "python3 -m ai_collab.cli ack --task-id TASK-ACK-001 --ai claude_code --status ok" in artifact_text
 
 
-def test_ack_silence_intervention_names_payload_and_uses_role_scoped_hint(
-    tmp_path: Path, monkeypatch
-):
+def test_ack_silence_intervention_names_payload_and_uses_role_scoped_hint(tmp_path: Path, monkeypatch):
     """自动投递的干预正文必须自足：点名 payload 文件 + 角色对齐的触发词。
 
     干预消息是投递给对方进程的正文，接收方没有会话上下文；
@@ -293,11 +289,7 @@ def test_ack_silence_intervention_names_payload_and_uses_role_scoped_hint(
 
     report = run_session_health_aggregation(workspace=workspace)
 
-    incident = next(
-        item
-        for item in report["incidents"]
-        if item["reason_code"] == "ack_silence_after_run"
-    )
+    incident = next(item for item in report["incidents"] if item["reason_code"] == "ack_silence_after_run")
     artifact_text = (workspace / incident["message_artifact"]).read_text(encoding="utf-8")
     assert "AGENT_TRIGGER_codearts_agent_latest.md" in artifact_text
     assert "`A.RUN`" in artifact_text
@@ -314,9 +306,7 @@ def test_ack_silence_intervention_names_payload_and_uses_role_scoped_hint(
     assert "write" in artifact_text
 
 
-def test_ack_silence_intervention_honors_trigger_output_config(
-    tmp_path: Path, monkeypatch
-):
+def test_ack_silence_intervention_honors_trigger_output_config(tmp_path: Path, monkeypatch):
     """payload 路径必须与 CLI 派发链路同源（`.vscode/ai-collab.json` 顶层 `trigger`）。"""
     workspace = tmp_path / "ws"
     workspace.mkdir()
@@ -329,9 +319,7 @@ def test_ack_silence_intervention_honors_trigger_output_config(
         "outputDir": "collaboration/payloads",
         "payloadPrefix": "PAYLOAD",
     }
-    config_file.write_text(
-        json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    config_file.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
 
     manager = state_manager.StateManager(workspace_path=str(workspace))
     register_session(
@@ -373,11 +361,7 @@ def test_ack_silence_intervention_honors_trigger_output_config(
 
     report = run_session_health_aggregation(workspace=workspace)
 
-    incident = next(
-        item
-        for item in report["incidents"]
-        if item["reason_code"] == "ack_silence_after_run"
-    )
+    incident = next(item for item in report["incidents"] if item["reason_code"] == "ack_silence_after_run")
     artifact_text = (workspace / incident["message_artifact"]).read_text(encoding="utf-8")
     assert "collaboration/payloads/PAYLOAD_codearts_agent_latest.md" in artifact_text
 
@@ -419,14 +403,10 @@ def test_session_health_surfaces_unregistered_sessions(tmp_path: Path, monkeypat
     assert "unregistered_session" in reason_codes
     assert "terminal_status_mismatch" in reason_codes
     assert report["unregistered_count"] >= 1
-    unregistered_sessions = [
-        item for item in report["sessions"] if item["session_status"] == "unregistered"
-    ]
+    unregistered_sessions = [item for item in report["sessions"] if item["session_status"] == "unregistered"]
     assert any(item["assignee"] == "codearts_agent" for item in unregistered_sessions)
 
-    unregistered_incident = next(
-        item for item in report["incidents"] if item["reason_code"] == "unregistered_session"
-    )
+    unregistered_incident = next(item for item in report["incidents"] if item["reason_code"] == "unregistered_session")
     artifact_text = (workspace / unregistered_incident["message_artifact"]).read_text(encoding="utf-8")
     assert "不会宣称可自动投递" in artifact_text
 

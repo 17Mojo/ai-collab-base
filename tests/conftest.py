@@ -39,9 +39,7 @@ if project_root not in sys.path:
 # 此时 os.environ 还是开发机原样——fixture 尚未把它改掉。
 REAL_HOME = os.environ.get("HOME") or os.environ.get("USERPROFILE") or ""
 REAL_GLOBAL_STATE_FILE = (
-    str(Path(REAL_HOME) / ".vscode" / "ai-collab" / "collaboration_state.json")
-    if REAL_HOME
-    else ""
+    str(Path(REAL_HOME) / ".vscode" / "ai-collab" / "collaboration_state.json") if REAL_HOME else ""
 )
 
 

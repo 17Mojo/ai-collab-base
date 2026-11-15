@@ -71,10 +71,12 @@ def tmp_json(tmp_path):
         p = tmp_path / name
         p.write_text(json.dumps(data), encoding="utf-8")
         return p
+
     return _write
 
 
 # ======================= 数据类 & 枚举 =======================
+
 
 class TestEnums:
     def test_validation_severity_values(self):
@@ -85,9 +87,7 @@ class TestEnums:
 
 class TestValidationIssue:
     def test_issue_init(self):
-        i = ValidationIssue(
-            path="$.x", message="m", severity=ValidationSeverity.ERROR, suggestion="fix"
-        )
+        i = ValidationIssue(path="$.x", message="m", severity=ValidationSeverity.ERROR, suggestion="fix")
         assert i.path == "$.x"
         assert i.suggestion == "fix"
 
@@ -136,6 +136,7 @@ class TestValidationResult:
 
 # ======================= validate_file =======================
 
+
 class TestValidateFile:
     def test_file_not_found(self):
         r = PackSchemaValidator().validate_file("/nonexistent/path/x.json")
@@ -166,6 +167,7 @@ class TestValidateFile:
 
 # ======================= validate_data — 顶层结构 =======================
 
+
 class TestValidateTopLevel:
     def test_missing_metadata(self):
         v = PackSchemaValidator()
@@ -191,6 +193,7 @@ class TestValidateTopLevel:
 
 
 # ======================= metadata 校验 =======================
+
 
 class TestValidateMetadata:
     def test_missing_required_field(self, minimal_valid_pack):
@@ -240,22 +243,19 @@ class TestValidateMetadata:
         minimal_valid_pack["metadata"]["updated_at"] = "2026-01-01T00:00:00"
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "created_at" in i.message and "after" in i.message
-            and i.severity == ValidationSeverity.WARNING
+            "created_at" in i.message and "after" in i.message and i.severity == ValidationSeverity.WARNING
             for i in r.issues
         )
 
 
 # ======================= domain 校验 =======================
 
+
 class TestValidateDomain:
     def test_missing_primary_domain_errors(self, minimal_valid_pack):
         minimal_valid_pack["domain"] = {}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        assert any(
-            "primary_domain" in i.message and i.severity == ValidationSeverity.ERROR
-            for i in r.issues
-        )
+        assert any("primary_domain" in i.message and i.severity == ValidationSeverity.ERROR for i in r.issues)
 
     def test_target_platforms_not_list(self, minimal_valid_pack):
         minimal_valid_pack["domain"] = {"primary_domain": "x", "target_platforms": "web"}
@@ -288,9 +288,7 @@ class TestValidateDomain:
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "Invalid platform: facebook" in i.message
-            and i.severity == ValidationSeverity.ERROR
-            for i in r.issues
+            "Invalid platform: facebook" in i.message and i.severity == ValidationSeverity.ERROR for i in r.issues
         )
 
     def test_empty_target_platforms_warns(self, minimal_valid_pack):
@@ -301,13 +299,12 @@ class TestValidateDomain:
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "target_platforms is empty" in i.message
-            and i.severity == ValidationSeverity.WARNING
-            for i in r.issues
+            "target_platforms is empty" in i.message and i.severity == ValidationSeverity.WARNING for i in r.issues
         )
 
 
 # ======================= workflow 校验 =======================
+
 
 class TestValidateWorkflow:
     def test_missing_steps(self, minimal_valid_pack):
@@ -330,8 +327,7 @@ class TestValidateWorkflow:
         minimal_valid_pack["workflow"]["steps"][0]["next_step"] = "nonexistent"
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "Step reference 'nonexistent' not found" in i.message
-            and i.severity == ValidationSeverity.ERROR
+            "Step reference 'nonexistent' not found" in i.message and i.severity == ValidationSeverity.ERROR
             for i in r.issues
         )
 
@@ -340,8 +336,7 @@ class TestValidateWorkflow:
         minimal_valid_pack["workflow"]["steps"][0]["on_error"] = "missing_handler"
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "Step reference 'missing_handler' not found" in i.message
-            and i.severity == ValidationSeverity.ERROR
+            "Step reference 'missing_handler' not found" in i.message and i.severity == ValidationSeverity.ERROR
             for i in r.issues
         )
 
@@ -352,8 +347,7 @@ class TestValidateWorkflow:
         ]
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "Branch target_step 'ghost' not found" in i.message
-            and i.severity == ValidationSeverity.ERROR
+            "Branch target_step 'ghost' not found" in i.message and i.severity == ValidationSeverity.ERROR
             for i in r.issues
         )
 
@@ -363,17 +357,10 @@ class TestValidateWorkflow:
         s1["next_step"] = "s2"
         s1["on_error"] = "err"
         s1["branches"] = [{"target_step": "s2", "condition_type": "contains"}]
-        minimal_valid_pack["workflow"]["steps"].append(
-            {"id": "s2", "name": "step2", "type": "local"}
-        )
-        minimal_valid_pack["workflow"]["steps"].append(
-            {"id": "err", "name": "error_handler", "type": "local"}
-        )
+        minimal_valid_pack["workflow"]["steps"].append({"id": "s2", "name": "step2", "type": "local"})
+        minimal_valid_pack["workflow"]["steps"].append({"id": "err", "name": "error_handler", "type": "local"})
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        ref_errors = [
-            i for i in r.issues
-            if "not found" in i.message and i.severity == ValidationSeverity.ERROR
-        ]
+        ref_errors = [i for i in r.issues if "not found" in i.message and i.severity == ValidationSeverity.ERROR]
         assert len(ref_errors) == 0
 
 
@@ -430,6 +417,7 @@ class TestValidateStep:
 
 # ======================= quality_metrics 校验 =======================
 
+
 class TestValidateQualityMetrics:
     def test_missing_metrics(self, minimal_valid_pack):
         minimal_valid_pack["quality_metrics"] = {}
@@ -474,18 +462,14 @@ class TestValidateQualityMetrics:
 
     def test_metric_missing_required_field_errors(self, minimal_valid_pack):
         """metric 缺内嵌必需字段 description/check_method → error（name 由 key 提供）"""
-        minimal_valid_pack["quality_metrics"] = {
-            "metrics": {"a": {"weight": 1.0}}
-        }
+        minimal_valid_pack["quality_metrics"] = {"metrics": {"a": {"weight": 1.0}}}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "Missing required metric field: description" in i.message
-            and i.severity == ValidationSeverity.ERROR
+            "Missing required metric field: description" in i.message and i.severity == ValidationSeverity.ERROR
             for i in r.issues
         )
         assert any(
-            "Missing required metric field: check_method" in i.message
-            and i.severity == ValidationSeverity.ERROR
+            "Missing required metric field: check_method" in i.message and i.severity == ValidationSeverity.ERROR
             for i in r.issues
         )
         # name 不再是内嵌必需字段（name-as-key 正典格式）
@@ -501,23 +485,18 @@ class TestValidateQualityMetrics:
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         qm_errors = [
-            i
-            for i in r.issues
-            if i.path.startswith("$.quality_metrics") and i.severity == ValidationSeverity.ERROR
+            i for i in r.issues if i.path.startswith("$.quality_metrics") and i.severity == ValidationSeverity.ERROR
         ]
         assert qm_errors == []
 
     def test_metric_inner_name_mismatch_warns(self, minimal_valid_pack):
         """内嵌 name 与 key 不一致 → warning（以 key 为准，防歧义）"""
         minimal_valid_pack["quality_metrics"] = {
-            "metrics": {
-                "a": {"name": "b", "description": "d", "check_method": "c", "weight": 1.0}
-            }
+            "metrics": {"a": {"name": "b", "description": "d", "check_method": "c", "weight": 1.0}}
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "metric.name 与 key 不一致" in i.message and i.severity == ValidationSeverity.WARNING
-            for i in r.issues
+            "metric.name 与 key 不一致" in i.message and i.severity == ValidationSeverity.WARNING for i in r.issues
         )
 
     def test_negative_weight_errors(self, minimal_valid_pack):
@@ -529,10 +508,7 @@ class TestValidateQualityMetrics:
             }
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        assert any(
-            "non-negative" in i.message and i.severity == ValidationSeverity.ERROR
-            for i in r.issues
-        )
+        assert any("non-negative" in i.message and i.severity == ValidationSeverity.ERROR for i in r.issues)
 
     def test_validation_tolerance_configurable(self, minimal_valid_pack):
         """自定义 validation_tolerance → 不假阴性"""
@@ -545,32 +521,27 @@ class TestValidateQualityMetrics:
         }
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         weight_warnings = [
-            i for i in r.issues
-            if "Weight sum" in i.message and i.severity == ValidationSeverity.WARNING
+            i for i in r.issues if "Weight sum" in i.message and i.severity == ValidationSeverity.WARNING
         ]
         assert len(weight_warnings) == 0
 
 
 # ======================= example_library 校验 =======================
 
+
 class TestValidateExampleLibrary:
     def test_no_examples_info(self, minimal_valid_pack):
         """example_library 无 good/bad examples → info 提示"""
         minimal_valid_pack["example_library"] = {}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
-        assert any(
-            "No examples" in i.message and i.severity == ValidationSeverity.INFO
-            for i in r.issues
-        )
+        assert any("No examples" in i.message and i.severity == ValidationSeverity.INFO for i in r.issues)
 
     def test_good_examples_not_list_errors(self, minimal_valid_pack):
         """good_examples 非 list → error"""
         minimal_valid_pack["example_library"] = {"good_examples": "x"}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "good_examples must be a list" in i.message
-            and i.severity == ValidationSeverity.ERROR
-            for i in r.issues
+            "good_examples must be a list" in i.message and i.severity == ValidationSeverity.ERROR for i in r.issues
         )
 
     def test_bad_examples_not_list_errors(self, minimal_valid_pack):
@@ -578,9 +549,7 @@ class TestValidateExampleLibrary:
         minimal_valid_pack["example_library"] = {"bad_examples": 123}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "bad_examples must be a list" in i.message
-            and i.severity == ValidationSeverity.ERROR
-            for i in r.issues
+            "bad_examples must be a list" in i.message and i.severity == ValidationSeverity.ERROR for i in r.issues
         )
 
     def test_few_shot_template_not_str_errors(self, minimal_valid_pack):
@@ -588,8 +557,7 @@ class TestValidateExampleLibrary:
         minimal_valid_pack["example_library"] = {"few_shot_template": 123}
         r = PackSchemaValidator().validate_data(minimal_valid_pack)
         assert any(
-            "few_shot_template must be a string" in i.message
-            and i.severity == ValidationSeverity.ERROR
+            "few_shot_template must be a string" in i.message and i.severity == ValidationSeverity.ERROR
             for i in r.issues
         )
 
@@ -606,6 +574,7 @@ class TestValidateExampleLibrary:
 
 
 # ======================= 便捷函数 =======================
+
 
 class TestConvenience:
     def test_validate_pack_function(self, tmp_json, minimal_valid_pack):

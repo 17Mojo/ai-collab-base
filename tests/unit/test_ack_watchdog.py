@@ -71,10 +71,7 @@ def test_cmd_ack_emits_tool_output_from_task_state(tmp_path: Path, capsys):
     )
     assert cli.cmd_ack(args) == 0
     output = capsys.readouterr().out.strip()
-    assert output == (
-        "C.ACK|task=TASK-ACK-EMIT-001|status=ok|result="
-        "collaboration/results/RESULT_TASK-ACK-EMIT-001.md"
-    )
+    assert output == ("C.ACK|task=TASK-ACK-EMIT-001|status=ok|result=collaboration/results/RESULT_TASK-ACK-EMIT-001.md")
 
 
 def test_ack_watchdog_redispatches_silent_pending_task_once(tmp_path: Path):
@@ -209,9 +206,7 @@ def test_ack_watchdog_redispatch_rearms_in_flight_intervention(tmp_path: Path):
     assert report["rearmed_count"] == 1
     assert report["rearmed_by_assignee"]["claude_code"] == ["intervention-rearm-001"]
 
-    interventions = json.loads(
-        (workspace / "logs" / "session_intervention_state.json").read_text(encoding="utf-8")
-    )
+    interventions = json.loads((workspace / "logs" / "session_intervention_state.json").read_text(encoding="utf-8"))
     item = interventions["items"]["intervention-rearm-001"]
     assert item["delivery_status"] == "pending_operator_delivery"
     assert item["resolved_at"] == ""
@@ -260,9 +255,7 @@ def test_ack_watchdog_alert_does_not_rearm_intervention(tmp_path: Path):
     assert report["alerted_count"] == 1
     assert report["rearmed_count"] == 0
 
-    interventions = json.loads(
-        (workspace / "logs" / "session_intervention_state.json").read_text(encoding="utf-8")
-    )
+    interventions = json.loads((workspace / "logs" / "session_intervention_state.json").read_text(encoding="utf-8"))
     item = interventions["items"]["intervention-norearm-001"]
     assert item["delivery_status"] == "queued_for_delivery"
 
@@ -280,9 +273,7 @@ def test_ack_watchdog_uses_role_scoped_run_hint(tmp_path: Path):
     config_dir = workspace / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "agent-orchestration.json").write_text(
-        (Path(__file__).resolve().parents[2] / "config" / "agent-orchestration.json").read_text(
-            encoding="utf-8"
-        ),
+        (Path(__file__).resolve().parents[2] / "config" / "agent-orchestration.json").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
 
@@ -322,9 +313,9 @@ def test_ack_watchdog_uses_role_scoped_run_hint(tmp_path: Path):
     report = run_ack_watchdog(workspace=workspace, threshold_seconds=120)
 
     assert report["redispatched_count"] == 1
-    payload = (
-        workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_claude_code_latest.md"
-    ).read_text(encoding="utf-8")
+    payload = (workspace / "collaboration" / "monitoring" / "AGENT_TRIGGER_claude_code_latest.md").read_text(
+        encoding="utf-8"
+    )
     assert "X.RUN-RESET" in payload
     assert "X.RUN" in payload
     assert "C.RUN" not in payload

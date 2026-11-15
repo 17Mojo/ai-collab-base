@@ -130,18 +130,14 @@ class TestMockFlagConsistency:
             assert hasattr(module, "_mock"), f"{module.__class__.__name__}应该有_mock属性"
             assert hasattr(module, "_mock_reason"), f"{module.__class__.__name__}应该有_mock_reason属性"
             assert isinstance(module._mock, bool), f"{module.__class__.__name__}._mock应该是布尔值"
-            assert isinstance(
-                module._mock_reason, str
-            ), f"{module.__class__.__name__}._mock_reason应该是字符串"
+            assert isinstance(module._mock_reason, str), f"{module.__class__.__name__}._mock_reason应该是字符串"
 
     def test_mock_flags_default_to_fallback_mode(self):
         """测试所有模块默认处于FALLBACK模式（_mock=False）"""
         modules = [NotebookLMIntegration(), ConsensusEngine(), SoulInjectionEngine()]
 
         for module in modules:
-            assert (
-                module._mock is False
-            ), f"{module.__class__.__name__}._mock默认值应该是False (FALLBACK模式)"
+            assert module._mock is False, f"{module.__class__.__name__}._mock默认值应该是False (FALLBACK模式)"
             assert len(module._mock_reason) > 0, f"{module.__class__.__name__}._mock_reason不应该为空"
 
 
@@ -301,15 +297,9 @@ class TestMockFlagConsistencyAdvanced:
         modules = [NotebookLMIntegration(), ConsensusEngine(), SoulInjectionEngine()]
 
         for module in modules:
-            assert (
-                module._mock_reason is not None
-            ), f"{module.__class__.__name__}._mock_reason不能为None"
-            assert isinstance(
-                module._mock_reason, str
-            ), f"{module.__class__.__name__}._mock_reason必须是字符串"
-            assert (
-                len(module._mock_reason.strip()) > 0
-            ), f"{module.__class__.__name__}._mock_reason不能为空字符串"
+            assert module._mock_reason is not None, f"{module.__class__.__name__}._mock_reason不能为None"
+            assert isinstance(module._mock_reason, str), f"{module.__class__.__name__}._mock_reason必须是字符串"
+            assert len(module._mock_reason.strip()) > 0, f"{module.__class__.__name__}._mock_reason不能为空字符串"
 
     def test_mock_mode_consistency_across_instances(self):
         """测试不同实例的Mock模式一致性"""
@@ -334,12 +324,8 @@ class TestMockFlagConsistencyAdvanced:
                 first_mock = instances_list[0]._mock
                 first_reason = instances_list[0]._mock_reason
                 for instance in instances_list[1:]:
-                    assert (
-                        instance._mock == first_mock
-                    ), f"{instance.__class__.__name__}实例的Mock模式不一致"
-                    assert (
-                        instance._mock_reason == first_reason
-                    ), f"{instance.__class__.__name__}实例的Mock原因不一致"
+                    assert instance._mock == first_mock, f"{instance.__class__.__name__}实例的Mock模式不一致"
+                    assert instance._mock_reason == first_reason, f"{instance.__class__.__name__}实例的Mock原因不一致"
 
 
 if __name__ == "__main__":

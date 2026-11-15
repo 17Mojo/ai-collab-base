@@ -36,9 +36,7 @@ class TestVSCodeIntegration:
         monkeypatch.setattr(VSCodeIntegration, "get_workspace_path", lambda: None)
         assert VSCodeIntegration.get_project_config() == {}
 
-    def test_get_project_config_reads_valid_json(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_get_project_config_reads_valid_json(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg_file = tmp_path / ".vscode" / "ai-collab.json"
         cfg_file.parent.mkdir(parents=True)
         cfg_file.write_text(json.dumps({"logsDir": "custom_logs"}), encoding="utf-8")
@@ -87,9 +85,7 @@ class TestVSCodeOutputLogger:
             assert channel == "AI Collab Activation"
 
         with patch.object(VSCodeOutputLogger, "log") as mock_log:
-            VSCodeOutputLogger.log_conflict(
-                {"task_id_1": "A", "task_id_2": "B", "overlapping_files": ["x.py"]}
-            )
+            VSCodeOutputLogger.log_conflict({"task_id_1": "A", "task_id_2": "B", "overlapping_files": ["x.py"]})
             msg, channel = mock_log.call_args.args
             assert "A vs B" in msg
             assert channel == "AI Collab Conflicts"
@@ -137,9 +133,7 @@ class TestDevLogger:
         assert logger.enable_git_log is False
         assert not (workspace / ".git" / "ai-collab" / "copilot").exists()
 
-    def test_create_log_writes_local_and_git_copy(
-        self, workspace: Path, default_template: None
-    ) -> None:
+    def test_create_log_writes_local_and_git_copy(self, workspace: Path, default_template: None) -> None:
         logger = DevLogger("claude-code", enable_git_log=True, enable_vsc_log=False)
         path = Path(
             logger.create_log(
@@ -209,9 +203,7 @@ class TestDevLogger:
         assert len(remaining) == 2
         assert created[0].name not in remaining
 
-    def test_vscode_notifications_when_enabled(
-        self, workspace: Path, default_template: None
-    ) -> None:
+    def test_vscode_notifications_when_enabled(self, workspace: Path, default_template: None) -> None:
         with patch.object(VSCodeOutputLogger, "log") as mock_log:
             logger = DevLogger("claude-code", enable_git_log=False, enable_vsc_log=True)
             path = logger.create_log(task_name="task-vsc")

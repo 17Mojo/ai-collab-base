@@ -57,8 +57,7 @@ STATUS_NEEDS_REASON = ("unverified", "not-run")
 # 路线 A/B 决策门禁的现状：本脚本只能产出 L1/L2 证据，
 # 「第一个外部用户」不在本脚本的证据范围内，因此门禁恒为开启。
 ROUTE_GATE_NOTE = (
-    "路线 A/B 决策门禁：本记录只覆盖 L1/L2 证据，"
-    "不含「第一个外部用户」——门禁仍为开启状态，不得据此拍板路线。"
+    "路线 A/B 决策门禁：本记录只覆盖 L1/L2 证据，不含「第一个外部用户」——门禁仍为开启状态，不得据此拍板路线。"
 )
 
 
@@ -257,9 +256,7 @@ def verify_run(run: dict, workspace: Path) -> tuple[list[str], str, bool]:
                     continue
                 outcome = _probe_outcome(ev_path, str(platform))
                 if outcome is not None and outcome != STATUS_PASS:
-                    errors.append(
-                        f"{where}: 证据与结论不符——探针判定 outcome={outcome}，记录却写 pass"
-                    )
+                    errors.append(f"{where}: 证据与结论不符——探针判定 outcome={outcome}，记录却写 pass")
         if status in STATUS_NEEDS_REASON and not rec.get("reason"):
             errors.append(f"{where}: 状态 {status} 必须写 reason")
 
@@ -271,25 +268,17 @@ def verify_run(run: dict, workspace: Path) -> tuple[list[str], str, bool]:
             errors.append(f"平台 {platform}: 缺 L1 记录（先跑 L1 再谈 L2）")
         if not l2:
             errors.append(f"平台 {platform}: 缺 L2 记录（没跑就记 not-run + reason）")
-        if any(r.get("status") == STATUS_PASS for r in l2) and not any(
-            r.get("status") == STATUS_PASS for r in l1
-        ):
+        if any(r.get("status") == STATUS_PASS for r in l2) and not any(r.get("status") == STATUS_PASS for r in l1):
             errors.append(f"平台 {platform}: L2 记为 pass，但 L1 没有 pass 的记录")
 
     # 结论
     has_fail = any(r.get("status") == STATUS_FAIL for r in records)
     l2_complete = all(
-        any(
-            r.get("layer") == "L2" and r.get("platform") == p and r.get("status") == STATUS_PASS
-            for r in records
-        )
+        any(r.get("layer") == "L2" and r.get("platform") == p and r.get("status") == STATUS_PASS for r in records)
         for p in platforms
     )
     l1_complete = all(
-        any(
-            r.get("layer") == "L1" and r.get("platform") == p and r.get("status") == STATUS_PASS
-            for r in records
-        )
+        any(r.get("layer") == "L1" and r.get("platform") == p and r.get("status") == STATUS_PASS for r in records)
         for p in platforms
     )
     if has_fail:

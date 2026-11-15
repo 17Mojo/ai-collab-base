@@ -152,11 +152,7 @@ def main() -> None:
     except Exception:
         pass
 
-    status_text = (
-        status_file.read_text(encoding="utf-8-sig")
-        if status_file.exists()
-        else "(status.md not found)"
-    )
+    status_text = status_file.read_text(encoding="utf-8-sig") if status_file.exists() else "(status.md not found)"
     runtime = _load_json(runtime_file)
     state = _load_json(state_file)
     config = _load_json(config_file)

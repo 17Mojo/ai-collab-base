@@ -76,9 +76,7 @@ def test_title_reflects_actual_days(monkeypatch, capsys):
 
 
 def test_row_marks_downloads_as_cumulative(monkeypatch, capsys):
-    _code, out, _captured = _run_trending(
-        monkeypatch, capsys, days=7, packs=[_make_pack(downloads=42)]
-    )
+    _code, out, _captured = _run_trending(monkeypatch, capsys, days=7, packs=[_make_pack(downloads=42)])
     assert "累计 42 下载" in out
 
 

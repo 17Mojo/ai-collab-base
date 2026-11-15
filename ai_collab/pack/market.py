@@ -164,9 +164,7 @@ class UserFeedback:
     def __post_init__(self):
         valid_types = ["bug", "suggestion", "request"]
         if self.feedback_type not in valid_types:
-            raise ValueError(
-                f"Invalid feedback_type: {self.feedback_type}. Must be one of {valid_types}"
-            )
+            raise ValueError(f"Invalid feedback_type: {self.feedback_type}. Must be one of {valid_types}")
 
     def to_dict(self) -> dict:
         """序列化为字典"""

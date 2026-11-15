@@ -55,11 +55,7 @@ async def execute_pack(request: dict[str, Any], db: Session = Depends(get_db)):
         )
 
     # 获取 Pack
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
         raise HTTPException(
@@ -95,7 +91,7 @@ async def execute_pack(request: dict[str, Any], db: Session = Depends(get_db)):
         "steps": execution_result["steps"],
         "iterations": execution_result["iterations"],
         "extracted_data": execution_result["extracted_data"],
-        "duration_ms": duration_ms
+        "duration_ms": duration_ms,
     }
     db_execution.completed_at = time.time()
     db.commit()
@@ -182,11 +178,13 @@ async def generate_studio(request: dict[str, Any], db: Session = Depends(get_db)
     download_urls: dict[str, str] = {}
 
     for artifact_type in artifacts:
-        generated_artifacts.append({
-            "type": artifact_type,
-            "status": "generated",
-            "size_mb": 10 if artifact_type == "audio" else (25 if artifact_type == "video" else 5),
-        })
+        generated_artifacts.append(
+            {
+                "type": artifact_type,
+                "status": "generated",
+                "size_mb": 10 if artifact_type == "audio" else (25 if artifact_type == "video" else 5),
+            }
+        )
         download_urls[artifact_type] = f"/api/studio/download/{artifact_id}/{artifact_type}"
 
     return {
@@ -230,9 +228,7 @@ async def get_execution_status(execution_id: str, db: Session = Depends(get_db))
     Returns:
         execution: 执行详情
     """
-    execution = db.query(ExecutionHistoryModel).filter(
-        ExecutionHistoryModel.id == int(execution_id)
-    ).first()
+    execution = db.query(ExecutionHistoryModel).filter(ExecutionHistoryModel.id == int(execution_id)).first()
 
     if not execution:
         raise HTTPException(

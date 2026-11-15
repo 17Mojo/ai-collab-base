@@ -42,9 +42,7 @@ def _resolve_paths(
     resolved_report = workspace / str(report_path or config.get("report", DEFAULT_REPORT_PATH))
     resolved_history = workspace / str(history_path or config.get("history", DEFAULT_HISTORY_PATH))
     resolved_summary = workspace / str(summary_path or config.get("summary", DEFAULT_SUMMARY_PATH))
-    resolved_runtime = workspace / str(
-        runtime_path or config.get("runtimeFile", DEFAULT_RUNTIME_PATH)
-    )
+    resolved_runtime = workspace / str(runtime_path or config.get("runtimeFile", DEFAULT_RUNTIME_PATH))
     return resolved_report, resolved_history, resolved_summary, resolved_runtime
 
 

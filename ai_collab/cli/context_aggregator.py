@@ -45,9 +45,7 @@ class ContextAggregatorCLI:
             return 1
 
         try:
-            context_id = self.aggregator.extract_knowledge(
-                source_type=source, content=content, confidence=confidence
-            )
+            context_id = self.aggregator.extract_knowledge(source_type=source, content=content, confidence=confidence)
 
             print(f"✓ Context added: {context_id.source_id}")
             return 0
@@ -55,9 +53,7 @@ class ContextAggregatorCLI:
             print(f"✗ Failed to add context: {e}")
             return 1
 
-    def aggregate(
-        self, query: str, source_type: str | None = None, strategy: str = "weighted"
-    ) -> int:
+    def aggregate(self, query: str, source_type: str | None = None, strategy: str = "weighted") -> int:
         """聚合上下文
 
         Args:
@@ -85,13 +81,11 @@ class ContextAggregatorCLI:
             result = self.aggregator.merge_knowledge(sources=sources, strategy=strategy)
 
             # 创建上下文记录
-            context_id = self.aggregator.create_context(
-                query=query, sources=[s.source_id for s in sources]
-            )
+            context_id = self.aggregator.create_context(query=query, sources=[s.source_id for s in sources])
 
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Aggregated Context: {context_id}")
-            print(f"{'='*60}\n")
+            print(f"{'=' * 60}\n")
             print(f"Query: {query}")
             print(f"Sources: {len(result.sources)}")
             print(f"Content:\n{result.content}\n")
@@ -109,9 +103,9 @@ class ContextAggregatorCLI:
         """
         sources = list(self._get_all_sources())
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Context Aggregator Status")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         print(f"Total Knowledge Items: {len(sources)}")
 
@@ -124,14 +118,12 @@ class ContextAggregatorCLI:
 
         print("\nSource Statistics:")
         for source_type, count in source_stats.items():
-            high_conf = sum(
-                1 for s in sources if s.source_type == source_type and s.confidence >= 0.7
-            )
+            high_conf = sum(1 for s in sources if s.source_type == source_type and s.confidence >= 0.7)
             print(f"  {source_type}:")
             print(f"    Total: {count}")
             print(f"    High Confidence: {high_conf}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         # 显示历史
         history = self.aggregator.get_history()
@@ -140,7 +132,7 @@ class ContextAggregatorCLI:
             for ctx in history:
                 print(f"  - {ctx.context_id}: {ctx.query}")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 
@@ -155,9 +147,9 @@ class ContextAggregatorCLI:
         """
         history = self.aggregator.get_history(limit)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Context History (last {len(history)})")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         if not history:
             print("No history found.")
@@ -170,7 +162,7 @@ class ContextAggregatorCLI:
             print(f"   Created: {ctx.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
             print()
 
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return 0
 
@@ -283,10 +275,7 @@ def main():
                 i += 1
 
         if not source or not content:
-            print(
-                "Usage: context_aggregator.py add "
-                "--source <type> --content <text> [--confidence <value>]"
-            )
+            print("Usage: context_aggregator.py add --source <type> --content <text> [--confidence <value>]")
             return 1
 
         return cli.add_context(source, content, confidence)
@@ -311,10 +300,7 @@ def main():
                 i += 1
 
         if not file_path:
-            print(
-                "Usage: context_aggregator.py add-file "
-                "--path <file> [--source <type>] [--confidence <value>]"
-            )
+            print("Usage: context_aggregator.py add-file --path <file> [--source <type>] [--confidence <value>]")
             return 1
 
         return cli.add_from_file(file_path, source, confidence)

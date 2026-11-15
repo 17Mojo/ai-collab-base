@@ -172,9 +172,7 @@ class TestConsensusIntegration:
         mock_instance.providers = {
             "chatgpt": type("P", (), {"enabled": True, "timeout": 30.0})(),
         }
-        mock_instance.generate_consensus = AsyncMock(
-            side_effect=ConnectionError("All providers failed")
-        )
+        mock_instance.generate_consensus = AsyncMock(side_effect=ConnectionError("All providers failed"))
 
         pack = _make_pack_with_ai_models(ai_models=["chatgpt"])
         executor = PackExecutorMVP(pack)
@@ -195,9 +193,7 @@ class TestConsensusIntegration:
         mock_instance.generate_consensus = AsyncMock(return_value=MOCK_CONSENSUS_RESULT)
 
         config = {"timeout": 45.0, "fusion_strategy": "best", "min_providers": 1}
-        pack = _make_pack_with_ai_models(
-            ai_models=["chatgpt"], consensus_config=config
-        )
+        pack = _make_pack_with_ai_models(ai_models=["chatgpt"], consensus_config=config)
         executor = PackExecutorMVP(pack)
         result = executor.execute({"topic": "测试", "content": "内容"})
 

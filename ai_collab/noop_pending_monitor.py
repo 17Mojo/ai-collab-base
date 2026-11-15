@@ -47,9 +47,7 @@ class NoOpPendingStats:
             "resolved_count": self.resolved_count,
             "unresolved_count": self.conflict_count - self.resolved_count,
             "conflict_rate": (
-                round(self.conflict_count / self.total_checks * 100, 2)
-                if self.total_checks > 0
-                else 0.0
+                round(self.conflict_count / self.total_checks * 100, 2) if self.total_checks > 0 else 0.0
             ),
             "alerts": [
                 {
@@ -74,9 +72,9 @@ class NoOpPendingStats:
         print(f"Resolved: {summary['resolved_count']}")
         print(f"Unresolved: {summary['unresolved_count']}")
 
-        if summary['alerts']:
+        if summary["alerts"]:
             print("\nConflict Alerts:")
-            for i, alert in enumerate(summary['alerts'], 1):
+            for i, alert in enumerate(summary["alerts"], 1):
                 print(f"  {i}. {alert['timestamp']}")
                 print(f"     Assignee: {alert['assignee']}")
                 print(f"     Payload: {alert['payload_file']}")
@@ -195,10 +193,10 @@ def write_noop_pending_summary(
     lines.append(f"- 未解决: `{summary['unresolved_count']}`")
     lines.append("")
 
-    if summary['alerts']:
+    if summary["alerts"]:
         lines.append("## 冲突告警")
         lines.append("")
-        for i, alert in enumerate(summary['alerts'], 1):
+        for i, alert in enumerate(summary["alerts"], 1):
             lines.append(f"### {i}. {alert['timestamp']}")
             lines.append("")
             lines.append(f"- **Assignee**: `{alert['assignee']}`")
@@ -208,7 +206,7 @@ def write_noop_pending_summary(
             lines.append("**告警消息**:")
             lines.append("")
             lines.append("```")
-            lines.append(alert['message'])
+            lines.append(alert["message"])
             lines.append("```")
             lines.append("")
     else:
@@ -227,7 +225,9 @@ def write_noop_pending_summary(
     lines.append("cat collaboration/monitoring/NOOP_PENDING_CONFLICT_SUMMARY_latest.md")
     lines.append("")
     lines.append("# 重置统计")
-    lines.append("python3 -c \"from ai_collab.noop_pending_monitor import reset_noop_pending_stats; reset_noop_pending_stats()\"")
+    lines.append(
+        'python3 -c "from ai_collab.noop_pending_monitor import reset_noop_pending_stats; reset_noop_pending_stats()"'
+    )
     lines.append("```")
     lines.append("")
 

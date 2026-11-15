@@ -44,9 +44,7 @@ class TestPermission:
         """Test creating permission"""
         timestamp = datetime.now()
 
-        permission = Permission(
-            user="testuser", level=PermissionLevel.WRITE, granted_at=timestamp, granted_by="admin"
-        )
+        permission = Permission(user="testuser", level=PermissionLevel.WRITE, granted_at=timestamp, granted_by="admin")
 
         assert permission.user == "testuser"
         assert permission.level == PermissionLevel.WRITE
@@ -72,9 +70,7 @@ class TestPermission:
         """Test converting permission to dict"""
         timestamp = datetime.now()
 
-        permission = Permission(
-            user="user1", level=PermissionLevel.ADMIN, granted_at=timestamp, granted_by="owner"
-        )
+        permission = Permission(user="user1", level=PermissionLevel.ADMIN, granted_at=timestamp, granted_by="owner")
 
         data = permission.to_dict()
 
@@ -120,9 +116,7 @@ class TestTeamInfo:
 
     def test_team_to_dict(self):
         """Test converting team to dict"""
-        team = TeamInfo(
-            name="team1", display_name="Team One", members={"user1", "user2"}, packs={"pack1"}
-        )
+        team = TeamInfo(name="team1", display_name="Team One", members={"user1", "user2"}, packs={"pack1"})
 
         data = team.to_dict()
 
@@ -154,9 +148,7 @@ class TestPackShareInfo:
 
     def test_pack_share_creation(self):
         """Test creating pack share info"""
-        share_info = PackShareInfo(
-            pack_name="test-pack", owner="owner1", permissions={}, teams={}, is_public=False
-        )
+        share_info = PackShareInfo(pack_name="test-pack", owner="owner1", permissions={}, teams={}, is_public=False)
 
         assert share_info.pack_name == "test-pack"
         assert share_info.owner == "owner1"
@@ -166,9 +158,7 @@ class TestPackShareInfo:
         """Test converting pack share to dict"""
         timestamp = datetime.now()
 
-        permission = Permission(
-            user="user1", level=PermissionLevel.READ, granted_at=timestamp, granted_by="owner"
-        )
+        permission = Permission(user="user1", level=PermissionLevel.READ, granted_at=timestamp, granted_by="owner")
 
         share_info = PackShareInfo(
             pack_name="my-pack",
@@ -230,9 +220,7 @@ class TestPermissionManager:
         """Test granting permission as non-admin"""
         manager = PermissionManager(temp_packs_dir)
         manager._save_share_info(
-            PackShareInfo(
-                pack_name="test-pack", owner="owner", permissions={}, teams={}, is_public=False
-            )
+            PackShareInfo(pack_name="test-pack", owner="owner", permissions={}, teams={}, is_public=False)
         )
         manager.current_user = "user1"
 
@@ -309,9 +297,7 @@ class TestPermissionManager:
         """Test setting public status as non-owner"""
         manager = PermissionManager(temp_packs_dir)
         manager._save_share_info(
-            PackShareInfo(
-                pack_name="test-pack", owner="owner", permissions={}, teams={}, is_public=False
-            )
+            PackShareInfo(pack_name="test-pack", owner="owner", permissions={}, teams={}, is_public=False)
         )
         manager.current_user = "user1"
 
@@ -336,9 +322,7 @@ class TestPermissionManager:
         """Test transferring ownership as non-owner"""
         manager = PermissionManager(temp_packs_dir)
         manager._save_share_info(
-            PackShareInfo(
-                pack_name="test-pack", owner="owner1", permissions={}, teams={}, is_public=False
-            )
+            PackShareInfo(pack_name="test-pack", owner="owner1", permissions={}, teams={}, is_public=False)
         )
         manager.current_user = "user1"
 

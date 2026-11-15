@@ -433,13 +433,13 @@ class TestContextEnhancerIntegration:
         assert summary["file_count"] == 2
 
 
-
 class TestContextEnhancerEnhancedQuery:
     """enhanced_query 完整路径覆盖 (78-80, 97-118)"""
 
     def test_enhanced_query_without_notebooklm(self):
         """无 NotebookLM 时返回 error"""
         from ai_collab.context.enhanced import ContextEnhancer
+
         enhancer = ContextEnhancer()  # 无 notebooklm
         result = enhancer.enhanced_query("test query")
         # 降级契约: 无 backend 时不得抛异常, 且原样回传 query + 空结果 + error 标记
@@ -506,6 +506,7 @@ class TestContextEnhancerSuggestFiles:
         """无 NotebookLM 时返回空建议"""
         from ai_collab.context.enhanced import ContextEnhancer
         from ai_collab.context.schema import Context, ScenarioType
+
         enhancer = ContextEnhancer()
         ctx = Context(context_id="ctx-1", scenario=ScenarioType.CODING, name="test")
         suggestions = enhancer.suggest_files(ctx, ["src/main.py"])
@@ -524,6 +525,7 @@ class TestContextEnhancerSuggestFiles:
         ctx = Context(context_id="ctx-1", scenario=ScenarioType.CODING, name="test")
         # 给 context 添加 file_contexts
         from ai_collab.context.schema import FileContext
+
         ctx.add_file(FileContext(path="src/main.py", language="python", size=100))
         suggestions = enhancer.suggest_files(ctx, ["src/main.py", "src/utils.py"])
         assert isinstance(suggestions, list)
@@ -567,17 +569,20 @@ class TestScenarioContextBuilderDetectLanguage:
 
     def test_detect_language_python(self):
         from ai_collab.context.enhanced import ScenarioContextBuilder
+
         builder = ScenarioContextBuilder()
         assert builder._detect_language("main.py") == "python"
 
     def test_detect_language_js(self):
         from ai_collab.context.enhanced import ScenarioContextBuilder
+
         builder = ScenarioContextBuilder()
         assert builder._detect_language("app.js") in ("javascript", "typescript")
         assert builder._detect_language("app.ts") == "typescript"
 
     def test_detect_language_other(self):
         from ai_collab.context.enhanced import ScenarioContextBuilder
+
         builder = ScenarioContextBuilder()
         assert builder._detect_language("README.md") == "markdown"
         assert builder._detect_language("unknown.xyz") == "text"  # fallback to text

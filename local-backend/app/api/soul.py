@@ -236,9 +236,7 @@ async def inject_soul(request: SoulInjectRequest):
         )
 
         if not result.get("success"):
-            raise HTTPException(
-                status_code=500, detail=result.get("error", "Soul injection failed")
-            )
+            raise HTTPException(status_code=500, detail=result.get("error", "Soul injection failed"))
 
         return SoulInjectResponse(**result)
 

@@ -159,15 +159,11 @@ def _model_to_context(model: ContextModel) -> Context:
             content=fc.get("content"),
             language=fc.get("language", "text"),
             size=fc.get("size", 0),
-            modified_at=datetime.fromisoformat(fc["modified_at"])
-            if fc.get("modified_at")
-            else None,
+            modified_at=datetime.fromisoformat(fc["modified_at"]) if fc.get("modified_at") else None,
             hash=fc.get("hash"),
         )
         for fc in (
-            json.loads(model.file_contexts)
-            if isinstance(model.file_contexts, str)
-            else model.file_contexts or []
+            json.loads(model.file_contexts) if isinstance(model.file_contexts, str) else model.file_contexts or []
         )
     ]
 
@@ -179,11 +175,7 @@ def _model_to_context(model: ContextModel) -> Context:
             messages=ais.get("messages", []),
             metadata=ais.get("metadata", {}),
         )
-        for ais in (
-            json.loads(model.ai_sessions)
-            if isinstance(model.ai_sessions, str)
-            else model.ai_sessions or []
-        )
+        for ais in (json.loads(model.ai_sessions) if isinstance(model.ai_sessions, str) else model.ai_sessions or [])
     ]
 
     notebooklm_context = None
@@ -198,19 +190,11 @@ def _model_to_context(model: ContextModel) -> Context:
             notebook_name=nlm_data.get("notebook_name"),
             query_results=nlm_data.get("query_results", []),
             sources=nlm_data.get("sources", []),
-            last_updated=datetime.fromisoformat(nlm_data["last_updated"])
-            if nlm_data.get("last_updated")
-            else None,
+            last_updated=datetime.fromisoformat(nlm_data["last_updated"]) if nlm_data.get("last_updated") else None,
         )
 
-    user_context = (
-        json.loads(model.user_context)
-        if isinstance(model.user_context, str)
-        else model.user_context or {}
-    )
-    metadata_data = (
-        json.loads(model.metadata) if isinstance(model.metadata, str) else model.metadata or {}
-    )
+    user_context = json.loads(model.user_context) if isinstance(model.user_context, str) else model.user_context or {}
+    metadata_data = json.loads(model.metadata) if isinstance(model.metadata, str) else model.metadata or {}
 
     metadata = ContextMetadata(
         tags=metadata_data.get("tags", []),
@@ -230,9 +214,7 @@ def _model_to_context(model: ContextModel) -> Context:
 
     context.parent_id = model.parent_id
     context.children_ids = (
-        json.loads(model.children_ids)
-        if isinstance(model.children_ids, str)
-        else model.children_ids or []
+        json.loads(model.children_ids) if isinstance(model.children_ids, str) else model.children_ids or []
     )
     context._size = model.size
 

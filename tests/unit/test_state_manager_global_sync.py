@@ -108,9 +108,7 @@ def _exercise_temp_leak(
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
     if break_reclamation:
         # 模拟「缺陷复发」：回收逻辑退化成 no-op
-        monkeypatch.setattr(
-            StateManager, "_reclaim_dead_global_entries", lambda self, gs, key: []
-        )
+        monkeypatch.setattr(StateManager, "_reclaim_dead_global_entries", lambda self, gs, key: [])
 
     leaked = tmp_path / "ws-leaked"
     leaked.mkdir()
@@ -128,13 +126,10 @@ def _assert_leak_reclaimed(state: dict[str, Any], leaked: str, survivor: str) ->
     assert survivor in state, "存活的工作区必须保留"
 
 
-def test_temp_workspace_entries_are_reclaimed_immediately(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_temp_workspace_entries_are_reclaimed_immediately(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """① 临时工作区消失后，下一次同步就该被回收。"""
     assert StateManager._is_under_temp_dir(str(tmp_path)), (
-        "测试前提失效：tmp_path 必须位于系统临时目录下，"
-        "否则「临时目录死条目立即回收」这条规则不适用"
+        "测试前提失效：tmp_path 必须位于系统临时目录下，否则「临时目录死条目立即回收」这条规则不适用"
     )
     state = _exercise_temp_leak(tmp_path, monkeypatch)
     _assert_leak_reclaimed(state, str(tmp_path / "ws-leaked"), str(tmp_path / "ws-alive"))
@@ -148,9 +143,7 @@ def _measure_leak_growth(
     global_file = root / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
     if break_reclamation:
-        monkeypatch.setattr(
-            StateManager, "_reclaim_dead_global_entries", lambda self, gs, key: []
-        )
+        monkeypatch.setattr(StateManager, "_reclaim_dead_global_entries", lambda self, gs, key: [])
 
     def write_leaks(count: int, offset: int) -> None:
         for i in range(offset, offset + count):
@@ -168,33 +161,24 @@ def _measure_leak_growth(
     return after_four, after_twelve, size_after_four, size_after_twelve
 
 
-def test_entry_count_does_not_grow_with_repeated_leaked_workspaces(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_entry_count_does_not_grow_with_repeated_leaked_workspaces(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """工单验收：连续写入 N 个已消失的临时 workspace，条目数/体积不随之无上限增长。"""
     after_four, after_twelve, size_after_four, size_after_twelve = _measure_leak_growth(
         tmp_path / "healthy", monkeypatch
     )
 
-    assert after_twelve <= after_four, (
-        f"条目数随泄漏次数增长：4 次后 {after_four} 条，12 次后 {after_twelve} 条"
-    )
+    assert after_twelve <= after_four, f"条目数随泄漏次数增长：4 次后 {after_four} 条，12 次后 {after_twelve} 条"
     # 体积不随泄漏次数**成比例**增长（条目内容本身有 id 长度等零星差异，
     # 所以按比例判定，不按绝对字节相等判定）
     assert size_after_twelve <= size_after_four * 1.5, (
-        f"文件体积随泄漏次数成比例增长：4 次后 {size_after_four} 字节，"
-        f"12 次后 {size_after_twelve} 字节"
+        f"文件体积随泄漏次数成比例增长：4 次后 {size_after_four} 字节，12 次后 {size_after_twelve} 字节"
     )
     assert after_twelve <= 2, f"泄漏的工作区没有被回收，仍剩 {after_twelve} 条"
 
     # 反证：把回收逻辑改坏，同样的写入次数就会让条目数线性增长——
     # 证明上面那两条断言真的对「回收逻辑」敏感，而不是恒真。
-    broken_four, broken_twelve, _, _ = _measure_leak_growth(
-        tmp_path / "broken", monkeypatch, break_reclamation=True
-    )
-    assert broken_twelve > broken_four, (
-        "反证失败：回收逻辑坏掉后条目数竟然没增长，说明上面的断言可能恒真"
-    )
+    broken_four, broken_twelve, _, _ = _measure_leak_growth(tmp_path / "broken", monkeypatch, break_reclamation=True)
+    assert broken_twelve > broken_four, "反证失败：回收逻辑坏掉后条目数竟然没增长，说明上面的断言可能恒真"
 
 
 # --------------------------------------------------------------------------- #
@@ -202,9 +186,7 @@ def test_entry_count_does_not_grow_with_repeated_leaked_workspaces(
 # --------------------------------------------------------------------------- #
 
 
-def test_live_workspace_entries_are_never_deleted(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_live_workspace_entries_are_never_deleted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """③ 真实工作区条目不被误删。"""
     global_file = tmp_path / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
@@ -223,9 +205,7 @@ def test_live_workspace_entries_are_never_deleted(
         assert key in state, f"存活的工作区被误删：{key}"
 
 
-def test_dead_non_temp_workspace_is_kept_during_grace_period(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_dead_non_temp_workspace_is_kept_during_grace_period(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """② 非临时目录下的死条目有宽限期——保护「盘临时未挂载」的真实工作区。"""
     global_file = tmp_path / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
@@ -237,14 +217,10 @@ def test_dead_non_temp_workspace_is_kept_during_grace_period(
     alive.mkdir()
     _sync(str(alive), "T-1")
 
-    assert unmounted in _read(global_file), (
-        "宽限期内不得回收非临时目录的死条目——那可能只是磁盘临时没挂上"
-    )
+    assert unmounted in _read(global_file), "宽限期内不得回收非临时目录的死条目——那可能只是磁盘临时没挂上"
 
 
-def test_dead_non_temp_workspace_is_reclaimed_after_grace_period(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_dead_non_temp_workspace_is_reclaimed_after_grace_period(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """② 超过宽限期后，非临时目录的死条目才被回收。"""
     global_file = tmp_path / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
@@ -266,26 +242,20 @@ def test_dead_non_temp_workspace_is_reclaimed_after_grace_period(
 # --------------------------------------------------------------------------- #
 
 
-def test_current_workspace_entry_is_never_reclaimed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_current_workspace_entry_is_never_reclaimed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """④ 当前正在写的条目永不被回收——哪怕它自己的路径已经不存在。
 
     关键：这条路径必须**本来就可回收**（在临时目录下、且确实不存在）。
     否则测到的「没被删」其实是宽限期在兜底，而不是当前条目保护在兜底——
     那样这条用例就证明不了任何事。
     """
-    monkeypatch.setattr(
-        VSCodeStateManager, "get_global_state_file", lambda: str(tmp_path / "g.json")
-    )
+    monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(tmp_path / "g.json"))
     manager = StateManager(workspace_path=str(tmp_path / "alive"))
 
     ghost = str(tmp_path / "gone")
     other = str(tmp_path / "other-gone")
     assert not Path(ghost).exists()
-    assert manager._global_entry_is_reclaimable(ghost, {"last_sync": _now_iso()}), (
-        "测试前提失效：这条路径本来就可回收"
-    )
+    assert manager._global_entry_is_reclaimable(ghost, {"last_sync": _now_iso()}), "测试前提失效：这条路径本来就可回收"
 
     state = {
         ghost: {"last_sync": _now_iso(), "tasks": {}},
@@ -299,9 +269,7 @@ def test_current_workspace_entry_is_never_reclaimed(
     assert reclaimed == [other]
 
 
-def test_unknown_key_is_not_reclaimed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_unknown_key_is_not_reclaimed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """⑤ 判不出是否为路径的 key（`unknown`）不被误删。"""
     global_file = tmp_path / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
@@ -319,9 +287,7 @@ def test_unknown_key_is_not_reclaimed(
 # --------------------------------------------------------------------------- #
 
 
-def test_entry_schema_is_unchanged(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_entry_schema_is_unchanged(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """⑥ 条目 schema 不变。"""
     global_file = tmp_path / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
@@ -339,9 +305,7 @@ def test_entry_schema_is_unchanged(
 # --------------------------------------------------------------------------- #
 
 
-def test_entry_count_cap_evicts_oldest_and_keeps_current(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_entry_count_cap_evicts_oldest_and_keeps_current(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """⑦ 条目数超上限时按 last_sync 淘汰最旧的，且永不动当前条目。"""
     global_file = tmp_path / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
@@ -364,9 +328,7 @@ def test_entry_count_cap_evicts_oldest_and_keeps_current(
     assert live[0] not in state, "最旧的条目应该被淘汰"
 
 
-def test_byte_cap_evicts_oldest(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_byte_cap_evicts_oldest(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """⑦ 体积超上限时按 last_sync 淘汰最旧的。"""
     global_file = tmp_path / "global_state.json"
     monkeypatch.setattr(VSCodeStateManager, "get_global_state_file", lambda: str(global_file))
@@ -392,9 +354,7 @@ def test_byte_cap_evicts_oldest(
 # --------------------------------------------------------------------------- #
 
 
-def test_reclamation_guard_is_reverse_verifiable(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_reclamation_guard_is_reverse_verifiable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """⑧ 把回收逻辑改坏（退化成 no-op），守护用例必须变红。
 
     没有这一条，「守护用例全绿」可能只是因为断言写空了——这套守护就证明不了
@@ -402,14 +362,10 @@ def test_reclamation_guard_is_reverse_verifiable(
     """
     with pytest.raises(AssertionError):
         state = _exercise_temp_leak(tmp_path, monkeypatch, break_reclamation=True)
-        _assert_leak_reclaimed(
-            state, str(tmp_path / "ws-leaked"), str(tmp_path / "ws-alive")
-        )
+        _assert_leak_reclaimed(state, str(tmp_path / "ws-leaked"), str(tmp_path / "ws-alive"))
 
 
-def test_temp_dir_detection_uses_realpath(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_temp_dir_detection_uses_realpath(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """⑧ 临时目录判定必须走 realpath。
 
     macOS 上 `/var/folders/...` 与 `/private/var/folders/...` 是同一个目录，
@@ -433,9 +389,7 @@ def _digest_or_missing(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_suite_does_not_write_the_ambient_global_state_file(
-    tmp_path: Path, ambient_global_state_file: str
-):
+def test_suite_does_not_write_the_ambient_global_state_file(tmp_path: Path, ambient_global_state_file: str):
     """⑨ 跑一次真实的状态同步，开发机真实的全局文件必须一个字节都没变。
 
     回收逻辑是**止血**，不是**治本**：产品照写全局文件，只是现在会回收死条目。
@@ -463,9 +417,7 @@ def test_suite_does_not_write_the_ambient_global_state_file(
     )
 
 
-def test_global_state_file_is_redirected_into_the_test_sandbox(
-    tmp_path: Path, ambient_global_state_file: str
-):
+def test_global_state_file_is_redirected_into_the_test_sandbox(tmp_path: Path, ambient_global_state_file: str):
     """⑨ 反向：全局文件确实被**写**了，只是写在隔离目录里。
 
     没有这条，上面那条可能因为「产品压根不写全局文件」而恒真。
@@ -474,9 +426,7 @@ def test_global_state_file_is_redirected_into_the_test_sandbox(
     # ambient 文件 = <HOME>/.vscode/ai-collab/collaboration_state.json
     # ⇒ parents[2] 就是原始 HOME
     ambient_home = Path(ambient_global_state_file).parents[2]
-    assert monkey_home != ambient_home, (
-        f"HOME 没被隔离到别处（仍是 {ambient_home}）——隔离装置本身没生效"
-    )
+    assert monkey_home != ambient_home, f"HOME 没被隔离到别处（仍是 {ambient_home}）——隔离装置本身没生效"
 
     workspace = tmp_path / "ws-sandbox"
     workspace.mkdir()

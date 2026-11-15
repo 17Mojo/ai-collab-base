@@ -80,14 +80,14 @@ class PackRatingCLI:
 
         pack = result["pack"]
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Pack: {pack['pack_name']} (v{pack['version']})")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Average Rating: {pack['rating']:.1f}/5.0")
         print(f"Total Ratings: {pack['rating_count']}")
         print(f"Downloads: {pack['downloads']}")
         print(f"Status: {pack['status']}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # 获取详细评分分布
         ratings = self.api.list_pack_ratings(pack_id)
@@ -131,10 +131,10 @@ class PackRatingCLI:
             print(f"No reviews found for pack: {pack_id}")
             return 0
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Reviews for Pack: {pack_id}")
         print(f"Showing {len(reviews)} review(s)")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         for i, review in enumerate(reviews, 1):
             stars = "★" * review["rating"]
@@ -155,7 +155,7 @@ class PackRatingCLI:
                 if summary:
                     print(f"    Summary: {summary}...")
 
-        print(f"\n{'='*60}\n")
+        print(f"\n{'=' * 60}\n")
 
         return 0
 
@@ -217,14 +217,14 @@ class PackRatingCLI:
 
         if result["success"]:
             stats = result["stats"]
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print("Pack Market Statistics")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
             print(f"Total Packs: {stats['total_packs']}")
             print(f"Pending Review: {stats['pending_packs']}")
             print(f"Total Downloads: {stats['total_downloads']}")
             print(f"Average Rating: {stats['average_rating']:.1f}/5.0")
-            print(f"{'='*60}\n")
+            print(f"{'=' * 60}\n")
             return 0
 
         return 1

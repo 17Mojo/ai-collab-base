@@ -57,9 +57,7 @@ def resolve_executor() -> tuple[str, str]:
         path = shutil.which(name)
         if path:
             return name, path
-    raise RuntimeError(
-        f"未找到可用执行器（候选: {', '.join(EXECUTOR_CANDIDATES)}），请安装其一并加入 PATH。"
-    )
+    raise RuntimeError(f"未找到可用执行器（候选: {', '.join(EXECUTOR_CANDIDATES)}），请安装其一并加入 PATH。")
 
 
 @dataclass
@@ -204,9 +202,7 @@ class CodexIntegration:
         runtime["operator"] = operator
         runtime["role_plan"] = plan.to_dict()
         runtime["last_plan_at"] = datetime.now().isoformat()
-        self.runtime_file.write_text(
-            json.dumps(runtime, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        self.runtime_file.write_text(json.dumps(runtime, ensure_ascii=False, indent=2), encoding="utf-8")
         return plan.to_dict()
 
     def _terminate_process_safely(self, proc: subprocess.Popen, timeout: int = 5) -> bool:
@@ -242,9 +238,7 @@ class CodexIntegration:
                     # 强制终止也失败，记录警告
                     import warnings
 
-                    warnings.warn(
-                        f"Failed to terminate process {proc.pid} after {timeout * 2} seconds", stacklevel=2
-                    )
+                    warnings.warn(f"Failed to terminate process {proc.pid} after {timeout * 2} seconds", stacklevel=2)
                     return False
 
         except Exception as e:
@@ -332,9 +326,7 @@ class CodexIntegration:
 
                     # 活跃度看 log+out 双文件：claude -p 的回答流写 out_file，
                     # 只盯 log_file 会在长思考期误判 stale。
-                    current_size = log_file.stat().st_size + (
-                        out_file.stat().st_size if out_file.exists() else 0
-                    )
+                    current_size = log_file.stat().st_size + (out_file.stat().st_size if out_file.exists() else 0)
                     if current_size > last_log_size:
                         last_log_size = current_size
                         last_activity = now
@@ -380,9 +372,7 @@ class CodexIntegration:
         settings = self._read_settings(settings_file)
         cleaned = self._remove_our_hooks(settings)
         settings_file.parent.mkdir(parents=True, exist_ok=True)
-        settings_file.write_text(
-            json.dumps(cleaned, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        settings_file.write_text(json.dumps(cleaned, ensure_ascii=False, indent=2), encoding="utf-8")
 
         details = self.hooks_status().details
         return HookOperationResult(
@@ -419,9 +409,7 @@ class CodexIntegration:
         if repair:
             normalized = self._merge_hooks(normalized, self._build_hook_config())
             settings_file.parent.mkdir(parents=True, exist_ok=True)
-            settings_file.write_text(
-                json.dumps(normalized, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+            settings_file.write_text(json.dumps(normalized, ensure_ascii=False, indent=2), encoding="utf-8")
             repaired = True
 
         status = self._detect_our_hooks(normalized)
@@ -478,9 +466,7 @@ class CodexIntegration:
 
         runtime["task_id"] = sync_task_id
         runtime["last_synced_at"] = now
-        self.runtime_file.write_text(
-            json.dumps(runtime, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        self.runtime_file.write_text(json.dumps(runtime, ensure_ascii=False, indent=2), encoding="utf-8")
 
         return {
             "task_id": sync_task_id,
@@ -496,9 +482,7 @@ class CodexIntegration:
             return {"done_steps": 0, "total_steps": 0, "goal": "", "scope_files": []}
 
         content = self.progress_file.read_text(encoding="utf-8")
-        step_matches = re.findall(
-            r"^- \[([xX ]?)\] \*\*Step \d+: .+\*\*$", content, flags=re.MULTILINE
-        )
+        step_matches = re.findall(r"^- \[([xX ]?)\] \*\*Step \d+: .+\*\*$", content, flags=re.MULTILINE)
         done_steps = sum(1 for m in step_matches if m.lower() == "x")
         total_steps = len(step_matches)
 
@@ -524,9 +508,7 @@ class CodexIntegration:
     def validate_progress(self) -> dict[str, Any]:
         """对 progress 文件进行轻量预检。"""
         info = self.parse_progress()
-        content = (
-            self.progress_file.read_text(encoding="utf-8") if self.progress_file.exists() else ""
-        )
+        content = self.progress_file.read_text(encoding="utf-8") if self.progress_file.exists() else ""
         issues: list[str] = []
 
         if info["total_steps"] <= 0:
@@ -559,9 +541,7 @@ class CodexIntegration:
                 "progress_file": result.progress_file,
             }
         )
-        self.runtime_file.write_text(
-            json.dumps(runtime, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        self.runtime_file.write_text(json.dumps(runtime, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def _read_runtime(self) -> dict[str, Any]:
         if self.runtime_file.exists():
@@ -701,25 +681,19 @@ class CodexIntegration:
             "Stop": [
                 {
                     "matcher": "",
-                    "hooks": [
-                        {"type": "command", "command": f'{py} "{stop_script}"', "timeout": 10000}
-                    ],
+                    "hooks": [{"type": "command", "command": f'{py} "{stop_script}"', "timeout": 10000}],
                 }
             ],
             "PreCompact": [
                 {
                     "matcher": "",
-                    "hooks": [
-                        {"type": "command", "command": f'{py} "{pre_script}"', "timeout": 5000}
-                    ],
+                    "hooks": [{"type": "command", "command": f'{py} "{pre_script}"', "timeout": 5000}],
                 }
             ],
             "SessionStart": [
                 {
                     "matcher": "",
-                    "hooks": [
-                        {"type": "command", "command": f'{py} "{session_script}"', "timeout": 5000}
-                    ],
+                    "hooks": [{"type": "command", "command": f'{py} "{session_script}"', "timeout": 5000}],
                 }
             ],
             "PreToolUse": [
@@ -736,9 +710,7 @@ class CodexIntegration:
             ],
         }
 
-    def _merge_hooks(
-        self, settings: dict[str, Any], new_hooks: dict[str, list[dict[str, Any]]]
-    ) -> dict[str, Any]:
+    def _merge_hooks(self, settings: dict[str, Any], new_hooks: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
         hooks = settings.get("hooks", {})
         for event, entries in new_hooks.items():
             existing = hooks.get(event, [])

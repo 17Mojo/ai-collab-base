@@ -99,7 +99,6 @@ def test_codearts_adapter_contract_exposes_pull_and_heartbeat(tmp_path: Path):
     assert heartbeat["open_intervention_count"] == 1
 
 
-
 class TestBaseAIAdapterContract:
     """BaseAIAdapter 接口契约测试 - 覆盖 base_adapter.py (11-50)"""
 
@@ -108,6 +107,7 @@ class TestBaseAIAdapterContract:
         import pytest
 
         from ai_collab.adapters.base_adapter import BaseAIAdapter
+
         # 抽象基类不可直接实例化
         with pytest.raises(TypeError):
             BaseAIAdapter("test")
@@ -120,10 +120,13 @@ class TestBaseAIAdapterContract:
             def connect(self) -> bool:
                 self.is_connected = True
                 return True
+
             def send_message(self, message, context=None):
                 return {"sent": True, "msg": message}
+
             def receive_message(self, timeout=30):
                 return {"received": True}
+
             def disconnect(self) -> bool:
                 self.is_connected = False
                 return True
@@ -139,10 +142,17 @@ class TestBaseAIAdapterContract:
         from ai_collab.adapters.base_adapter import BaseAIAdapter
 
         class TestAdapter(BaseAIAdapter):
-            def connect(self): return True
-            def send_message(self, message, context=None): return {}
-            def receive_message(self, timeout=30): return None
-            def disconnect(self): return True
+            def connect(self):
+                return True
+
+            def send_message(self, message, context=None):
+                return {}
+
+            def receive_message(self, timeout=30):
+                return None
+
+            def disconnect(self):
+                return True
 
         adapter = TestAdapter("chatgpt", {"api_key": "sk-123"})
         info = adapter.get_platform_info()
@@ -155,10 +165,17 @@ class TestBaseAIAdapterContract:
         from ai_collab.adapters.base_adapter import BaseAIAdapter
 
         class TestAdapter(BaseAIAdapter):
-            def connect(self): return True
-            def send_message(self, message, context=None): return {}
-            def receive_message(self, timeout=30): return None
-            def disconnect(self): return True
+            def connect(self):
+                return True
+
+            def send_message(self, message, context=None):
+                return {}
+
+            def receive_message(self, timeout=30):
+                return None
+
+            def disconnect(self):
+                return True
 
         adapter = TestAdapter("claude")
         adapter.log_action("send", {"to": "user"})
@@ -176,12 +193,18 @@ class TestBaseAIAdapterContract:
                 super().__init__(name)
                 self.connected_count = 0
                 self.disconnected_count = 0
+
             def connect(self):
                 self.connected_count += 1
                 self.is_connected = True
                 return True
-            def send_message(self, message, context=None): return {}
-            def receive_message(self, timeout=30): return None
+
+            def send_message(self, message, context=None):
+                return {}
+
+            def receive_message(self, timeout=30):
+                return None
+
             def disconnect(self):
                 self.disconnected_count += 1
                 self.is_connected = False
@@ -196,6 +219,7 @@ class TestBaseAIAdapterContract:
     def test_exception_classes(self):
         """异常类层次结构"""
         from ai_collab.adapters.base_adapter import AIAdapterError, ConnectionError, MessageError, TimeoutError
+
         # AIAdapterError 是基类
         assert issubclass(ConnectionError, AIAdapterError)
         assert issubclass(MessageError, AIAdapterError)

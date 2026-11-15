@@ -99,17 +99,12 @@ def test_chrome_extension_html_structure() -> None:
 
 def test_chrome_extension_css_accessibility() -> None:
     failed_checks = _chrome_css_check()
-    assert not failed_checks, "Chrome popup CSS accessibility checks failed: " + ", ".join(
-        failed_checks
-    )
+    assert not failed_checks, "Chrome popup CSS accessibility checks failed: " + ", ".join(failed_checks)
 
 
 def test_vscode_extension_package() -> None:
     failed_checks = _vscode_native_host_check()
-    assert not failed_checks, (
-        "VSCode extension native_host accessibility checks failed: "
-        + ", ".join(failed_checks)
-    )
+    assert not failed_checks, "VSCode extension native_host accessibility checks failed: " + ", ".join(failed_checks)
 
 
 def generate_accessibility_report() -> dict[str, Any]:

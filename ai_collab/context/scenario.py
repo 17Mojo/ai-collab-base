@@ -39,7 +39,18 @@ class ScenarioDetector:
     # 场景定义和识别规则
     SCENARIO_RULES = {
         ScenarioType.CODING: {
-            "directories": ["src", "app", "lib", "services", "controllers", "models", "handlers", "utils", "core", "api"],
+            "directories": [
+                "src",
+                "app",
+                "lib",
+                "services",
+                "controllers",
+                "models",
+                "handlers",
+                "utils",
+                "core",
+                "api",
+            ],
             "files": ["*.py", "*.js", "*.ts", "*.java", "*.go", "*.rs", "*.cpp", "*.jsx", "*.tsx", "*.rb", "*.php"],
             "patterns": [
                 "class \\w+",
@@ -116,9 +127,7 @@ class ScenarioDetector:
         """
         self.root_dir: Path = Path(root_dir) if root_dir else Path.cwd()
 
-    def detect(
-        self, active_files: list[str] | None = None, include_content: bool = False
-    ) -> ScenarioScore:
+    def detect(self, active_files: list[str] | None = None, include_content: bool = False) -> ScenarioScore:
         """
         检测当前场景
 
@@ -139,9 +148,7 @@ class ScenarioDetector:
         # 返回最高分的场景
         return max(scores, key=lambda s: s.score)
 
-    def detect_all(
-        self, active_files: list[str] | None = None, include_content: bool = False
-    ) -> list[ScenarioScore]:
+    def detect_all(self, active_files: list[str] | None = None, include_content: bool = False) -> list[ScenarioScore]:
         """
         检测所有场景的分数
 
@@ -209,9 +216,7 @@ class ScenarioDetector:
 
         return score
 
-    def _analyze_directories(
-        self, scenario: ScenarioType, rules: dict, evidence_list: list[ScenarioEvidence]
-    ) -> float:
+    def _analyze_directories(self, scenario: ScenarioType, rules: dict, evidence_list: list[ScenarioEvidence]) -> float:
         """分析目录结构"""
         target_dirs = rules.get("directories", [])
         if not target_dirs:
@@ -321,8 +326,7 @@ class ScenarioDetector:
                             ScenarioEvidence(
                                 evidence_type="content",
                                 value=file_path,
-                                weight=min(1.0, file_matches / len(patterns))
-                                / max(1, len(active_files)),
+                                weight=min(1.0, file_matches / len(patterns)) / max(1, len(active_files)),
                                 description=f"文件内容匹配 {file_matches}/{len(patterns)} 个模式",
                             )
                         )

@@ -151,9 +151,7 @@ class CompatibilityChecker:
             timestamp=datetime.now(),
         )
 
-    def _create_major_upgrade_issue(
-        self, source: PackVersion, target: PackVersion
-    ) -> CompatibilityIssue:
+    def _create_major_upgrade_issue(self, source: PackVersion, target: PackVersion) -> CompatibilityIssue:
         """创建主版本升级问题"""
         return CompatibilityIssue(
             issue_type=BreakingChangeType.API_CHANGE,
@@ -163,9 +161,7 @@ class CompatibilityChecker:
             migration_path=f"Review pack documentation for migration guide from {source} to {target}",
         )
 
-    def _create_minor_update_issues(
-        self, source: PackVersion, target: PackVersion
-    ) -> list[CompatibilityIssue]:
+    def _create_minor_update_issues(self, source: PackVersion, target: PackVersion) -> list[CompatibilityIssue]:
         """创建次版本更新问题"""
         issues: list[CompatibilityIssue] = []
 
@@ -303,9 +299,7 @@ class DependencyValidator:
         """
         self.pack_manager = pack_manager
 
-    def validate_dependencies(
-        self, pack_name: str, required_version: str | None = None
-    ) -> dict[str, Any]:
+    def validate_dependencies(self, pack_name: str, required_version: str | None = None) -> dict[str, Any]:
         """
         验证 Pack 依赖
 
@@ -338,9 +332,7 @@ class DependencyValidator:
                     required = PackVersion.parse(required_version)
                     if dep_version < required:
                         version_ok = False
-                        version_message = (
-                            f"Required: {required_version}, Found: {dep_pack.manifest.version}"
-                        )
+                        version_message = f"Required: {required_version}, Found: {dep_pack.manifest.version}"
 
                 results.append(
                     {
@@ -418,16 +410,12 @@ class DependencyValidator:
                     for pack_name in versions_by_pack:
                         if pack_name not in conflicts:
                             conflicts[pack_name] = []
-                        conflicts[pack_name].append(
-                            f"{dep_name} has conflicting versions: {versions}"
-                        )
+                        conflicts[pack_name].append(f"{dep_name} has conflicting versions: {versions}")
 
         return conflicts
 
 
-def check_pack_compatibility(
-    pack_name: str, target_version: str, workspace: str = "."
-) -> dict[str, Any]:
+def check_pack_compatibility(pack_name: str, target_version: str, workspace: str = ".") -> dict[str, Any]:
     """
     检查 Pack 兼容性（便捷函数）
 

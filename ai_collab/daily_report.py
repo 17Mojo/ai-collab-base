@@ -76,10 +76,7 @@ def write_daily_report_json(
     """Write daily report to JSON file."""
     report_file = workspace / report_path
     report_file.parent.mkdir(parents=True, exist_ok=True)
-    report_file.write_text(
-        json.dumps(report.to_dict(), ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    report_file.write_text(json.dumps(report.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def write_daily_report_markdown(

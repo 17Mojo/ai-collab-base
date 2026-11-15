@@ -15,6 +15,7 @@ from ai_collab import workspace_guard as wg
 # _normalize_path
 # ============================================================
 
+
 def test_normalize_path_handles_arrow_rename():
     """git porcelain 改名格式: 'old -> new' -> 取后半部分"""
     assert wg._normalize_path("old_name -> new_name") == "new_name"
@@ -35,6 +36,7 @@ def test_normalize_path_none_safe():
 # ============================================================
 # _decode_git_quoted_path
 # ============================================================
+
 
 def test_decode_git_quoted_octal_escapes():
     """git 把非 ASCII 路径用八进制转义, latin1->utf-8 反转"""
@@ -58,6 +60,7 @@ def test_decode_git_quoted_invalid_inner_returns_safely():
 # ============================================================
 # _status_type
 # ============================================================
+
 
 def test_status_type_untracked():
     assert wg._status_type("??") == "untracked"
@@ -87,6 +90,7 @@ def test_status_type_other_default():
 # _classify_domain
 # ============================================================
 
+
 def test_classify_domain_source():
     assert wg._classify_domain("ai_collab/foo.py") == "source"
     assert wg._classify_domain("tests/unit/test_x.py") == "source"
@@ -114,10 +118,9 @@ def test_classify_domain_other():
 # _read_status_entries
 # ============================================================
 
+
 def test_read_status_entries_returns_error_when_git_fails(tmp_path):
-    fake = subprocess.CompletedProcess(
-        args=[], returncode=128, stdout="", stderr="not a git repo"
-    )
+    fake = subprocess.CompletedProcess(args=[], returncode=128, stdout="", stderr="not a git repo")
     with patch.object(wg.subprocess, "run", return_value=fake):
         out = wg._read_status_entries(tmp_path)
     assert out["ok"] is False
@@ -148,10 +151,9 @@ def test_read_status_entries_parses_normal_output(tmp_path):
 # inspect_workspace
 # ============================================================
 
+
 def test_inspect_workspace_returns_error_when_git_fails(tmp_path):
-    fake = subprocess.CompletedProcess(
-        args=[], returncode=1, stdout="", stderr="boom"
-    )
+    fake = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="boom")
     with patch.object(wg.subprocess, "run", return_value=fake):
         out = wg.inspect_workspace(tmp_path)
     assert out["ok"] is False
@@ -189,23 +191,22 @@ def test_inspect_workspace_counts_results_untracked(tmp_path):
 # run_workspace_guard: git error 路径
 # ============================================================
 
+
 def test_run_workspace_guard_records_warning_when_git_fails(tmp_path):
     """git 失败 + guard 不适用 -> 走 warning 分支, 不 violation"""
-    fake = subprocess.CompletedProcess(
-        args=[], returncode=1, stdout="", stderr="fatal: not a git repo"
-    )
+    fake = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="fatal: not a git repo")
     with patch.object(wg.subprocess, "run", return_value=fake):
-            report = wg.run_workspace_guard(
-                workspace=tmp_path,
-                command="apply",
-                mode="apply",
-                guard_config={
-                    "enabled": False,
-                    "applyOnly": False,
-                    "failOnGitError": True,
-                },
-                force=False,
-            )
+        report = wg.run_workspace_guard(
+            workspace=tmp_path,
+            command="apply",
+            mode="apply",
+            guard_config={
+                "enabled": False,
+                "applyOnly": False,
+                "failOnGitError": True,
+            },
+            force=False,
+        )
     assert len(report["violations"]) == 0
     assert any("not a git repo" in w for w in report["warnings"])
 
@@ -214,10 +215,9 @@ def test_run_workspace_guard_records_warning_when_git_fails(tmp_path):
 # stage_domain_changes
 # ============================================================
 
+
 def test_stage_domain_changes_unsupported_domain(tmp_path):
-    out = wg.stage_domain_changes(
-        workspace=tmp_path, domain="hacker-zone", dry_run=True
-    )
+    out = wg.stage_domain_changes(workspace=tmp_path, domain="hacker-zone", dry_run=True)
     assert out["ok"] is False
     assert "unsupported domain" in out["error"]
     assert out["domain"] == "hacker-zone"
@@ -225,25 +225,17 @@ def test_stage_domain_changes_unsupported_domain(tmp_path):
 
 def test_stage_domain_changes_git_error(tmp_path):
     """git 失败 -> 返回 ok=False"""
-    fake = subprocess.CompletedProcess(
-        args=[], returncode=128, stdout="", stderr="git fail"
-    )
+    fake = subprocess.CompletedProcess(args=[], returncode=128, stdout="", stderr="git fail")
     with patch.object(wg.subprocess, "run", return_value=fake):
-        out = wg.stage_domain_changes(
-            workspace=tmp_path, domain="source", dry_run=False
-        )
+        out = wg.stage_domain_changes(workspace=tmp_path, domain="source", dry_run=False)
     assert out["ok"] is False
 
 
 def test_stage_domain_changes_dry_run_skips_git_add(tmp_path):
     """dry_run=True -> 不调用 git add"""
-    fake = subprocess.CompletedProcess(
-        args=[], returncode=0, stdout=" M ai_collab/foo.py\n", stderr=""
-    )
+    fake = subprocess.CompletedProcess(args=[], returncode=0, stdout=" M ai_collab/foo.py\n", stderr="")
     with patch.object(wg.subprocess, "run", return_value=fake) as mock_run:
-        out = wg.stage_domain_changes(
-            workspace=tmp_path, domain="source", dry_run=True
-        )
+        out = wg.stage_domain_changes(workspace=tmp_path, domain="source", dry_run=True)
     assert out["ok"] is True
     assert mock_run.call_count == 1
     args = mock_run.call_args[0][0]
@@ -253,6 +245,7 @@ def test_stage_domain_changes_dry_run_skips_git_add(tmp_path):
 # ============================================================
 # _chunked
 # ============================================================
+
 
 def test_chunked_splits_correctly():
     items = list(range(450))
@@ -274,6 +267,7 @@ def test_chunked_smaller_than_size():
 # ============================================================
 # 模块顶层导出
 # ============================================================
+
 
 def test_module_exports():
     assert callable(wg.inspect_workspace)

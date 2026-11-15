@@ -45,9 +45,7 @@ def _patch_paths(monkeypatch: pytest.MonkeyPatch, workspace: Path) -> None:
         "get_project_config",
         lambda: {"stateFile": "./logs/collaboration_state.json"},
     )
-    monkeypatch.setattr(
-        VSCodeIntegration, "update_vscode_output", lambda message, channel="AI Collab": None
-    )
+    monkeypatch.setattr(VSCodeIntegration, "update_vscode_output", lambda message, channel="AI Collab": None)
     # 让 fallback 路径解析（get_global_state_file, get_issues_file, get_backup_dir）
     # 走 workspace 而不是真实 ~/.vscode/ai-collab
     monkeypatch.setattr(VSCodeIntegration, "_is_valid_workspace", lambda p: bool(p) and os.path.isdir(p))
@@ -97,9 +95,7 @@ class TestVSCodeStateManagerPathResolution:
         assert state_file.endswith("collaboration_state.json")
         assert os.path.isdir(os.path.dirname(state_file))
 
-    def test_get_project_state_file_without_workspace_falls_back_to_cwd(
-        self, tmp_path: Path, monkeypatch
-    ):
+    def test_get_project_state_file_without_workspace_falls_back_to_cwd(self, tmp_path: Path, monkeypatch):
         monkeypatch.setattr(VSCodeIntegration, "get_workspace_path", lambda: None)
         monkeypatch.setattr(VSCodeIntegration, "get_project_config", lambda: {})
         monkeypatch.setattr(os, "getcwd", lambda: str(tmp_path))
@@ -151,9 +147,7 @@ class TestVSCodeIntegrationStaticMethods:
         # 环境变量设置了,workspace 应当指向它
         assert result == os.path.abspath(str(tmp_path))
 
-    def test_get_workspace_path_falls_back_to_cwd_when_no_markers(
-        self, tmp_path: Path, monkeypatch
-    ):
+    def test_get_workspace_path_falls_back_to_cwd_when_no_markers(self, tmp_path: Path, monkeypatch):
         monkeypatch.delenv("VSCODE_CWD", raising=False)
         monkeypatch.setattr(os, "getcwd", lambda: str(tmp_path))
         # tmp_path 里没有 .vscode/ 也没有 package.json,应回退到 cwd
@@ -290,9 +284,7 @@ class TestGetAndResolveConflicts:
         with pytest.raises(json.JSONDecodeError):
             mgr.get_conflicts()
 
-    def test_resolve_conflict_marks_resolved_and_clears_file_status(
-        self, tmp_path: Path, monkeypatch
-    ):
+    def test_resolve_conflict_marks_resolved_and_clears_file_status(self, tmp_path: Path, monkeypatch):
         _patch_paths(monkeypatch, tmp_path)
         mgr = StateManager(workspace_path=str(tmp_path))
         mgr.state["file_status"]["a.py"] = FileStatus.CONFLICT.value
@@ -328,9 +320,7 @@ class TestGetAndResolveConflicts:
             json.dump({"issues": []}, f)
         assert mgr.resolve_conflict("NOPE", "x") is False
 
-    def test_resolve_conflict_returns_false_when_issues_file_missing(
-        self, tmp_path: Path, monkeypatch
-    ):
+    def test_resolve_conflict_returns_false_when_issues_file_missing(self, tmp_path: Path, monkeypatch):
         _patch_paths(monkeypatch, tmp_path)
         mgr = StateManager(workspace_path=str(tmp_path))
         # 故意不创建 issues_file
@@ -390,9 +380,7 @@ class TestClearCompletedTasks:
 class TestHandoffAcknowledge:
     """覆盖 2001-2079 行的双向交接 (P0-2 工单要求)"""
 
-    def _seed_handoff(
-        self, mgr: StateManager, handoff_id: str = "H-1", tmp_path: Path | None = None
-    ) -> None:
+    def _seed_handoff(self, mgr: StateManager, handoff_id: str = "H-1", tmp_path: Path | None = None) -> None:
         """把 handoff 同时写入内存和磁盘（acknowledge_handoff 通过 _load_handoffs 从磁盘读）"""
         payload = {
             handoff_id: {

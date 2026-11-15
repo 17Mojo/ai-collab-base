@@ -162,10 +162,7 @@ def write_archive_manifest(
     """Write archive manifest to file."""
     manifest_file = workspace / manifest_path
     manifest_file.parent.mkdir(parents=True, exist_ok=True)
-    manifest_file.write_text(
-        json.dumps(manifest.to_dict(), ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    manifest_file.write_text(json.dumps(manifest.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def print_archive_summary(*, manifest: ArchiveManifest) -> None:

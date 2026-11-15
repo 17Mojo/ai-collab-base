@@ -228,9 +228,7 @@ class PackMarketAPI:
 
     # ========== Pack 评价管理 ==========
 
-    def rate_pack(
-        self, pack_id: str, user_id: str, rating: int, title: str = "", content: str = ""
-    ) -> dict[str, Any]:
+    def rate_pack(self, pack_id: str, user_id: str, rating: int, title: str = "", content: str = "") -> dict[str, Any]:
         """评价 Pack
 
         Args:
@@ -319,9 +317,7 @@ class PackMarketAPI:
 
     # ========== 用户反馈管理 ==========
 
-    def submit_feedback(
-        self, pack_id: str, user_id: str, feedback_type: str, content: str
-    ) -> dict[str, Any]:
+    def submit_feedback(self, pack_id: str, user_id: str, feedback_type: str, content: str) -> dict[str, Any]:
         """提交用户反馈
 
         Args:
@@ -353,9 +349,7 @@ class PackMarketAPI:
         return {
             "success": success,
             "feedback_id": feedback_id if success else None,
-            "message": "Feedback submitted successfully"
-            if success
-            else "Failed to submit feedback",
+            "message": "Feedback submitted successfully" if success else "Failed to submit feedback",
         }
 
     def get_feedback(self, feedback_id: str) -> dict[str, Any]:
@@ -374,9 +368,7 @@ class PackMarketAPI:
 
         return {"success": True, "feedback": feedback.to_dict()}
 
-    def list_pack_feedback(
-        self, pack_id: str, feedback_type: str | None = None
-    ) -> dict[str, Any]:
+    def list_pack_feedback(self, pack_id: str, feedback_type: str | None = None) -> dict[str, Any]:
         """列出 Pack 反馈
 
         Args:
@@ -530,9 +522,7 @@ class PackMarketAPI:
         from datetime import timedelta
 
         seven_days_ago = datetime.now() - timedelta(days=7)
-        recent_ratings = [
-            r for r in ratings if datetime.fromisoformat(r["created_at"]) > seven_days_ago
-        ]
+        recent_ratings = [r for r in ratings if datetime.fromisoformat(r["created_at"]) > seven_days_ago]
 
         if recent_ratings:
             recent_avg = sum(r["rating"] for r in recent_ratings) / len(recent_ratings)
@@ -547,16 +537,12 @@ class PackMarketAPI:
             "rating_count": pack["rating_count"],
             "rating_distribution": distribution,
             "high_quality_count": len(high_quality),
-            "high_quality_percentage": round(len(high_quality) / len(ratings) * 100, 1)
-            if ratings
-            else 0,
+            "high_quality_percentage": round(len(high_quality) / len(ratings) * 100, 1) if ratings else 0,
             "recent_ratings_count": len(recent_ratings),
             "recent_average_rating": round(recent_avg, 2),
         }
 
-    def get_high_quality_reviews(
-        self, pack_id: str, min_rating: int = 4, limit: int = 10
-    ) -> dict[str, Any]:
+    def get_high_quality_reviews(self, pack_id: str, min_rating: int = 4, limit: int = 10) -> dict[str, Any]:
         """获取高质量评价
 
         Args:
@@ -573,9 +559,7 @@ class PackMarketAPI:
             return all_ratings
 
         # 筛选高质量评价
-        high_quality = [
-            r for r in all_ratings["ratings"] if r["rating"] >= min_rating and r.get("content")
-        ]
+        high_quality = [r for r in all_ratings["ratings"] if r["rating"] >= min_rating and r.get("content")]
 
         # 按评分降序排序
         high_quality.sort(key=lambda x: x["rating"], reverse=True)

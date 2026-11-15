@@ -132,9 +132,7 @@ def test_credential_vars_are_really_read_by_the_bridge():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    source = (PROJECT_ROOT / "scripts" / "codearts_bridge_deliver.py").read_text(
-        encoding="utf-8"
-    )
+    source = (PROJECT_ROOT / "scripts" / "codearts_bridge_deliver.py").read_text(encoding="utf-8")
     for name in CREDENTIAL_ENV_VARS:
         if name == "OPENCODE_SERVER_USERNAME":
             continue

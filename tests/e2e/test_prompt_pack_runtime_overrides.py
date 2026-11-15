@@ -108,9 +108,7 @@ class ExtensionHostMock:
         """Setup message handler mock"""
         self._message_handler = handler
 
-    def simulate_execute_pack(
-        self, pack_id: str, runtime_overrides: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def simulate_execute_pack(self, pack_id: str, runtime_overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Simulate executePack message flow
 
@@ -172,9 +170,7 @@ class TestRuntimeOverridesE2E:
         # Execute with runtime overrides
         runtime_overrides = {"style_profile": "casual", "tone": "friendly", "length": "short"}
 
-        result = extension_host.simulate_execute_pack(
-            "test-pack-001", runtime_overrides=runtime_overrides
-        )
+        result = extension_host.simulate_execute_pack("test-pack-001", runtime_overrides=runtime_overrides)
 
         # Verify
         assert result["ok"] is True
@@ -187,9 +183,7 @@ class TestRuntimeOverridesE2E:
         # Only override style_profile
         runtime_overrides = {"style_profile": "creative"}
 
-        result = extension_host.simulate_execute_pack(
-            "test-pack-001", runtime_overrides=runtime_overrides
-        )
+        result = extension_host.simulate_execute_pack("test-pack-001", runtime_overrides=runtime_overrides)
 
         assert result["ok"] is True
 
@@ -208,9 +202,7 @@ class TestRuntimeOverridesE2E:
         # Invalid field
         runtime_overrides = {"invalid_field": "value"}
 
-        result = extension_host.simulate_execute_pack(
-            "test-pack-001", runtime_overrides=runtime_overrides
-        )
+        result = extension_host.simulate_execute_pack("test-pack-001", runtime_overrides=runtime_overrides)
 
         # Should still succeed (invalid fields ignored)
         assert result["ok"] is True
@@ -228,9 +220,7 @@ class TestRuntimeOverridesE2E:
             "temperature_bias": 0.8,
         }
 
-        result = extension_host.simulate_execute_pack(
-            "test-pack-001", runtime_overrides=valid_overrides
-        )
+        result = extension_host.simulate_execute_pack("test-pack-001", runtime_overrides=valid_overrides)
 
         assert result["ok"] is True
 
@@ -242,9 +232,7 @@ class TestRuntimeOverridesE2E:
         # Override: style_profile = "casual"
         runtime_overrides = {"style_profile": "casual"}
 
-        result = extension_host.simulate_execute_pack(
-            "test-pack-001", runtime_overrides=runtime_overrides
-        )
+        result = extension_host.simulate_execute_pack("test-pack-001", runtime_overrides=runtime_overrides)
 
         # Verify override takes priority
         assert result["ok"] is True
@@ -294,9 +282,7 @@ class TestRuntimeOverridesE2E:
         # Test compliance_level override
         runtime_overrides = {"compliance_level": "strict"}
 
-        result = extension_host.simulate_execute_pack(
-            "test-pack-001", runtime_overrides=runtime_overrides
-        )
+        result = extension_host.simulate_execute_pack("test-pack-001", runtime_overrides=runtime_overrides)
 
         assert result["ok"] is True
 
@@ -307,9 +293,7 @@ class TestRuntimeOverridesE2E:
         # Test temperature_bias override
         runtime_overrides = {"temperature_bias": 0.9}
 
-        result = extension_host.simulate_execute_pack(
-            "test-pack-001", runtime_overrides=runtime_overrides
-        )
+        result = extension_host.simulate_execute_pack("test-pack-001", runtime_overrides=runtime_overrides)
 
         assert result["ok"] is True
 

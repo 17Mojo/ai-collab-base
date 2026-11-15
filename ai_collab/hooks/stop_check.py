@@ -213,14 +213,10 @@ def _read_state_drift(state_file: Path, workspace: Path, *, current_agent: str =
             hinted_result = _resolve_existing_path(workspace, patch.get("result_file"))
             task_id = str(patch.get("task_id", "")).strip()
             expected_result_path: Path | None = (
-                workspace / "collaboration" / "results" / f"RESULT_{task_id}.md"
-                if task_id
-                else None
+                workspace / "collaboration" / "results" / f"RESULT_{task_id}.md" if task_id else None
             )
 
-            if hinted_result is not None or (
-                expected_result_path is not None and expected_result_path.exists()
-            ):
+            if hinted_result is not None or (expected_result_path is not None and expected_result_path.exists()):
                 drifts.append(f"patch {patch_id} ({status})")
 
     return drifts
@@ -332,9 +328,7 @@ def main() -> None:
         lines.extend([f"  - {task_id}" for task_id in active_tasks[:10]])
     if missing_explicit_ack:
         lines.append("当前会话显式 ACK 缺失:")
-        lines.extend(
-            [f"  - {item['task_id']} ({item['status']})" for item in missing_explicit_ack[:10]]
-        )
+        lines.extend([f"  - {item['task_id']} ({item['status']})" for item in missing_explicit_ack[:10]])
         lines.append("请先原样执行以下命令并将 stdout 回复到会话中:")
         lines.extend([f"  {item['command']}" for item in missing_explicit_ack[:10]])
     if drifts:

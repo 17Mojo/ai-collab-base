@@ -84,9 +84,7 @@ def _validate_pack_data(pack_data: dict) -> tuple[int, int]:
     return len(errors), len(warnings)
 
 
-def _attach_validation_headers(
-    response: Response, error_count: int, warning_count: int
-) -> None:
+def _attach_validation_headers(response: Response, error_count: int, warning_count: int) -> None:
     """把验证结果附加到 response header。"""
     response.headers["X-Pack-Validation-Errors"] = str(error_count)
     response.headers["X-Pack-Validation-Warnings"] = str(warning_count)
@@ -116,9 +114,7 @@ async def list_packs(
         query = query.filter(PackModel.category == category)
 
     if search:
-        query = query.filter(
-            PackModel.pack_name.contains(search) | PackModel.description.contains(search)
-        )
+        query = query.filter(PackModel.pack_name.contains(search) | PackModel.description.contains(search))
 
     total = query.count()
     packs = query.offset(skip).limit(limit).all()
@@ -129,9 +125,7 @@ async def list_packs(
 
 
 @router.post("/bulk/create", response_model=BulkPackCreateResponse)
-async def bulk_create_packs(
-    payload: BulkPackCreateRequest, response: Response, db: Session = Depends(get_db)
-):
+async def bulk_create_packs(payload: BulkPackCreateRequest, response: Response, db: Session = Depends(get_db)):
     """批量创建 Pack（支持部分失败）"""
     created: list[PackResponse] = []
     errors: list[BulkErrorItem] = []
@@ -285,16 +279,10 @@ async def get_pack(pack_id: str, db: Session = Depends(get_db)):
     if cached_payload is not None:
         return PackResponse.model_validate(cached_payload)
 
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     response = PackResponse.model_validate(pack)
     cache.set(cache_key, response.model_dump(mode="json"), ttl=PACK_CACHE_TTL_SECONDS)
@@ -318,16 +306,10 @@ async def get_pack_metadata(pack_id: str, db: Session = Depends(get_db)):
     if cached_payload is not None:
         return cached_payload
 
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     pack_data = pack.pack_data or {}
 
@@ -344,9 +326,7 @@ async def get_pack_metadata(pack_id: str, db: Session = Depends(get_db)):
         "language": pack.language,
         "execution_count": pack.execution_count,
         "avg_quality_score": getattr(pack, "avg_quality_score", None),
-        "estimated_efficiency_gain": pack_data.get("metadata", {}).get(
-            "estimated_efficiency_gain", "60%"
-        ),
+        "estimated_efficiency_gain": pack_data.get("metadata", {}).get("estimated_efficiency_gain", "60%"),
         # 基础领域配置
         "domain": pack_data.get("domain", {}),
         # 工作流定义（客户端需要知道如何执行）
@@ -369,9 +349,7 @@ async def get_pack_metadata(pack_id: str, db: Session = Depends(get_db)):
         "generation_params": {
             "output_versions": pack_data.get("generation_params", {}).get("output_versions", 1),
             "temperature": pack_data.get("generation_params", {}).get("temperature", 0.7),
-            "output_format": pack_data.get("generation_params", {}).get(
-                "output_format", "markdown"
-            ),
+            "output_format": pack_data.get("generation_params", {}).get("output_format", "markdown"),
         },
     }
 
@@ -406,26 +384,16 @@ async def get_pack_full(
     try:
         is_valid = verify_client_token(client_token)
         if not is_valid:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Invalid client token"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid client token")
     except ExpiredTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Client token has expired"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Client token has expired")
     except InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid client token")
 
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     # 返回完整的 Pack 数据
     full_pack = {
@@ -447,20 +415,12 @@ async def get_pack_full(
 
 
 @router.put("/{pack_id}", response_model=PackResponse)
-async def update_pack(
-    pack_id: str, pack_update: PackUpdate, response: Response, db: Session = Depends(get_db)
-):
+async def update_pack(pack_id: str, pack_update: PackUpdate, response: Response, db: Session = Depends(get_db)):
     """更新 Pack"""
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     # 更新字段
     update_data = pack_update.model_dump(exclude_unset=True)
@@ -488,16 +448,10 @@ async def update_pack(
 @router.delete("/{pack_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_pack(pack_id: str, db: Session = Depends(get_db)):
     """删除 Pack（软删除）"""
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     pack.is_active = False
     db.commit()
@@ -510,43 +464,27 @@ async def delete_pack(pack_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{pack_id}/executions", response_model=ExecutionListResponse)
-async def list_executions(
-    pack_id: str, skip: int = 0, limit: int = 20, db: Session = Depends(get_db)
-):
+async def list_executions(pack_id: str, skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
     """获取 Pack 执行历史"""
     query = db.query(ExecutionHistoryModel).filter(ExecutionHistoryModel.pack_id == pack_id)
 
     total = query.count()
-    executions = (
-        query.order_by(ExecutionHistoryModel.started_at.desc()).offset(skip).limit(limit).all()
-    )
+    executions = query.order_by(ExecutionHistoryModel.started_at.desc()).offset(skip).limit(limit).all()
 
-    return ExecutionListResponse(
-        total=total, executions=[ExecutionResponse.model_validate(e) for e in executions]
-    )
+    return ExecutionListResponse(total=total, executions=[ExecutionResponse.model_validate(e) for e in executions])
 
 
-@router.post(
-    "/{pack_id}/executions", response_model=ExecutionResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/{pack_id}/executions", response_model=ExecutionResponse, status_code=status.HTTP_201_CREATED)
 async def create_execution(pack_id: str, execution: ExecutionCreate, db: Session = Depends(get_db)):
     """创建执行记录"""
     # 检查 Pack 是否存在
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     # 创建执行记录
-    db_execution = ExecutionHistoryModel(
-        pack_id=pack_id, status="pending", input_data=execution.input_data
-    )
+    db_execution = ExecutionHistoryModel(pack_id=pack_id, status="pending", input_data=execution.input_data)
 
     db.add(db_execution)
 
@@ -561,20 +499,12 @@ async def create_execution(pack_id: str, execution: ExecutionCreate, db: Session
 
 
 @router.post("/{pack_id}/executions/bulk-create", response_model=BulkExecutionCreateResponse)
-async def bulk_create_executions(
-    pack_id: str, payload: BulkExecutionCreateRequest, db: Session = Depends(get_db)
-):
+async def bulk_create_executions(pack_id: str, payload: BulkExecutionCreateRequest, db: Session = Depends(get_db)):
     """批量创建执行记录（支持部分失败）"""
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     executions: list[ExecutionResponse] = []
     errors: list[BulkErrorItem] = []
@@ -619,9 +549,7 @@ async def bulk_create_executions(
 # ==================== Quality Metrics ====================
 
 
-@router.post(
-    "/{pack_id}/metrics", response_model=QualityMetricResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/{pack_id}/metrics", response_model=QualityMetricResponse, status_code=status.HTTP_201_CREATED)
 async def create_metric(pack_id: str, metric: QualityMetricCreate, db: Session = Depends(get_db)):
     """记录质量指标"""
     db_metric = QualityMetricModel(
@@ -689,16 +617,10 @@ async def validate_pack(pack_id: str, db: Session = Depends(get_db)):
         warnings: 警告列表
         structure_check: 结构检查详情
     """
-    pack = (
-        db.query(PackModel)
-        .filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True))
-        .first()
-    )
+    pack = db.query(PackModel).filter(PackModel.pack_id == pack_id, PackModel.is_active.is_(True)).first()
 
     if not pack:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pack {pack_id} not found")
 
     pack_data = pack.pack_data or {}
     errors: list[str] = []

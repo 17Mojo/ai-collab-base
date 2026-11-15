@@ -219,9 +219,7 @@ class KnowledgeGraph:
 
         # 移除其他节点指向该节点的关系
         for source_id in list(self._relations.keys()):
-            self._relations[source_id] = [
-                r for r in self._relations[source_id] if r.target_id != node_id
-            ]
+            self._relations[source_id] = [r for r in self._relations[source_id] if r.target_id != node_id]
 
         for target_id in list(self._reverse_relations.keys()):
             self._reverse_relations[target_id] = [
@@ -295,10 +293,7 @@ class KnowledgeGraph:
 
         # 检查是否已存在
         for existing in self._relations[relation.source_id]:
-            if (
-                existing.target_id == relation.target_id
-                and existing.relation_type == relation.relation_type
-            ):
+            if existing.target_id == relation.target_id and existing.relation_type == relation.relation_type:
                 return False
 
         self._relations[relation.source_id].append(relation)
@@ -341,9 +336,7 @@ class KnowledgeGraph:
             return False
 
         original_len = len(self._relations[source_id])
-        self._relations[source_id] = [
-            r for r in self._relations[source_id] if r.target_id != target_id
-        ]
+        self._relations[source_id] = [r for r in self._relations[source_id] if r.target_id != target_id]
 
         if target_id in self._reverse_relations:
             self._reverse_relations[target_id] = [
@@ -600,11 +593,7 @@ class KnowledgeGraph:
         """序列化为字典"""
         return {
             "nodes": [node.to_dict() for node in self._nodes.values()],
-            "relations": [
-                relation.to_dict()
-                for relations in self._relations.values()
-                for relation in relations
-            ],
+            "relations": [relation.to_dict() for relations in self._relations.values() for relation in relations],
         }
 
     @classmethod

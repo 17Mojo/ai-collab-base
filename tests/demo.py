@@ -212,7 +212,9 @@ def demo_complete_vscode_workflow():
 
     # 模拟 Copilot 同时操作
     copilot_conflicts = state.check_conflicts(
-        ai_type="copilot", files=["src/types/user.ts"], check_mode="on_save"  # 不同文件，无冲突
+        ai_type="copilot",
+        files=["src/types/user.ts"],
+        check_mode="on_save",  # 不同文件，无冲突
     )
 
     if copilot_conflicts:
@@ -220,7 +222,9 @@ def demo_complete_vscode_workflow():
     else:
         # 检查与 Claude Code 的冲突
         copilot_conflicts = state.check_conflicts(
-            ai_type="copilot", files=["src/auth/index.ts"], check_mode="on_save"  # 相同文件，冲突！
+            ai_type="copilot",
+            files=["src/auth/index.ts"],
+            check_mode="on_save",  # 相同文件，冲突！
         )
         if copilot_conflicts:
             print("  ⚠ Copilot 无法修改此文件: Claude Code 正在编辑")
@@ -229,9 +233,7 @@ def demo_complete_vscode_workflow():
     # 步骤5: 创建日志
     print("\n[步骤5] 创建开发日志")
     logger = DevLogger("claude-code", enable_vsc_log=True)
-    log_path = logger.create_log(
-        task_name="auth-feature-dev", task_id=task["task_id"], description="用户认证功能"
-    )
+    log_path = logger.create_log(task_name="auth-feature-dev", task_id=task["task_id"], description="用户认证功能")
     print("  ✓ 日志已创建")
     print(f"    项目: {log_path}")
     print("    Git: .git/ai-collab/claude-code/*")

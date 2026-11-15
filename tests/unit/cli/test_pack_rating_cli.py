@@ -35,9 +35,7 @@ class TestPackRatingCLI:
         mock_api.rate_pack.return_value = {"success": True, "rating_id": "rating_123"}
 
         cli = PackRatingCLI()
-        result = cli.add_rating(
-            pack_id="test_pack", score=5, title="Excellent", content="Great pack!"
-        )
+        result = cli.add_rating(pack_id="test_pack", score=5, title="Excellent", content="Great pack!")
 
         assert result == 0
         mock_api.rate_pack.assert_called_once()
@@ -317,8 +315,7 @@ class TestPackRatingCLIDetailedMode:
                     "rating": 5,
                     "user_id": "user1",
                     "created_at": "2026-04-10",
-                    "content": "This is a very long content that should be truncated to 200 characters. "
-                    * 5,
+                    "content": "This is a very long content that should be truncated to 200 characters. " * 5,
                 }
             ],
         }

@@ -132,9 +132,7 @@ class TestReadStateActive:
     def test_read_state_no_active_tasks(self, tmp_path):
         """Test reading state with no active tasks."""
         state_file = tmp_path / "state.json"
-        state_data = {
-            "tasks": {"TASK-001": {"status": "completed"}, "TASK-002": {"status": "failed"}}
-        }
+        state_data = {"tasks": {"TASK-001": {"status": "completed"}, "TASK-002": {"status": "failed"}}}
         state_file.write_text(json.dumps(state_data))
         result = _read_state_active(state_file)
         assert result == []
@@ -242,9 +240,7 @@ class TestReadStateDrift:
         result_file = result_dir / "RESULT_TASK-001.md"
         result_file.write_text("# Result")
 
-        state_data = {
-            "tasks": {"TASK-001": {"status": "in_progress"}, "TASK-002": {"status": "completed"}}
-        }
+        state_data = {"tasks": {"TASK-001": {"status": "in_progress"}, "TASK-002": {"status": "completed"}}}
         state_file.write_text(json.dumps(state_data))
 
         drifts = _read_state_drift(state_file, tmp_path)
@@ -354,9 +350,7 @@ class TestReadMissingExplicitAck:
         result_file.parent.mkdir(parents=True)
         result_file.write_text("# Result")
 
-        state_data = {
-            "patches": {"PATCH-001": {"status": "blocked", "result_file": str(result_file)}}
-        }
+        state_data = {"patches": {"PATCH-001": {"status": "blocked", "result_file": str(result_file)}}}
         state_file.write_text(json.dumps(state_data))
 
         drifts = _read_state_drift(state_file, tmp_path)
@@ -514,10 +508,7 @@ class TestMain:
         assert exc_info.value.code == 2
         captured = capsys.readouterr()
         assert "当前会话显式 ACK 缺失" in captured.err
-        assert (
-            "python3 -m ai_collab.cli ack --task-id TASK-CLAUDE-ACK-001 --ai claude_code --status ok"
-            in captured.err
-        )
+        assert "python3 -m ai_collab.cli ack --task-id TASK-CLAUDE-ACK-001 --ai claude_code --status ok" in captured.err
 
     def test_main_does_not_block_on_other_assignee_tasks(self, tmp_path, capsys):
         """Test current session only blocks on its own tasks."""

@@ -38,9 +38,7 @@ class ContextModel(Base):
 
     # 关系
     parent = relationship("ContextModel", remote_side="ContextModel.context_id")
-    changes = relationship(
-        "ContextChangeLogModel", back_populates="context", cascade="all, delete-orphan"
-    )
+    changes = relationship("ContextChangeLogModel", back_populates="context", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict:
         """转换为字典"""
@@ -51,24 +49,18 @@ class ContextModel(Base):
             "file_contexts": json.loads(self.file_contexts)
             if isinstance(self.file_contexts, str)
             else self.file_contexts,
-            "ai_sessions": json.loads(self.ai_sessions)
-            if isinstance(self.ai_sessions, str)
-            else self.ai_sessions,
+            "ai_sessions": json.loads(self.ai_sessions) if isinstance(self.ai_sessions, str) else self.ai_sessions,
             "notebooklm_context": json.loads(self.notebooklm_context)
             if isinstance(self.notebooklm_context, str)
             else self.notebooklm_context
             if self.notebooklm_context
             else None,
-            "user_context": json.loads(self.user_context)
-            if isinstance(self.user_context, str)
-            else self.user_context,
+            "user_context": json.loads(self.user_context) if isinstance(self.user_context, str) else self.user_context,
             "metadata": json.loads(self.context_metadata)
             if isinstance(self.context_metadata, str)
             else self.context_metadata,
             "parent_id": self.parent_id,
-            "children_ids": json.loads(self.children_ids)
-            if isinstance(self.children_ids, str)
-            else self.children_ids,
+            "children_ids": json.loads(self.children_ids) if isinstance(self.children_ids, str) else self.children_ids,
             "size": self.size,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
@@ -163,9 +155,7 @@ class SessionModel(Base):
             "session_id": self.session_id,
             "ai_type": self.ai_type,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "messages": json.loads(self.messages)
-            if isinstance(self.messages, str)
-            else self.messages,
+            "messages": json.loads(self.messages) if isinstance(self.messages, str) else self.messages,
             "metadata": json.loads(self.session_metadata)
             if isinstance(self.session_metadata, str)
             else self.session_metadata,
@@ -205,9 +195,7 @@ def get_db_session(database_url: str | None = None):
 
     url = database_url or "sqlite:///local-backend/data/contexts.db"
 
-    engine = create_engine(
-        url, connect_args={"check_same_thread": False} if "sqlite" in url else {}
-    )
+    engine = create_engine(url, connect_args={"check_same_thread": False} if "sqlite" in url else {})
     SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
     return SessionLocal()

@@ -121,9 +121,7 @@ class PromptPack:
 
     def add_rule(self, filename: str, content: str, priority: int = 100, enabled: bool = True):
         """添加规则文件"""
-        self.rules[filename] = RuleFile(
-            filename=filename, content=content, priority=priority, enabled=enabled
-        )
+        self.rules[filename] = RuleFile(filename=filename, content=content, priority=priority, enabled=enabled)
 
     def get_rules_content(self, tool: AITool | None = None) -> list[str]:
         """
@@ -143,9 +141,7 @@ class PromptPack:
                 return []  # 不兼容，返回空列表
 
         # 按优先级排序并过滤启用的规则
-        sorted_rules = sorted(
-            [r for r in self.rules.values() if r.enabled], key=lambda r: r.priority
-        )
+        sorted_rules = sorted([r for r in self.rules.values() if r.enabled], key=lambda r: r.priority)
 
         return [rule.content for rule in sorted_rules]
 

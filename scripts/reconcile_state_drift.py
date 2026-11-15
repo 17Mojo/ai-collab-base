@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Reconcile state drift between agents."""
+
 import argparse
 import json
 import sys
@@ -30,8 +31,13 @@ def read_ack_state(workspace):
 
 
 NEGATIVE_SIGNAL_PATTERNS = [
-    "未完成", "未集成", "需要返工", "需要继续",
-    "TODO", "FIXME", "TBD",
+    "未完成",
+    "未集成",
+    "需要返工",
+    "需要继续",
+    "TODO",
+    "FIXME",
+    "TBD",
 ]
 
 
@@ -72,37 +78,43 @@ def find_drift_tasks(state, ack_state):
         if ws_path and (ws_path / candidate).exists():
             # Check for negative signals
             if has_negative_signals(ws_path / candidate):
-                drifts.append({
-                    "kind": "task",
-                    "item_id": tid,
-                    "current_status": status,
-                    "issue": "result file contains negative signals",
-                    "candidate_status": "implementing",
-                    "needs_explicit_ack": False,
-                    "contains_negative_signals": True,
-                })
+                drifts.append(
+                    {
+                        "kind": "task",
+                        "item_id": tid,
+                        "current_status": status,
+                        "issue": "result file contains negative signals",
+                        "candidate_status": "implementing",
+                        "needs_explicit_ack": False,
+                        "contains_negative_signals": True,
+                    }
+                )
                 continue
             ai_type = task.get("ai_type", "")
             assignee = task.get("assignee", "")
             if "claude" in ai_type.lower() or assignee == "claude_code":
                 if not has_explicit_ack(tid, ack_state):
-                    drifts.append({
-                        "kind": "task",
-                        "item_id": tid,
-                        "current_status": status,
-                        "issue": "active but result file exists, missing explicit ack",
-                        "candidate_status": "completed",
-                        "needs_explicit_ack": True,
-                    })
+                    drifts.append(
+                        {
+                            "kind": "task",
+                            "item_id": tid,
+                            "current_status": status,
+                            "issue": "active but result file exists, missing explicit ack",
+                            "candidate_status": "completed",
+                            "needs_explicit_ack": True,
+                        }
+                    )
                     continue
-            drifts.append({
-                "kind": "task",
-                "item_id": tid,
-                "current_status": status,
-                "issue": "active but result file exists",
-                "candidate_status": "completed",
-                "needs_explicit_ack": False,
-            })
+            drifts.append(
+                {
+                    "kind": "task",
+                    "item_id": tid,
+                    "current_status": status,
+                    "issue": "active but result file exists",
+                    "candidate_status": "completed",
+                    "needs_explicit_ack": False,
+                }
+            )
 
     return drifts
 
@@ -128,34 +140,40 @@ def find_drift_patches(state):
             if task_status == "completed" or task.get("completed_at"):
                 # Task completed but patch not completed
                 if status not in {"completed", "merged"}:
-                    drifts.append({
+                    drifts.append(
+                        {
+                            "kind": "patch",
+                            "item_id": pid,
+                            "task_id": task_id,
+                            "current_status": status,
+                            "issue": "associated task completed",
+                            "candidate_status": "completed",
+                        }
+                    )
+            elif status == "blocked" and task_id in state.get("active_tasks", []):
+                # Blocked patch with active task
+                drifts.append(
+                    {
                         "kind": "patch",
                         "item_id": pid,
                         "task_id": task_id,
                         "current_status": status,
-                        "issue": "associated task completed",
+                        "issue": "blocked patch for active task",
                         "candidate_status": "completed",
-                    })
-            elif status == "blocked" and task_id in state.get("active_tasks", []):
-                # Blocked patch with active task
-                drifts.append({
+                    }
+                )
+        elif status in RECONCILEABLE_PATCH_STATUSES:
+            # No task association
+            drifts.append(
+                {
                     "kind": "patch",
                     "item_id": pid,
                     "task_id": task_id,
                     "current_status": status,
-                    "issue": "blocked patch for active task",
+                    "issue": "patch in active state without resolution",
                     "candidate_status": "completed",
-                })
-        elif status in RECONCILEABLE_PATCH_STATUSES:
-            # No task association
-            drifts.append({
-                "kind": "patch",
-                "item_id": pid,
-                "task_id": task_id,
-                "current_status": status,
-                "issue": "patch in active state without resolution",
-                "candidate_status": "completed",
-            })
+                }
+            )
     return drifts
 
 
@@ -164,18 +182,22 @@ def apply_drift(state, drifts):
     errors = []
     for drift in drifts:
         if drift.get("needs_explicit_ack"):
-            errors.append({
-                "item_id": drift["item_id"],
-                "kind": drift["kind"],
-                "error": "explicit ACK required for claude_code task",
-            })
+            errors.append(
+                {
+                    "item_id": drift["item_id"],
+                    "kind": drift["kind"],
+                    "error": "explicit ACK required for claude_code task",
+                }
+            )
             continue
         if drift.get("contains_negative_signals"):
-            errors.append({
-                "item_id": drift["item_id"],
-                "kind": drift["kind"],
-                "error": "result file contains_negative_signals, not auto-completing",
-            })
+            errors.append(
+                {
+                    "item_id": drift["item_id"],
+                    "kind": drift["kind"],
+                    "error": "result file contains_negative_signals, not auto-completing",
+                }
+            )
             continue
         kind = drift["kind"]
         item_id = drift["item_id"]
@@ -223,16 +245,12 @@ def reconcile(args):
         report["error_count"] = len(errors)
         report["errors"] = errors
         state_file = workspace / "logs" / "collaboration_state.json"
-        state_file.write_text(
-            json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
 
     if args.report:
         report_path = workspace / args.report
         report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(
-            json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 
     if args.apply:
         if errors:
@@ -240,9 +258,7 @@ def reconcile(args):
             if args.report:
                 report_path = workspace / args.report
                 report_path.parent.mkdir(parents=True, exist_ok=True)
-                report_path.write_text(
-                    json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
-                )
+                report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
             return 1
         return 0
     if args.fail_on_drift and all_drifts:

@@ -12,6 +12,7 @@ from typing import Any
 @dataclass
 class StepResult:
     """步骤执行结果"""
+
     id: str
     type: str
     status: str
@@ -24,6 +25,7 @@ class StepResult:
 @dataclass
 class ExecutionState:
     """执行状态"""
+
     input: dict[str, Any]
     output: str | None = None
     steps: list[StepResult] = field(default_factory=list)
@@ -80,10 +82,7 @@ class BranchEvaluator:
         if branch.get("negate", False):
             matched = not matched
 
-        return {
-            "matched": matched,
-            "target_step": branch.get("target_step") if matched else None
-        }
+        return {"matched": matched, "target_step": branch.get("target_step") if matched else None}
 
     @staticmethod
     def _get_target_value(target_field: str, execution: ExecutionState) -> Any:
@@ -190,12 +189,7 @@ class PackExecutor:
             output = "fusion_completed"
 
         return StepResult(
-            id=step_id,
-            type=step_type,
-            status="completed",
-            output=output,
-            description=description,
-            branches=branches
+            id=step_id, type=step_type, status="completed", output=output, description=description, branches=branches
         )
 
 
@@ -212,12 +206,12 @@ def execute_pack(pack_data: dict[str, Any], input_data: dict[str, Any]) -> dict[
                 "status": s.status,
                 "output": s.output,
                 "description": s.description,
-                "branches": s.branches
+                "branches": s.branches,
             }
             for s in execution.steps
         ],
         "iterations": execution.iterations,
         "extracted_data": execution.extracted_data,
         "current_step_id": execution.current_step_id,
-        "branch_logic_enabled": any(s.get("branches") for s in executor.steps)
+        "branch_logic_enabled": any(s.get("branches") for s in executor.steps),
     }

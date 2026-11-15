@@ -182,9 +182,7 @@ def inspect_workspace(workspace: Path) -> dict[str, Any]:
         },
         "root_deleted": int(root_deleted),
         "results_untracked": int(results_untracked),
-        "top_dirs": [
-            {"dir": name, "count": int(count)} for name, count in top_dirs.most_common(20)
-        ],
+        "top_dirs": [{"dir": name, "count": int(count)} for name, count in top_dirs.most_common(20)],
     }
 
 
@@ -247,21 +245,12 @@ def run_workspace_guard(
             dirty_total = int(totals.get("total", 0))
             source_dirty = int(domains.get("source", 0))
             if dirty_total > thresholds["dirty_total"]:
-                violations.append(
-                    f"dirty_total={dirty_total} exceeds threshold={thresholds['dirty_total']}"
-                )
+                violations.append(f"dirty_total={dirty_total} exceeds threshold={thresholds['dirty_total']}")
             if root_deleted > thresholds["root_deleted"]:
-                violations.append(
-                    f"root_deleted={root_deleted} exceeds threshold={thresholds['root_deleted']}"
-                )
+                violations.append(f"root_deleted={root_deleted} exceeds threshold={thresholds['root_deleted']}")
             if require_source_clean and source_dirty > 0:
-                violations.append(
-                    f"source domain is not clean: source_dirty={source_dirty}, require_source_clean=true"
-                )
-            if (
-                source_dirty > thresholds["source_dirty"]
-                and results_untracked > thresholds["results_untracked"]
-            ):
+                violations.append(f"source domain is not clean: source_dirty={source_dirty}, require_source_clean=true")
+            if source_dirty > thresholds["source_dirty"] and results_untracked > thresholds["results_untracked"]:
                 violations.append(
                     "source+artifact squeeze detected: "
                     f"source_dirty={source_dirty}>{thresholds['source_dirty']} and "
@@ -331,9 +320,7 @@ def stage_domain_changes(
         }
 
     entries = [item for item in raw.get("entries", []) if item.get("domain") == normalized_domain]
-    paths = sorted(
-        {str(item.get("path", "")).strip() for item in entries if str(item.get("path", "")).strip()}
-    )
+    paths = sorted({str(item.get("path", "")).strip() for item in entries if str(item.get("path", "")).strip()})
     status_counter = Counter(str(item.get("status", "other")) for item in entries)
 
     add_error = ""
@@ -372,12 +359,8 @@ def stage_domain_changes(
         "error": add_error,
     }
 
-    report_file = (
-        workspace / "logs" / "workspace_forensics" / f"stage_{normalized_domain}_latest.json"
-    )
-    history_file = (
-        workspace / "logs" / "workspace_forensics" / f"stage_{normalized_domain}_history.jsonl"
-    )
+    report_file = workspace / "logs" / "workspace_forensics" / f"stage_{normalized_domain}_latest.json"
+    history_file = workspace / "logs" / "workspace_forensics" / f"stage_{normalized_domain}_history.jsonl"
     _write_json(report_file, report)
     _append_jsonl(history_file, report)
     report["report_file"] = str(report_file)

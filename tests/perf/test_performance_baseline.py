@@ -48,8 +48,7 @@ def test_task_dispatch_performance(tmp_path):
     )
 
     assert elapsed < PERF_THRESHOLDS["task_dispatch_single"], (
-        f"Single task dispatch took {elapsed:.3f}s, "
-        f"threshold is {PERF_THRESHOLDS['task_dispatch_single']}s"
+        f"Single task dispatch took {elapsed:.3f}s, threshold is {PERF_THRESHOLDS['task_dispatch_single']}s"
     )
 
     # Measure batch task registration (10 tasks)
@@ -64,8 +63,7 @@ def test_task_dispatch_performance(tmp_path):
     elapsed = time.perf_counter() - start
 
     assert elapsed < PERF_THRESHOLDS["task_dispatch_batch_10"], (
-        f"Batch task dispatch (10 tasks) took {elapsed:.3f}s, "
-        f"threshold is {PERF_THRESHOLDS['task_dispatch_batch_10']}s"
+        f"Batch task dispatch (10 tasks) took {elapsed:.3f}s, threshold is {PERF_THRESHOLDS['task_dispatch_batch_10']}s"
     )
 
 
@@ -101,8 +99,7 @@ def test_state_update_performance(tmp_path):
     )
 
     assert elapsed < PERF_THRESHOLDS["state_update_single"], (
-        f"Single state update took {elapsed:.3f}s, "
-        f"threshold is {PERF_THRESHOLDS['state_update_single']}s"
+        f"Single state update took {elapsed:.3f}s, threshold is {PERF_THRESHOLDS['state_update_single']}s"
     )
 
 
@@ -127,8 +124,7 @@ def test_state_query_performance(tmp_path):
     _, elapsed = measure_time(state.get_all_tasks)
 
     assert elapsed < PERF_THRESHOLDS["state_query_all"], (
-        f"Query all tasks took {elapsed:.3f}s, "
-        f"threshold is {PERF_THRESHOLDS['state_query_all']}s"
+        f"Query all tasks took {elapsed:.3f}s, threshold is {PERF_THRESHOLDS['state_query_all']}s"
     )
 
 
@@ -147,7 +143,7 @@ def test_cli_help_performance():
 
     assert result.returncode == 0, f"CLI help failed: {result.stderr}"
     assert elapsed < PERF_THRESHOLDS["cli_help"], (
-        f"CLI help took {elapsed:.3f}s, " f"threshold is {PERF_THRESHOLDS['cli_help']}s"
+        f"CLI help took {elapsed:.3f}s, threshold is {PERF_THRESHOLDS['cli_help']}s"
     )
 
 
@@ -190,7 +186,7 @@ def test_cli_tasks_list_performance(tmp_path):
 
     assert result.returncode == 0, f"CLI tasks list failed: {result.stderr}"
     assert elapsed < PERF_THRESHOLDS["cli_tasks_list"], (
-        f"CLI tasks list took {elapsed:.3f}s, " f"threshold is {PERF_THRESHOLDS['cli_tasks_list']}s"
+        f"CLI tasks list took {elapsed:.3f}s, threshold is {PERF_THRESHOLDS['cli_tasks_list']}s"
     )
 
 

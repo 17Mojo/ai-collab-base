@@ -202,9 +202,7 @@ class TestPackDependencyCLIAddDependency:
             "pack": {
                 "pack_id": "test_pack",
                 "version": "1.0.0",
-                "dependencies": [
-                    {"name": "lib1", "version_range": "^1.0.0", "optional": False, "reason": ""}
-                ],
+                "dependencies": [{"name": "lib1", "version_range": "^1.0.0", "optional": False, "reason": ""}],
             },
         }
         mock_api.update_pack_version.return_value = {"success": True}
@@ -714,9 +712,7 @@ class TestPackDependencyCLIMainFull:
         mock_resolver = MagicMock()
         mock_resolver_class.return_value = mock_resolver
 
-        with patch(
-            "sys.argv", ["pack_dependency.py", "add", "test_pack", "lib1", "--version", "^1.0.0"]
-        ):
+        with patch("sys.argv", ["pack_dependency.py", "add", "test_pack", "lib1", "--version", "^1.0.0"]):
             result = main()
             assert result == 0
 
@@ -882,9 +878,7 @@ class TestPackDependencyCLIUpdateExisting:
         mock_api.get_pack.return_value = {
             "pack_id": "test_pack",
             "version": "1.0.0",
-            "dependencies": [
-                {"name": "lib1", "version_range": "^1.0.0", "optional": False, "reason": ""}
-            ],
+            "dependencies": [{"name": "lib1", "version_range": "^1.0.0", "optional": False, "reason": ""}],
         }
         mock_api.update_pack_version.return_value = {"success": True}
         mock_api_class.return_value = mock_api

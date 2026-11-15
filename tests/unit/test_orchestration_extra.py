@@ -1,9 +1,7 @@
-
 """
 orchestration.py 补测 - 重点覆盖 enum 和数据类
 目标: 27% -> 40%+ (单测可覆盖的部分)
 """
-
 
 from ai_collab.orchestration import (
     AgentProvider,
@@ -16,6 +14,7 @@ from ai_collab.orchestration import (
 # ============================================================
 # Enum 值校验
 # ============================================================
+
 
 def test_binding_status_enum_values():
     assert BindingStatus.UNINITIALIZED.value == "uninitialized"
@@ -45,6 +44,7 @@ def test_provider_connection_status_enum_values():
 # ============================================================
 # AgentProvider 构造与属性
 # ============================================================
+
 
 def test_agent_provider_default_construction():
     """空 config 时使用 defaults"""

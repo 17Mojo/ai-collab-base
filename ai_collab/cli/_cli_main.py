@@ -95,16 +95,12 @@ def _parse_iso_datetime(value: object) -> datetime | None:
         return None
 
 
-def _report_health_line(
-    *, name: str, path: Path, payload: dict, stale_after_minutes: int = 180
-) -> str:
+def _report_health_line(*, name: str, path: Path, payload: dict, stale_after_minutes: int = 180) -> str:
     """Build a human-readable health line for status output."""
     if not path.exists():
         return f"  {name}: missing ({path})"
 
-    generated_at = (
-        _parse_iso_datetime(payload.get("generated_at")) if isinstance(payload, dict) else None
-    )
+    generated_at = _parse_iso_datetime(payload.get("generated_at")) if isinstance(payload, dict) else None
     if generated_at is None:
         return f"  {name}: present / generated_at=unknown ({path})"
 
@@ -112,8 +108,7 @@ def _report_health_line(
     age_minutes = max(0, int((now - generated_at).total_seconds() // 60))
     freshness = "stale" if age_minutes > stale_after_minutes else "fresh"
     return (
-        f"  {name}: {freshness} / age={age_minutes}m / "
-        f"generated_at={payload.get('generated_at', 'unknown')} ({path})"
+        f"  {name}: {freshness} / age={age_minutes}m / generated_at={payload.get('generated_at', 'unknown')} ({path})"
     )
 
 
@@ -134,9 +129,7 @@ def _generate_reports_and_summaries(
 
         # Get ACK stats from receipt report and ACK bridge evidence state.
         ack_stats = {}
-        receipt_report_file = workspace_path / (
-            receipt_report_path or "logs/task_receipt_report.json"
-        )
+        receipt_report_file = workspace_path / (receipt_report_path or "logs/task_receipt_report.json")
         if receipt_report_file.exists():
             try:
                 receipt_data = json.loads(receipt_report_file.read_text(encoding="utf-8"))
@@ -193,8 +186,7 @@ def _generate_reports_and_summaries(
                 pending_tasks = [
                     str(task.get("task_id", "")).strip()
                     for task in manager.get_all_tasks()
-                    if isinstance(task, dict)
-                    and str(task.get("status", "")).strip().lower() == "pending"
+                    if isinstance(task, dict) and str(task.get("status", "")).strip().lower() == "pending"
                 ]
                 pending_tasks = [task_id for task_id in pending_tasks if task_id]
             except (AttributeError, TypeError, ValueError):
@@ -249,9 +241,7 @@ def _run_workspace_guard_gate(
     force_workspace: bool,
 ) -> bool:
     """执行工作区门禁（阈值 + 分域隔离），并输出结论。"""
-    guard_config = (
-        config.get("workspaceGuard", {}) if isinstance(config.get("workspaceGuard"), dict) else {}
-    )
+    guard_config = config.get("workspaceGuard", {}) if isinstance(config.get("workspaceGuard"), dict) else {}
     mode = "dry-run" if dry_run else "apply"
     report = run_workspace_guard(
         workspace=Path(workspace),
@@ -264,9 +254,7 @@ def _run_workspace_guard_gate(
     totals = report.get("totals", {})
     domains = report.get("domains", {})
     print("\n[工作区门禁]")
-    print(
-        f"  allowed: {report.get('allowed', False)}" f"  mode: {mode}" f"  force: {force_workspace}"
-    )
+    print(f"  allowed: {report.get('allowed', False)}  mode: {mode}  force: {force_workspace}")
     print(
         "  dirty: "
         f"total={totals.get('total', 0)} "
@@ -323,9 +311,7 @@ def _run_spawn_agent_guard_gate(
 
     print("\n[spawn_agent 门禁]")
     print(
-        f"  allowed: {report.get('allowed', False)}"
-        f"  actor: {report.get('actor', '')}"
-        f"  mode: {report.get('mode', '')}"
+        f"  allowed: {report.get('allowed', False)}  actor: {report.get('actor', '')}  mode: {report.get('mode', '')}"
     )
     print(f"  parent_task: {report.get('parent_task_id', 'none')}")
     print(f"  parent_task_source: {report.get('parent_task_source', 'cli')}")
@@ -430,9 +416,7 @@ def _run_concurrent_guard_gate(
     )
     if resolved_baseline:
         changed = baseline_signal.get("changed_watch_paths") or []
-        changed_count = sum(
-            1 for item in changed if (item.get("commits_since") or 0) > 0
-        )
+        changed_count = sum(1 for item in changed if (item.get("commits_since") or 0) > 0)
         stale_mark = "  <- stale" if baseline_signal.get("stale") else ""
         print(
             f"  baseline: {resolved_baseline} -> "
@@ -458,10 +442,7 @@ def _run_concurrent_guard_gate(
         print(f"  violation: {item}")
 
     if not allowed:
-        print(
-            "\n门禁阻断：请先消除分支漂移或基线过期，"
-            "或在确认风险后使用 --force-workspace 显式覆盖。"
-        )
+        print("\n门禁阻断：请先消除分支漂移或基线过期，或在确认风险后使用 --force-workspace 显式覆盖。")
         return False
     return True
 
@@ -525,10 +506,7 @@ def _resolve_trigger_assignees(config: dict, *, target: str = "all") -> list[str
     if isinstance(enabled, list):
         for item in enabled:
             normalized = _normalize_trigger_assignee(str(item))
-            if (
-                normalized in {"claude_code", "codearts_agent", "codex"}
-                and normalized not in assignees
-            ):
+            if normalized in {"claude_code", "codearts_agent", "codex"} and normalized not in assignees:
                 assignees.append(normalized)
 
     if not assignees:
@@ -568,9 +546,7 @@ def _generate_trigger_payload_files(
     section_map = split_orders_by_assignee(orders_text)
 
     trigger_config = config.get("trigger", {}) if isinstance(config.get("trigger"), dict) else {}
-    output_dir_rel = output_dir_rel or str(
-        trigger_config.get("outputDir", "collaboration/monitoring")
-    )
+    output_dir_rel = output_dir_rel or str(trigger_config.get("outputDir", "collaboration/monitoring"))
     payload_prefix = payload_prefix or str(trigger_config.get("payloadPrefix", "AGENT_TRIGGER"))
 
     assignees = _resolve_trigger_assignees(config, target=target)
@@ -688,15 +664,12 @@ def _enqueue_dispatch_interventions(
         reusable = [
             item
             for item in list(existing.get("interventions", []) or [])
-            if str(item.get("delivery_status") or "").strip().lower()
-            in DISPATCH_INTERVENTION_REUSABLE_STATUSES
+            if str(item.get("delivery_status") or "").strip().lower() in DISPATCH_INTERVENTION_REUSABLE_STATUSES
         ]
         if reusable:
             current = reusable[0]
             current_status = str(current.get("delivery_status") or "").strip().lower()
-            current_task_ids = [
-                str(t).strip() for t in (current.get("task_ids") or []) if str(t).strip()
-            ]
+            current_task_ids = [str(t).strip() for t in (current.get("task_ids") or []) if str(t).strip()]
             # 在途（已投出、等 ACK）且上一轮已经全部 ACK 落地 → 收口旧的、开新的。
             #
             # 不这么做的话，在途记录会被适配器的在途过滤器整个跳过（且不报错），
@@ -833,9 +806,7 @@ def _count_reopened_redispatch_tasks_for_target(*, workspace: str, target: str) 
     except Exception:
         return 0
 
-    dispatch_state = (
-        _read_json_if_exists(Path(workspace) / "logs" / "agent_dispatch_state.json") or {}
-    )
+    dispatch_state = _read_json_if_exists(Path(workspace) / "logs" / "agent_dispatch_state.json") or {}
     items = dispatch_state.get("items")
     if not isinstance(items, dict):
         return 0
@@ -883,11 +854,7 @@ def _auto_enable_dispatch_flags(
 
 
 def _resolve_workspace_hygiene_config(config: dict) -> dict:
-    raw = (
-        config.get("workspaceHygiene", {})
-        if isinstance(config.get("workspaceHygiene"), dict)
-        else {}
-    )
+    raw = config.get("workspaceHygiene", {}) if isinstance(config.get("workspaceHygiene"), dict) else {}
     return {
         "enabled": bool(raw.get("enabled", False)),
         "pollIntervalMinutes": _as_int(raw.get("pollIntervalMinutes"), 15),
@@ -954,9 +921,7 @@ def cmd_activate(args):
         if context:
             print(f"  上下文: {json.dumps(context, ensure_ascii=False, indent=2)}")
 
-    handler = ActivationHandler(
-        ai_type=ai_type, workspace_path=args.workspace, on_activated=on_activated
-    )
+    handler = ActivationHandler(ai_type=ai_type, workspace_path=args.workspace, on_activated=on_activated)
 
     print("=" * 60)
     print(f"AI 协作系统 - 激活 ({args.ai.upper()})")
@@ -1081,9 +1046,7 @@ def cmd_tasks(args):
             tasks = [t for t in state.get_all_tasks() if t.get("status") == "completed"]
         elif args.status in {"in_progress", "implementing"}:
             tasks = [
-                t
-                for t in state.get_all_tasks()
-                if str(t.get("status", "")).lower() in {"implementing", "in_progress"}
+                t for t in state.get_all_tasks() if str(t.get("status", "")).lower() in {"implementing", "in_progress"}
             ]
         else:
             tasks = [t for t in state.get_all_tasks() if t.get("status") == args.status]
@@ -1097,10 +1060,7 @@ def cmd_tasks(args):
                 print(f"    状态: {task.get('status', 'unknown')}")
                 print(f"    创建时间: {task.get('created_at', 'N/A')}")
                 if task.get("files"):
-                    print(
-                        f"    文件: {', '.join(task['files'][:3])}"
-                        + ("..." if len(task["files"]) > 3 else "")
-                    )
+                    print(f"    文件: {', '.join(task['files'][:3])}" + ("..." if len(task["files"]) > 3 else ""))
         else:
             print("  无任务")
 
@@ -1158,11 +1118,7 @@ def cmd_tasks(args):
                 f"unparseable={audit_report.get('unparseable_count', 0)} "
                 f"missing_result={audit_report.get('missing_result_count', 0)}"
             )
-            print(
-                "  "
-                f"report={audit_report.get('report_file', '')} "
-                f"summary={audit_report.get('summary_file', '')}"
-            )
+            print(f"  report={audit_report.get('report_file', '')} summary={audit_report.get('summary_file', '')}")
             if audit_report.get("issues"):
                 for item in audit_report["issues"][:10]:
                     print(
@@ -1180,12 +1136,9 @@ def cmd_tasks(args):
         report = run_terminal_result_consistency_audit(
             workspace=workspace,
             task_id=str(getattr(args, "task_id", "") or "").strip() or None,
-            report_path=str(
-                getattr(args, "report", "") or "logs/task_result_consistency_report.json"
-            ),
+            report_path=str(getattr(args, "report", "") or "logs/task_result_consistency_report.json"),
             summary_path=str(
-                getattr(args, "summary", "")
-                or "collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md"
+                getattr(args, "summary", "") or "collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md"
             ),
         )
 
@@ -1302,10 +1255,7 @@ def cmd_tasks(args):
                 print(f"\n错误: {exc}")
                 return 1
             changed = list(contract_result.get("updated_fields", {}))
-            print(
-                f"\n任务契约已更新: {args.task_id} -> "
-                f"{', '.join(changed) if changed else '无变更'}"
-            )
+            print(f"\n任务契约已更新: {args.task_id} -> {', '.join(changed) if changed else '无变更'}")
 
         if status_provided:
             new_status = status_map[args.status]
@@ -1396,11 +1346,7 @@ def cmd_ack(args):
         assignee = explicit_assignee or "codex"
         status = explicit_status or "noop"
         result_file = explicit_result_file or "none"
-        print(
-            build_ack_line(
-                assignee=assignee, task_id="none", result_file=result_file, status=status
-            )
-        )
+        print(build_ack_line(assignee=assignee, task_id="none", result_file=result_file, status=status))
         return 0
 
     manager = StateManager(workspace_path=workspace)
@@ -1432,13 +1378,9 @@ def cmd_ack(args):
         result_path = Path(result_file)
         if not result_path.is_absolute():
             result_path = Path(workspace) / result_path
-        if assignee in SUPPORTED_ASSIGNEES and (
-            existing_ack or explicit_result_file or result_path.exists()
-        ):
+        if assignee in SUPPORTED_ASSIGNEES and (existing_ack or explicit_result_file or result_path.exists()):
             completed_at = str(
-                existing_ack.get("receipt_completed_at")
-                or existing_ack.get("bridged_at")
-                or datetime.now().isoformat()
+                existing_ack.get("receipt_completed_at") or existing_ack.get("bridged_at") or datetime.now().isoformat()
             )
             record_ack_bridge(
                 workspace=Path(workspace),
@@ -1484,10 +1426,7 @@ def cmd_ack(args):
     )
     if assignee in SUPPORTED_ASSIGNEES:
         completed_at = str(
-            task.get("completed_at")
-            or task.get("updated_at")
-            or task.get("created_at")
-            or datetime.now().isoformat()
+            task.get("completed_at") or task.get("updated_at") or task.get("created_at") or datetime.now().isoformat()
         )
         record_ack_bridge(
             workspace=Path(workspace),
@@ -1516,10 +1455,7 @@ def cmd_ack_remediation(args):
         dry_run=bool(getattr(args, "dry_run", False)),
         task_id=str(getattr(args, "task_id", "") or "").strip() or None,
         report_path=str(getattr(args, "report", "") or "logs/ack_remediation_report.json"),
-        summary_path=str(
-            getattr(args, "summary", "")
-            or "collaboration/monitoring/ACK_REMEDIATION_SUMMARY_latest.md"
-        ),
+        summary_path=str(getattr(args, "summary", "") or "collaboration/monitoring/ACK_REMEDIATION_SUMMARY_latest.md"),
         state_path=str(getattr(args, "state", "") or "logs/agent_ack_bridge_state.json"),
     )
 
@@ -1588,8 +1524,7 @@ def cmd_sessions(args):
             assignee=str(getattr(args, "assignee", "") or "").strip() or None,
             transport_mode=str(getattr(args, "transport_mode", "") or "").strip() or None,
             session_status=str(getattr(args, "session_status", "") or "").strip() or None,
-            last_handoff_artifact=str(getattr(args, "last_handoff_artifact", "") or "").strip()
-            or None,
+            last_handoff_artifact=str(getattr(args, "last_handoff_artifact", "") or "").strip() or None,
             health_status=str(getattr(args, "health_status", "") or "").strip() or None,
             state_path=str(getattr(args, "state", "") or "").strip() or None,
             history_path=str(getattr(args, "history", "") or "").strip() or None,
@@ -1963,9 +1898,7 @@ def cmd_patches(args):
     if cmd == "claim":
         ai = args.ai or "codex"
         candidates = [
-            p
-            for p in state.list_patches(status_filter="pending")
-            if not p.get("assignee") or p.get("assignee") == ai
+            p for p in state.list_patches(status_filter="pending") if not p.get("assignee") or p.get("assignee") == ai
         ]
         if not candidates:
             print("\n无可领取 patch")
@@ -2315,9 +2248,7 @@ def cmd_status(args):
     """显示系统状态"""
     _set_workspace_env(args.workspace)
     state = StateManager(workspace_path=args.workspace)
-    workspace = os.path.abspath(
-        args.workspace or VSCodeIntegration.get_workspace_path() or os.getcwd()
-    )
+    workspace = os.path.abspath(args.workspace or VSCodeIntegration.get_workspace_path() or os.getcwd())
     workspace_path = Path(workspace)
 
     print("=" * 60)
@@ -2362,9 +2293,7 @@ def cmd_status(args):
 
     ack_summary = summarize_ack_bridge_state(workspace_path)
     missing_ack_report = _load_json_file(workspace_path / "logs" / "missing_ack_report.json")
-    result_consistency_report = _load_json_file(
-        workspace_path / "logs" / "task_result_consistency_report.json"
-    )
+    result_consistency_report = _load_json_file(workspace_path / "logs" / "task_result_consistency_report.json")
     daily_report = _load_json_file(workspace_path / "logs" / "daily_report.json")
 
     print("\n[治理健康]")
@@ -2583,9 +2512,7 @@ def cmd_codex(args):
         if plan:
             print("\n动态角色计划:")
             print(f"  Lead: {plan['lead_agent']}")
-            print(
-                f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}"
-            )
+            print(f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}")
 
             if args.emit_tasks:
                 state = StateManager(workspace_path=workspace)
@@ -2596,9 +2523,7 @@ def cmd_codex(args):
             if getattr(args, "emit_patches", False):
                 state = StateManager(workspace_path=workspace)
                 patch_task_id = args.task_id or f"TASK-PLAN-{int(datetime.now().timestamp())}"
-                patches = _emit_plan_patches(
-                    state, plan, task_id=patch_task_id, related_files=args.file or []
-                )
+                patches = _emit_plan_patches(state, plan, task_id=patch_task_id, related_files=args.file or [])
                 print(f"  并行 Patch 创建: {len(patches)}")
                 for patch_id in patches:
                     print(f"    - {patch_id}")
@@ -2614,9 +2539,7 @@ def cmd_codex(args):
             )
             print("\n动态角色计划:")
             print(f"  Lead: {plan['lead_agent']}")
-            print(
-                f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}"
-            )
+            print(f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}")
 
         progress_check = integration.validate_progress()
         if progress_check["issues"]:
@@ -2665,9 +2588,7 @@ def cmd_codex(args):
         )
         print("\n动态角色计划:")
         print(f"  Lead: {plan['lead_agent']}")
-        print(
-            f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}"
-        )
+        print(f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}")
 
         if args.emit_tasks:
             state = StateManager(workspace_path=workspace)
@@ -2678,9 +2599,7 @@ def cmd_codex(args):
         if getattr(args, "emit_patches", False):
             state = StateManager(workspace_path=workspace)
             patch_task_id = args.task_id or f"TASK-PLAN-{int(datetime.now().timestamp())}"
-            patches = _emit_plan_patches(
-                state, plan, task_id=patch_task_id, related_files=args.file or []
-            )
+            patches = _emit_plan_patches(state, plan, task_id=patch_task_id, related_files=args.file or [])
             print(f"  并行 Patch 创建: {len(patches)}")
             for patch_id in patches:
                 print(f"    - {patch_id}")
@@ -2759,12 +2678,8 @@ def cmd_codex(args):
         print("\n动态角色计划:")
         print(f"  意图分类: {plan['intent_category']}")
         print(f"  Lead: {plan['lead_agent']}")
-        print(
-            f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}"
-        )
-        print(
-            f"  可用代理: {', '.join(plan['available_agents']) if plan['available_agents'] else 'none'}"
-        )
+        print(f"  Support: {', '.join(plan['support_agents']) if plan['support_agents'] else 'none'}")
+        print(f"  可用代理: {', '.join(plan['available_agents']) if plan['available_agents'] else 'none'}")
         print(f"  模型映射代理: {', '.join(plan['model_agents']) if plan['model_agents'] else 'none'}")
         print(f"  原因: {'; '.join(plan['reasons'])}")
         print("\n  并行利用计划:")
@@ -2780,9 +2695,7 @@ def cmd_codex(args):
         if getattr(args, "emit_patches", False):
             state = StateManager(workspace_path=workspace)
             patch_task_id = args.task_id or f"TASK-PLAN-{int(datetime.now().timestamp())}"
-            patches = _emit_plan_patches(
-                state, plan, task_id=patch_task_id, related_files=args.file or []
-            )
+            patches = _emit_plan_patches(state, plan, task_id=patch_task_id, related_files=args.file or [])
             print(f"\n  自动创建 Patch: {len(patches)}")
             for patch_id in patches:
                 print(f"    - {patch_id}")
@@ -2823,9 +2736,7 @@ def cmd_controller(args):
     _set_workspace_env(args.workspace)
     workspace = os.path.abspath(args.workspace or os.getcwd())
     config = VSCodeIntegration.get_project_config()
-    controller_config = (
-        config.get("controller", {}) if isinstance(config.get("controller"), dict) else {}
-    )
+    controller_config = config.get("controller", {}) if isinstance(config.get("controller"), dict) else {}
 
     interval_sec_arg = getattr(args, "interval_sec", None)
     pending_timeout_arg = getattr(args, "pending_timeout_sec", None)
@@ -2835,9 +2746,7 @@ def cmd_controller(args):
     history_arg = getattr(args, "history", None)
     max_iterations_arg = getattr(args, "max_iterations", None)
     interval_sec = (
-        interval_sec_arg
-        if interval_sec_arg is not None
-        else _as_int(controller_config.get("intervalSec"), 30)
+        interval_sec_arg if interval_sec_arg is not None else _as_int(controller_config.get("intervalSec"), 30)
     )
     pending_timeout_sec = (
         pending_timeout_arg
@@ -2855,19 +2764,11 @@ def cmd_controller(args):
         else _as_int(controller_config.get("blockedTimeoutSec"), 3600)
     )
     prewarn_ratio = (
-        float(prewarn_ratio_arg)
-        if prewarn_ratio_arg is not None
-        else float(controller_config.get("prewarnRatio", 0.8))
+        float(prewarn_ratio_arg) if prewarn_ratio_arg is not None else float(controller_config.get("prewarnRatio", 0.8))
     )
-    default_assignee = args.default_assignee or str(
-        controller_config.get("defaultAssignee", "codex")
-    )
-    report_path = args.report or str(
-        controller_config.get("report", "logs/task_controller_report.json")
-    )
-    history_path = history_arg or str(
-        controller_config.get("history", "logs/task_controller_history.jsonl")
-    )
+    default_assignee = args.default_assignee or str(controller_config.get("defaultAssignee", "codex"))
+    report_path = args.report or str(controller_config.get("report", "logs/task_controller_report.json"))
+    history_path = history_arg or str(controller_config.get("history", "logs/task_controller_history.jsonl"))
 
     script_path = Path(__file__).resolve().parents[2] / "scripts" / "task_controller_daemon.py"
     if not script_path.exists():
@@ -2959,10 +2860,7 @@ def cmd_orchestration(args):
             marker = "●" if role.is_active() else "○"
             model = role.binding.get("model_variant")
             suffix = f" ({model})" if model else ""
-            print(
-                f"  {marker} {role_id} → {provider or '未绑定'}{suffix}"
-                f"  [{role.display_name}]"
-            )
+            print(f"  {marker} {role_id} → {provider or '未绑定'}{suffix}  [{role.display_name}]")
         prefixes = config.config.get("command_prefixes", {})
         if isinstance(prefixes, dict):
             print("\n命令前缀:")
@@ -2990,10 +2888,7 @@ def cmd_orchestration(args):
                 provider = role.binding.get("provider")
                 model = role.binding.get("model_variant")
                 suffix = f" ({model})" if model else ""
-                print(
-                    f"  {role_id} → {provider or '未绑定'}{suffix}"
-                    f"  [{role.display_name}] {role.raci_role}"
-                )
+                print(f"  {role_id} → {provider or '未绑定'}{suffix}  [{role.display_name}] {role.raci_role}")
             return 0
 
         if action == "activate":
@@ -3074,12 +2969,8 @@ def cmd_dispatch(args):
         include_pending = bool(dispatch_config.get("includePending", False))
 
     force_workspace = bool(getattr(args, "force_workspace", False))
-    report_path = args.report or str(
-        dispatch_config.get("report", "logs/task_dispatch_report.json")
-    )
-    history_path = args.history or str(
-        dispatch_config.get("history", "logs/task_dispatch_history.jsonl")
-    )
+    report_path = args.report or str(dispatch_config.get("report", "logs/task_dispatch_report.json"))
+    history_path = args.history or str(dispatch_config.get("history", "logs/task_dispatch_history.jsonl"))
     state_path = args.state or str(dispatch_config.get("state", "logs/agent_dispatch_state.json"))
     orders_path = args.orders or str(
         dispatch_config.get("orders", "collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md")
@@ -3216,16 +3107,10 @@ def cmd_trigger(args):
         return 1
 
     trigger_config = config.get("trigger", {}) if isinstance(config.get("trigger"), dict) else {}
-    output_dir_rel = args.output_dir or str(
-        trigger_config.get("outputDir", "collaboration/monitoring")
-    )
+    output_dir_rel = args.output_dir or str(trigger_config.get("outputDir", "collaboration/monitoring"))
     payload_prefix = str(trigger_config.get("payloadPrefix", "AGENT_TRIGGER"))
-    trigger_report_rel = args.report or str(
-        trigger_config.get("report", "logs/task_trigger_report.json")
-    )
-    trigger_history_rel = args.history or str(
-        trigger_config.get("history", "logs/task_trigger_history.jsonl")
-    )
+    trigger_report_rel = args.report or str(trigger_config.get("report", "logs/task_trigger_report.json"))
+    trigger_history_rel = args.history or str(trigger_config.get("history", "logs/task_trigger_history.jsonl"))
 
     payload_sync = _generate_trigger_payload_files(
         workspace=workspace,
@@ -3270,8 +3155,7 @@ def cmd_trigger(args):
         "action": intent.action,
         "target": target,
         "dispatch_orders": str(orders_file.relative_to(workspace)),
-        "dispatch_report": dispatch_args.report
-        or str(dispatch_config.get("report", "logs/task_dispatch_report.json")),
+        "dispatch_report": dispatch_args.report or str(dispatch_config.get("report", "logs/task_dispatch_report.json")),
         "output_files": output_files,
         "copied_to_clipboard": bool(args.copy),
         "dispatch_interventions": dispatch_interventions,
@@ -3405,9 +3289,7 @@ def cmd_receipt(args):
 
     force_workspace = bool(getattr(args, "force_workspace", False))
     report_path = args.report or str(receipt_config.get("report", "logs/task_receipt_report.json"))
-    history_path = args.history or str(
-        receipt_config.get("history", "logs/task_receipt_history.jsonl")
-    )
+    history_path = args.history or str(receipt_config.get("history", "logs/task_receipt_history.jsonl"))
     state_path = args.state or str(receipt_config.get("state", "logs/agent_receipt_state.json"))
     summary_path = args.summary or str(
         receipt_config.get("summary", "collaboration/monitoring/AGENT_RECEIPT_SUMMARY_latest.md")
@@ -3489,9 +3371,7 @@ def cmd_receipt(args):
                 f"report={hygiene_report.get('report_file', '')}"
             )
         except Exception as exc:
-            print(
-                f"[post-receipt hygiene] warning: hygiene failed but receipt already completed: {exc}"
-            )
+            print(f"[post-receipt hygiene] warning: hygiene failed but receipt already completed: {exc}")
 
     # Generate reports and summaries
     _generate_reports_and_summaries(
@@ -3596,11 +3476,7 @@ def cmd_spawn_agent_guard(args):
     _set_workspace_env(args.workspace)
     workspace = os.path.abspath(args.workspace or os.getcwd())
     config = dict(VSCodeIntegration.get_project_config())
-    spawn_config = (
-        dict(config.get("spawnAgentGuard", {}))
-        if isinstance(config.get("spawnAgentGuard"), dict)
-        else {}
-    )
+    spawn_config = dict(config.get("spawnAgentGuard", {})) if isinstance(config.get("spawnAgentGuard"), dict) else {}
     if getattr(args, "report", None):
         spawn_config["report"] = args.report
     if getattr(args, "history", None):
@@ -3757,21 +3633,13 @@ def _execute_hygiene_once(
     max_candidates_override: int | None = None,
 ) -> dict:
     workspace_path = Path(workspace)
-    guard_config = (
-        config.get("workspaceGuard", {}) if isinstance(config.get("workspaceGuard"), dict) else {}
-    )
+    guard_config = config.get("workspaceGuard", {}) if isinstance(config.get("workspaceGuard"), dict) else {}
     hygiene_config = _resolve_workspace_hygiene_config(config)
 
     include_source = (
-        bool(include_source_override)
-        if include_source_override is not None
-        else bool(hygiene_config["includeSource"])
+        bool(include_source_override) if include_source_override is not None else bool(hygiene_config["includeSource"])
     )
-    auto_stage = (
-        bool(auto_stage_override)
-        if auto_stage_override is not None
-        else bool(hygiene_config["autoStage"])
-    )
+    auto_stage = bool(auto_stage_override) if auto_stage_override is not None else bool(hygiene_config["autoStage"])
     max_candidates = (
         int(max_candidates_override)
         if max_candidates_override is not None
@@ -3805,9 +3673,7 @@ def _execute_hygiene_once(
     if not bool(guard_report.get("allowed", False)):
         blocked_reasons.extend(list(guard_report.get("violations", [])))
     if max_candidates > 0 and total_candidates > max_candidates:
-        blocked_reasons.append(
-            f"candidate_count={total_candidates} exceeds maxCandidatesPerRun={max_candidates}"
-        )
+        blocked_reasons.append(f"candidate_count={total_candidates} exceeds maxCandidatesPerRun={max_candidates}")
 
     can_apply = (not dry_run) and auto_stage and not errors and not blocked_reasons
     if can_apply:
@@ -3911,12 +3777,8 @@ def cmd_hygiene(args):
             dry_run=bool(args.dry_run),
             force_workspace=bool(getattr(args, "force_workspace", False)),
             trigger_source=str(getattr(args, "trigger_source", "manual")),
-            include_source_override=(
-                True if bool(getattr(args, "include_source", False)) else None
-            ),
-            auto_stage_override=(
-                None if getattr(args, "auto_stage", None) is None else bool(args.auto_stage)
-            ),
+            include_source_override=(True if bool(getattr(args, "include_source", False)) else None),
+            auto_stage_override=(None if getattr(args, "auto_stage", None) is None else bool(args.auto_stage)),
             max_candidates_override=getattr(args, "max_candidates", None),
         )
         _print_hygiene_report(report)
@@ -3945,14 +3807,10 @@ def cmd_benefit(args):
     benefit_config = config.get("benefit", {}) if isinstance(config.get("benefit"), dict) else {}
 
     dispatch_histories = (
-        args.dispatch_history
-        or benefit_config.get("dispatchHistory")
-        or ["logs/task_dispatch_history.jsonl"]
+        args.dispatch_history or benefit_config.get("dispatchHistory") or ["logs/task_dispatch_history.jsonl"]
     )
     receipt_histories = (
-        args.receipt_history
-        or benefit_config.get("receiptHistory")
-        or ["logs/task_receipt_history.jsonl"]
+        args.receipt_history or benefit_config.get("receiptHistory") or ["logs/task_receipt_history.jsonl"]
     )
     if isinstance(dispatch_histories, str):
         dispatch_histories = [dispatch_histories]
@@ -3960,25 +3818,16 @@ def cmd_benefit(args):
         receipt_histories = [receipt_histories]
 
     target_ratio = (
-        float(args.target_ratio)
-        if args.target_ratio is not None
-        else float(benefit_config.get("targetRatio", 3.0))
+        float(args.target_ratio) if args.target_ratio is not None else float(benefit_config.get("targetRatio", 3.0))
     )
     window = int(args.window) if args.window is not None else int(benefit_config.get("window", 14))
-    report_path = args.report or str(
-        benefit_config.get("report", "logs/automation_benefit_report.json")
-    )
+    report_path = args.report or str(benefit_config.get("report", "logs/automation_benefit_report.json"))
     output_path = args.output or str(
-        benefit_config.get(
-            "output", "collaboration/monitoring/AUTOMATION_BENEFIT_DASHBOARD_latest.md"
-        )
+        benefit_config.get("output", "collaboration/monitoring/AUTOMATION_BENEFIT_DASHBOARD_latest.md")
     )
 
     script_path = (
-        Path(__file__).resolve().parents[2]
-        / "collaboration"
-        / "scripts"
-        / "build_automation_benefit_dashboard.py"
+        Path(__file__).resolve().parents[2] / "collaboration" / "scripts" / "build_automation_benefit_dashboard.py"
     )
     if not script_path.exists():
         print(f"\n错误: 收益看板脚本不存在: {script_path}")
@@ -4160,9 +4009,7 @@ def cmd_pack(args):
             print("\n错误: 需要 --source 和 --target 参数")
             return 1
         # Map args to expected format
-        compat_args = type(
-            "Args", (), {"source_version": args.source, "target_version": args.target}
-        )()
+        compat_args = type("Args", (), {"source_version": args.source, "target_version": args.target})()
         return _handle_compat_check(compat_args, packs_root)
 
     # Pack 商店
@@ -4320,9 +4167,7 @@ def _handle_version_command(args, packs_root):
             else:
                 print(f"\nPack '{args.name}' 版本历史:")
                 for idx, record in enumerate(history, 1):
-                    print(
-                        f"  {idx}. v{record.version} - {record.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
-                    )
+                    print(f"  {idx}. v{record.version} - {record.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
                     if hasattr(record, "changelog") and record.changelog:
                         print(f"     变更日志: {record.changelog}")
         except FileNotFoundError:
@@ -4357,11 +4202,7 @@ def _handle_compat_check(args, packs_root):
             print("  兼容性: ✅ COMPATIBLE (新增功能)")
             print("  说明: 小版本号增加，向后兼容")
             return 0
-        elif (
-            target.major == source.major
-            and target.minor == source.minor
-            and target.patch > source.patch
-        ):
+        elif target.major == source.major and target.minor == source.minor and target.patch > source.patch:
             print("  兼容性: ✅ COMPATIBLE (修复)")
             print("  说明: 补丁版本号增加，向后兼容")
             return 0
@@ -5054,13 +4895,9 @@ def main():
 
     # check 命令
     check_parser = subparsers.add_parser("check", help="检查文件冲突")
-    check_parser.add_argument(
-        "--ai", choices=["claude", "copilot", "codearts_agent", "codex"], help="检查的 AI 类型"
-    )
+    check_parser.add_argument("--ai", choices=["claude", "copilot", "codearts_agent", "codex"], help="检查的 AI 类型")
     check_parser.add_argument("--files", nargs="*", help="要检查的文件列表")
-    check_parser.add_argument(
-        "--mode", choices=["on_save", "command", "both"], default="both", help="检查模式"
-    )
+    check_parser.add_argument("--mode", choices=["on_save", "command", "both"], default="both", help="检查模式")
     check_parser.add_argument("--resolve", action="store_true", help="自动标记冲突")
 
     # tasks 命令
@@ -5100,9 +4937,7 @@ def main():
     )
     tasks_parser.set_defaults(status_provided=False)
     tasks_parser.add_argument("--task-id", help="任务ID")
-    tasks_parser.add_argument(
-        "--ai", choices=["claude_code", "copilot", "codearts_agent", "codex"], help="AI 类型"
-    )
+    tasks_parser.add_argument("--ai", choices=["claude_code", "copilot", "codearts_agent", "codex"], help="AI 类型")
     tasks_parser.add_argument("--description", help="任务描述")
     tasks_parser.add_argument("--files", nargs="*", help="涉及文件")
     tasks_parser.add_argument("--note", help="备注")
@@ -5153,38 +4988,27 @@ def main():
         help="子命令",
     )
     sessions_parser.add_argument("--session-id", help="会话 ID")
-    sessions_parser.add_argument(
-        "--assignee", choices=["claude_code", "codearts_agent", "codex"], help="会话 assignee"
-    )
+    sessions_parser.add_argument("--assignee", choices=["claude_code", "codearts_agent", "codex"], help="会话 assignee")
     sessions_parser.add_argument("--transport-mode", choices=["manual", "bridge"], help="传输模式")
     sessions_parser.add_argument("--session-status", help="会话状态，例如 active/idle/blocked")
     sessions_parser.add_argument("--health-status", help="健康状态，例如 healthy/unhealthy")
     sessions_parser.add_argument("--last-handoff-artifact", help="最近一次 handoff / payload 工件路径")
-    sessions_parser.add_argument(
-        "--reason-code", help="intervention reason_code 过滤（interventions 子命令专用）"
-    )
+    sessions_parser.add_argument("--reason-code", help="intervention reason_code 过滤（interventions 子命令专用）")
     sessions_parser.add_argument(
         "--delivery-status", help="intervention delivery_status 过滤（interventions 子命令专用）"
     )
-    sessions_parser.add_argument(
-        "--pack-dir", help="intervention pack 输出目录（intervention-pack 子命令专用）"
-    )
+    sessions_parser.add_argument("--pack-dir", help="intervention pack 输出目录（intervention-pack 子命令专用）")
     sessions_parser.add_argument("--state", help="registry state 路径（相对 workspace）")
     sessions_parser.add_argument("--history", help="history 路径（相对 workspace）")
     sessions_parser.add_argument("--summary", help="summary 路径（相对 workspace）")
     sessions_parser.add_argument("--report", help="report 路径（相对 workspace）")
     sessions_parser.add_argument("--runtime-path", help="Codex runtime 路径（codex-adapter 子命令专用）")
     sessions_parser.add_argument("--artifact-dir", help="intervention artifact 输出目录（health 子命令专用）")
-    sessions_parser.add_argument(
-        "--event-dir", help="adapter event 输出目录（claude-push/codearts-pull 子命令专用）"
-    )
+    sessions_parser.add_argument("--event-dir", help="adapter event 输出目录（claude-push/codearts-pull 子命令专用）")
     sessions_parser.add_argument(
         "--force-redeliver",
         action="store_true",
-        help=(
-            "强制重投在途 intervention（已投递但未收到 ACK）。"
-            "默认跳过，避免每轮轮询都在对方那边新建会话。"
-        ),
+        help=("强制重投在途 intervention（已投递但未收到 ACK）。默认跳过，避免每轮轮询都在对方那边新建会话。"),
     )
     sessions_parser.add_argument("--output-dir", help="handoff 输出目录（handoff 子命令专用）")
     sessions_parser.add_argument("--objective", help="handoff 的当前目标摘要")
@@ -5201,17 +5025,13 @@ def main():
     sessions_parser.add_argument(
         "--include-closed", action="store_true", help="intervention-pack 包含 closed interventions"
     )
-    sessions_parser.add_argument(
-        "--dry-run", action="store_true", help="仅生成报告/工件，不推进实际 delivery 状态"
-    )
+    sessions_parser.add_argument("--dry-run", action="store_true", help="仅生成报告/工件，不推进实际 delivery 状态")
     sessions_parser.add_argument("--json", action="store_true", help="输出 JSON")
 
     # ack 命令
     ack_parser = subparsers.add_parser("ack", help="输出标准 ACK 协议行")
     ack_parser.add_argument("--task-id", required=True, help="任务 ID；无任务时可用 none")
-    ack_parser.add_argument(
-        "--ai", choices=["claude_code", "copilot", "codearts_agent", "codex"], help="AI 类型"
-    )
+    ack_parser.add_argument("--ai", choices=["claude_code", "copilot", "codearts_agent", "codex"], help="AI 类型")
     ack_parser.add_argument(
         "--status",
         choices=["ok", "blocked", "noop", "completed"],
@@ -5219,12 +5039,8 @@ def main():
     )
     ack_parser.add_argument("--result-file", help="结果文件路径（默认从任务状态推断）")
 
-    ack_remediation_parser = subparsers.add_parser(
-        "ack-remediation", help="审计并标记历史非显式 ACK bridge 残留"
-    )
-    ack_remediation_parser.add_argument(
-        "--dry-run", action="store_true", help="仅检测，不写回 ACK bridge 状态"
-    )
+    ack_remediation_parser = subparsers.add_parser("ack-remediation", help="审计并标记历史非显式 ACK bridge 残留")
+    ack_remediation_parser.add_argument("--dry-run", action="store_true", help="仅检测，不写回 ACK bridge 状态")
     ack_remediation_parser.add_argument("--task-id", help="仅处理指定任务 ID")
     ack_remediation_parser.add_argument("--report", help="报告路径（相对 workspace）")
     ack_remediation_parser.add_argument("--summary", help="摘要路径（相对 workspace）")
@@ -5232,9 +5048,7 @@ def main():
 
     # patches 命令
     patches_parser = subparsers.add_parser("patches", help="Patch 管理")
-    patches_parser.add_argument(
-        "subcommand", choices=["list", "create", "update", "assign", "claim"], help="子命令"
-    )
+    patches_parser.add_argument("subcommand", choices=["list", "create", "update", "assign", "claim"], help="子命令")
     patches_parser.add_argument("--patch-id", help="Patch ID")
     patches_parser.add_argument("--task-id", help="关联任务ID")
     patches_parser.add_argument(
@@ -5243,9 +5057,7 @@ def main():
         default="all",
         help="Patch 状态过滤",
     )
-    patches_parser.add_argument(
-        "--ai", choices=["claude_code", "copilot", "codex", "codearts_agent"], help="AI 类型"
-    )
+    patches_parser.add_argument("--ai", choices=["claude_code", "copilot", "codex", "codearts_agent"], help="AI 类型")
     patches_parser.add_argument("--title", help="Patch 标题")
     patches_parser.add_argument("--description", help="Patch 描述")
     patches_parser.add_argument("--files", nargs="*", help="涉及文件")
@@ -5261,9 +5073,7 @@ def main():
     # logs 命令
     logs_parser = subparsers.add_parser("logs", help="日志管理")
     logs_parser.add_argument("subcommand", choices=["list", "show"], help="子命令")
-    logs_parser.add_argument(
-        "--ai", choices=["claude-code", "codearts-agent", "copilot"], help="AI 类型"
-    )
+    logs_parser.add_argument("--ai", choices=["claude-code", "codearts-agent", "copilot"], help="AI 类型")
     logs_parser.add_argument("--month", help="月份过滤 (YYYY-MM)")
     logs_parser.add_argument("--log-file", help="日志文件名")
 
@@ -5323,12 +5133,8 @@ def main():
     controller_parser.add_argument("--dry-run", action="store_true", help="仅检测，不修改状态")
     controller_parser.add_argument("--interval-sec", type=int, help="轮询间隔（秒）")
     controller_parser.add_argument("--max-iterations", type=int, help="最大迭代次数（0 或不填表示无限）")
-    controller_parser.add_argument(
-        "--pending-timeout-sec", type=int, help="pending/planning 超时阈值（秒）"
-    )
-    controller_parser.add_argument(
-        "--active-timeout-sec", type=int, help="implementing/testing 超时阈值（秒）"
-    )
+    controller_parser.add_argument("--pending-timeout-sec", type=int, help="pending/planning 超时阈值（秒）")
+    controller_parser.add_argument("--active-timeout-sec", type=int, help="implementing/testing 超时阈值（秒）")
     controller_parser.add_argument("--blocked-timeout-sec", type=int, help="blocked 超时阈值（秒）")
     controller_parser.add_argument("--prewarn-ratio", type=float, help="预警阈值比例（0.1-0.95）")
     controller_parser.add_argument("--default-assignee", help="自动补丁默认执行者")
@@ -5338,77 +5144,45 @@ def main():
     # orchestration 命令（角色编排配置）
     # 注意：嵌套子解析器使用 SUPPRESS 作为 --workspace 默认值，
     # 否则 argparse 子命名空间里的 None 会覆盖父级已解析出的工作区路径。
-    orchestration_parser = subparsers.add_parser(
-        "orchestration", help="角色编排配置（绑定状态、角色激活、快照、历史）"
-    )
+    orchestration_parser = subparsers.add_parser("orchestration", help="角色编排配置（绑定状态、角色激活、快照、历史）")
     orchestration_parser.add_argument("--workspace", help="工作区路径")
     orchestration_sub = orchestration_parser.add_subparsers(dest="subcommand")
 
-    orchestration_status_parser = orchestration_sub.add_parser(
-        "status", help="显示绑定状态与角色绑定"
-    )
-    orchestration_status_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
+    orchestration_status_parser = orchestration_sub.add_parser("status", help="显示绑定状态与角色绑定")
+    orchestration_status_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
 
-    orchestration_detect_parser = orchestration_sub.add_parser(
-        "detect", help="检测可用的 Agent 服务商"
-    )
-    orchestration_detect_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
+    orchestration_detect_parser = orchestration_sub.add_parser("detect", help="检测可用的 Agent 服务商")
+    orchestration_detect_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
 
     orchestration_roles_parser = orchestration_sub.add_parser("roles", help="角色列表与激活")
-    orchestration_roles_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
+    orchestration_roles_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
     orchestration_roles_sub = orchestration_roles_parser.add_subparsers(dest="action")
     orchestration_roles_list_parser = orchestration_roles_sub.add_parser("list", help="列出角色")
-    orchestration_roles_list_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
-    orchestration_roles_activate_parser = orchestration_roles_sub.add_parser(
-        "activate", help="激活角色并绑定服务商"
-    )
+    orchestration_roles_list_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
+    orchestration_roles_activate_parser = orchestration_roles_sub.add_parser("activate", help="激活角色并绑定服务商")
     orchestration_roles_activate_parser.add_argument("--role-id", required=True, help="角色代号")
     orchestration_roles_activate_parser.add_argument("--provider", required=True, help="服务商 ID")
     orchestration_roles_activate_parser.add_argument("--model-variant", help="模型变体")
-    orchestration_roles_activate_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
+    orchestration_roles_activate_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
 
     orchestration_snapshot_parser = orchestration_sub.add_parser("snapshot", help="配置快照")
-    orchestration_snapshot_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
+    orchestration_snapshot_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
     orchestration_snapshot_sub = orchestration_snapshot_parser.add_subparsers(dest="action")
-    orchestration_snapshot_create_parser = orchestration_snapshot_sub.add_parser(
-        "create", help="创建快照"
-    )
+    orchestration_snapshot_create_parser = orchestration_snapshot_sub.add_parser("create", help="创建快照")
     orchestration_snapshot_create_parser.add_argument("--note", default="", help="快照备注")
-    orchestration_snapshot_create_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
-    orchestration_snapshot_rollback_parser = orchestration_snapshot_sub.add_parser(
-        "rollback", help="回滚到快照"
-    )
+    orchestration_snapshot_create_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
+    orchestration_snapshot_rollback_parser = orchestration_snapshot_sub.add_parser("rollback", help="回滚到快照")
     orchestration_snapshot_rollback_parser.add_argument("--snapshot-id", required=True, help="快照 ID")
-    orchestration_snapshot_rollback_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
+    orchestration_snapshot_rollback_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
 
     orchestration_history_parser = orchestration_sub.add_parser("history", help="编排变更历史")
     orchestration_history_parser.add_argument("--limit", type=int, default=20, help="显示条数")
-    orchestration_history_parser.add_argument(
-        "--workspace", default=argparse.SUPPRESS, help="工作区路径"
-    )
+    orchestration_history_parser.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区路径")
 
     # dispatch 命令
     dispatch_parser = subparsers.add_parser("dispatch", help="自动派单桥接（生成 Agent 执行指令包）")
     dispatch_parser.add_argument("--dry-run", action="store_true", help="仅生成报告与指令包，不写派单状态")
-    dispatch_parser.add_argument(
-        "--include-pending", action="store_true", help="将 pending 任务纳入派发候选"
-    )
+    dispatch_parser.add_argument("--include-pending", action="store_true", help="将 pending 任务纳入派发候选")
     dispatch_parser.add_argument("--redispatch", action="store_true", help="允许重复派发已派发过的任务")
     dispatch_parser.add_argument("--report", help="报告路径（相对 workspace）")
     dispatch_parser.add_argument("--history", help="历史快照路径（相对 workspace）")
@@ -5418,28 +5192,20 @@ def main():
 
     # trigger 命令
     trigger_parser = subparsers.add_parser("trigger", help="暗语触发派单（2X DISPATCH）")
-    trigger_parser.add_argument(
-        "--phrase", required=True, help="暗语，例如: '2X DISPATCH' 或 '2X DISPATCH CLAUDE'"
-    )
+    trigger_parser.add_argument("--phrase", required=True, help="暗语，例如: '2X DISPATCH' 或 '2X DISPATCH CLAUDE'")
     trigger_parser.add_argument(
         "--target",
         choices=["all", "claude_code", "codearts_agent", "codex"],
         help="覆盖暗语中的目标（默认取暗语）",
     )
     trigger_parser.add_argument("--dry-run", action="store_true", help="透传到 dispatch --dry-run")
-    trigger_parser.add_argument(
-        "--include-pending", action="store_true", help="透传到 dispatch --include-pending"
-    )
-    trigger_parser.add_argument(
-        "--redispatch", action="store_true", help="透传到 dispatch --redispatch"
-    )
+    trigger_parser.add_argument("--include-pending", action="store_true", help="透传到 dispatch --include-pending")
+    trigger_parser.add_argument("--redispatch", action="store_true", help="透传到 dispatch --redispatch")
     trigger_parser.add_argument("--dispatch-report", help="透传到 dispatch --report")
     trigger_parser.add_argument("--dispatch-history", help="透传到 dispatch --history")
     trigger_parser.add_argument("--dispatch-state", help="透传到 dispatch --state")
     trigger_parser.add_argument("--dispatch-orders", help="透传到 dispatch --orders")
-    trigger_parser.add_argument(
-        "--force-workspace", action="store_true", help="透传到 dispatch --force-workspace"
-    )
+    trigger_parser.add_argument("--force-workspace", action="store_true", help="透传到 dispatch --force-workspace")
     trigger_parser.add_argument("--output-dir", help="会话派单文件输出目录（相对 workspace）")
     trigger_parser.add_argument("--report", help="trigger 报告路径（相对 workspace）")
     trigger_parser.add_argument("--history", help="trigger 历史路径（相对 workspace）")
@@ -5453,12 +5219,8 @@ def main():
         help="快捷目标",
     )
     quick_2x_parser.add_argument("--dry-run", action="store_true", help="透传到 trigger --dry-run")
-    quick_2x_parser.add_argument(
-        "--include-pending", action="store_true", help="透传到 trigger --include-pending"
-    )
-    quick_2x_parser.add_argument(
-        "--redispatch", action="store_true", help="透传到 trigger --redispatch"
-    )
+    quick_2x_parser.add_argument("--include-pending", action="store_true", help="透传到 trigger --include-pending")
+    quick_2x_parser.add_argument("--redispatch", action="store_true", help="透传到 trigger --redispatch")
     quick_2x_parser.add_argument("--no-copy", action="store_true", help="单目标时禁用自动复制剪贴板")
     quick_2x_parser.add_argument("--dispatch-only", action="store_true", help="禁用智能收口，仅执行派单逻辑")
     quick_2x_parser.add_argument("--force-workspace", action="store_true", help="透传工作区门禁覆盖参数（高风险）")
@@ -5475,12 +5237,8 @@ def main():
 
     # run 命令
     run_parser = subparsers.add_parser("run", help="标准 RUN 流程：dispatch -> receipt -> benefit")
-    run_parser.add_argument(
-        "--dry-run", action="store_true", help="透传 dry-run 到 dispatch/receipt/benefit"
-    )
-    run_parser.add_argument(
-        "--include-pending", action="store_true", help="透传到 dispatch --include-pending"
-    )
+    run_parser.add_argument("--dry-run", action="store_true", help="透传 dry-run 到 dispatch/receipt/benefit")
+    run_parser.add_argument("--include-pending", action="store_true", help="透传到 dispatch --include-pending")
     run_parser.add_argument("--redispatch", action="store_true", help="透传到 dispatch --redispatch")
     run_parser.add_argument("--reclose", action="store_true", help="透传到 receipt --reclose")
     run_parser.add_argument("--force-workspace", action="store_true", help="忽略工作区门禁并强制执行（高风险）")
@@ -5492,12 +5250,8 @@ def main():
     run_parser.add_argument("--receipt-history", help="透传到 receipt --history")
     run_parser.add_argument("--receipt-state", help="透传到 receipt --state")
     run_parser.add_argument("--receipt-summary", help="透传到 receipt --summary")
-    run_parser.add_argument(
-        "--benefit-dispatch-history", action="append", help="透传到 benefit --dispatch-history"
-    )
-    run_parser.add_argument(
-        "--benefit-receipt-history", action="append", help="透传到 benefit --receipt-history"
-    )
+    run_parser.add_argument("--benefit-dispatch-history", action="append", help="透传到 benefit --dispatch-history")
+    run_parser.add_argument("--benefit-receipt-history", action="append", help="透传到 benefit --receipt-history")
     run_parser.add_argument("--target-ratio", type=float, help="透传到 benefit --target-ratio")
     run_parser.add_argument("--window", type=int, help="透传到 benefit --window")
     run_parser.add_argument("--benefit-report", help="透传到 benefit --report")
@@ -5506,9 +5260,7 @@ def main():
     # workspace-guard 命令
     workspace_guard_parser = subparsers.add_parser("workspace-guard", help="工作区门禁诊断（阈值+分域）")
     workspace_guard_parser.add_argument("--dry-run", action="store_true", help="按 dry-run 模式评估门禁")
-    workspace_guard_parser.add_argument(
-        "--for-command", default="workspace-guard", help="门禁评估的命令上下文名"
-    )
+    workspace_guard_parser.add_argument("--for-command", default="workspace-guard", help="门禁评估的命令上下文名")
     workspace_guard_parser.add_argument("--force-workspace", action="store_true", help="模拟强制覆盖门禁")
 
     spawn_guard_parser = subparsers.add_parser("spawn-agent-guard", help="Codex spawn_agent 前置门禁诊断")
@@ -5537,15 +5289,9 @@ def main():
     concurrent_guard_parser.add_argument(
         "--baseline-commit", help="基线 commit（未传时取配置 concurrentGuard.baselineCommit）"
     )
-    concurrent_guard_parser.add_argument(
-        "--watch-path", action="append", default=[], help="监听路径，可重复指定"
-    )
-    concurrent_guard_parser.add_argument(
-        "--session-started-at", help="会话开始时间（ISO），用于归属判定"
-    )
-    concurrent_guard_parser.add_argument(
-        "--force-workspace", action="store_true", help="模拟强制覆盖门禁"
-    )
+    concurrent_guard_parser.add_argument("--watch-path", action="append", default=[], help="监听路径，可重复指定")
+    concurrent_guard_parser.add_argument("--session-started-at", help="会话开始时间（ISO），用于归属判定")
+    concurrent_guard_parser.add_argument("--force-workspace", action="store_true", help="模拟强制覆盖门禁")
 
     # hygiene 命令
     hygiene_parser = subparsers.add_parser("hygiene", help="工作区/暂存区自动治理（可一次执行或轮询）")
@@ -5571,9 +5317,7 @@ def main():
     stage_source_parser = subparsers.add_parser("stage-source", help="按 source 域安全暂存（替代 git add .）")
     stage_source_parser.add_argument("--dry-run", action="store_true", help="仅预览候选文件，不执行暂存")
 
-    stage_ops_parser = subparsers.add_parser(
-        "stage-ops", help="按 ops 域安全暂存（results/monitoring/logs）"
-    )
+    stage_ops_parser = subparsers.add_parser("stage-ops", help="按 ops 域安全暂存（results/monitoring/logs）")
     stage_ops_parser.add_argument("--dry-run", action="store_true", help="仅预览候选文件，不执行暂存")
 
     stage_docs_parser = subparsers.add_parser("stage-docs", help="按 docs 域安全暂存（文档/研究/规范）")
@@ -5604,9 +5348,7 @@ def main():
 
     # pack list
     list_parser = pack_subparsers.add_parser("list", help="列出可用 Pack")
-    list_parser.add_argument(
-        "--category", choices=["domain", "project", "stage", "role"], help="按类别过滤"
-    )
+    list_parser.add_argument("--category", choices=["domain", "project", "stage", "role"], help="按类别过滤")
 
     # pack show
     show_parser = pack_subparsers.add_parser("show", help="显示 Pack 详情")
@@ -5642,9 +5384,7 @@ def main():
 
     bump_parser = version_subparsers.add_parser("bump", help="升级版本")
     bump_parser.add_argument("--name", required=True, help="Pack 名称")
-    bump_parser.add_argument(
-        "--type", choices=["major", "minor", "patch"], default="patch", help="版本类型"
-    )
+    bump_parser.add_argument("--type", choices=["major", "minor", "patch"], default="patch", help="版本类型")
 
     history_parser = version_subparsers.add_parser("history", help="查看版本历史")
     history_parser.add_argument("--name", required=True, help="Pack 名称")
@@ -5666,9 +5406,7 @@ def main():
     store_parser.add_argument("--limit", type=int, default=20, help="结果数量限制")
 
     browse_parser = pack_subparsers.add_parser("browse", help="按类别浏览")
-    browse_parser.add_argument(
-        "--category", required=True, choices=["domain", "project", "stage", "role"], help="类别"
-    )
+    browse_parser.add_argument("--category", required=True, choices=["domain", "project", "stage", "role"], help="类别")
     browse_parser.add_argument(
         "--sort",
         default="popularity",
@@ -5692,9 +5430,7 @@ def main():
     add_rating_parser = rate_subparsers.add_parser("add", help="添加评分")
     add_rating_parser.add_argument("--name", required=True, help="Pack 名称")
     add_rating_parser.add_argument("--user", required=True, help="用户名")
-    add_rating_parser.add_argument(
-        "--rating", required=True, type=int, choices=[1, 2, 3, 4, 5], help="评分"
-    )
+    add_rating_parser.add_argument("--rating", required=True, type=int, choices=[1, 2, 3, 4, 5], help="评分")
     add_rating_parser.add_argument("--title", required=True, help="标题")
     add_rating_parser.add_argument("--content", help="内容")
 
@@ -5709,9 +5445,7 @@ def main():
     grant_parser = share_subparsers.add_parser("grant", help="授予权限")
     grant_parser.add_argument("--name", required=True, help="Pack 名称")
     grant_parser.add_argument("--user", dest="target_user", required=True, help="目标用户")
-    grant_parser.add_argument(
-        "--level", required=True, choices=["read", "write", "admin"], help="权限级别"
-    )
+    grant_parser.add_argument("--level", required=True, choices=["read", "write", "admin"], help="权限级别")
     grant_parser.add_argument("--as-user", help="以该用户身份操作")
 
     revoke_parser = share_subparsers.add_parser("revoke", help="撤销权限")
@@ -5723,9 +5457,7 @@ def main():
 
     public_parser = share_subparsers.add_parser("public", help="设置公开展示")
     public_parser.add_argument("--name", required=True, help="Pack 名称")
-    public_parser.add_argument(
-        "--set", required=True, choices=["true", "false"], help="true=公开, false=私密"
-    )
+    public_parser.add_argument("--set", required=True, choices=["true", "false"], help="true=公开, false=私密")
 
     # pack validate
     validate_parser = pack_subparsers.add_parser("validate", help="验证 Pack 文件")
