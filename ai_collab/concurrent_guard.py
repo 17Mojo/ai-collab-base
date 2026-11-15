@@ -197,6 +197,60 @@ def detect_foreign_changes(
     }
 
 
+def detect_worktree_branch_collisions(workspace: Path) -> dict[str, Any]:
+    """Detect branches checked out in more than one worktree (G11, git hard evidence).
+
+    正常 git 不允许同一分支被两个 worktree 同时签出：`worktree add` 会拒绝，
+    `checkout` / `switch` 也会以 "already checked out at ..." 拦住。只有**大写**
+    `-B` / `-C`（语义是「强制重置该分支」）或手工 `update-ref` 能造出这个状态。
+
+    因此一旦出现重复，它不是配置问题，是**事故痕迹**：某处重置了一个被别处签出的
+    分支引用，那个 worktree 的 HEAD 被动前移、索引留在旧基线，`git status` 会把
+    基线漂移全部报成改动（含 D 型「删除」假象）。
+
+    检测是只读的 `git worktree list --porcelain`，不改任何工作树状态。
+    """
+    result = _run_git(workspace, ["worktree", "list", "--porcelain"])
+    if result.returncode != 0:
+        return {
+            "collisions": [],
+            "worktree_count": 0,
+            "severity": "none",
+            "error": result.stderr.strip() or "git worktree list failed",
+        }
+
+    entries: list[dict[str, Any]] = []
+    current: dict[str, Any] = {}
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            if current:
+                entries.append(current)
+                current = {}
+            continue
+        key, _, value = line.partition(" ")
+        if key == "worktree":
+            current["path"] = value
+        elif key == "branch":
+            current["branch"] = value[len("refs/heads/") :] if value.startswith("refs/heads/") else value
+        elif key == "detached":
+            current["detached"] = True
+    if current:
+        entries.append(current)
+
+    by_branch: dict[str, list[str]] = {}
+    for entry in entries:
+        branch = entry.get("branch")
+        if branch:
+            by_branch.setdefault(str(branch), []).append(str(entry.get("path", "")))
+
+    collisions = [{"branch": branch, "paths": paths} for branch, paths in by_branch.items() if len(paths) > 1]
+    return {
+        "collisions": collisions,
+        "worktree_count": len(entries),
+        "severity": "high" if collisions else "none",
+    }
+
+
 def assess_concurrent_risk(
     workspace: Path,
     *,
@@ -207,6 +261,7 @@ def assess_concurrent_risk(
     tracked_paths: list[str] | None = None,
     foreign_change_severity: str = "warning",
     ahead_warn_threshold: int = 20,
+    worktree_collision_severity: str = "high",
 ) -> dict[str, Any]:
     """Assess concurrent workspace risk across branch drift, baseline staleness, and foreign changes."""
     git_context = inspect_git_context(workspace)
@@ -254,6 +309,18 @@ def assess_concurrent_risk(
     if ahead > ahead_warn_threshold:
         warnings.append(f"ahead of upstream by {ahead} commits (threshold={ahead_warn_threshold})")
 
+    # G11：同一分支被多个 worktree 签出。正常 git 造不出这个状态，出现即事故痕迹。
+    collision_signal = detect_worktree_branch_collisions(workspace)
+    signals["worktree_collisions"] = collision_signal
+    collisions = collision_signal.get("collisions", [])
+    if collisions:
+        detail = "; ".join(f"{item['branch']} @ {len(item['paths'])} 处" for item in collisions)
+        message = f"worktree collision: 同一分支被多个工作树签出（{detail}）"
+        if worktree_collision_severity == "high":
+            violations.append(message)
+        else:
+            warnings.append(message)
+
     has_high = len(violations) > 0
     has_medium = len(warnings) > 0
     if has_high:
@@ -293,6 +360,7 @@ def run_concurrent_guard(
     enabled = bool(cfg.get("enabled", True))
     foreign_change_severity = str(cfg.get("foreignChangeSeverity", "warning"))
     ahead_warn_threshold = int(cfg.get("aheadWarnThreshold", 20))
+    worktree_collision_severity = str(cfg.get("worktreeCollisionSeverity", "high"))
 
     assessment = assess_concurrent_risk(
         workspace,
@@ -303,6 +371,7 @@ def run_concurrent_guard(
         tracked_paths=tracked_paths,
         foreign_change_severity=foreign_change_severity,
         ahead_warn_threshold=ahead_warn_threshold,
+        worktree_collision_severity=worktree_collision_severity,
     )
 
     violations = list(assessment.get("violations", []))
@@ -327,6 +396,7 @@ def run_concurrent_guard(
         "thresholds": {
             "aheadWarnThreshold": ahead_warn_threshold,
             "foreignChangeSeverity": foreign_change_severity,
+            "worktreeCollisionSeverity": worktree_collision_severity,
         },
         "input_contract_complete": input_contract_complete(expected_branch, baseline_commit, watch_paths),
     }

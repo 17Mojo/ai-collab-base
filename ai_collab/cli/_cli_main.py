@@ -429,6 +429,11 @@ def _run_concurrent_guard_gate(
         print("  baseline: none (skipped)")
     foreign_count = int(foreign_signal.get("foreign_count", 0) or 0)
     print(f"  foreign: {foreign_count} files (severity: {foreign_signal.get('severity', 'none')})")
+    collision_signal = signals.get("worktree_collisions") or {}
+    collisions = list(collision_signal.get("collisions") or [])
+    collision_mark = "  <- collision" if collisions else ""
+    detail = ", ".join(f"{item.get('branch')} x{len(item.get('paths') or [])}" for item in collisions)
+    print(f"  worktrees: {collision_signal.get('worktree_count', 0)} (collisions: {detail or 'none'}){collision_mark}")
     print(f"  report: {report.get('report_file', '')}")
     print(f"  history: {report.get('history_file', '')}")
 
@@ -445,6 +450,9 @@ def _run_concurrent_guard_gate(
 
     if not allowed:
         print("\n门禁阻断：请先消除分支漂移或基线过期，或在确认风险后使用 --force-workspace 显式覆盖。")
+        if collisions:
+            print("  worktree 冲突不能靠覆盖解决：先让多余的工作树脱离该分支（git worktree remove 或")
+            print("  git checkout --detach），否则它的 git status 会把基线漂移报成大量假改动。")
         return False
     return True
 

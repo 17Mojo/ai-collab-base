@@ -153,6 +153,8 @@ Change 'migrate-session-identity' is valid
    `audit_task_identity` 读 `state["tasks"]`（18 条），而 `collaboration/tasks/TASK-*.md` 有 26 个。
    逐个 grep 身份字段得到 26/26 两者皆无。因此 `legacy=18` **不等于**「全部任务已盘点」。
    已登记 `known_gaps.json` N26（P2/open）并在此声明，不给单一数字背书。差值 8 的归属未逐条追查。
+   **2026-11-16 复核追加**：在真实 clone 上 `checked=0` / `total=0` / 磁盘 26 个文件——
+   `18` 是某台机器账本的属性，**不可从仓库复现**。见 §记录更正 2。
 
 4. **运行时路由仍是 `assignee`，本 change 没有迁移它。**
    ack / 干预队列 / 缺失 ACK / 看门狗 / 会话健康五个模块仍按厂商标签过滤。
@@ -160,10 +162,12 @@ Change 'migrate-session-identity' is valid
    牵动桥接脚本，属独立风险面。`PROTOCOL §12.1` 的三条淘汰条件就是给下一个 change 的入口判据。
    在此之前，「工单能声明身份」与「消息按身份投递」之间仍有断层。
 
-5. **26 个历史工单没有任何身份事实可依，全部按 legacy 计数。**
-   注册表里没有这些会话的记录，`created_at` 也在切点之前。给它们编 `session_id` 会让
-   统计看起来漂亮，但那是假的——比留空更坏。`legacy_identity=18` 会一直存在，
-   直到这些工单到达可核验终态。
+5. **历史工单没有任何身份事实可依，只能按 legacy 计数。**
+   磁盘 26 个 `TASK-*.md` 逐个 grep：26/26 既无 `session_id` 也无 `model_id`；
+   本机账本里那 18 条同样没有。注册表里没有这些会话的记录，`created_at` 也在切点之前。
+   给它们编 `session_id` 会让统计看起来漂亮，但那是假的——比留空更坏。
+   `legacy_identity` 会一直是这个数，直到这些工单到达可核验终态。
+   注意这个数**只在本机账本上有意义**（干净检出上是 0），见 §记录更正 2。
 
 6. **`git add -A` 会把本机单会话快照覆盖到共享监控文件上（已登记 N27，本轮已规避）。**
    `collaboration/monitoring/*_latest.md` 被跟踪，但数据源 `logs/session_registry_state.json` 是
@@ -173,11 +177,61 @@ Change 'migrate-session-identity' is valid
    本轮已把这两个文件排除出提交 pathspec 并 `git checkout --` 还原。
    这条**不是**本 change 引入的缺陷，但收口时差点被 `add -A` 顺手带进 main。
 
-7. **干净 main 检出上 `preflight` 仍会 FAIL，缺的是本机活动不是代码。**
-   `.ai_collab_session.json` 与 `.vscode/ai-collab.local.json` 都是本机状态（已忽略），
-   干净检出上没有它们，「必读清单声明」「状态机时效」「显式 ACK」三项必然红。
-   这不是回归，是这两项的设计前提就是「有本机会话在活动」。CI 上若要绿，需要各自的装备，
-   或改用 CI 自己的基线。
+7. **干净 main 检出上 `preflight` 会 FAIL，缺的是本机活动不是代码。**
+   `.ai_collab_session.json`、`logs/collaboration_state.json`、
+   `.vscode/ai-collab.local.json` 三个输入都是 gitignored 的本机状态，干净检出上没有它们，
+   「必读清单声明」「状态机时效」「门禁输入完整性」「显式 ACK」**四项**必然红；
+   只有「HEAD 治理登记」是仓库事实因而 PASS。
+   这不是回归，是这四项的设计前提就是「有本机会话在活动」。CI 上若要绿，需要各自的装备，
+   或改用 CI 自己的基线。原报告写的是「三项」，漏了门禁输入完整性——见 §记录更正 1。
+
+## 记录更正（2026-11-16 复核）
+
+本报告首版有两处口径不准，复核后按实测改，保留更正痕迹而不是直接改数：
+
+### 更正 1 · 干净检出 `preflight` 是四项 FAIL，不是三项
+
+首版列的是「必读清单声明 / 状态机时效 / 显式 ACK」三项，漏了**门禁输入完整性**。
+漏的原因是那次在 `/tmp/wt-gov-identity` 里跑的，而我在那儿亲手建了
+`.vscode/ai-collab.local.json` 覆盖层，所以它 PASS——**在干净检出上它必然 FAIL**。
+
+真实 clone 实测（不是 `git archive` 快照，避免 `4d04acd` 不存在造成的假象）：
+
+```
+$ git clone git@github.com:17Mojo/ai-collab-base.git /tmp/realclone   # HEAD 2a968a2
+$ python3 -m ai_collab.cli governance preflight
+[FAIL] 必读清单声明: .ai_collab_session.json 缺失或为空，无法核验必读清单
+[FAIL] 状态机时效: 状态文件缺失或无 last_updated
+[FAIL] 门禁输入完整性: 未装备，缺: ['expectedBranch', 'baselineCommit', 'watchPaths']
+[PASS] HEAD 治理登记: 边界后合并提交 3 个，未登记 0 个
+[FAIL] 显式 ACK 证据: 无显式 ACK
+preflight: FAIL
+```
+
+### 更正 2 · `legacy_identity=18` 不可从仓库复现
+
+同一个真实 clone 上：
+
+```
+$ python3 -m ai_collab.cli tasks validate-contract --scope all
+契约校验结果: checked=0 skipped=0 invalid=0 legacy_identity=0
+
+$ python3 -m ai_collab.cli tasks migrate-identity
+身份迁移审计: scope=all apply=False cutoff=2026-11-16 total=0 ... legacy=0
+
+$ ls collaboration/tasks/TASK-*.md | wc -l
+26
+```
+
+三处数字互不相等：**账本 0 条 / 磁盘 26 个文件 / 本机 18 条**。
+
+所以 `legacy_identity=18` 是「某台机器的 `logs/collaboration_state.json` 里恰好有 18 条任务」
+这个事实，**不是仓库事实**。首版把它写成「26 个工单全部 legacy」会让人以为任何检出都能看到
+这批历史欠账——实际看不到。这条已追加进 `known_gaps.json` N26 的证据链。
+
+含义：任何以账本为输入的身份类审计，在新鲜检出上都是空跑（`checked=0`），
+**看不出**历史工单缺身份这件事。要真做「历史欠账盘点」，得先有余量把
+`collaboration/tasks/TASK-*.md` 与账本对齐（N26 的待做项 ①）。
 
 ## 回滚
 

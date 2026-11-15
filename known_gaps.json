@@ -490,15 +490,16 @@
         "ai_collab/state_manager.py:2246（get_all_tasks 只读账本，不扫 collaboration/tasks/*.md）",
         "collaboration/tasks/（磁盘 26 个 TASK-*.md，账本 18 条）"
       ],
-      "detail": "2026-11-16 在 migrate-session-identity 收口阶段实测：`python3 -m ai_collab.cli -w <main> tasks migrate-identity` 报 `total=18 legacy=18`，而对 26 个任务文件逐个 grep `session_id:` / `model_id:` 得到 26/26 两者皆无。两处事实不矛盾（账本是任务事实源，md 是文档载体），但**数量差 8** 说明有一部分任务只存在于文件里、从未进账本，因此任何以账本为输入的身份类审计都天然漏掉它们。本 change 未引入该差异，但把它写进「证据」会让 `legacy=18` 看起来像全量，属于会误导的口径。",
-      "impact": "① 据 `legacy=18` 宣布历史欠账已全部盘点，实际漏 8 个文件；② 后续按账本补身份后复算，md 侧仍有 8 个空字段，容易被判成「迁移没跑完」而反复返工；③ 若将来有工具改成扫 md 文件，同一批任务会被算两次或给出不同 legacy 数，两套口径并存。",
-      "fix": "已做（本轮）：在 `openspec/changes/migrate-session-identity/tasks.md` 的「偏离与理由 §2」写明差 8 条、审计输入是账本而非文件，并在 E7 证据里同时给出账本 18 与磁盘 26 两个数，避免单口径误导。待做：① 决定任务事实源的唯一归属——要么把 8 个文件补录进账本，要么在审计输出里显式声明「本审计覆盖账本 N 条，磁盘另有 M 个未登记文件」；② 若选后者，给 `audit_task_identity` 增加 `unregistered_files` 计数并加守护用例；③ 补录前不得在报告里使用「全部任务」这类全量措辞。",
+      "detail": "2026-11-16 在 migrate-session-identity 收口阶段实测：`python3 -m ai_collab.cli -w <main> tasks migrate-identity` 报 `total=18 legacy=18`，而对 26 个任务文件逐个 grep `session_id:` / `model_id:` 得到 26/26 两者皆无。两处事实不矛盾（账本是任务事实源，md 是文档载体），但**数量差 8** 说明有一部分任务只存在于文件里、从未进账本，因此任何以账本为输入的身份类审计都天然漏掉它们。本 change 未引入该差异，但把它写进「证据」会让 `legacy=18` 看起来像全量，属于会误导的口径。\n\n2026-11-16 复核补强：在真实 clone（`git clone git@github.com:17Mojo/ai-collab-base.git`，HEAD 2a968a2）上跑同一套命令，得到**第三个数**——`tasks validate-contract --scope all` 报 `checked=0 invalid=0 legacy_identity=0`，`tasks migrate-identity` 报 `total=0`，而磁盘上 `TASK-*.md` 仍是 26 个。于是三处数字互不相等：账本 0 条 / 磁盘 26 个文件 / 本机 18 条。结论：`legacy_identity=18` 是「某台机器账本里恰好有 18 条任务」这个事实，**不是仓库事实**，任何新鲜检出都看不到这批历史欠账。",
+      "impact": "① 据 `legacy=18` 宣布历史欠账已全部盘点，实际漏 8 个文件；② 后续按账本补身份后复算，md 侧仍有 8 个空字段，容易被判成「迁移没跑完」而反复返工；③ 若将来有工具改成扫 md 文件，同一批任务会被算两次或给出不同 legacy 数，两套口径并存。 ④ 新鲜检出上身份审计空跑（`checked=0`），会让人误判「没有历史欠账」，而磁盘上 26 个文件全缺身份字段——该结论比原报告写的「差 8 条」更容易误导。",
+      "fix": "已做（本轮）：在 `openspec/changes/migrate-session-identity/tasks.md` 的「偏离与理由 §2」写明差 8 条、审计输入是账本而非文件，并在 E7 证据里同时给出账本 18 与磁盘 26 两个数，避免单口径误导；结果报告新增「记录更正」章节，补入真实 clone 上的第三个数字（0）。待做：① 决定任务事实源的唯一归属——要么把 8 个文件补录进账本，要么在审计输出里显式声明「本审计覆盖账本 N 条，磁盘另有 M 个未登记文件」；② 若选后者，给 `audit_task_identity` 增加 `unregistered_files` 计数并加守护用例；③ 补录前不得在报告里使用「全部任务」这类全量措辞。",
       "found_at": "2026-11-16",
       "closed_at": null,
       "appended_evidence": [
         "账本侧：`tasks migrate-identity` → `total=18 declared=0 partial=0 legacy=18 missing=0 invalid=0`；该次运行前后 `logs/collaboration_state.json` sha256 均为 62d92b34…f1b5d4（只读实测）。",
         "磁盘侧：`for f in TASK-*.md` 逐个 grep 身份字段 → `文件总数=26 有 session_id=0 有 model_id=0 两者皆无=26`。",
-        "差值 8 未逐条追查归属，本条只登记「数量不一致且审计口径会误导」，不宣称已知是哪 8 个。"
+        "差值 8 未逐条追查归属，本条只登记「数量不一致且审计口径会误导」，不宣称已知是哪 8 个。",
+        "2026-11-16 真实 clone 复测（HEAD 2a968a2）：`checked=0` / `total=0` / `legacy_identity=0`，同时 `ls collaboration/tasks/TASK-*.md | wc -l` → 26。三处数字不一致，18 不可从仓库复现。"
       ]
     },
     {
@@ -520,6 +521,33 @@
       "appended_evidence": [
         "实测 diff：`-生成时间: 2026-10-24T19:06:17` / `-会话数: 8` / `+会话数: 1`，8 条 `assignee=claude_code` 会话行被删除，只留 `sess-migrate-identity-20261116`。",
         "该改动由 `sessions register` 与 `tasks validate-contract` 自动触发，非人为编辑；本轮已 `git checkout --` 还原，未进入提交。"
+      ]
+    },
+    {
+      "id": "N28",
+      "priority": "P1",
+      "status": "open",
+      "title": "worktree 里对已被签出的分支用大写 -B / -C 会连带改掉主工作区，且 status 会把基线漂移报成假改动",
+      "reader": "任何在本仓开 worktree 做事、需要在合入后切回 main 的人——本仓主工作区长期停在 main 且带 150+ 条未提交改动，一次 `checkout -B main origin/main` 就会把它的 HEAD 前移、索引留在旧基线，status 从 153 条涨到 424 条（含 D 型「删除」假象）；以及看 diff 的评审——那多出来的 271 条看起来像真实改动，实际是引用被移动的副产品。",
+      "where": [
+        "collaboration/PROTOCOL.md:14.5（门禁分层表，新增 G11 行）",
+        "collaboration/PROTOCOL.md:14.7（G11 现象 / 危害 / 检出手法 / 修法）",
+        "ai_collab/concurrent_guard.py:detect_worktree_branch_collisions（解析 git worktree list --porcelain）",
+        "ai_collab/cli/_cli_main.py:cmd_concurrent_guard（worktrees 行 + 冲突修法提示）",
+        ".vscode/ai-collab.json（concurrentGuard.worktreeCollisionSeverity 默认 high）",
+        "tests/unit/test_worktree_collision_guard.py（9 条检测/分级用例）",
+        "tests/unit/test_concurrent_guard_cli.py::TestWorktreeCollision（3 条 CLI 用例）"
+      ],
+      "detail": "worktree 共享同一份 `.git`（对象库 + `refs/`），各自独立的只有 HEAD / 索引 / 工作树。HEAD 文件内容是 `ref: refs/heads/<branch>`，所以移动 ref 等于**同时移动所有指向它的 HEAD**，但索引不跟着走：`git status` = 工作树 vs 索引 + 索引 vs HEAD，后一项在 HEAD 被动前移后会把基线漂移全部吐出来。正常 git 造不出「同一分支被两个 worktree 签出」：`worktree add` 拒绝重复，`checkout <branch>` / `switch <branch>` 都以 `fatal: already checked out at ...` 拦住；**只有大写 `-B` / `-C`（语义为强制重置分支）或手工 update-ref 能绕过**。2026-11-16 现场实测：在 `/tmp/wt-gov-identity` 执行 `git checkout -q main 2>/dev/null || git checkout -q -B main origin/main`，主工作区 HEAD 由 36d9ec2 前移到 2cc2790，status 153 → 424 条（`36d9ec2..2cc2790` 漂移 273 条路径，与脏集交集 3 条）。已用 `checkout --detach` + `update-ref refs/heads/main 36d9ec2` 复原，工作树文件全程未被改写，无数据丢失。",
+      "impact": "① 主工作区 HEAD 被动前移，工作树与索引脱节，git status 大面积失真，容易误提交或误 revert；② 那个「D 型删除」会让人以为文件被删，实际是索引里没有而新 HEAD 有；③ 若此时在主工作区跑 pytest 或打包，得到的是旧树跑新代码的混合结果；④ 两个 worktree 同时持有同一分支时，无论哪边提交都会让另一边的 HEAD 静默前移，问题会反复出现而不是一次性的。",
+      "fix": "已做：① `concurrent_guard.detect_worktree_branch_collisions()` 只读解析 `git worktree list --porcelain`，重复分支即判违规（G11 硬门禁，默认 high，可经 `worktreeCollisionSeverity: warning` 降级但仍进 warnings 不静默）；② `concurrent` CLI 增加 `worktrees: N (collisions: ...)` 行，阻断时给出正确修法（`checkout --detach` 或 `update-ref`，明确说覆盖不是解）；③ PROTOCOL §14.5 加 G11 行 + §14.7 写清现象/危害/检出手法/修法；④ 12 条新用例（9 检测分级 + 3 CLI），正反两侧含「单工作树 / 不同分支 / detached 不误报」。待做：⑤ 检测目前只在 `concurrent guard` 被调用时生效，若希望开工即拦，需把 G11 接进 `governance preflight`（会改变 preflight 项数，需同步既有断言）；⑥ 操作层面的人工前置检查（`git worktree list`）仍是第一道，代码守卫是第二道。",
+      "found_at": "2026-11-16",
+      "closed_at": null,
+      "appended_evidence": [
+        "对照实验（可复现）：`git checkout main` → `fatal: 'main' is already checked out at '...'`；`git checkout -B main feat` → `Switched to and reset branch 'main'`（放行）。`git switch` 与 `git switch -C` 行为一致。结论：大写 -B/-C 跳过占用检查。",
+        "现场数字：主工作区 status 153 → 424；`git diff --name-only 36d9ec2 2cc2790` 273 条（新增 25 / 修改 248 / 删除 0），与 153 条脏集交集 3 条，153+273-3=423，实测 424（差 1 条未逐条对账，疑为重命名在 porcelain 占两行）。",
+        "复原实测：`checkout --detach` 后 `git update-ref refs/heads/main 36d9ec2`，主工作区回到 HEAD=36d9ec2 / 在途 153 / 账本 sha256 62d92b34…f1b5d4 未变。",
+        "守卫落地后对本仓实跑：`concurrent guard` → `worktrees: 7 (collisions: none)`，7 个 worktree 各在不同分支或 detached，无误报。"
       ]
     }
   ]
