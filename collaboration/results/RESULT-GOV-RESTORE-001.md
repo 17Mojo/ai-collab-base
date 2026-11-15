@@ -253,3 +253,28 @@ All checks passed!
   理由，保留历史可追溯。
 - **开发日志**：`logs/claude-code/2026-11/2026-11-15-governance-restore-phase1-3.md` 只作本地
   证据，不在版本库内，无需回滚。
+
+---
+
+## 收口补记（2026-11-16 · 合入与归档）
+
+本节是合入后追加，不改上文结论，只补「合入动作自身被新门禁拦下并登记」这一段实测。
+
+| 步骤 | 动作 | 结果 |
+| --- | --- | --- |
+| 合入 | `gh pr merge 70 --merge` | merge commit `89160f1aa881d679ce38ac03dd30e331cc8f80d1` |
+| 拦下 | 合入后在 main 上跑 `tasks validate-contract --scope all --strict` | `merge_count=1 gap_count=1 would_fail=True applied=True`、`exit=1`、点名 `::error::未登记合并提交: 89160f1...` |
+| 登记 | `governance declare-commit --commit-sha 89160f1... --change-id restore-governance-enforcement` | 追加一条 `kind=commit` 记录 |
+| 复跑 | 同一命令 | `gap_count=0 would_fail=False`、`exit=0` |
+| 落盘 | 提交登记表 | `8834739` |
+| 归档 | `openspec archive restore-governance-enforcement --yes` | `archived as 2026-11-16-restore-governance-enforcement`；`openspec/specs/governance-coverage/spec.md` 升为常驻规格（+4 added） |
+| 归档校验 | `openspec validate --archived --strict` | `2 passed, 0 failed`，`exit=0` |
+
+**归档校验通过的口径必须写清**：它不是「42 项全做完」，而是「1 项取消 + 1 项归档动作完成」。
+4.7（装备 `concurrentGuard`）**未执行**，按风险 1 的理由裁定取消，已在归档后的
+`tasks.md` 里从 checkbox 改为留痕条目并单列「显式取消」章节。把未做的事情改成已勾选来凑绿，
+比留着一条红更坏；因此选择改口径并留痕，而不是改勾选。
+
+**结果报告与工单状态仍成立**：`audited=1 consistent=1 mismatch=0`；工单 `TASK-GOV-RESTORE-001`
+状态 `completed`，ACK 已由 CLI 生成。归档与登记均落在 main，主工作区另一 session 的在途改动
+数量在全程保持 153 未变。
