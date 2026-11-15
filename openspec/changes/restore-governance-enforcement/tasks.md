@@ -4,8 +4,8 @@
 > 不改项目代码；进入 apply 后逐条执行。凡勾选者必须附**实测证据（命令 + 关键输出）**，
 > 不写「已完成」了事。勾选项的证据按编号 E1–E9 引用，集中列在文末「实测证据」。
 >
-> 本轮执行到 **Phase 4 结束，总闸已开启**；Phase 5 协同收口进行中。4.7 按结构性缺口
-> 显式不做（理由见该条），其验收意图由 A6 受控工作区等价覆盖。
+> 本轮执行到 **Phase 5 收口，仅剩 5.8（PR 合入后归档）**。4.7 按结构性缺口显式不做
+> （理由见该条），其验收意图由 A6 受控工作区等价覆盖。
 
 ## Phase 0 · 立项与隔离（已交付）
 
@@ -47,12 +47,14 @@
 - [x] 2.4 增加模块级总闸常量（默认关闭），关闭时既有结论逐位不变（E7）
 - [x] 2.5 观测差异落盘 `logs/governance_coverage_observe.jsonl`（输入摘要 / 当前结论 / 假想结论 / 是否一致）（E7）
 - [x] 2.6 登记表缺失或不可解析时非零退出并说明事实源不可取（E10 / A4）
-- [ ] 2.7 `enforced_from_commit` 与启用改动同 commit 落盘，并校验声明 sha 与 git 真值一致
-  - **机制已就绪，勾选待提交后回填**：登记表已从 `logs/`（被 `.gitignore:39` 目录级排除、
-    不可取反）迁至可跟踪的 `collaboration/governance/governance-ledger.jsonl`，生效边界
-    记录已由 `governance declare-enforcement` 写入；`enforced_from()` 用
-    `git cat-file -e <sha>^{commit}` 校验声明 sha 是真提交（E10）。本条要求的「同 commit」
-    只能由实际提交动作满足，故在 Phase 5 的 5.7 提交完成后回填 commit sha。
+- [x] 2.7 `enforced_from_commit` 与启用改动同 commit 落盘，并校验声明 sha 与 git 真值一致
+  - **已满足**：登记表从 `logs/`（被 `.gitignore:39` 目录级排除、不可取反）迁至可跟踪的
+    `collaboration/governance/governance-ledger.jsonl`；生效边界记录由
+    `governance declare-enforcement` 写入；`enforced_from()` 用
+    `git cat-file -e <sha>^{commit}` 校验声明 sha 是真提交。
+  - 同 commit 证据：`git show --stat --oneline e29e226` 同时含
+    `ai_collab/governance.py`（`COVERAGE_IN_DECISION = True`）与
+    `collaboration/governance/governance-ledger.jsonl`。
 - [x] 2.8 新增反向测试：移除新增字段后既有校验结论逐位不变（E8）
 - [x] 2.9 跑前 / 跑后同一命令输出比对，证明观测期零行为改变（E7）
 
@@ -93,14 +95,28 @@
 
 ## Phase 5 · 协同收口（每一条都是本 change 的交付条件）
 
-- [ ] 5.1 结果报告 `collaboration/results/RESULT-GOV-RESTORE-001.md` 四段（执行命令 / 验证结果含测试结论 / 风险 / 回滚）
-- [ ] 5.2 结果报告含可解析状态行，工单里每条 `acceptance_commands` 原样出现
-- [ ] 5.3 开发日志落 `logs/claude-code/2026-11/`
-- [ ] 5.4 ACK 由 `python3 -m ai_collab.cli ack ...` 生成，不手写
-- [ ] 5.5 任务状态经 `tasks update` CLI 变更，不手改状态文件
-- [ ] 5.6 会话结束前跑 `sessions handoff` 并留存交接文件
-- [ ] 5.7 提交带 pathspec；复核主工作区在途改动数量未变
+- [x] 5.1 结果报告 `collaboration/results/RESULT-GOV-RESTORE-001.md` 四段（执行命令 / 验证结果含测试结论 / 风险 / 回滚）
+- [x] 5.2 结果报告含可解析状态行，工单里每条 `acceptance_commands` 原样出现
+  - 机器核验：`tasks validate-contract --scope all --strict` →
+    `终态结果一致性: audited=1 consistent=1 mismatch=0 unparseable=0 missing_result=0`
+- [x] 5.3 开发日志落 `logs/claude-code/2026-11/`
+  - **但该路径被 `.gitignore:39` 的 `logs/` 目录级排除挡死**（`git ls-files 'logs/claude-code/*'` = 0），
+    文件只作本地证据、不入库；这条本身就是第三处治理假绿，交后续立法 change 处理。
+- [x] 5.4 ACK 由 `python3 -m ai_collab.cli ack ...` 生成，不手写
+  - 输出：`A.ACK|task=TASK-GOV-RESTORE-001|status=completed|result=collaboration/results/RESULT-GOV-RESTORE-001.md`
+  - ACK 生成后 `governance preflight` 的「显式 ACK 证据」由 FAIL 转 `[PASS] 显式 ACK 证据: 1 条`
+- [x] 5.5 任务状态经 `tasks update` CLI 变更，不手改状态文件
+  - `tasks register` → `tasks update --status testing` → `tasks update --status completed`
+- [x] 5.6 会话结束前跑 `sessions handoff` 并留存交接文件
+  - `logs/handoff/SESSION_CONTINUATION_HANDOFF_2026-11-16.md`（本地产物，不入库）
+- [x] 5.7 提交带 pathspec；复核主工作区在途改动数量未变
+  - 提交 `e29e226`，15 个路径显式 pathspec；`collaboration/monitoring/*_latest.md` 是跑 CLI 的
+    再生品，刻意留在工作区不提交（避免把 worktree 本地快照推进 main）
+  - 主工作区 `/Users/raymondna/Documents/AI-collab/ai-collab-base` 在途改动：提交前 153、提交后 153
 - [ ] 5.8 PR 合并后 `openspec archive` 并复跑 `--archived --strict`
+  - **待评审合入后执行**：分支已推送、PR 已开。`openspec archive` 必须在 main 上执行，
+    否则归档动作会落进一个未合入的分支。评审者 `codearts_agent` 合入后执行：
+    `openspec archive restore-governance-enforcement && openspec validate --archived --strict`
 
 ## 偏离与理由（规划阶段预先写明，及本轮新增）
 
