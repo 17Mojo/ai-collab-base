@@ -11,6 +11,7 @@ Pack 评分和评价系统
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -169,9 +170,9 @@ class RatingSystem:
                     registry.update_pack_stats(
                         pack_name, rating=summary.average_rating, review_count=summary.total_reviews
                     )
-            except Exception:
+            except Exception as exc:
                 # 忽略错误（商店可能不可用）
-                pass
+                logging.getLogger(__name__).debug("评分统计更新失败（商店可能不可用）: %s", exc)
 
         return review
 
@@ -330,9 +331,9 @@ class RatingSystem:
             summary = self.get_rating_summary(pack_name)
             if summary.total_reviews > 0:
                 registry.update_pack_stats(pack_name, rating=summary.average_rating, review_count=summary.total_reviews)
-        except Exception:
+        except Exception as exc:
             # 忽略错误（商店可能不可用）
-            pass
+            logging.getLogger(__name__).debug("评分统计更新失败（商店可能不可用）: %s", exc)
 
     def export_reviews(self, pack_name: str) -> dict[str, Any]:
         """

@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -65,8 +66,8 @@ class ResearchDrivenWorkflow:
                         "mode": query_result.get("mode", "unknown"),
                     }
                 )
-        except Exception:
-            pass  # FALLBACK 模式可能不支持
+        except Exception as exc:
+            logging.getLogger(__name__).debug("FALLBACK 模式不支持该查询，已降级: %s", exc)
 
         # 跨 notebook 查询 (通过 query_knowledge 模拟)
         cross_insights = []
@@ -81,8 +82,8 @@ class ResearchDrivenWorkflow:
                         "dependencies": [],
                     }
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            logging.getLogger(__name__).debug("研究工作流可选步骤失败，已降级: %s", exc)
 
         # 评估可行性
         feasibility_score = self._assess_feasibility(external_sources, cross_insights)

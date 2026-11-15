@@ -10,6 +10,7 @@ SessionStart Hook:
 from __future__ import annotations
 
 import json
+import logging
 import re
 import shutil
 import sys
@@ -149,8 +150,8 @@ def main() -> None:
             hook_input=hook_input,
             event_name="SessionStart",
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).debug("SessionStart 会话注册失败（hook 不阻塞）: %s", exc)
 
     status_text = status_file.read_text(encoding="utf-8-sig") if status_file.exists() else "(status.md not found)"
     runtime = _load_json(runtime_file)
@@ -188,8 +189,8 @@ def main() -> None:
                 source="session_inject",
                 transport_mode="manual",
             )
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).debug("hook 观测记录失败（不阻塞）: %s", exc)
 
     context = (
         "## AI Collab Session Context (Auto-injected)\n"

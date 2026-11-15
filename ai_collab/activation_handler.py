@@ -7,6 +7,7 @@
 """
 
 import json
+import logging
 import os
 from collections.abc import Callable
 from datetime import datetime
@@ -119,8 +120,8 @@ class VSCodeIntegration:
             log_file = os.path.join(global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log")
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"[{datetime.now().isoformat()}] [{channel}] {message}\n")
-        except Exception:
-            pass  # 静默失败
+        except Exception as exc:
+            logging.getLogger(__name__).debug("写入输出日志失败（静默降级，不影响主流程）: %s", exc)
 
     @staticmethod
     def get_rule_files(ai_type: AIType) -> list[str]:

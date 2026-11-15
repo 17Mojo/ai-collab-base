@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 
 def _run_git(workspace: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return subprocess.run(  # nosec B603, B607  # 理由：固定命令 / shell=False，无外部可控输入；可执行文件名由系统 PATH 解析（平台内置命令）
         ["git", "-C", str(workspace), *args],
         capture_output=True,
         text=True,

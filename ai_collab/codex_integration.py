@@ -18,7 +18,7 @@ import json
 import platform
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -296,7 +296,7 @@ class CodexIntegration:
         # claude -p 把最终回答写 stdout → 直接落 out_file（对齐 _ensure_output_file
         # 期望）；stderr（进度/告警）→ log_file。
         with open(out_file, "w", encoding="utf-8") as of, open(log_file, "w", encoding="utf-8") as lf:
-            proc = subprocess.Popen(  # noqa: S603
+            proc = subprocess.Popen(  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
                 cmd,
                 cwd=str(self.workspace),
                 stdout=of,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -102,7 +102,7 @@ def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
 
 def _read_status_entries(workspace: Path) -> dict[str, Any]:
     """Read git porcelain entries and annotate status/domain."""
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B603, B607  # 理由：固定命令 / shell=False，无外部可控输入；可执行文件名由系统 PATH 解析（平台内置命令）
         ["git", "-C", str(workspace), "status", "--porcelain=v1", "--untracked-files=all"],
         capture_output=True,
         text=True,
@@ -327,7 +327,7 @@ def stage_domain_changes(
     staged = False
     if paths and not dry_run:
         for chunk in _chunked(paths):
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603, B607  # 理由：固定命令 / shell=False，无外部可控输入；可执行文件名由系统 PATH 解析（平台内置命令）
                 ["git", "-C", str(workspace), "add", "--", *chunk],
                 capture_output=True,
                 text=True,

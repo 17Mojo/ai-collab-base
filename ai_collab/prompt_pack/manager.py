@@ -5,6 +5,7 @@ Prompt Pack 管理器 - 负责 Pack 的加载、依赖解析、上下文注入
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 from .schema import AITool, PackCategoryType, PackDependencyError, PackManifest, PromptPack
@@ -316,8 +317,8 @@ class PackManager:
                 try:
                     dep_pack = self.load_pack(dep_name)
                     total_tokens += self.estimate_pack_tokens(dep_pack, include_dependencies=False)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logging.getLogger(__name__).debug("依赖 pack 估算失败，跳过该依赖: %s", exc)
 
         return total_tokens
 
