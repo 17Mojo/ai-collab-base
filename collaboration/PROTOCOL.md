@@ -584,15 +584,51 @@ python3 -m ai_collab.cli sessions handoff
 | 基线过期（G2） | git 真证 | **硬门禁** | ✅ |
 | 归属不清（G3） | mtime 启发式 | **软警告** | ❌（见下） |
 | 测试污染（G4） | pytest 配置 | 测试层修复 | ❌ |
+| 工作树分支冲突（G11） | git 真证 | **硬门禁** | ✅ |
 
 > **G3 的例外**：G3 默认只告警不阻断；但配置
 > `concurrentGuard.foreignChangeSeverity: "high"` 时，它会进入
 > **违规列表**并按违规阻断（此时风险级别为 `high`、放行结论为假）。
 > 也就是说「G3 不可阻断」说的是**默认配置**下的行为。
 
+### 14.7 工作树分支冲突（G11）
+
+**现象**：`git worktree list` 里两个及以上工作树签出同一个分支。
+
+**为什么它是硬门禁而不是软警告**：正常 git 造不出这个状态。`git worktree add`
+会拒绝重复分支，`git checkout <branch>` / `git switch <branch>` 也会以
+`fatal: '<branch>' is already checked out at '<path>'` 拦住。能造出它的只有
+**大写 `-B` / `-C`**（语义是「强制重置该分支」）或手工 `update-ref`——
+两者都绕过「该分支已被别处签出」的检查。
+
+**危害**：`HEAD` 是 `ref: refs/heads/<branch>`，而 `refs/` 由所有工作树共享。
+移动引用 = **同时移动所有指向它的 HEAD**，但各工作树的索引不跟着走。于是
+`git status` 会把「索引 vs 新 HEAD」的基线漂移全部报成改动，包括 `D` 型
+「删除」假象（文件根本没被删）。2026-11-16 实测：主工作区在一个 worktree 里
+执行 `checkout -B main origin/main` 后，HEAD 被动前移，`status` 从 153 条
+在途改动暴涨到 424 条（漂移 273 条路径）。
+
+**检测**：`concurrent_guard.detect_worktree_branch_collisions(workspace)`，
+解析 `git worktree list --porcelain`，只读。detached HEAD 的工作树没有
+`branch` 行，不参与计数（也不会掩盖真冲突）。
+
+**修法**：冲突不能靠 `--force-workspace` 覆盖解决——覆盖只是让门禁闭嘴，
+失真仍在那里。先让多余的工作树脱离该分支：
+
+```
+git -C <多余工作树> checkout --detach
+```
+
+若只想移动引用、不碰任何工作树，用 `git update-ref refs/heads/<branch> <commit>`，
+不要用 `-B` / `-C`。
+
+**降级开关**：`concurrentGuard.worktreeCollisionSeverity: "warning"` 可把它降为
+软警告（仍进 `warnings`，不静默）。默认 `high`。
+
+
 ### 14.6 综合风险评级
 
-`concurrent_guard.assess_concurrent_risk()` 综合三信号输出风险等级：
+`concurrent_guard.assess_concurrent_risk()` 综合四信号输出风险等级：
 
 | 条件 | risk_level | allowed |
 |------|-----------|---------|

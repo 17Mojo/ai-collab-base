@@ -286,3 +286,63 @@ class TestReportPersistence:
         assert rc == 0
         assert (ws / "logs/custom/report.json").exists()
         assert (ws / "logs/custom/history.jsonl").exists()
+
+
+class TestWorktreeCollision:
+    """G11 在 CLI 层的可观测性：退出码、报告、以及分支冲突的提示语。"""
+
+    def test_collision_blocks_with_exit_code_2(self, tmp_path, monkeypatch):
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        _commit(ws)
+        wt = tmp_path / "wt-feat"
+        subprocess.run(
+            ["git", "-C", str(ws), "worktree", "add", "-q", "-b", "feat1", str(wt)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        _git(ws, "checkout", "-q", "-B", "feat1")
+        _use_config(monkeypatch, {})
+
+        rc = cli.cmd_concurrent_guard(_args(ws, expected_branch="feat1"))
+
+        assert rc == 2
+        report = json.loads((ws / "logs/workspace_forensics/concurrent_guard_latest.json").read_text(encoding="utf-8"))
+        assert report["signals"]["worktree_collisions"]["collisions"][0]["branch"] == "feat1"
+        assert any("worktree collision" in item for item in report["violations"])
+
+    def test_collision_hint_explains_how_to_fix(self, tmp_path, monkeypatch, capsys):
+        """阻断时必须给出修法：覆盖不是解，冲突状态本身会让 status 失真。"""
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        _commit(ws)
+        wt = tmp_path / "wt-feat"
+        subprocess.run(
+            ["git", "-C", str(ws), "worktree", "add", "-q", "-b", "feat1", str(wt)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        _git(ws, "checkout", "-q", "-B", "feat1")
+        _use_config(monkeypatch, {})
+
+        cli.cmd_concurrent_guard(_args(ws, expected_branch="feat1"))
+
+        out = capsys.readouterr().out
+        assert "collisions: feat1 x2" in out
+        assert "worktree 冲突不能靠覆盖解决" in out
+
+    def test_no_collision_line_shows_none(self, tmp_path, monkeypatch, capsys):
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        _commit(ws)
+        _use_config(monkeypatch, {})
+
+        rc = cli.cmd_concurrent_guard(_args(ws, expected_branch="main"))
+
+        assert rc == 0
+        assert "collisions: none" in capsys.readouterr().out
