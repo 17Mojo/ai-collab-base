@@ -9,6 +9,7 @@ PreCompact Hook:
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import sys
 from datetime import datetime
@@ -52,8 +53,8 @@ def main() -> None:
             hook_input=hook_input,
             event_name="PreCompact",
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).debug("PreCompact 会话自动注册失败（hook 不阻塞）: %s", exc)
 
     snapshots = cwd / ".cc-claude-codex" / "snapshots"
     status_file = cwd / ".cc-claude-codex" / "status.md"

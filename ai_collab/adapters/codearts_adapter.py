@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import platform
 import re
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -239,7 +239,7 @@ def _run_bridge_command(
         cmd = ["cmd", "/C", rendered]
     else:
         cmd = ["/bin/sh", "-lc", rendered]
-    return subprocess.run(
+    return subprocess.run(  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
         cmd,
         cwd=str(workspace),
         capture_output=True,

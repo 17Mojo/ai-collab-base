@@ -12,7 +12,7 @@ import json
 import os
 import shlex
 import shutil
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -143,7 +143,7 @@ class AgentProvider:
                 # check_command 来源是硬编码常量（见 ProviderConfig），无注入风险
                 # 但仍用 shlex 拆分并 shell=False 以彻底消除 B602 告警
                 cmd_parts = shlex.split(check_command)
-                result = subprocess.run(cmd_parts, shell=False, capture_output=True, timeout=5)
+                result = subprocess.run(cmd_parts, shell=False, capture_output=True, timeout=5)  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
                 if result.returncode == 0:
                     self.connection_status = ProviderConnectionStatus.DETECTED
                     self.last_check = datetime.now()

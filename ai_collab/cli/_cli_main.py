@@ -6,9 +6,10 @@ AI 协作开发系统 - CLI 工具
 
 import argparse
 import json
+import logging
 import os
 import re
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -944,9 +945,9 @@ def cmd_activate(args):
                 assignee=args.ai,
                 session_id=result.get("session_id", ""),
             )
-        except Exception:
+        except Exception as exc:
             # 激活成功不应因自动注册失败而回退。
-            pass
+            logging.getLogger(__name__).debug("自动注册失败（激活成功不因注册失败而回退）: %s", exc)
 
         print("\n激活成功!")
         print(f"  AI类型: {result['ai_type']}")
@@ -2819,7 +2820,7 @@ def cmd_controller(args):
     print(f"历史路径: {history_path}")
     print(f"模式: {'dry-run' if args.dry_run else 'apply'}{' + once' if args.once else ''}")
 
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False)  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
     code = int(result.returncode)
     if code != 0:
         return code
@@ -3025,7 +3026,7 @@ def cmd_dispatch(args):
     print(f"状态路径: {state_path}")
     print(f"指令包: {orders_path}")
 
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False)  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
     code = int(result.returncode)
     if code != 0:
         return code
@@ -3142,7 +3143,7 @@ def cmd_trigger(args):
 
     if args.copy:
         assignee = assignees[0]
-        copy_result = subprocess.run(["pbcopy"], input=payloads[assignee], text=True, check=False)
+        copy_result = subprocess.run(["pbcopy"], input=payloads[assignee], text=True, check=False)  # nosec B603, B607  # 理由：固定命令 / shell=False，无外部可控输入；可执行文件名由系统 PATH 解析（平台内置命令）
         if copy_result.returncode != 0:
             print("\n错误: 拷贝到剪贴板失败（pbcopy 不可用）")
             return 1
@@ -3341,7 +3342,7 @@ def cmd_receipt(args):
     print(f"状态路径: {state_path}")
     print(f"摘要文件: {summary_path}")
 
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False)  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
     code = int(result.returncode)
     if code != 0:
         return code
@@ -3866,7 +3867,7 @@ def cmd_benefit(args):
     print(f"报告路径: {report_path}")
     print(f"看板路径: {output_path}")
 
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False)  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
     return int(result.returncode)
 
 

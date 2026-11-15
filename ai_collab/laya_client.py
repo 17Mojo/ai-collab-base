@@ -111,7 +111,7 @@ class LayaClient:
     def health(self) -> bool:
         """Return True if the Laya server is reachable (any response < 500 counts as up)."""
         try:
-            response = requests.get(
+            response = requests.get(  # nosec B113  # 理由：timeout 已由 timeout=min(2.0, self.timeout) 显式传入
                 f"{self.base_url}{HEALTH_PATH}",
                 timeout=min(2.0, self.timeout),
             )

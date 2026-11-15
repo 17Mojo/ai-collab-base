@@ -17,7 +17,7 @@ import json
 import logging
 import os
 import re
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 import time
 from datetime import datetime
 from pathlib import Path
@@ -183,7 +183,7 @@ def _query_notebooklm_via_cli(
     last_error: Exception | None = None
     for attempt in range(retries + 1):
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603  # 理由：固定命令 / shell=False，无外部可控输入
                 [NLM_CLI_PATH, "notebook", "query", notebook_id, query],
                 capture_output=True,
                 text=True,

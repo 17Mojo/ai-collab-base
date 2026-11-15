@@ -7,6 +7,7 @@
 根据项目文件结构和用户行为识别当前使用场景
 """
 
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -332,7 +333,8 @@ class ScenarioDetector:
                         )
 
                 total_files += 1
-            except Exception:
+            except Exception as exc:
+                logging.getLogger(__name__).debug("跳过无法读取的场景文件: %s", exc)
                 continue
 
         if total_files > 0:

@@ -9,6 +9,7 @@ Stop Hook:
 from __future__ import annotations
 
 import json
+import logging
 import re
 import sys
 from pathlib import Path
@@ -294,8 +295,8 @@ def main() -> None:
             hook_input=hook_input,
             event_name="StopActive",
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).debug("StopActive 会话注册失败（hook 不阻塞）: %s", exc)
 
     unfinished = _read_status_unfinished(status_file)
     active_tasks = _read_state_active(state_file, current_agent=current_agent)
@@ -313,8 +314,8 @@ def main() -> None:
                 hook_input=hook_input,
                 event_name="Stop",
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logging.getLogger(__name__).debug("Stop 会话注册失败（hook 不阻塞）: %s", exc)
         sys.exit(0)
 
     lines = ["AI Collab Stop Hook: 检测到未完成事项，阻止结束会话。"]

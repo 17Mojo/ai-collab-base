@@ -6,6 +6,7 @@ Pack 依赖 CLI 命令
 支持依赖添加、列出、解析、删除和冲突检查
 """
 
+import logging
 import sys
 from pathlib import Path
 
@@ -299,7 +300,8 @@ class PackDependencyCLI:
             try:
                 dep = PackDependency(name=dep_data["name"], version_range=dep_data["version_range"])
                 root.add_dependency(dep)
-            except Exception:
+            except Exception as exc:
+                logging.getLogger(__name__).debug("跳过无法解析的依赖条目: %s", exc)
                 continue
 
         # 检测冲突

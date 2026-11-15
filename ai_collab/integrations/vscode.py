@@ -5,6 +5,7 @@ VSCode 集成辅助模块
 """
 
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Any
@@ -152,9 +153,9 @@ class VSCodeIntegration:
             log_file = os.path.join(global_config_dir, f"output_{datetime.now().strftime('%Y%m%d')}.log")
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"[{datetime.now().isoformat()}] [{channel}] {message}\n")
-        except Exception:
+        except Exception as exc:
             # 静默失败，避免影响主流程
-            pass
+            logging.getLogger(__name__).debug("写入 VSCode 输出日志失败（静默失败，避免影响主流程）: %s", exc)
 
     @staticmethod
     def get_rule_files(ai_type: str, rules_dir: str = "./rules") -> list[str]:
