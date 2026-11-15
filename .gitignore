@@ -75,15 +75,12 @@ tests/playwright/playwright-report/
 tests/playwright/test-results/
 
 # Generated collaboration monitoring artifacts
-collaboration/monitoring/AGENT_DISPATCH_ORDERS_20*.md
-collaboration/monitoring/AGENT_DISPATCH_ORDERS_latest.md
-collaboration/monitoring/AGENT_DISPATCH_ORDERS_test.md
-collaboration/monitoring/AGENT_RECEIPT_SUMMARY_20*.md
-collaboration/monitoring/AGENT_RECEIPT_SUMMARY_latest.md
-collaboration/monitoring/AGENT_TRIGGER_codex_latest.md
-collaboration/monitoring/AGENT_TRIGGER_*_latest.md
-collaboration/monitoring/DAILY_REPORT_latest.md
-collaboration/monitoring/NOOP_PENDING_CONFLICT_SUMMARY_latest.md
+# 这类摘要的数据源是 gitignored 的本机状态（logs/*），产物只描述「生成它的那台机器」。
+# 规则必须覆盖该类产物的全部实例：早期是逐条列举，新增摘要会被静默漏掉，等到有人
+# `git add -A` 才发现——那时库里的团队会话总览已被覆写成单机视图（见 known_gaps.json N27）。
+collaboration/monitoring/*_latest.md
+collaboration/monitoring/*_20*.md
+collaboration/monitoring/*_test.md
 
 # 运行时事件/干预工件：每次轮询都会重生成，不入库
 collaboration/monitoring/codearts_pull_events/

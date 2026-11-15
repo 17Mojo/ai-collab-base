@@ -499,13 +499,14 @@
         "账本侧：`tasks migrate-identity` → `total=18 declared=0 partial=0 legacy=18 missing=0 invalid=0`；该次运行前后 `logs/collaboration_state.json` sha256 均为 62d92b34…f1b5d4（只读实测）。",
         "磁盘侧：`for f in TASK-*.md` 逐个 grep 身份字段 → `文件总数=26 有 session_id=0 有 model_id=0 两者皆无=26`。",
         "差值 8 未逐条追查归属，本条只登记「数量不一致且审计口径会误导」，不宣称已知是哪 8 个。",
-        "2026-11-16 真实 clone 复测（HEAD 2a968a2）：`checked=0` / `total=0` / `legacy_identity=0`，同时 `ls collaboration/tasks/TASK-*.md | wc -l` → 26。三处数字不一致，18 不可从仓库复现。"
+        "2026-11-16 真实 clone 复测（HEAD 2a968a2）：`checked=0` / `total=0` / `legacy_identity=0`，同时 `ls collaboration/tasks/TASK-*.md | wc -l` → 26。三处数字不一致，18 不可从仓库复现。",
+        "2026-11-16 根因补强（untrack-monitoring-snapshots 期间实测）：`logs/` 是**每个工作树各一份**的本机状态，不随 worktree 共享。主工作区 `logs/collaboration_state.json` 为 34,644 B / tasks 18 条 / sha256 62d92b34…（mtime 2026-10-26）；同基线新建的 wt-g11 为 3,301 B / tasks 2 条 / sha256 0472a163…（mtime 2026-11-16）；而磁盘 26 个 `TASK-*.md` 与两侧账本的交集均为 0。故「0 / 26 / 18」三数不一致的根因不是「审计漏读了文件」，而是**账本 per-worktree、md 才是仓库共享** —— 任何以账本为输入的审计，在非主工作区里只能看到该工作区自己注册过的任务。修法须先裁定任务事实源归属。"
       ]
     },
     {
       "id": "N27",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "机器本地的监控快照被跟踪进库，提交会把共享快照覆盖成本机单会话",
       "reader": "在 worktree 或干净检出里跑过一次 `sessions register` / `tasks validate-contract` 然后 `git add -A` 的人——`collaboration/monitoring/*_latest.md` 会被静默改写，提交后 main 上的 8 会话快照变成「单会话、healthy 1」，而这份 diff 看起来像一次正常的数据更新；以及看板读者——他们以为那是团队会话总览，实际是最后一个人跑 CLI 那台机器的本地视图。",
       "where": [
@@ -515,12 +516,17 @@
       ],
       "detail": "2026-11-16 在 migrate-session-identity 收口阶段实测：本 worktree 只跑了一次 `sessions register` 与一次 `validate-contract`，两个摘要文件立刻被改写——`SESSION_REGISTRY_SUMMARY_latest.md` 从「生成时间 2026-10-24 / 会话数 8 / healthy 7 / unhealthy 1」变成「2026-11-16 / 会话数 1 / healthy 1 / unhealthy 0」，8 个真实会话 ID 整段被本机唯一会话 `sess-migrate-identity-20261116` 替换。数据源 `logs/session_registry_state.json` 是 gitignored 的本机状态，因此这些摘要天生只描述「生成它的那台机器」。",
       "impact": "① `git add -A` 提交后 main 上的团队会话总览被覆写成单机视图，且 diff 形如正常刷新，评审很难看出信息丢失；② 两份 worktree 并行时互相覆盖，谁最后提交谁赢，历史里留下一串语义错误的快照；③ 任何以该摘要为输入的健康度/审计判断都会读到该机器以外的会话数为 0，得出「团队只有一个会话」的荒谬结论。",
-      "fix": "已做（本轮）：识别到该风险后将两个文件从提交 pathspec 中排除并 `git checkout --` 还原，提交里不含它们，`git status` 复跑后确认无残留。待做：① 把 `collaboration/monitoring/*_latest.md` 加入 `.gitignore` 并 `git rm --cached`，让摘要不再入库；② 若要保留团队级总览，改为 CI/汇总侧生成，数据源换成跨会话的聚合口径而非单机 `logs/`；③ 在修复前，任何 `git add -A` 式提交都应显式排除该目录。",
+      "fix": "已修（2026-11-16 · untrack-monitoring-snapshots）：`.gitignore` 的 monitoring 区块由 9 条逐条列举换成 `*_latest.md` / `*_20*.md` / `*_test.md` 三条通配；`git rm --cached` 全部 13 个已跟踪摘要（`--cached` 语义，工作区文件保留、内容 sha256 未变）；生成器未改。实测 `sessions register` 真改写摘要后 `git status` 不再报告（M 型 monitoring 改动 0 条）。待做（独立 change，不在本条范围）：若要恢复团队级总览，改由汇总侧按跨会话聚合口径生成，不要回到「单机日志直出 + 入库」。",
       "found_at": "2026-11-16",
-      "closed_at": null,
+      "closed_at": "2026-11-16",
       "appended_evidence": [
         "实测 diff：`-生成时间: 2026-10-24T19:06:17` / `-会话数: 8` / `+会话数: 1`，8 条 `assignee=claude_code` 会话行被删除，只留 `sess-migrate-identity-20261116`。",
-        "该改动由 `sessions register` 与 `tasks validate-contract` 自动触发，非人为编辑；本轮已 `git checkout --` 还原，未进入提交。"
+        "该改动由 `sessions register` 与 `tasks validate-contract` 自动触发，非人为编辑；本轮已 `git checkout --` 还原，未进入提交。",
+        "2026-11-16 修复实测：13 个摘要全部 untrack，`git ls-files collaboration/monitoring/` 返回 0 条；工作区 13 个文件仍在原位、`SESSION_REGISTRY_SUMMARY_latest.md` 的 sha256 仍为 292699c5…（会话数 8）。",
+        "效果实证：`sessions register --session-id sess-untrack-monitoring-20261116` 把该摘要从 sha256 292699c5…（生成时间 2026-10-24，会话数 8）改写为 2be4f908…（2026-11-16，会话数 2），而 `git status --porcelain | grep -E '^( M|M )' | grep -c collaboration/monitoring` 为 0 —— 改写不再被报告。",
+        "范围更正：不是台账原写的 2 个文件，而是 13 个受跟踪摘要（11 个 `*_latest.md` + 2 个 `*_test.md`）。`.gitignore` 原有 9 条逐条列举 vs 13 个受跟踪文件，两集合无交集。",
+        "改规则时抓到回归：`AGENT_DISPATCH_ORDERS_test.md` 原由第 80 行单独忽略（后缀 `_test`），换成 `*_latest.md` / `*_20*.md` 后失去忽略；补 `*_test.md` 后恢复。9 条原规则覆盖的实例逐个复核，全部仍被忽略。",
+        "方法论更正：`git check-ignore` 默认跳过已跟踪文件，对受跟踪集合调用必然全部返回未命中，不能用于判定「规则是否覆盖该路径」，须加 `--no-index`。初期用前者得出「13 个全部未命中」，方向正确但方法不可沿用；已写进 `specs/tracked-artifact-hygiene/spec.md` 的核验场景。"
       ]
     },
     {
