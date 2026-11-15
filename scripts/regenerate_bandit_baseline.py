@@ -155,7 +155,9 @@ def main() -> int:
         return 0
 
     args.baseline.parent.mkdir(parents=True, exist_ok=True)
-    args.baseline.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    # 沿用 bandit 原生报告格式（indent=2 / ensure_ascii=True / 无末尾换行），
+    # 避免每次重生成都产生全文件 diff，审计时只需看实际变化的行。
+    args.baseline.write_text(json.dumps(out, indent=2), encoding="utf-8")
     args.audit_log.parent.mkdir(parents=True, exist_ok=True)
     with args.audit_log.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")

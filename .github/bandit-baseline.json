@@ -1,2282 +1,2282 @@
 {
- "errors": [],
- "generated_at": "2026-11-15T12:57:39Z",
- "metrics": {
-  "_totals": {
-   "CONFIDENCE.HIGH": 42,
-   "CONFIDENCE.LOW": 1,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 42,
-   "SEVERITY.MEDIUM": 1,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 34001,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 26,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/__main__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 8,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/ack_protocol.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 298,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/ack_remediation.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 179,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/ack_watchdog.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 408,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/activation_handler.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 374,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/adapters/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 11,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/adapters/base_adapter.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 43,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/adapters/claude_adapter.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 348,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/adapters/codearts_adapter.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 521,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/adapters/codex_adapter.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 224,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/adapters/contract.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 65,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/agent_orchestrator.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 223,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/archive_inventory.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 147,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 47,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/__main__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 12,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/_cli_main.py": {
-   "CONFIDENCE.HIGH": 8,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 8,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 4706,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/context_aggregator.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 272,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/context_search.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 313,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/pack_bulk.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 304,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/pack_dependency.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 291,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/pack_import.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 346,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/pack_market.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 378,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/pack_rating.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 223,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/pack_template.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 235,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/pack_version.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 241,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/cli/react_convert.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 171,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/codex_integration.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 648,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/concurrent_guard.py": {
-   "CONFIDENCE.HIGH": 3,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 3,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 296,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/config/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 6,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/config/integration_flags.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 87,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 0,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/aggregator.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 181,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/enhanced.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 396,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/graph.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 187,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/learning.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 260,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/recommender.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 454,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/scenario.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 405,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/schema.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 294,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/search.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 333,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/context/store.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 206,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/daily_report.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 244,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/dev_logger.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 338,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/dispatch_trigger.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 350,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/engines/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 0,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/engines/consensus_engine.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 313,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/engines/soul_injection_engine.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 396,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/external_closeout_queue.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 368,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/handoff_notification.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 277,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/hooks/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 1,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/hooks/pre_compact.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 49,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/hooks/session_inject.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 168,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/hooks/spawn_agent_preflight.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 309,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/hooks/stop_check.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 285,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/integrations/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 6,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/integrations/dispatch_notebooklm.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 355,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/integrations/knowledge_graph.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 443,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/integrations/multi_source.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 220,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/integrations/notebooklm.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 393,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/integrations/research_workflow.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 136,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/integrations/vscode.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 166,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/intervention_queue.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 791,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/laya_client.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 1,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 1,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 105,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/missing_ack_monitor.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 324,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/noop_pending_monitor.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 195,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/notification.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 235,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/orchestration.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 641,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 16,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/bulk.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 389,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/dependency.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 373,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/examples/pack_usage_demo.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 198,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/examples/xiaohongshu_explosive_copy.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 13,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/importer.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 293,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/market.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 161,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/market_api.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 429,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/market_store.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 620,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/pack_executor_mvp.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 441,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/react_converter.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 348,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/schema_v2.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 802,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/schema_validator.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 481,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/template.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 334,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/pack/version.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 340,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/__init__.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 25,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/compatibility.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 344,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/manager.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 342,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/rating.py": {
-   "CONFIDENCE.HIGH": 2,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 2,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 299,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/schema.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 135,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/sharing.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 364,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/store.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 379,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/prompt_pack/version.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 300,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/resources/prompt_aggregator.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 245,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/result_consistency_audit.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 212,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/role_prefix.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 164,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/session_auto_register.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 294,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/session_autoregistration.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 198,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/session_continuation_handoff.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 368,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/session_health.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 858,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/session_registry.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 429,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/spawn_agent_guard.py": {
-   "CONFIDENCE.HIGH": 0,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 0,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 234,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/state_manager.py": {
-   "CONFIDENCE.HIGH": 1,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 1,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 1977,
-   "nosec": 0,
-   "skipped_tests": 0
-  },
-  "ai_collab/workspace_guard.py": {
-   "CONFIDENCE.HIGH": 5,
-   "CONFIDENCE.LOW": 0,
-   "CONFIDENCE.MEDIUM": 0,
-   "CONFIDENCE.UNDEFINED": 0,
-   "SEVERITY.HIGH": 0,
-   "SEVERITY.LOW": 5,
-   "SEVERITY.MEDIUM": 0,
-   "SEVERITY.UNDEFINED": 0,
-   "loc": 321,
-   "nosec": 0,
-   "skipped_tests": 0
+  "errors": [],
+  "generated_at": "2026-11-15T12:14:28Z",
+  "metrics": {
+    "_totals": {
+      "CONFIDENCE.HIGH": 42,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 42,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 34001,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 26,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/__main__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 8,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/ack_protocol.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 298,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/ack_remediation.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 179,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/ack_watchdog.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 408,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/activation_handler.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 374,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/adapters/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 11,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/adapters/base_adapter.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 43,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/adapters/claude_adapter.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 348,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/adapters/codearts_adapter.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 521,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/adapters/codex_adapter.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 224,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/adapters/contract.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 65,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/agent_orchestrator.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 223,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/archive_inventory.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 147,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 47,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/__main__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 12,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/_cli_main.py": {
+      "CONFIDENCE.HIGH": 8,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 8,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 4706,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/context_aggregator.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 272,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/context_search.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 313,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/pack_bulk.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 304,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/pack_dependency.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 291,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/pack_import.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 346,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/pack_market.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 378,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/pack_rating.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 223,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/pack_template.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 235,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/pack_version.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 241,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/cli/react_convert.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 171,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/codex_integration.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 648,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/concurrent_guard.py": {
+      "CONFIDENCE.HIGH": 3,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 3,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 296,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/config/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 6,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/config/integration_flags.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 87,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/aggregator.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 181,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/enhanced.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 396,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/graph.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 187,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/learning.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 260,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/recommender.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 454,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/scenario.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 405,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/schema.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 294,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/search.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 333,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/context/store.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 206,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/daily_report.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 244,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/dev_logger.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 338,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/dispatch_trigger.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 350,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/engines/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/engines/consensus_engine.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 313,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/engines/soul_injection_engine.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 396,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/external_closeout_queue.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 368,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/handoff_notification.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 277,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/hooks/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 1,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/hooks/pre_compact.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 49,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/hooks/session_inject.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 168,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/hooks/spawn_agent_preflight.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 309,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/hooks/stop_check.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 285,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/integrations/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 6,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/integrations/dispatch_notebooklm.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 355,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/integrations/knowledge_graph.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 443,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/integrations/multi_source.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 220,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/integrations/notebooklm.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 393,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/integrations/research_workflow.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 136,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/integrations/vscode.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 166,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/intervention_queue.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 791,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/laya_client.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 105,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/missing_ack_monitor.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 324,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/noop_pending_monitor.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 195,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/notification.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 235,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/orchestration.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 641,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 16,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/bulk.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 389,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/dependency.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 373,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/examples/pack_usage_demo.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 198,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/examples/xiaohongshu_explosive_copy.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 13,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/importer.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 293,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/market.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 161,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/market_api.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 429,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/market_store.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 620,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/pack_executor_mvp.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 441,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/react_converter.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 348,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/schema_v2.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 802,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/schema_validator.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 481,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/template.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 334,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/pack/version.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 340,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 25,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/compatibility.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 344,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/manager.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 342,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/rating.py": {
+      "CONFIDENCE.HIGH": 2,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 299,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/schema.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 135,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/sharing.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 364,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/store.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 379,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/prompt_pack/version.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 300,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/resources/prompt_aggregator.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 245,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/result_consistency_audit.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 212,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/role_prefix.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 164,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/session_auto_register.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 294,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/session_autoregistration.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 198,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/session_continuation_handoff.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 368,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/session_health.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 858,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/session_registry.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 429,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/spawn_agent_guard.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 234,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/state_manager.py": {
+      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 1977,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "ai_collab/workspace_guard.py": {
+      "CONFIDENCE.HIGH": 5,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 5,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 321,
+      "nosec": 0,
+      "skipped_tests": 0
+    }
+  },
+  "results": [
+    {
+      "code": "121                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n122         except Exception:\n123             pass  # \u9759\u9ed8\u5931\u8d25\n124 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/activation_handler.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 122,
+      "line_range": [
+        122,
+        123
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "7 import re\n8 import subprocess\n9 from datetime import datetime\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/adapters/claude_adapter.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 8,
+      "line_range": [
+        8
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "146         cmd = [\"/bin/sh\", \"-lc\", rendered]\n147     return subprocess.run(\n148         cmd,\n149         cwd=str(workspace),\n150         capture_output=True,\n151         text=True,\n152         check=False,\n153     )\n154 \n",
+      "col_offset": 11,
+      "end_col_offset": 5,
+      "filename": "ai_collab/adapters/claude_adapter.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 147,
+      "line_range": [
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "7 import re\n8 import subprocess\n9 from datetime import datetime\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/adapters/codearts_adapter.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 8,
+      "line_range": [
+        8
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "241         cmd = [\"/bin/sh\", \"-lc\", rendered]\n242     return subprocess.run(\n243         cmd,\n244         cwd=str(workspace),\n245         capture_output=True,\n246         text=True,\n247         check=False,\n248     )\n249 \n",
+      "col_offset": 11,
+      "end_col_offset": 5,
+      "filename": "ai_collab/adapters/codearts_adapter.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 242,
+      "line_range": [
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "10 import re\n11 import subprocess\n12 import sys\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 11,
+      "line_range": [
+        11
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "946             )\n947         except Exception:\n948             # \u6fc0\u6d3b\u6210\u529f\u4e0d\u5e94\u56e0\u81ea\u52a8\u6ce8\u518c\u5931\u8d25\u800c\u56de\u9000\u3002\n949             pass\n950 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 947,
+      "line_range": [
+        947,
+        948,
+        949
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "2821 \n2822     result = subprocess.run(cmd, check=False)\n2823     code = int(result.returncode)\n",
+      "col_offset": 13,
+      "end_col_offset": 45,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 2822,
+      "line_range": [
+        2822
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "3027 \n3028     result = subprocess.run(cmd, check=False)\n3029     code = int(result.returncode)\n",
+      "col_offset": 13,
+      "end_col_offset": 45,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 3028,
+      "line_range": [
+        3028
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "3144         assignee = assignees[0]\n3145         copy_result = subprocess.run([\"pbcopy\"], input=payloads[assignee], text=True, check=False)\n3146         if copy_result.returncode != 0:\n",
+      "col_offset": 22,
+      "end_col_offset": 98,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Starting a process with a partial executable path",
+      "line_number": 3145,
+      "line_range": [
+        3145
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
+      "test_id": "B607",
+      "test_name": "start_process_with_partial_path"
+    },
+    {
+      "code": "3144         assignee = assignees[0]\n3145         copy_result = subprocess.run([\"pbcopy\"], input=payloads[assignee], text=True, check=False)\n3146         if copy_result.returncode != 0:\n",
+      "col_offset": 22,
+      "end_col_offset": 98,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 3145,
+      "line_range": [
+        3145
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "3343 \n3344     result = subprocess.run(cmd, check=False)\n3345     code = int(result.returncode)\n",
+      "col_offset": 13,
+      "end_col_offset": 45,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 3344,
+      "line_range": [
+        3344
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "3868 \n3869     result = subprocess.run(cmd, check=False)\n3870     return int(result.returncode)\n",
+      "col_offset": 13,
+      "end_col_offset": 45,
+      "filename": "ai_collab/cli/_cli_main.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 3869,
+      "line_range": [
+        3869
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "301                 root.add_dependency(dep)\n302             except Exception:\n303                 continue\n304 \n",
+      "col_offset": 12,
+      "end_col_offset": 24,
+      "filename": "ai_collab/cli/pack_dependency.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Continue detected.",
+      "line_number": 302,
+      "line_range": [
+        302,
+        303
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html",
+      "test_id": "B112",
+      "test_name": "try_except_continue"
+    },
+    {
+      "code": "20 import shutil\n21 import subprocess\n22 import time\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/codex_integration.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 21,
+      "line_range": [
+        21
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "298         with open(out_file, \"w\", encoding=\"utf-8\") as of, open(log_file, \"w\", encoding=\"utf-8\") as lf:\n299             proc = subprocess.Popen(  # noqa: S603\n300                 cmd,\n301                 cwd=str(self.workspace),\n302                 stdout=of,\n303                 stderr=lf,\n304                 text=True,\n305             )\n306 \n",
+      "col_offset": 19,
+      "end_col_offset": 13,
+      "filename": "ai_collab/codex_integration.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 299,
+      "line_range": [
+        299,
+        300,
+        301,
+        302,
+        303,
+        304,
+        305
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "6 import os\n7 import subprocess\n8 from datetime import datetime\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/concurrent_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 7,
+      "line_range": [
+        7
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "13 def _run_git(workspace: Path, args: list[str]) -> subprocess.CompletedProcess[str]:\n14     return subprocess.run(\n15         [\"git\", \"-C\", str(workspace), *args],\n16         capture_output=True,\n17         text=True,\n18         check=False,\n19     )\n20 \n",
+      "col_offset": 11,
+      "end_col_offset": 5,
+      "filename": "ai_collab/concurrent_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Starting a process with a partial executable path",
+      "line_number": 14,
+      "line_range": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
+      "test_id": "B607",
+      "test_name": "start_process_with_partial_path"
+    },
+    {
+      "code": "13 def _run_git(workspace: Path, args: list[str]) -> subprocess.CompletedProcess[str]:\n14     return subprocess.run(\n15         [\"git\", \"-C\", str(workspace), *args],\n16         capture_output=True,\n17         text=True,\n18         check=False,\n19     )\n20 \n",
+      "col_offset": 11,
+      "end_col_offset": 5,
+      "filename": "ai_collab/concurrent_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 14,
+      "line_range": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "334                 total_files += 1\n335             except Exception:\n336                 continue\n337 \n",
+      "col_offset": 12,
+      "end_col_offset": 24,
+      "filename": "ai_collab/context/scenario.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Continue detected.",
+      "line_number": 335,
+      "line_range": [
+        335,
+        336
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html",
+      "test_id": "B112",
+      "test_name": "try_except_continue"
+    },
+    {
+      "code": "44                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n45         except Exception:\n46             pass\n47 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/dev_logger.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 45,
+      "line_range": [
+        45,
+        46
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "54         )\n55     except Exception:\n56         pass\n57 \n",
+      "col_offset": 4,
+      "end_col_offset": 12,
+      "filename": "ai_collab/hooks/pre_compact.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 55,
+      "line_range": [
+        55,
+        56
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "151         )\n152     except Exception:\n153         pass\n154 \n",
+      "col_offset": 4,
+      "end_col_offset": 12,
+      "filename": "ai_collab/hooks/session_inject.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 152,
+      "line_range": [
+        152,
+        153
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "190             )\n191     except Exception:\n192         pass\n193 \n",
+      "col_offset": 4,
+      "end_col_offset": 12,
+      "filename": "ai_collab/hooks/session_inject.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 191,
+      "line_range": [
+        191,
+        192
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "296         )\n297     except Exception:\n298         pass\n299 \n",
+      "col_offset": 4,
+      "end_col_offset": 12,
+      "filename": "ai_collab/hooks/stop_check.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 297,
+      "line_range": [
+        297,
+        298
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "315             )\n316         except Exception:\n317             pass\n318         sys.exit(0)\n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/hooks/stop_check.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 316,
+      "line_range": [
+        316,
+        317
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "19 import re\n20 import subprocess\n21 import time\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/integrations/dispatch_notebooklm.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 20,
+      "line_range": [
+        20
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "185         try:\n186             result = subprocess.run(\n187                 [NLM_CLI_PATH, \"notebook\", \"query\", notebook_id, query],\n188                 capture_output=True,\n189                 text=True,\n190                 env=env,\n191                 timeout=timeout,\n192             )\n193 \n",
+      "col_offset": 21,
+      "end_col_offset": 13,
+      "filename": "ai_collab/integrations/dispatch_notebooklm.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 186,
+      "line_range": [
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "67                 )\n68         except Exception:\n69             pass  # FALLBACK \u6a21\u5f0f\u53ef\u80fd\u4e0d\u652f\u6301\n70 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/integrations/research_workflow.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 68,
+      "line_range": [
+        68,
+        69
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "83                 )\n84         except Exception:\n85             pass\n86 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/integrations/research_workflow.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 84,
+      "line_range": [
+        84,
+        85
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "154                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n155         except Exception:\n156             # \u9759\u9ed8\u5931\u8d25\uff0c\u907f\u514d\u5f71\u54cd\u4e3b\u6d41\u7a0b\n157             pass\n158 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/integrations/vscode.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 155,
+      "line_range": [
+        155,
+        156,
+        157
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "113         try:\n114             response = requests.get(\n115                 f\"{self.base_url}{HEALTH_PATH}\",\n116                 timeout=min(2.0, self.timeout),\n117             )\n118             return response.status_code < 500\n",
+      "col_offset": 23,
+      "end_col_offset": 13,
+      "filename": "ai_collab/laya_client.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 400,
+        "link": "https://cwe.mitre.org/data/definitions/400.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Call to requests without timeout",
+      "line_number": 114,
+      "line_range": [
+        114,
+        115,
+        116,
+        117
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b113_request_without_timeout.html",
+      "test_id": "B113",
+      "test_name": "request_without_timeout"
+    },
+    {
+      "code": "14 import shutil\n15 import subprocess\n16 from datetime import datetime\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/orchestration.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 15,
+      "line_range": [
+        15
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "145                 cmd_parts = shlex.split(check_command)\n146                 result = subprocess.run(cmd_parts, shell=False, capture_output=True, timeout=5)\n147                 if result.returncode == 0:\n",
+      "col_offset": 25,
+      "end_col_offset": 95,
+      "filename": "ai_collab/orchestration.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 146,
+      "line_range": [
+        146
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "318                     total_tokens += self.estimate_pack_tokens(dep_pack, include_dependencies=False)\n319                 except Exception:\n320                     pass\n321 \n",
+      "col_offset": 16,
+      "end_col_offset": 24,
+      "filename": "ai_collab/prompt_pack/manager.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 319,
+      "line_range": [
+        319,
+        320
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "171                     )\n172             except Exception:\n173                 # \u5ffd\u7565\u9519\u8bef\uff08\u5546\u5e97\u53ef\u80fd\u4e0d\u53ef\u7528\uff09\n174                 pass\n175 \n",
+      "col_offset": 12,
+      "end_col_offset": 20,
+      "filename": "ai_collab/prompt_pack/rating.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 172,
+      "line_range": [
+        172,
+        173,
+        174
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "332                 registry.update_pack_stats(pack_name, rating=summary.average_rating, review_count=summary.total_reviews)\n333         except Exception:\n334             # \u5ffd\u7565\u9519\u8bef\uff08\u5546\u5e97\u53ef\u80fd\u4e0d\u53ef\u7528\uff09\n335             pass\n336 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/prompt_pack/rating.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 333,
+      "line_range": [
+        333,
+        334,
+        335
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "284                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n285         except Exception:\n286             pass\n287 \n",
+      "col_offset": 8,
+      "end_col_offset": 16,
+      "filename": "ai_collab/state_manager.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Try, Except, Pass detected.",
+      "line_number": 285,
+      "line_range": [
+        285,
+        286
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
+      "test_id": "B110",
+      "test_name": "try_except_pass"
+    },
+    {
+      "code": "5 import json\n6 import subprocess\n7 from collections import Counter\n",
+      "col_offset": 0,
+      "end_col_offset": 17,
+      "filename": "ai_collab/workspace_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Consider possible security implications associated with the subprocess module.",
+      "line_number": 6,
+      "line_range": [
+        6
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "test_id": "B404",
+      "test_name": "blacklist"
+    },
+    {
+      "code": "104     \"\"\"Read git porcelain entries and annotate status/domain.\"\"\"\n105     result = subprocess.run(\n106         [\"git\", \"-C\", str(workspace), \"status\", \"--porcelain=v1\", \"--untracked-files=all\"],\n107         capture_output=True,\n108         text=True,\n109         check=False,\n110     )\n111     if result.returncode != 0:\n",
+      "col_offset": 13,
+      "end_col_offset": 5,
+      "filename": "ai_collab/workspace_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Starting a process with a partial executable path",
+      "line_number": 105,
+      "line_range": [
+        105,
+        106,
+        107,
+        108,
+        109,
+        110
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
+      "test_id": "B607",
+      "test_name": "start_process_with_partial_path"
+    },
+    {
+      "code": "104     \"\"\"Read git porcelain entries and annotate status/domain.\"\"\"\n105     result = subprocess.run(\n106         [\"git\", \"-C\", str(workspace), \"status\", \"--porcelain=v1\", \"--untracked-files=all\"],\n107         capture_output=True,\n108         text=True,\n109         check=False,\n110     )\n111     if result.returncode != 0:\n",
+      "col_offset": 13,
+      "end_col_offset": 5,
+      "filename": "ai_collab/workspace_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 105,
+      "line_range": [
+        105,
+        106,
+        107,
+        108,
+        109,
+        110
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    },
+    {
+      "code": "329         for chunk in _chunked(paths):\n330             result = subprocess.run(\n331                 [\"git\", \"-C\", str(workspace), \"add\", \"--\", *chunk],\n332                 capture_output=True,\n333                 text=True,\n334                 check=False,\n335             )\n336             if result.returncode != 0:\n",
+      "col_offset": 21,
+      "end_col_offset": 13,
+      "filename": "ai_collab/workspace_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Starting a process with a partial executable path",
+      "line_number": 330,
+      "line_range": [
+        330,
+        331,
+        332,
+        333,
+        334,
+        335
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
+      "test_id": "B607",
+      "test_name": "start_process_with_partial_path"
+    },
+    {
+      "code": "329         for chunk in _chunked(paths):\n330             result = subprocess.run(\n331                 [\"git\", \"-C\", str(workspace), \"add\", \"--\", *chunk],\n332                 capture_output=True,\n333                 text=True,\n334                 check=False,\n335             )\n336             if result.returncode != 0:\n",
+      "col_offset": 21,
+      "end_col_offset": 13,
+      "filename": "ai_collab/workspace_guard.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 78,
+        "link": "https://cwe.mitre.org/data/definitions/78.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "subprocess call - check for execution of untrusted input.",
+      "line_number": 330,
+      "line_range": [
+        330,
+        331,
+        332,
+        333,
+        334,
+        335
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
+      "test_id": "B603",
+      "test_name": "subprocess_without_shell_equals_true"
+    }
+  ],
+  "_audit": {
+    "schema_version": 1,
+    "generated_at": "2026-11-15T13:01:56Z",
+    "generated_from_commit": "f2854d01b51a0c02841f32ebc4b115f61ca52598",
+    "bandit_version": "1.9.4",
+    "scan_path": "ai_collab/",
+    "result_count": 43,
+    "results_sha256": "b7b2dcfae3e09fbaf84ec7cc8347ae65c6d4035f940413b20b11ba21a449e43c",
+    "reason": "\u521d\u59cb\u767b\u8bb0 43 \u6761\u5b58\u91cf findings\uff08PR #66 baseline \u95e8\u7981\u5347\u7ea7\uff0c\u8865\u5f3a\u5236\u5ba1\u8ba1\u5143\u6570\u636e\uff09"
   }
- },
- "results": [
-  {
-   "code": "121                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n122         except Exception:\n123             pass  # 静默失败\n124 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/activation_handler.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 122,
-   "line_range": [
-    122,
-    123
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "7 import re\n8 import subprocess\n9 from datetime import datetime\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/adapters/claude_adapter.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 8,
-   "line_range": [
-    8
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "146         cmd = [\"/bin/sh\", \"-lc\", rendered]\n147     return subprocess.run(\n148         cmd,\n149         cwd=str(workspace),\n150         capture_output=True,\n151         text=True,\n152         check=False,\n153     )\n154 \n",
-   "col_offset": 11,
-   "end_col_offset": 5,
-   "filename": "ai_collab/adapters/claude_adapter.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 147,
-   "line_range": [
-    147,
-    148,
-    149,
-    150,
-    151,
-    152,
-    153
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "7 import re\n8 import subprocess\n9 from datetime import datetime\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/adapters/codearts_adapter.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 8,
-   "line_range": [
-    8
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "241         cmd = [\"/bin/sh\", \"-lc\", rendered]\n242     return subprocess.run(\n243         cmd,\n244         cwd=str(workspace),\n245         capture_output=True,\n246         text=True,\n247         check=False,\n248     )\n249 \n",
-   "col_offset": 11,
-   "end_col_offset": 5,
-   "filename": "ai_collab/adapters/codearts_adapter.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 242,
-   "line_range": [
-    242,
-    243,
-    244,
-    245,
-    246,
-    247,
-    248
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "10 import re\n11 import subprocess\n12 import sys\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 11,
-   "line_range": [
-    11
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "946             )\n947         except Exception:\n948             # 激活成功不应因自动注册失败而回退。\n949             pass\n950 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 947,
-   "line_range": [
-    947,
-    948,
-    949
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "2821 \n2822     result = subprocess.run(cmd, check=False)\n2823     code = int(result.returncode)\n",
-   "col_offset": 13,
-   "end_col_offset": 45,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 2822,
-   "line_range": [
-    2822
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "3027 \n3028     result = subprocess.run(cmd, check=False)\n3029     code = int(result.returncode)\n",
-   "col_offset": 13,
-   "end_col_offset": 45,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 3028,
-   "line_range": [
-    3028
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "3144         assignee = assignees[0]\n3145         copy_result = subprocess.run([\"pbcopy\"], input=payloads[assignee], text=True, check=False)\n3146         if copy_result.returncode != 0:\n",
-   "col_offset": 22,
-   "end_col_offset": 98,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Starting a process with a partial executable path",
-   "line_number": 3145,
-   "line_range": [
-    3145
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
-   "test_id": "B607",
-   "test_name": "start_process_with_partial_path"
-  },
-  {
-   "code": "3144         assignee = assignees[0]\n3145         copy_result = subprocess.run([\"pbcopy\"], input=payloads[assignee], text=True, check=False)\n3146         if copy_result.returncode != 0:\n",
-   "col_offset": 22,
-   "end_col_offset": 98,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 3145,
-   "line_range": [
-    3145
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "3343 \n3344     result = subprocess.run(cmd, check=False)\n3345     code = int(result.returncode)\n",
-   "col_offset": 13,
-   "end_col_offset": 45,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 3344,
-   "line_range": [
-    3344
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "3868 \n3869     result = subprocess.run(cmd, check=False)\n3870     return int(result.returncode)\n",
-   "col_offset": 13,
-   "end_col_offset": 45,
-   "filename": "ai_collab/cli/_cli_main.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 3869,
-   "line_range": [
-    3869
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "301                 root.add_dependency(dep)\n302             except Exception:\n303                 continue\n304 \n",
-   "col_offset": 12,
-   "end_col_offset": 24,
-   "filename": "ai_collab/cli/pack_dependency.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Continue detected.",
-   "line_number": 302,
-   "line_range": [
-    302,
-    303
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html",
-   "test_id": "B112",
-   "test_name": "try_except_continue"
-  },
-  {
-   "code": "20 import shutil\n21 import subprocess\n22 import time\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/codex_integration.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 21,
-   "line_range": [
-    21
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "298         with open(out_file, \"w\", encoding=\"utf-8\") as of, open(log_file, \"w\", encoding=\"utf-8\") as lf:\n299             proc = subprocess.Popen(  # noqa: S603\n300                 cmd,\n301                 cwd=str(self.workspace),\n302                 stdout=of,\n303                 stderr=lf,\n304                 text=True,\n305             )\n306 \n",
-   "col_offset": 19,
-   "end_col_offset": 13,
-   "filename": "ai_collab/codex_integration.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 299,
-   "line_range": [
-    299,
-    300,
-    301,
-    302,
-    303,
-    304,
-    305
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "6 import os\n7 import subprocess\n8 from datetime import datetime\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/concurrent_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 7,
-   "line_range": [
-    7
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "13 def _run_git(workspace: Path, args: list[str]) -> subprocess.CompletedProcess[str]:\n14     return subprocess.run(\n15         [\"git\", \"-C\", str(workspace), *args],\n16         capture_output=True,\n17         text=True,\n18         check=False,\n19     )\n20 \n",
-   "col_offset": 11,
-   "end_col_offset": 5,
-   "filename": "ai_collab/concurrent_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Starting a process with a partial executable path",
-   "line_number": 14,
-   "line_range": [
-    14,
-    15,
-    16,
-    17,
-    18,
-    19
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
-   "test_id": "B607",
-   "test_name": "start_process_with_partial_path"
-  },
-  {
-   "code": "13 def _run_git(workspace: Path, args: list[str]) -> subprocess.CompletedProcess[str]:\n14     return subprocess.run(\n15         [\"git\", \"-C\", str(workspace), *args],\n16         capture_output=True,\n17         text=True,\n18         check=False,\n19     )\n20 \n",
-   "col_offset": 11,
-   "end_col_offset": 5,
-   "filename": "ai_collab/concurrent_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 14,
-   "line_range": [
-    14,
-    15,
-    16,
-    17,
-    18,
-    19
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "334                 total_files += 1\n335             except Exception:\n336                 continue\n337 \n",
-   "col_offset": 12,
-   "end_col_offset": 24,
-   "filename": "ai_collab/context/scenario.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Continue detected.",
-   "line_number": 335,
-   "line_range": [
-    335,
-    336
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html",
-   "test_id": "B112",
-   "test_name": "try_except_continue"
-  },
-  {
-   "code": "44                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n45         except Exception:\n46             pass\n47 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/dev_logger.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 45,
-   "line_range": [
-    45,
-    46
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "54         )\n55     except Exception:\n56         pass\n57 \n",
-   "col_offset": 4,
-   "end_col_offset": 12,
-   "filename": "ai_collab/hooks/pre_compact.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 55,
-   "line_range": [
-    55,
-    56
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "151         )\n152     except Exception:\n153         pass\n154 \n",
-   "col_offset": 4,
-   "end_col_offset": 12,
-   "filename": "ai_collab/hooks/session_inject.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 152,
-   "line_range": [
-    152,
-    153
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "190             )\n191     except Exception:\n192         pass\n193 \n",
-   "col_offset": 4,
-   "end_col_offset": 12,
-   "filename": "ai_collab/hooks/session_inject.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 191,
-   "line_range": [
-    191,
-    192
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "296         )\n297     except Exception:\n298         pass\n299 \n",
-   "col_offset": 4,
-   "end_col_offset": 12,
-   "filename": "ai_collab/hooks/stop_check.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 297,
-   "line_range": [
-    297,
-    298
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "315             )\n316         except Exception:\n317             pass\n318         sys.exit(0)\n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/hooks/stop_check.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 316,
-   "line_range": [
-    316,
-    317
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "19 import re\n20 import subprocess\n21 import time\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/integrations/dispatch_notebooklm.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 20,
-   "line_range": [
-    20
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "185         try:\n186             result = subprocess.run(\n187                 [NLM_CLI_PATH, \"notebook\", \"query\", notebook_id, query],\n188                 capture_output=True,\n189                 text=True,\n190                 env=env,\n191                 timeout=timeout,\n192             )\n193 \n",
-   "col_offset": 21,
-   "end_col_offset": 13,
-   "filename": "ai_collab/integrations/dispatch_notebooklm.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 186,
-   "line_range": [
-    186,
-    187,
-    188,
-    189,
-    190,
-    191,
-    192
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "67                 )\n68         except Exception:\n69             pass  # FALLBACK 模式可能不支持\n70 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/integrations/research_workflow.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 68,
-   "line_range": [
-    68,
-    69
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "83                 )\n84         except Exception:\n85             pass\n86 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/integrations/research_workflow.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 84,
-   "line_range": [
-    84,
-    85
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "154                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n155         except Exception:\n156             # 静默失败，避免影响主流程\n157             pass\n158 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/integrations/vscode.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 155,
-   "line_range": [
-    155,
-    156,
-    157
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "113         try:\n114             response = requests.get(\n115                 f\"{self.base_url}{HEALTH_PATH}\",\n116                 timeout=min(2.0, self.timeout),\n117             )\n118             return response.status_code < 500\n",
-   "col_offset": 23,
-   "end_col_offset": 13,
-   "filename": "ai_collab/laya_client.py",
-   "issue_confidence": "LOW",
-   "issue_cwe": {
-    "id": 400,
-    "link": "https://cwe.mitre.org/data/definitions/400.html"
-   },
-   "issue_severity": "MEDIUM",
-   "issue_text": "Call to requests without timeout",
-   "line_number": 114,
-   "line_range": [
-    114,
-    115,
-    116,
-    117
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b113_request_without_timeout.html",
-   "test_id": "B113",
-   "test_name": "request_without_timeout"
-  },
-  {
-   "code": "14 import shutil\n15 import subprocess\n16 from datetime import datetime\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/orchestration.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 15,
-   "line_range": [
-    15
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "145                 cmd_parts = shlex.split(check_command)\n146                 result = subprocess.run(cmd_parts, shell=False, capture_output=True, timeout=5)\n147                 if result.returncode == 0:\n",
-   "col_offset": 25,
-   "end_col_offset": 95,
-   "filename": "ai_collab/orchestration.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 146,
-   "line_range": [
-    146
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "318                     total_tokens += self.estimate_pack_tokens(dep_pack, include_dependencies=False)\n319                 except Exception:\n320                     pass\n321 \n",
-   "col_offset": 16,
-   "end_col_offset": 24,
-   "filename": "ai_collab/prompt_pack/manager.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 319,
-   "line_range": [
-    319,
-    320
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "171                     )\n172             except Exception:\n173                 # 忽略错误（商店可能不可用）\n174                 pass\n175 \n",
-   "col_offset": 12,
-   "end_col_offset": 20,
-   "filename": "ai_collab/prompt_pack/rating.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 172,
-   "line_range": [
-    172,
-    173,
-    174
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "332                 registry.update_pack_stats(pack_name, rating=summary.average_rating, review_count=summary.total_reviews)\n333         except Exception:\n334             # 忽略错误（商店可能不可用）\n335             pass\n336 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/prompt_pack/rating.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 333,
-   "line_range": [
-    333,
-    334,
-    335
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "284                 f.write(f\"[{datetime.now().isoformat()}] [{channel}] {message}\\n\")\n285         except Exception:\n286             pass\n287 \n",
-   "col_offset": 8,
-   "end_col_offset": 16,
-   "filename": "ai_collab/state_manager.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 703,
-    "link": "https://cwe.mitre.org/data/definitions/703.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Try, Except, Pass detected.",
-   "line_number": 285,
-   "line_range": [
-    285,
-    286
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-   "test_id": "B110",
-   "test_name": "try_except_pass"
-  },
-  {
-   "code": "5 import json\n6 import subprocess\n7 from collections import Counter\n",
-   "col_offset": 0,
-   "end_col_offset": 17,
-   "filename": "ai_collab/workspace_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Consider possible security implications associated with the subprocess module.",
-   "line_number": 6,
-   "line_range": [
-    6
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess",
-   "test_id": "B404",
-   "test_name": "blacklist"
-  },
-  {
-   "code": "104     \"\"\"Read git porcelain entries and annotate status/domain.\"\"\"\n105     result = subprocess.run(\n106         [\"git\", \"-C\", str(workspace), \"status\", \"--porcelain=v1\", \"--untracked-files=all\"],\n107         capture_output=True,\n108         text=True,\n109         check=False,\n110     )\n111     if result.returncode != 0:\n",
-   "col_offset": 13,
-   "end_col_offset": 5,
-   "filename": "ai_collab/workspace_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Starting a process with a partial executable path",
-   "line_number": 105,
-   "line_range": [
-    105,
-    106,
-    107,
-    108,
-    109,
-    110
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
-   "test_id": "B607",
-   "test_name": "start_process_with_partial_path"
-  },
-  {
-   "code": "104     \"\"\"Read git porcelain entries and annotate status/domain.\"\"\"\n105     result = subprocess.run(\n106         [\"git\", \"-C\", str(workspace), \"status\", \"--porcelain=v1\", \"--untracked-files=all\"],\n107         capture_output=True,\n108         text=True,\n109         check=False,\n110     )\n111     if result.returncode != 0:\n",
-   "col_offset": 13,
-   "end_col_offset": 5,
-   "filename": "ai_collab/workspace_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 105,
-   "line_range": [
-    105,
-    106,
-    107,
-    108,
-    109,
-    110
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  },
-  {
-   "code": "329         for chunk in _chunked(paths):\n330             result = subprocess.run(\n331                 [\"git\", \"-C\", str(workspace), \"add\", \"--\", *chunk],\n332                 capture_output=True,\n333                 text=True,\n334                 check=False,\n335             )\n336             if result.returncode != 0:\n",
-   "col_offset": 21,
-   "end_col_offset": 13,
-   "filename": "ai_collab/workspace_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "Starting a process with a partial executable path",
-   "line_number": 330,
-   "line_range": [
-    330,
-    331,
-    332,
-    333,
-    334,
-    335
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b607_start_process_with_partial_path.html",
-   "test_id": "B607",
-   "test_name": "start_process_with_partial_path"
-  },
-  {
-   "code": "329         for chunk in _chunked(paths):\n330             result = subprocess.run(\n331                 [\"git\", \"-C\", str(workspace), \"add\", \"--\", *chunk],\n332                 capture_output=True,\n333                 text=True,\n334                 check=False,\n335             )\n336             if result.returncode != 0:\n",
-   "col_offset": 21,
-   "end_col_offset": 13,
-   "filename": "ai_collab/workspace_guard.py",
-   "issue_confidence": "HIGH",
-   "issue_cwe": {
-    "id": 78,
-    "link": "https://cwe.mitre.org/data/definitions/78.html"
-   },
-   "issue_severity": "LOW",
-   "issue_text": "subprocess call - check for execution of untrusted input.",
-   "line_number": 330,
-   "line_range": [
-    330,
-    331,
-    332,
-    333,
-    334,
-    335
-   ],
-   "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html",
-   "test_id": "B603",
-   "test_name": "subprocess_without_shell_equals_true"
-  }
- ],
- "_audit": {
-  "schema_version": 1,
-  "generated_at": "2026-11-15T13:01:56Z",
-  "generated_from_commit": "f2854d01b51a0c02841f32ebc4b115f61ca52598",
-  "bandit_version": "1.9.4",
-  "scan_path": "ai_collab/",
-  "result_count": 43,
-  "results_sha256": "b7b2dcfae3e09fbaf84ec7cc8347ae65c6d4035f940413b20b11ba21a449e43c",
-  "reason": "初始登记 43 条存量 findings（PR #66 baseline 门禁升级，补强制审计元数据）"
- }
 }
