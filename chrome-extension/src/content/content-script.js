@@ -31,6 +31,7 @@ import { SELECTORS as YIYAN_SELECTORS } from "../platforms/yiyan-adapter.js";
 import { SELECTORS as YUANBAO_SELECTORS } from "../platforms/yuanbao-adapter.js";
 import { SELECTORS as LONGCAT_SELECTORS } from "../platforms/longcat-adapter.js";
 import { SELECTORS as DEEPSEEK_SELECTORS } from "../platforms/deepseek-adapter.js";
+import { SELECTORS as STEPFUN_SELECTORS } from "../platforms/stepfun-adapter.js";
 
 import { handleNewSession as handleNewSessionCore } from "./new-session-control.js";
 
@@ -74,6 +75,7 @@ const PLATFORM_CONFIGS = {
   "longcat.chat": LONGCAT_SELECTORS,
   "longcat.ai": LONGCAT_SELECTORS,
   "chat.deepseek.com": DEEPSEEK_SELECTORS,
+  "studio.stepfun.com": STEPFUN_SELECTORS,
 };
 
 /**

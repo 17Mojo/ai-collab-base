@@ -15,6 +15,7 @@ import YiyanAdapter from "../platforms/yiyan-adapter.js";
 import YuanbaoAdapter from "../platforms/yuanbao-adapter.js";
 import LongCatAdapter from "../platforms/longcat-adapter.js";
 import DeepSeekAdapter from "../platforms/deepseek-adapter.js";
+import StepFunAdapter from "../platforms/stepfun-adapter.js";
 import PackExecutor from "./pack-executor.js";
 import NotebookLMPackExecutorBridge from "./notebooklm-packexecutor-bridge.js";
 import { DEFAULT_PACKS } from "./default-packs.js";
@@ -39,6 +40,7 @@ const adapters = {
   "longcat.ai": new LongCatAdapter(),
   "longcat.chat": new LongCatAdapter(),
   "chat.deepseek.com": new DeepSeekAdapter(),
+  "studio.stepfun.com": new StepFunAdapter(),
 };
 
 // Pack 执行器实例

@@ -1,0 +1,476 @@
+{
+  "generatedAt": "2026-11-18T02:01:04.343Z",
+  "mode": "precheck",
+  "candidates": [
+    "stepfun",
+    "yuanbao",
+    "chatglm",
+    "yiyan",
+    "kimi"
+  ],
+  "platformPolicy": [
+    {
+      "id": "stepfun",
+      "allowed": true,
+      "active": true,
+      "unfrozenBy": null,
+      "reason": "active"
+    },
+    {
+      "id": "yuanbao",
+      "allowed": true,
+      "active": true,
+      "unfrozenBy": null,
+      "reason": "active"
+    },
+    {
+      "id": "chatglm",
+      "allowed": true,
+      "active": true,
+      "unfrozenBy": null,
+      "reason": "active"
+    },
+    {
+      "id": "yiyan",
+      "allowed": true,
+      "active": true,
+      "unfrozenBy": null,
+      "reason": "active"
+    },
+    {
+      "id": "kimi",
+      "allowed": true,
+      "active": true,
+      "unfrozenBy": null,
+      "reason": "active"
+    }
+  ],
+  "results": [
+    {
+      "platform": "stepfun",
+      "url": "https://studio.stepfun.com/",
+      "finalUrl": "https://studio.stepfun.com/",
+      "title": "AI Studio | 阶跃星辰",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 0,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar h-svh studio-sidebar",
+            "len": 230,
+            "attrs": [
+              "data-slot=sidebar-wrapper",
+              "style=--sidebar-width:13.75rem;--sidebar-width",
+              "class=group/sidebar-wrapper flex min-h-svh w-f"
+            ]
+          },
+          {
+            "cls": "group peer hidden text-sidebar-foreground md:block",
+            "len": 92,
+            "attrs": [
+              "class=group peer hidden text-sidebar-foregroun",
+              "data-state=expanded",
+              "data-collapsible=",
+              "data-variant=sidebar",
+              "data-side=left"
+            ]
+          },
+          {
+            "cls": "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 eas",
+            "len": 92,
+            "attrs": [
+              "data-slot=sidebar-container",
+              "class=fixed inset-y-0 z-10 hidden h-svh w-(--s"
+            ]
+          },
+          {
+            "cls": "flex h-full w-full flex-col bg-background group-data-[variant=floating]:rounded-lg group-data-[varia",
+            "len": 92,
+            "attrs": [
+              "data-sidebar=sidebar",
+              "data-slot=sidebar-inner",
+              "class=flex h-full w-full flex-col bg-backgroun"
+            ]
+          },
+          {
+            "cls": "flex min-h-0 flex-1 flex-col overflow-auto group-data-[collapsible=icon]:overflow-hidden gap-0",
+            "len": 58,
+            "attrs": [
+              "data-slot=sidebar-content",
+              "data-sidebar=content",
+              "class=flex min-h-0 flex-1 flex-col overflow-au"
+            ]
+          },
+          {
+            "cls": "min-h-0 flex-1 overflow-auto",
+            "len": 138,
+            "attrs": [
+              "class=min-h-0 flex-1 overflow-auto"
+            ]
+          },
+          {
+            "cls": "flex h-full w-full flex-col bg-background",
+            "len": 138,
+            "attrs": [
+              "class=flex h-full w-full flex-col bg-backgroun"
+            ]
+          },
+          {
+            "cls": "relative min-h-0 flex-1 bg-background",
+            "len": 124,
+            "attrs": [
+              "class=relative min-h-0 flex-1 bg-background"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "platform": "yuanbao",
+      "url": "https://yuanbao.tencent.com/",
+      "finalUrl": "https://yuanbao.tencent.com/chat/naQivTmsDa",
+      "title": "元宝-腾讯旗下全能AI助手",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 16,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "",
+            "len": 138,
+            "attrs": [
+              "id=__next"
+            ]
+          },
+          {
+            "cls": "",
+            "len": 138,
+            "attrs": [
+              "id=app"
+            ]
+          },
+          {
+            "cls": "yb-layout agent-layout layout-pc yb-layout--pc-container",
+            "len": 138,
+            "attrs": [
+              "class=yb-layout agent-layout layout-pc yb-layo"
+            ]
+          },
+          {
+            "cls": "yb-layout__content agent-layout__content",
+            "len": 74,
+            "attrs": [
+              "class=yb-layout__content agent-layout__content"
+            ]
+          },
+          {
+            "cls": "agent-dialogue",
+            "len": 74,
+            "attrs": [
+              "class=agent-dialogue"
+            ]
+          },
+          {
+            "cls": "agent-dialogue__content-wrapper",
+            "len": 74,
+            "attrs": [
+              "class=agent-dialogue__content-wrapper"
+            ]
+          },
+          {
+            "cls": "agent-dialogue__content",
+            "len": 62,
+            "attrs": [
+              "class=agent-dialogue__content"
+            ]
+          },
+          {
+            "cls": "SplitPane agent-dialogue__content-split-pane vertical ",
+            "len": 62,
+            "attrs": [
+              "class=SplitPane agent-dialogue__content-split-",
+              "style=display: flex; flex: 1 1 0%; height: 100"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "platform": "chatglm",
+      "url": "https://chatglm.cn/",
+      "finalUrl": "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+      "title": "智谱清言",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 6,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "",
+            "len": 342,
+            "attrs": [
+              "id=app",
+              "data-v-app="
+            ]
+          },
+          {
+            "cls": "pr",
+            "len": 342,
+            "attrs": [
+              "id=app",
+              "class=pr",
+              "style=background: var(--bg_white_1,#ffffff); -"
+            ]
+          },
+          {
+            "cls": "el-container",
+            "len": 342,
+            "attrs": [
+              "data-v-282eb4c7=",
+              "class=el-container"
+            ]
+          },
+          {
+            "cls": "detail-container",
+            "len": 280,
+            "attrs": [
+              "data-v-558eee39=",
+              "data-v-282eb4c7=",
+              "class=detail-container"
+            ]
+          },
+          {
+            "cls": "detail flex flex-x-center flex-y-start",
+            "len": 280,
+            "attrs": [
+              "data-v-558eee39=",
+              "class=detail flex flex-x-center flex-y-start",
+              "id=session-container"
+            ]
+          },
+          {
+            "cls": "chat-top-section",
+            "len": 126,
+            "attrs": [
+              "data-v-2dcc16ce=",
+              "class=chat-top-section"
+            ]
+          },
+          {
+            "cls": "left",
+            "len": 51,
+            "attrs": [
+              "data-v-2dcc16ce=",
+              "class=left"
+            ]
+          },
+          {
+            "cls": "top-bar",
+            "len": 51,
+            "attrs": [
+              "data-v-85929814=",
+              "data-v-2dcc16ce=",
+              "class=top-bar"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "platform": "yiyan",
+      "url": "https://yiyan.baidu.com/",
+      "finalUrl": "https://wenxin.baidu.com/?enter_type=yiyan_site",
+      "title": "百度文心助手 - 办公学习一站解决",
+      "composerVisible": true,
+      "composerCount": 2,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 38,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "aside-scroll-container chat-aside-scroll",
+            "len": 309,
+            "attrs": [
+              "class=aside-scroll-container chat-aside-scroll"
+            ]
+          },
+          {
+            "cls": "chat-aside-scroll-content",
+            "len": 309,
+            "attrs": [
+              "class=chat-aside-scroll-content"
+            ]
+          },
+          {
+            "cls": "history-chat",
+            "len": 309,
+            "attrs": [
+              "class=history-chat"
+            ]
+          },
+          {
+            "cls": "agent-item agent-tool-item quick-entrance-hover-show",
+            "len": 473,
+            "attrs": [
+              "class=agent-item agent-tool-item quick-entranc"
+            ]
+          },
+          {
+            "cls": "quick-entrance-tooltip-wrapper\n                    quick-entrance-tooltip-wrapper\n                  ",
+            "len": 258,
+            "attrs": [
+              "class=quick-entrance-tooltip-wrapper\n         "
+            ]
+          },
+          {
+            "cls": "quick-entrance-tooltip-content\n                    quick-entrance-tooltip-content-sample",
+            "len": 258,
+            "attrs": [
+              "class=quick-entrance-tooltip-content\n         "
+            ]
+          },
+          {
+            "cls": "\n            ",
+            "len": 495,
+            "attrs": [
+              "class=\n            "
+            ]
+          },
+          {
+            "cls": "_more-btn_62twd_61",
+            "len": 495,
+            "attrs": [
+              "class=_more-btn_62twd_61"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "platform": "kimi",
+      "url": "https://www.kimi.com/",
+      "finalUrl": "https://www.kimi.com/",
+      "title": "Kimi AI 官网：K3.1 Pro 上线，编程与智能体任务全面升级",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 2,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 18,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "next-sidebar__drag-slot",
+            "len": 416,
+            "attrs": [
+              "class=next-sidebar__drag-slot",
+              "data-v-e4a72136="
+            ]
+          },
+          {
+            "cls": "next-sidebar__drag-slot",
+            "len": 404,
+            "attrs": [
+              "class=next-sidebar__drag-slot",
+              "data-v-e4a72136="
+            ]
+          },
+          {
+            "cls": "next-sidebar__drag-slot",
+            "len": 67,
+            "attrs": [
+              "class=next-sidebar__drag-slot",
+              "data-v-e4a72136="
+            ]
+          },
+          {
+            "cls": "next-sidebar__footer",
+            "len": 450,
+            "attrs": [
+              "class=next-sidebar__footer",
+              "data-v-0d757fe4="
+            ]
+          },
+          {
+            "cls": "next-sidebar__footer-content is-user-nav-open",
+            "len": 450,
+            "attrs": [
+              "class=next-sidebar__footer-content is-user-nav",
+              "data-v-0d757fe4="
+            ]
+          },
+          {
+            "cls": "user-area",
+            "len": 450,
+            "attrs": [
+              "data-v-333d960a=",
+              "data-v-0d757fe4=",
+              "class=user-area",
+              "id=v-0-7-popover-trigger",
+              "aria-controls=v-0-7-popover"
+            ]
+          },
+          {
+            "cls": "user-info",
+            "len": 408,
+            "attrs": [
+              "data-v-333d960a=",
+              "class=user-info"
+            ]
+          },
+          {
+            "cls": "chat-editor-wrap",
+            "len": 56,
+            "attrs": [
+              "class=chat-editor-wrap",
+              "data-v-0b2c297d=",
+              "data-v-27f29726="
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 /**
  * 平台冻结守卫的守护测试。
  *
- * 用户 2026-11-11 红线：仅保留 qianwen / yuanbao / chatglm / yiyan / kimi，
- * 其他冻结不去碰。上一轮的教训是「只读探针」——红线写在注释里，
+ * 用户 2026-11-11 红线：仅保留 5 个活跃站，其他冻结不去碰。
+ * 2026-11-18 用户改判：千问有反自动化机制，活跃位由 stepfun 接替；
+ * qianwen 不再出现在活跃白名单里（生产 adapter 仍保留）。
+ * 上一轮的教训是「只读探针」——红线写在注释里，
  * 谁加一行 click 也不会红。这里把红线变成会红的测试。
  */
 
@@ -24,13 +26,13 @@ const L2_DRIVER = fileURLToPath(
   new URL("./real-machine/l2-platform-auto.mjs", import.meta.url),
 );
 
-test("白名单恰好是 5 个活跃站，不含 deepseek / longcat", () => {
+test("白名单恰好是 5 个活跃站，不含 deepseek / longcat / qianwen", () => {
   assert.deepEqual(
     [...ACTIVE_PLATFORM_IDS].sort(),
-    ["chatglm", "kimi", "qianwen", "yiyan", "yuanbao"],
+    ["chatglm", "kimi", "stepfun", "yiyan", "yuanbao"],
   );
-  for (const id of FROZEN_AB_PLATFORMS) {
-    assert.equal(isPlatformActive(id), false, `${id} 必须处于冻结状态`);
+  for (const id of [...FROZEN_AB_PLATFORMS, "qianwen"]) {
+    assert.equal(isPlatformActive(id), false, `${id} 必须处于冻结/不碰状态`);
   }
 });
 
@@ -68,13 +70,13 @@ test("只有 ALLOW_FROZEN=1 才放行冻结平台，并在回执里留痕", () =
 
 test("候选集里混进一个冻结站，整个预检都拒绝，不许跳过继续", () => {
   assert.throws(
-    () => assertCandidatesAllowed(["qianwen", "chatglm", "longcat"]),
+    () => assertCandidatesAllowed(["stepfun", "chatglm", "longcat"]),
     /候选集含冻结平台 \[longcat\]/,
   );
 });
 
 test("候选集全活跃时放行，逐个可用的策略都写清楚", () => {
-  const rows = assertCandidatesAllowed(["qianwen", "kimi"]);
+  const rows = assertCandidatesAllowed(["stepfun", "kimi"]);
   assert.equal(rows.length, 2);
   assert.ok(rows.every((r) => r.allowed === true && r.unfrozenBy === null));
 });

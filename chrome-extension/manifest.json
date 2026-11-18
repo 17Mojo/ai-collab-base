@@ -33,7 +33,8 @@
     "https://yuanbao.tencent.com/*",
     "https://longcat.ai/*",
     "https://longcat.chat/*",
-    "https://chat.deepseek.com/*"
+    "https://chat.deepseek.com/*",
+    "https://studio.stepfun.com/*"
   ],
   "background": {
     "service_worker": "src/background/service-worker.js",
@@ -59,7 +60,8 @@
         "https://yuanbao.tencent.com/*",
         "https://longcat.ai/*",
         "https://longcat.chat/*",
-        "https://chat.deepseek.com/*"
+        "https://chat.deepseek.com/*",
+        "https://studio.stepfun.com/*"
       ],
       "js": ["src/content/content-script.js"],
       "run_at": "document_idle"

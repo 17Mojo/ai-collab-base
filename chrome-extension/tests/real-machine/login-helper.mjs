@@ -84,7 +84,17 @@ const STAMP = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2,
 ).padStart(2, "0")}`;
 const OUT = process.env.OUT || `${EVIDENCE_DIR}/login-helper-${STAMP}.json`;
 
-const LOGIN_HINTS = ["请先登录", "登录后", "扫码登录", "立即登录", "Sign in", "Log in"];
+const LOGIN_HINTS = [
+  "请先登录",
+  "登录后",
+  "扫码登录",
+  "立即登录",
+  "登录 / 注册", // 2026-11-18 stepfun：游客态首页也有输入框，但侧栏带这个 CTA
+  "手机号登录",
+  "邮箱登录",
+  "Sign in",
+  "Log in",
+];
 const AUTH_PATH = /sign[_-]?in|log[_-]?in|passport|\/auth|oauth/i;
 
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);

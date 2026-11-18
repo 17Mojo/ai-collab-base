@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<!--
+  StepFun fixture（2026-11-18 真人登录后只读 DOM 采样）。
+  结构按真站快照：
+    textarea[data-slot="textarea"]  ← chat-input
+    button[aria-label="发送"]       ← send-button
+    [data-split-pane="chat"] 下 div[class="flex flex-col gap-6"] 的直接子节点
+                                     ← 一条消息一个（提问 + 回答）
+  侧栏 button[aria-label="新会话"] 是下拉诱饵，不标 newChat，也不在 adapter 的
+  newChat 选择器里——点它不会开新会话，只能从侧栏「新对话」进入。
+-->
+<head>
+  <meta charset="UTF-8" />
+  <title>StepFun (阶跃星辰 AI Studio)</title>
+</head>
+<body>
+  <aside>
+    <button type="button" data-slot="sidebar-menu-button" data-sidebar="menu-button" data-active="true">
+      <span>新对话</span>
+    </button>
+    <button type="button" aria-label="新会话" title="新会话" data-slot="dropdown-menu-trigger">
+      <span>新会话</span>
+    </button>
+  </aside>
+
+  <main>
+    <div data-split-pane="chat" class="min-h-0 min-w-0">
+      <div class="h-full w-full overflow-y-auto">
+        <div class="mx-auto w-full max-w-3xl px-8 py-6 max-md:px-5">
+          <div class="flex flex-col gap-6">
+            <div class="flex flex-col group items-end gap-1" data-role="message">
+              <div class="flex w-full justify-end">
+                <div class="max-w-[60%] rounded-2xl rounded-br-md bg-accent px-3 py-2 text-sm text-foreground">
+                  请只回复：连接器自检A1
+                </div>
+              </div>
+            </div>
+            <div class="group flex flex-col" data-role="message">
+              <div class="flex justify-start">
+                <div class="flex w-full flex-col gap-2 px-1 py-1">
+                  <div class="min-w-0 max-w-full text-sm leading-relaxed text-foreground">
+                    <p class="my-6 first:mt-0 last:mb-0">连接器自检A1</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <textarea data-slot="textarea" class="w-full resize-none" data-role="chat-input"></textarea>
+      <button type="button" aria-label="发送" data-slot="button" data-role="send-button">
+        <svg></svg>
+      </button>
+    </div>
+  </main>
+</body>
+</html>

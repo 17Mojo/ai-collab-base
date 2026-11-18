@@ -588,6 +588,31 @@
         "修复后活跃 5 站复验：qianwen/yuanbao/chatglm/yiyan/kimi 均 success=true / 8/8 steps / sessionResets.available=true，消息数分别 6→0 / 12→0 / 12→0 / 6→0 / 6→0，unfrozenBy 全为 null；首轮 qianwen .n29fix 在 step_6 撞 Response timeout 未跑到 step_8，如实留档不计通过，.n29fix2 才计入。",
         "回归守护：可见态 jsdom 用例 + 变异检查新增条目「可见语义层被清空」，125/125 变异被杀死；扩展全套 326 条测试全绿。"
       ]
+    },
+    {
+      "id": "N30",
+      "priority": "P1",
+      "status": "closed",
+      "title": "千问有防范非人类操作机制，活跃真机白名单改用 stepfun（真人登录后登记）",
+      "reader": "任何继续用 qianwen 做真机回归的人；以及依据「活跃 5 站」结论判断会话边界是否生效的人——2026-11-18 起活跃位已换站，旧报告的 5 站清单不再适用。",
+      "where": [
+        "chrome-extension/tests/real-machine/platform-freeze.mjs（ACTIVE_PLATFORM_IDS 白名单）",
+        "chrome-extension/src/platforms/stepfun-adapter.js（新增生产适配器）",
+        "chrome-extension/tests/platforms.mjs / manifest.json / src/content/content-script.js / src/background/service-worker.js（11 站登记）",
+        "collaboration/results/real-machine-runs/evidence/login-stepfun-2026-11-18.human.json（真人确认登录证据）"
+      ],
+      "detail": "用户 2026-11-18 裁定：qianwen 有防范非人类操作机制，不再作为活跃真机站，换成 stepfun（https://studio.stepfun.com/），由真人配合登录。N29 虽已修复千问的会话重置选择器问题，但该修复只说明「入口选对了」，不能推翻用户对站点反自动化机制的裁定。首次 login-helper 判定曾为假阳性：stepfun 游客态首页也有输入框，脚本 1 秒就报已登录；改用「真人确认标记 + localStorage 身份信号」后重采，确认登录态（站点显示账号名，localStorage 有 studio_user_login_recorded）。",
+      "impact": "① 继续拿 qianwen 当活跃站会把反自动化误判成产品缺陷，且证据不可复现；② 若只改白名单不登记生产适配器，后台 getAdapter 返回 null，整条 Pack 链路静默失灵；③ 平台注册一致性测试原本硬编码 10 站，必须同步到 11 站，否则「新增平台」会被当成漂移。",
+      "fix": "已修（2026-11-18）：新增 stepfun adapter/fixture/快照记录，manifest/content-script/service-worker/platforms 注册表同步到 11 站；白名单 qianwen → stepfun，qianwen adapter 保留在生产层但本轮真机不碰；platform-freeze 测试与变异锚同步。真机复验：stepfun 8/8、会话重置 12→0（text-match、unfrozenBy=null），其余 4 站 8/8 全通。证据：RESULT-STEPFUN-SWAP-2026-11-18.md。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18",
+      "appended_evidence": [
+        "真人登录证据：login-stepfun-2026-11-18.human.json，url=https://studio.stepfun.com/，loginCta=false，localStorage 含 studio_user_login_recorded 与用户标识键；首次两份 login-stepfun-*.json 是假阳性，如实留档不删。",
+        "只读 DOM 证据：输入框 textarea[data-slot=textarea]、发送 button[aria-label=发送]、消息容器 [data-split-pane=chat] div[class=\"flex flex-col gap-6\"] > div（2 条消息→2 个节点）；点侧栏「新对话」后 2→0。",
+        "stepfun 完整 L2：L2-stepfun-auto-2026-11-18.full8.json，success=true / 8/8、sessionResets available=true / text-match / 12→0 / 304ms、platformPolicy active=true / unfrozenBy=null。",
+        "全集守护：扩展 326/326、适配器矩阵 117/125 passed / 0 failed / 8 skipped、变异 125/125 被杀死；11 站注册一致性通过。",
+        "替换后活跃 5 站：stepfun / yuanbao / chatglm / yiyan / kimi 全部 success=true / 8/8 / sessionResets.available=true，消息数 12→0 / 12→0 / 12→0 / 6→0 / 6→0，unfrozenBy 全为 null；deepseek / longcat 仍冻结，本轮未碰。"
+      ]
     }
   ]
 }

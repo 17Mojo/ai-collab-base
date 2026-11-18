@@ -1,0 +1,51 @@
+{
+  "capturedAt": "2026-11-18T01:50:01.774Z",
+  "platform": "stepfun",
+  "name": "StepFun (阶跃星辰 AI Studio)",
+  "url": "https://studio.stepfun.com/",
+  "locale": "zh-CN",
+  "httpStatus": 200,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
+  "sendButtonFound": true,
+  "messageCount": 0,
+  "messageListSelectors": [
+    {
+      "selector": "[data-split-pane=\"chat\"] div[class=\"flex flex-col gap-6\"] > div",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "messageContentSelectors": [
+    {
+      "selector": "div[class*=\"leading-relaxed\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "p.my-6",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    },
+    {
+      "selector": "[class*=\"markdown\"]",
+      "matched": false,
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "typingIndicatorSelectors": [],
+  "isTyping": false,
+  "messageCountModel": {
+    "ok": true,
+    "count": 0,
+    "reason": "落地页消息数为 0、isTyping() 为 false，符合「无会话即无消息 / 空闲即不忙」的不变量",
+    "falsePositiveSelectors": []
+  },
+  "sanitized": true
+}
