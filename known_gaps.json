@@ -808,6 +808,28 @@
         "现场后果：本次会话中我向用户声明「按项目 G7/G10 门禁，提交需你确认」，用户回「不现实，我没有审核的能力」；随后实查确认 G7/G10 不存在，该阻断理由不成立。真实门禁为 G1/G2/G3/G4/G11，且全部为机器可判项，不含「人工审 diff」要求。",
         "文本证据位置：两份 plan 的第 13 行同一句，2026-11-11 与 2026-11-18 版本一致，属复制沿袭。"
       ]
+    },
+    {
+      "id": "N39",
+      "priority": "P2",
+      "status": "open",
+      "title": "npm test 用 readdirSync 收集用例，未跟踪的 *.test.mjs 也算进去 —— 同一 commit 在不同工作区跑出不同用例数与不同结论",
+      "reader": "拿到「测试全绿」或「有 N 条失败」这类结论的人——尤其在新 clone、其他 worktree、或 CI 上复跑的人。他们会发现用例数对不上（实测同一 commit：干净工作区 318 条全绿，本工作区 334 条里 4 条失败），而失败的四条测的是一个**只在别人工作区里存在、从未提交**的特性。此时「测试挂了」既不能归因到代码，也不能用「重新跑一遍」解决，因为重跑读的还是同一片磁盘。",
+      "where": [
+        "chrome-extension/tests/run-tests.mjs:37-43（readdirSync 遍历目录，`entry.endsWith(\".test.mjs\")` 即收，不校验跟踪状态）",
+        "chrome-extension/tests/deepseek-new-session.test.mjs（本次之前为未跟踪文件，测 newChatText 特性；实现未合入前它必然红）"
+      ],
+      "detail": "2026-11-18 实测：在本工作区对 main@26b2627 跑 `npm test` 得 `1..334 / pass 330 / fail 4`，4 条全部是 deepseek 新会话用例；但 HEAD 的 `new-session-control.js` 与 `new-session-control.test.mjs` 都**不含**「开启新对话」字样（`grep -c` 均为 0）。追查发现用例来自未跟踪文件 `tests/deepseek-new-session.test.mjs`（`git status` 为 `??`），它测的是 stash 里那批未合入 WIP 的 `newChatText` 特性。四项测试文件合计 16 条用例，减去后干净工作区应为 318 条且全绿。\n\n也就是说：**「测试结论」在这里是工作区属性，不是 commit 属性。** 同一 sha、同一台机器，只因为磁盘上多了一个未跟踪文件，结论就从「全绿」变成「4 条失败」。",
+      "impact": "① 交付结论不可复现：评审看到「有 4 条失败」无法判断是代码问题还是环境问题；② 反向误判同样危险：若 WIP 实现已合入而测试文件仍未跟踪，干净工作区会全绿，**该特性的回归守护实际为零**却看不出来；③ 变异检查同样受影响（它复用 tests/ 树），守护关系可能建立在未提交的测试上；④ 「重跑一遍」在这类问题上无效，容易诱导人去改代码。",
+      "fix": "未修。三个方向，建议 ②+③：\n① 让 run-tests.mjs 只收受跟踪文件（`git ls-files '*.test.mjs'` 过滤）——最严，但会让「新写测试还没 add」时静默不跑，反而更危险。\n② 启动时把「未跟踪的 *.test.mjs」显式打印出来并在结论里标注（例如 `注意：本次含 1 个未跟踪测试文件，干净检出下不会运行`），让差异可见而不是静默计入。\n③ 在结论行同时打印「受跟踪用例数」与「实际运行用例数」，两者不等即提示。这样既不阻断本地开发，又让「结论依赖磁盘状态」这件事在输出里自曝。\n本次已顺带消除具体实例：`deepseek-new-session.test.mjs` 随 8162248 一并提交，该特性现已有受跟踪的回归守护。但机制的脆弱性未改。",
+      "found_at": "2026-11-18",
+      "appended_evidence": [
+        "实测同一 commit 两种结论：本工作区 `npm test` → `1..334 / pass 330 / fail 4`；4 条失败均为 deepseek 用例。",
+        "反证：`grep -c '开启新对话' chrome-extension/src/content/new-session-control.js` → 0；同文件测试 → 0。HEAD 上无该特性实现，也无该用例的受跟踪来源。",
+        "来源定位：`grep -rn '开启新对话' chrome-extension/tests/` → 命中 `tests/deepseek-new-session.test.mjs`（`git status` 显示 `??`，未跟踪）。",
+        "收集机制：`tests/run-tests.mjs:37-43` 用 `readdirSync(dir)` + `entry.endsWith('.test.mjs')`，不查 `git ls-files`，故未跟踪文件照收。",
+        "消除后复测：该测试文件随 8162248 提交后，`npm test` → `1..350 / pass 350 / fail 0`，变异检查 152/152 被杀死——即那 4 条原本是「测试在、实现不在」，不是实现有缺陷。"
+      ]
     }
   ]
 }
