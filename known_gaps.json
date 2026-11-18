@@ -1070,6 +1070,24 @@
       "fix": "已修（2026-11-18）。只换构造原语、不换被守的东西：把 8 处 `checkout -q -B <branch>` 改为 `symbolic-ref HEAD refs/heads/<branch>`。终态完全一样（同一分支被两个工作树签出），但不再依赖某个 git 版本对 `-B` 的宽纵。\n明确没有做的事：没有删用例、没有 skip、没有放松断言、没有把冲突判定降级——守的仍是「同一分支被多工作树签出必须被判违规」，正反两侧用例都保留。\n模块 docstring 同步改写，写明这次为什么改构造方式，避免下一个人又按「复刻 -B」的思路改回去。\n验证：本地 `pytest tests/unit/test_worktree_collision_guard.py tests/unit/test_preflight_worktree_gate.py tests/unit/test_concurrent_guard_cli.py` → 39 passed；全量 `tests/unit` → 3037 passed / 1 skipped。CI 侧由 Test Suite 工作流在 git 2.56.1 上复核。",
       "found_at": "2026-11-18",
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N50",
+      "priority": "P1",
+      "status": "closed",
+      "title": "DeepSeek 的 mock fixture 是照旧选择器写的假 DOM：真机上 `.ds-chat-message` 与 `[data-testid=\"conversation-turn\"]` 命中 0，写死的「human 气泡」还套着 AI 正文容器",
+      "reader": "任何看到 Test Suite 里 chrome-extension-tests 红、准备去改生产 adapter 的人；以及任何相信「矩阵绿就等于 adapter 对」的人。",
+      "where": [
+        "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-deepseek.html（重写前 :40/:46/:52：三块消息全写 class=\"ds-chat-message\"，第 3 块无 data-role，且「human 气泡」套了 .ds-assistant-message-main-content）",
+        "chrome-extension/src/platforms/deepseek-adapter.js:41（messageList = [\".ds-assistant-message-main-content\"]，2026-11-11 起）",
+        "collaboration/results/real-machine-runs/evidence/deepseek-message-contract-probe-2026-11-11.json:14-23（真机计数：上述两个选择器各 0 命中；div.ds-message=5、.ds-assistant-message-main-content=3、[class*=\"message\"]=8）",
+        ".github/workflows/test.yml:214-216（矩阵失败即红，不再有 echo 兜底）"
+      ],
+      "detail": "真机只读探针（2026-11-11，历史会话页，redlines 全 false）的计数里，`[data-testid=\"conversation-turn\"]`=0、`.ds-chat-message`=0、`.chat-message`=0——这三个类名在该站点上根本不存在。而 fixture 是 2026-10-25（71c9eac）手写的 mock，用的正是前两个不存在的类；三块「消息」里第三块没有 data-role 标注，正文写的是输入框里那句提问（本意是 human 气泡），外层却仍套着 AI 正文容器。\n71c9eac 当时矩阵 110/114 全绿，因为 messageList 首条是 `[data-testid=\"conversation-turn\"]`，只命中前两块被标注的卡。8162248 把 messageList 改成「只数 AI 正文容器」之后，`getMessageList()` 返回 3 个 `.ds-assistant-message-main-content`，第三个落在那块未标注的卡里 ⇒ 两条断言同时红（不返回标注范围之外 / getLatestMessage 落在最后一条标注消息内）。\n归因可钉死：26b2627（2026-11-18T06:08Z，早于 8162248）的失败 job 只有 python-tests，chrome-extension-tests 是绿的；2100e5e（06:35Z，即 8162248 之后）起 chrome-extension-tests 每次必红。\n与 docs/REAL_MACHINE_REGRESSION.md §6.1 里「千问的 mock fixture 是照着旧选择器写的假 DOM，矩阵因此『因为错的原因而绿』」是同一类缺陷：fixture 与生产选择器互为镜像地一起漂移，两边都失去发现漂移的能力。",
+      "impact": "chrome-extension-tests 自 2026-11-18 起长期红，而报错文案（「返回了标注范围之外的元素——这正是『回退到页面全部 div』的旧缺陷」）会把人指向生产 adapter，可生产选择器是对的——按报错去改只会把真实修复改回去。反向同样有害：这块 fixture 连真机的类名都没有，deepseek 真发生选择器漂移它也照样绿。",
+      "fix": "已修（2026-11-18）。只重写 fixture：断言一条未改、没有 skip、没有放宽阈值、没有把 human 气泡标成 message 来「凑绿」。\n按探针计数与 mixedGroup 的 outer HTML 逐层还原：AI 回答 = `div.ds-message` > `div.ds-markdown.ds-assistant-message-main-content` > `p.ds-markdown-paragraph` > span（3 条，标 data-role=\"message\"）；human 气泡 = `div.d29f3d7d.ds-message` > `.fbb737a4` > `.ds-collapsible-text`（2 条，标 data-role=\"user-message\"，**不带** AI 正文容器）；外层补 `.ds-virtual-list-visible-items`；删掉真机不存在的 `ds-chat-message` 与 `data-testid=\"conversation-turn\"`。文末 `.chat-message` / `.message-content` 两处合成诱饵保留并显式标注「非快照内容」，继续守「回退到宽选择器」这一类。\nhuman 气泡刻意不标 data-role=\"message\"：它一旦被 getMessageList() 计入就落在标注范围之外，矩阵立刻红——这正是 8162248 要守的那条线（human 气泡进基准 ⇒ 计数跳变、把提示词当回复取走）。\n重建后计数与探针逐项吻合：div.ds-message=5、.ds-assistant-message-main-content=3、data-role=message 3 个、data-role=user-message 2 个、两个旧类均 0；[class*=\"message\"]=10（8 个快照元素 + 2 个合成诱饵）。\n验证：矩阵全量 116/125 passed / 0 failed / 9 skipped（11 个平台全绿）；`node tests/run-tests.mjs` → 369 passed / 0 fail；三条定向变异全被杀——messageList 改 `div.ds-message`（被 human 气泡抓住）→ 9/11、改 `[class*=\"message\"]` → 8/11、改回已死的 `[data-testid=\"conversation-turn\"]` → 8/11。\n仍未解决：DeepSeek 没有可用的真实快照（tests/real-machine/fixtures/real/deepseek.json 记 outcome=unverified，撞登录墙）——本 fixture 是「按探针计数重建的 mock」而不是逐节点快照，要升级只能补一次已登录 profile 的 L1 采数。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     }
   ]
 }

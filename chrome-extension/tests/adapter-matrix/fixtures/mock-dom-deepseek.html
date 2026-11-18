@@ -4,9 +4,30 @@
 <!--
   fixture 契约：用 data-role 标注「这个元素在真实站点里扮演什么角色」，
   测试矩阵（adapter-test-runner.js）据此把**生产 adapter 的返回值**与快照对账：
-    data-role="chat-input"  输入框（应为 1 个）
-    data-role="send-button" 发送按钮（应为 1 个）
-    data-role="message"     消息（可多个）
+    data-role="chat-input"    输入框（应为 1 个）
+    data-role="send-button"   发送按钮（应为 1 个）
+    data-role="message"       AI 回答卡（可多个）—— getMessageList() 的判定对象
+    data-role="user-message"  human 气泡（可多个）—— **永远不该被 getMessageList() 计入**
+
+  形状来源：真机只读探针
+  collaboration/results/real-machine-runs/evidence/deepseek-message-contract-probe-2026-11-11.json
+  （历史会话页；redlines 全 false —— 不发送、不输入、不注入 Pack）：
+    div.ds-message                     = 5   （3 条 AI 回答 + 2 条 human 气泡）
+    .ds-assistant-message-main-content = 3   （每条 AI 回答一个）
+    [class*="message"]                 = 8   （上面两组混在一起）
+    [data-testid="conversation-turn"]  = 0   ← 真机根本没有
+    .ds-chat-message                   = 0   ← 真机根本没有
+
+  ⚠️ 2026-11-18 修正记录：本快照此前把 3 条消息全写成 class="ds-chat-message"，
+  并且给「human 气泡」也套了 .ds-assistant-message-main-content —— 两处都与真机不符
+  （上面那两个 0 就是反证）。于是 8162248 把 messageList 改成「只数 AI 正文容器」
+  之后，矩阵报「返回了标注范围之外的元素」，看着像生产回归，其实是快照过期。
+  现按探针计数重写：类名用 ds-message，human 气泡不带 AI 正文容器。
+
+  human 气泡为什么不标 data-role="message"：它一旦被 getMessageList() 返回，
+  就落在标注范围之外 ⇒ 矩阵「不返回标注范围之外的元素」立刻报红。
+  这正是要守的那条线（human 气泡计入基准 ⇒ 计数跳变 / 把提示词当回复取走）。
+
   改了生产选择器却没改本快照 → 矩阵立刻报红；本快照过期 → L1 探针会报漂移。
 -->
 <head>
@@ -36,26 +57,52 @@
     <span>生成中...</span>
   </div>
 
-  <!-- Message List -->
-  <div data-testid="conversation-turn" class="ds-chat-message" data-role="message">
-    <div class="ds-assistant-message-main-content">
-      <div class="markdown"><p>What is deep learning?</p></div>
+  <!-- Message List —— 顺序照抄真机会话页：AI 回答 / human 气泡交替出现。
+       真机多一层 .ds-virtual-list-visible-items（虚拟列表，滚动时旧消息会被卸载），
+       这里保留该容器：它不含 "message" 字样，不影响 [class*="message"] 的计数。 -->
+  <div class="ds-virtual-list-visible-items">
+
+    <!-- AI 回答 1 -->
+    <div class="ds-message _63c77b1" data-role="message">
+      <div class="ds-markdown ds-assistant-message-main-content">
+        <p class="ds-markdown-paragraph"><span class="">深度学习是机器学习的一个子集，用多层神经网络自动学习特征表示。</span></p>
+      </div>
     </div>
+
+    <!-- human 气泡 1：真机 class 是 d29f3d7d ds-message，内部**没有** AI 正文容器 -->
+    <div class="d29f3d7d ds-message _63c77b1" data-role="user-message">
+      <div class="fbb737a4">
+        <div class="ds-collapsible-text"><div><span class="">请写开头</span></div></div>
+      </div>
+    </div>
+
+    <!-- AI 回答 2 -->
+    <div class="ds-message _63c77b1" data-role="message">
+      <div class="ds-markdown ds-assistant-message-main-content">
+        <p class="ds-markdown-paragraph"><span class="">你每天用的 AI 其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。</span></p>
+      </div>
+    </div>
+
+    <!-- human 气泡 2 -->
+    <div class="d29f3d7d ds-message _63c77b1" data-role="user-message">
+      <div class="fbb737a4">
+        <div class="ds-collapsible-text"><div><span class="">请写边界标注</span></div></div>
+      </div>
+    </div>
+
+    <!-- AI 回答 3（最新一条：getLatestMessage() 必须落在它里面） -->
+    <div class="ds-message _63c77b1" data-role="message">
+      <div class="ds-markdown ds-assistant-message-main-content">
+        <p class="ds-markdown-paragraph"><span class="">这段内容适合手头有「步骤多、要来回查信息、还得动手操作几个软件」的重复活儿的人看。</span></p>
+      </div>
+    </div>
+
   </div>
 
-  <div data-testid="conversation-turn" class="ds-chat-message" data-role="message">
-    <div class="ds-assistant-message-main-content">
-      <div class="markdown"><p>Deep learning is a subset of machine learning that uses neural networks with multiple layers.</p></div>
-    </div>
-  </div>
-
-  <div class="ds-chat-message">
-    <div class="ds-assistant-message-main-content">
-      <div class="markdown prose"><p>What are transformers in AI?</p></div>
-    </div>
-  </div>
-
-  <!-- Fallback message elements -->
+  <!-- 合成诱饵（**不是**快照内容，真机没有这两块）：
+       守「回退到页面全部 div / 宽选择器」这一类旧缺陷——任何 adapter 若退回
+       .chat-message 或 [class*="message-content"]，返回的元素会落在标注范围之外，矩阵报红。
+       注：下面两处会让本页 [class*="message"] 的计数变成 10，上面写的 8 仅指快照部分。 -->
   <div class="chat-message" style="display:none;">
     <div class="message-content"><p>fallback</p></div>
   </div>
