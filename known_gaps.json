@@ -1133,7 +1133,7 @@
         "chrome-extension/tests/real-machine/message-model.mjs:9-24（不变量 1 的前提写死「落地页（没有会话）」）",
         "chrome-extension/tests/adapter-matrix/adapter-test-runner.js:437-475（真实快照段只有 3 条断言：chat-input / send-button / isTyping，没有 messageList）"
       ],
-      "detail": "落地页是「新对话」，一条消息都没有，所以真实快照里 messageList 必然 0 命中，`data-probe-role` 也就标不出任何消息元素；真实快照对账段因此只能验「输入框在不在」「空闲时不忙」，验不了「消息选择器还认不认得真气泡」。11 家平台共 7 家有 real fixture，这 7 家在 messageList 上的真机覆盖是 0。\n想把会话页采下来，需要同时改两处：① 采集器支持指定页面（会话 URL 只能从侧栏历史里取，`platform.url` 表达不了）；② `message-model.mjs` 的不变量 1 只在落地页成立——会话页上「messageList 命中 3 个有内容的元素」恰恰是**正确**的，现在会被判成硬伤（本轮实采会话页就撞上了：3 个 `.ds-assistant-message-main-content` 被判「计数被界面外壳撑起来」，采集器退出码 1）。这不是加一个 flag 的事，得让判定知道「这一页是什么页」。",
+      "detail": "落地页是「新对话」，一条消息都没有，所以真实快照里 messageList 必然 0 命中，`data-probe-role` 也就标不出任何消息元素；真实快照对账段因此只能验「输入框在不在」「空闲时不忙」，验不了「消息选择器还认不认得真气泡」。11 家平台共 7 家有 real fixture，这 7 家在 messageList 上的真机覆盖是 0。\n想把会话页采下来，需要同时改两处：① 采集器支持指定页面（会话 URL 只能从侧栏历史里取，`platform.url` 表达不了）；② `message-model.mjs` 的不变量 1 只在落地页成立——会话页上「messageList 命中 3 个有内容的元素」恰恰是**正确**的，现在会被判成硬伤（本轮实采会话页就撞上了：3 个 `.ds-assistant-message-main-content` 被判「计数被界面外壳撑起来」，采集器退出码 1）。这不是加一个 flag 的事，得让判定知道「这一页是什么页」。\n2026-11-18 追加第二种表现（N55）：触发元素甚至不是消息容器，而是「会话 + 联网搜索」这个**页态**才渲染的 `div.site_logo_loading`。落地页快照永远不含它，普通会话页快照也未必含它（取决于那一步有没有开搜索）。⇒ 真实快照这条路线对 isTyping 的守护还有一个页态盲区，不只是「落地页 vs 会话页」二分。",
       "impact": "真实快照给了「真机验过」的错觉，但验的只是落地页那三件事。选择器漂移最可能先坏在消息容器上（虚拟列表改版、DOM 结构重排），而这一层恰恰没有真机守护——2026-11-10 / 11-11 两轮 L2 失败全是 messageList 0 命中，定位时反复踩「打开会话页数不出气泡」。",
       "fix": "未修（本轮只把 DeepSeek 的落地页快照补上，并把会话页证据改用现成的 `dom-shape-probe.mjs` 留档，证据 `evidence/deepseek-dom-shape-2026-11-18.json`）。\n建议方案（未实施）：采集器加 `--url`（收窄到单平台）+ sidecar 里记 `pageKind: landing|session`；`assessMessageCountModel(dom, {pageKind})` 按页种切换不变量——落地页＝命中的元素必须全空；会话页＝命中的元素必须全非空、且「每条形如消息卡的元素至多命中一次」；真实快照对账段再加一条只在 pageKind=session 时生效的 messageList 断言。",
       "found_at": "2026-11-18"
@@ -1152,6 +1152,42 @@
       "detail": "2026-11-18 用登录态实采落地页后 `sendButtonFound=false`。复查真实 DOM：`document.querySelectorAll(\"button\")` 在落地页上命中 0 个；输入区右侧那个紫色的发送箭头是 `div.ds-icon > svg`，祖先六层全是构建期哈希类名（`_020ab5b` / `_77cefa5 _9996a53` / `aaff8b8f` / `_9a2f8e4` / `_660ca72`），没有 aria-label / data-testid / role / 稳定 class。所以 `button[...]` 这四条选择器**不可能命中**，与漂移无关，是形状不匹配。\n矩阵里 deepseek 的「getSendButton() 命中 fixture 标注的发送按钮」长期是 SKIP（fixture 没标 send-button），真实快照段也是 SKIP（没有标注可对），于是这条一直没被任何门禁问过。",
       "impact": "功能上不致命：`clickSend()` 取不到按钮会派发 Enter keydown，历史 L2 也确实发出去了。但它意味着「发送按钮」这条链路在 deepseek 上从未被验证，且**看起来是被验证过的**（矩阵全绿，只是那条是 SKIP）。若将来 Enter 兜底被移除或站点改成「Enter 换行」，这条会静默变成发不出去。",
       "fix": "未修（deepseek 已按 N25 退出目标源、属冻结平台，本轮不动生产选择器）。\n若将来要修：不要写哈希类名。可考虑 `textarea` 的兄弟位置锚定（如 composer 容器内最后一个 `div[tabindex=\"0\"]`）+ 可见性闸，或干脆承认「走 Enter」，把 `sendButton` 留空并在注释里写明「本站无 button 形态的发送控件」，同时让矩阵对 deepseek 的 send-button 断言显式记 SKIP 原因（现在是无声跳过）。",
+      "found_at": "2026-11-18"
+    },
+    {
+      "id": "N55",
+      "priority": "P1",
+      "status": "closed",
+      "title": "DeepSeek typingIndicator 的 `[class*=\"loading\"]` 宽通配命中联网搜索的来源站点图标 ⇒ isTyping() 恒 true ⇒ 每一步都白等 4×180s，全量 8 步被一步拖死",
+      "reader": "任何看到「DeepSeek 真机 Response timeout」就断定「站点反自动化 / 站点挂了 / 账号有问题」的人；以及任何以后想给某个 adapter 的 typingIndicator 加宽通配 `[class*=\"xxx\"]` 的人。",
+      "where": [
+        "chrome-extension/src/platforms/deepseek-adapter.js:93-96（typingIndicator 现为 [class*=generating] / .typing-indicator，宽通配已删，理由注释在上方）",
+        "chrome-extension/src/content/content-script.js:510（等待主判据 `if (state.ready && !isTyping())`）",
+        "chrome-extension/src/platforms/adapter-utils.js:96（isElementRendered：只看 display / visibility / opacity，**不看尺寸**，16×16 占位符也算「可见」）",
+        "chrome-extension/tests/typing-indicator.test.mjs（5 条守卫，含真机诱饵元素 site_logo_loading）",
+        "chrome-extension/tests/real-machine/mutation-check.mjs（变异锚：把 [class*=loading] 加回去必须让上面那条测试变红）"
+      ],
+      "detail": "2026-11-18 全量 L2（`evidence/L2-nov18-deepseek.json`）在 `step_5_boundary` 卡满 723.44s（= 4×180s + 3.44s），回执只写「Response timeout。如果那个网站要求先登录，请先在页面上登录再重试」。\n同一时刻的截图 `evidence/L2-nov18-deepseek.png` 证明页面根本不是「没反应」：AI 回答**早已完整落在页面上**（整段可见）、输入框空闲、页面上写着「搜索到 23 个网页」并排着 6 个 16×16 的来源站点图标占位：\n\n    <div class=\"site_logo_loading site_logo_fallback\" style=\"width:16px;height:16px\">\n\nclass 里带 `loading` ⇒ `[class*=\"loading\"]` 命中 ⇒ `findVisibleElement` 返回它（16×16 也算可见，因为 isElementRendered 不看尺寸）⇒ `isTyping()` 恒为 true ⇒ 等待循环的 `state.ready && !isTyping()` 永不成立 ⇒ 每一步都必然耗尽 4×180s。\n为什么只有 step_5 撞上：前 4 步没触发联网搜索，页面上没有那排 logo。缺陷是**条件触发**的，不是每次必现——这正是它躲过 11-12~11-14 连续 5 轮 8/8 的原因（那几轮的步骤没开搜索）。",
+      "impact": "一个恒为 true 的忙闲判据会让**每一个**用到它的步骤必然超时，而回执把原因写成「Response timeout / 可能需要先登录」，同时把读者引向站点、账号、反自动化三个错误方向。RESULT-N25 的初版结论就据此写成「撞墙」，直到截图 + DOM 复查对上才改判；若不改判，一个 20 行的选择器缺陷会被记成「站点不可用」的产品结论。",
+      "fix": "已修（2026-11-18）。删掉 `[class*=\"loading\"]`，保留 `[class*=\"generating\"]` / `.typing-indicator` 两条 + stopButton + 等待循环里的正文稳定窗——真机空闲态这三条实测均 0 命中，step_2/3/4 本来就是走稳定窗成功的，所以删掉不引入「太早成功」。\n刻意**不**改成 `:not([class*=\"site_logo\"])`：那只是把今天的类名钉进选择器，站点改版即复发；宽通配误命中界面外壳是这个项目反复踩的同一个坑（文心命中通知中心、元宝命中新建按钮）。\n验证三条：① 单测 `tests/typing-indicator.test.mjs` 5/5（诱饵元素在场时 isTyping 必须 false，生成信号在场时必须 true）；② 变异锚把宽通配加回去 → 该测试变红（全量变异检查已验）；③ 全量 L2 复跑 `evidence/L2-nov18-deepseek.fix1.json` 8/8 completed，整轮 81.58s，同一步 11.67s（修复前 723.44s）。\n⚠️ 复跑的截图上没有「搜索到 N 个网页」，即这一轮**未必**再次触发搜索——8/8 证明的是「不再出现假超时、也没因删判据变成太早成功」，**直接证明来自单测**（诱饵在场 ⇒ isTyping 必须为 false），不来自复跑。",
+      "found_at": "2026-11-18"
+    },
+    {
+      "id": "N56",
+      "priority": "P2",
+      "status": "open",
+      "title": "longcat 的真机残留失败至今未归因：最佳 7/8，失败位在 step_8 / step_4 之间漂移，每次都是 723–724s 耗尽 4×180s",
+      "reader": "任何将来解冻 longcat、或以为「longcat 只是被 deepseek 连坐冻结、跟着一起解冻就行」的人；以及任何想把 N55 的修法照搬到 longcat 上的人。",
+      "where": [
+        "chrome-extension/src/platforms/longcat-adapter.js:60-66（typingIndicator：全是从站点 bundle 字面量级证据来的具体类名，**没有**裸 [class*=loading]）",
+        "chrome-extension/tests/typing-indicator-contract.test.mjs（LongCat 段 7 条用例，含 reason-title 反例）",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-11.{fix1,fix2,fix3}.json",
+        "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab{2,4}-*.json",
+        "collaboration/results/RESULT-L2-MULTIPLATFORM-2026-11-10.md:261（§9.3「longcat：账号态解除后是纯选择器问题」）"
+      ],
+      "detail": "2026-11-18 为回答「longcat 是否与 deepseek 同病因」，逐条读了磁盘上 6 份 longcat 真机回执（不是凭印象）。结论：**不是同一病因**。\n① 选择器层面已排除：longcat 的 typingIndicator 从来没有裸 `[class*=\"loading\"]`——它的 5 条全是 11-04 零发送静态普查从站点 bundle 里拿到的字面量（`.assistant-main .v-loading-dot` / `.v-loading-dot` / `[class*=\"stop-generate\"]` / `[class*=\"loading-dot-box\"]` / `[class*=\"loading-text\"]`），且已用 7 条契约用例（含「思考完成后仍保留的 reason-title 不许算生成中」反例）钉住。deepseek 那条宽通配是本站独有。\n② 11-11 fix1/fix2 的 step_2 失败（243.8s = 4×60+3.8；723.9s = 4×180+3.9）已被 §9.3 定为**纯选择器问题**（messageList 0 命中）并修好：fix3 起 step_2 203s 就过，接着 2~7 步 17–27s 正常通过。\n③ 残留失败全部落在**靠后**的一步：fix3 step_8 724.0s、ab2-with-boundary step_8 723.2s、ab4-no-boundary step_4 723.3s、ab4-with-boundary step_8 724.3s。失败位在 step_4 / step_8 之间漂移 ⇒ 与「某一步固定挂」不同，指向会话累积长度而非某个页态。\n④ 旁证：11-11 §9 记录 longcat 在长会话里对同一条 2437 字 fusion 提示词**由平台自己回「服务出错啦」**；同一条提示词发进全新会话则 21s 答完 1481 字（`evidence/L2-longcat-fusion-isolated-2026-11-11.json`）。\n⇒ 现在有两份「看起来一样、成因不同」的假超时样本：deepseek 是忙闲判据恒真（N55，已修），longcat 是长会话响应迟到 / 平台报错（未修、未归因）。",
+      "impact": "把 longcat 当成 N55 的复本，会去改一个本来就没问题的选择器，然后发现「改完还是 7/8」；把两者都写成「站点反自动化」，则挡住任何真正的修复。同时这也意味着「解冻 longcat 就能多一个目标源」这个推论**没有数据支撑**——它从未 8/8。",
+      "fix": "未修（longcat 属冻结平台，按 2026-11-18 裁定本轮不碰真机，连只读预检都算「碰」）。\n若要归因：解冻后跑一次带**发送期 DOM 采样**的 L2（`PROBE_DURING=1`），在失败那一步同时记录三件事——`isTyping()` 的值、`getMessageList().length`、`messageContent` 命中数。这三条能把「忙闲恒真 / 选择器 0 命中 / 站点真的没给答案」一次性分开，不必再靠猜。",
       "found_at": "2026-11-18"
     }
   ]

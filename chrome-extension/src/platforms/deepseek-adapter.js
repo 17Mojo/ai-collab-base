@@ -71,8 +71,26 @@ const SELECTORS = {
     selector: "span",
     texts: ["开启新对话"],
   },
+  // 🔧 2026-11-18 实测（真机全量 L2，step_5 稳定复现 723.44s 假超时）：
+  // 这里原本第一条是 `[class*="loading"]`，它把**联网搜索的来源站点图标**当成「正在生成」。
+  //
+  //   页面现象：step_5「写边界标注」那一步触发了联网搜索（截图里有「搜索到 23 个网页」
+  //   与引用角标），于是页面渲染出 6 个来源站点 logo 占位：
+  //     <div class="site_logo_loading site_logo_fallback" style="width:16px;height:16px">
+  //   class 里带 loading ⇒ findVisibleElement(['[class*="loading"]']) 命中 ⇒
+  //   isTyping() **恒为 true** ⇒ handleWaitForResponse 的 `state.ready && !isTyping()`
+  //   永远不成立 ⇒ 白等 4×180s。截图同期证明 AI 回答早已完整落在页面上。
+  //
+  // 为什么删掉而不是改成 `:not([class*="site_logo"])`：那只是把今天的哈希类名
+  // 钉进选择器，站点下次改版就复发。宽通配 `[class*="..."]` 误命中界面外壳
+  // 是这个项目反复踩的同一个坑（文心命中通知中心、元宝命中新建按钮）。
+  //
+  // 删掉后靠什么判忙闲：stopButton（生成中才出现的停止按钮）+ generating +
+  // .typing-indicator + 等待循环里的 8 秒正文稳定窗。真机上这三条在空闲态
+  // 实测均 0 命中，所以 step_2/3/4 本来就是走「稳定窗」这条路成功的；
+  // 删掉宽通配不引入「太早成功」，只是把 step_5 拉回与前 3 步同样的路径。
+  // 宁可少一个信号，也不要一个恒为 true 的忙闲判定——后者让每一步都必然超时。
   typingIndicator: [
-    '[class*="loading"]',
     '[class*="generating"]',
     ".typing-indicator",
   ],

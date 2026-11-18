@@ -1351,6 +1351,21 @@ const MUTATIONS = [
     expectTest: "DeepSeek：新回答落地 3 → 4，countGrew 成立且基准不跳组",
   },
 
+  // ── 忙闲判定的宽通配（2026-11-18 真机 723.44s 假超时的真凶）─────────
+  // step_5 触发联网搜索后会渲染 6 个 `site_logo_loading site_logo_fallback`
+  // 来源图标（16×16、可见）。typingIndicator 里那条 `[class*="loading"]`
+  // 把它们判成「正在生成」⇒ isTyping() 恒 true ⇒ 等待循环的
+  // `state.ready && !isTyping()` 永不成立，而截图证明回答早已完整在页面上。
+  {
+    name: "DeepSeek typingIndicator 加回 [class*=loading] 宽通配",
+    why: "宽通配命中联网搜索的来源站点图标（class 带 loading）⇒ 空闲页被判成生成中 ⇒ isTyping() 恒 true，每一步都白等满 4×180s",
+    target: "src/platforms/deepseek-adapter.js",
+    find: '  typingIndicator: [\n    \'[class*="generating"]\',',
+    replace: '  typingIndicator: [\n    \'[class*="loading"]\',\n    \'[class*="generating"]\',',
+    testFile: "typing-indicator.test.mjs",
+    expectTest: "DeepSeek：空闲页上的搜索来源图标（class 带 loading）不得被判成「正在生成」",
+  },
+
   // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────
   // 四轮 A/B 全部 723.x s 失败、截图却显示 AI 已答完：长会话卸载旧回答，
   // 计数不涨 ⇒ countGrew 恒 false。下面把「内容型增长信号」的每一环

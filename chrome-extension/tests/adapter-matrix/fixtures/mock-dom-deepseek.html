@@ -99,6 +99,14 @@
 
   </div>
 
+  <!-- 联网搜索的「来源站点图标」占位（真机实测：开搜索后渲染 6 个，16×16、可见）。
+       class 里带 loading —— 2026-11-18 前 deepseek 的 typingIndicator 第一条
+       `[class*="loading"]` 会命中它，于是**空闲页**被判成「正在生成」，
+       isTyping() 恒 true ⇒ 等待循环 `state.ready && !isTyping()` 永不成立
+       ⇒ step_5 稳定复现 723.44s 假超时（答案其实早已在页面上）。
+       这里保留该结构，好让矩阵的「空闲即不忙」断言能守住这个回归。 -->
+  <div class="site_logo_loading site_logo_fallback" style="width:16px;height:16px;"></div>
+
   <!-- 合成诱饵（**不是**快照内容，真机没有这两块）：
        守「回退到页面全部 div / 宽选择器」这一类旧缺陷——任何 adapter 若退回
        .chat-message 或 [class*="message-content"]，返回的元素会落在标注范围之外，矩阵报红。
