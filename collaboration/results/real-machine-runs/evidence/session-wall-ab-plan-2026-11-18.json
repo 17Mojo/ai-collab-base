@@ -10,7 +10,7 @@
   "unfreezeConditions": [
     "用户给出明确的解冻指令（点名平台 + 允许范围）。**当前未满足**：用户只授权了本地准备与 push，没有解冻。",
     "两站登录态可用：PRECHECK=1 且 ALLOW_FROZEN=1、显式 CANDIDATES=deepseek,longcat；deepseek 此前从未被预检过，longcat 只有 2026-11-10 的旧快照，都不是当前态。**当前未满足**。",
-    "dist 产物与源码一致（npm run build 后比对 hash 与关键字，G1–G10 口径）。本轮本地准备会核，结果写进 RESULT。",
+    "dist 产物与源码一致（npm run build 后比对 hash 与关键字）。这是**构建一致性检查**，不属于 PROTOCOL §14.5 的五条门禁（G1/G2/G3/G4/G11），别当门禁引用。本轮本地准备会核，结果写进 RESULT。",
     "确认账号额度：2 站 × 2 变体 × 8 步 = 32 步真实发送 + 1 轮预检。**当前未满足/未核**：账号侧信息，我无法核，需用户确认。"
   ],
   "activePlatforms": [
