@@ -1170,7 +1170,8 @@
       "detail": "2026-11-18 全量 L2（`evidence/L2-nov18-deepseek.json`）在 `step_5_boundary` 卡满 723.44s（= 4×180s + 3.44s），回执只写「Response timeout。如果那个网站要求先登录，请先在页面上登录再重试」。\n同一时刻的截图 `evidence/L2-nov18-deepseek.png` 证明页面根本不是「没反应」：AI 回答**早已完整落在页面上**（整段可见）、输入框空闲、页面上写着「搜索到 23 个网页」并排着 6 个 16×16 的来源站点图标占位：\n\n    <div class=\"site_logo_loading site_logo_fallback\" style=\"width:16px;height:16px\">\n\nclass 里带 `loading` ⇒ `[class*=\"loading\"]` 命中 ⇒ `findVisibleElement` 返回它（16×16 也算可见，因为 isElementRendered 不看尺寸）⇒ `isTyping()` 恒为 true ⇒ 等待循环的 `state.ready && !isTyping()` 永不成立 ⇒ 每一步都必然耗尽 4×180s。\n为什么只有 step_5 撞上：前 4 步没触发联网搜索，页面上没有那排 logo。缺陷是**条件触发**的，不是每次必现——这正是它躲过 11-12~11-14 连续 5 轮 8/8 的原因（那几轮的步骤没开搜索）。",
       "impact": "一个恒为 true 的忙闲判据会让**每一个**用到它的步骤必然超时，而回执把原因写成「Response timeout / 可能需要先登录」，同时把读者引向站点、账号、反自动化三个错误方向。RESULT-N25 的初版结论就据此写成「撞墙」，直到截图 + DOM 复查对上才改判；若不改判，一个 20 行的选择器缺陷会被记成「站点不可用」的产品结论。",
       "fix": "已修（2026-11-18）。删掉 `[class*=\"loading\"]`，保留 `[class*=\"generating\"]` / `.typing-indicator` 两条 + stopButton + 等待循环里的正文稳定窗——真机空闲态这三条实测均 0 命中，step_2/3/4 本来就是走稳定窗成功的，所以删掉不引入「太早成功」。\n刻意**不**改成 `:not([class*=\"site_logo\"])`：那只是把今天的类名钉进选择器，站点改版即复发；宽通配误命中界面外壳是这个项目反复踩的同一个坑（文心命中通知中心、元宝命中新建按钮）。\n验证三条：① 单测 `tests/typing-indicator.test.mjs` 5/5（诱饵元素在场时 isTyping 必须 false，生成信号在场时必须 true）；② 变异锚把宽通配加回去 → 该测试变红（全量变异检查已验）；③ 全量 L2 复跑 `evidence/L2-nov18-deepseek.fix1.json` 8/8 completed，整轮 81.58s，同一步 11.67s（修复前 723.44s）。\n⚠️ 复跑的截图上没有「搜索到 N 个网页」，即这一轮**未必**再次触发搜索——8/8 证明的是「不再出现假超时、也没因删判据变成太早成功」，**直接证明来自单测**（诱饵在场 ⇒ isTyping 必须为 false），不来自复跑。",
-      "found_at": "2026-11-18"
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N56",
