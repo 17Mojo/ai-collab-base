@@ -724,3 +724,41 @@ def test_once_path_flags_terminal_task_without_result_file(tmp_path):
     report = json.loads((workspace / "logs" / "controller_dry.json").read_text(encoding="utf-8"))
     kinds = {issue.get("issue_type") for issue in report["result_consistency_issues"]}
     assert "missing_result_file" in kinds, f"审计没看出终态缺产物，实际 issue 类型: {kinds}"
+
+
+def test_once_path_runs_the_watchdog_for_real(tmp_path):
+    """`--once` 这条真实入口必须真的调看门狗（台账 N45 二次复查）。
+
+    此前 `--once` **根本不调**它：只有 `run_controller_once` 调，而那个函数只有
+    测试在用。所以「看门狗恒返回 0」的真实形态是「报告里压根没这几个字段」。
+    变异检查：删掉 `run_once` 里那行 `ack_result = run_ack_watchdog(...)`，
+    本用例因 KeyError 立刻红。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    script = Path(__file__).resolve().parents[2] / "scripts" / "task_controller_daemon.py"
+    _seed_silent_dispatch(workspace)
+    dispatch_file = workspace / "logs" / "agent_dispatch_state.json"
+    dispatch_before = dispatch_file.read_text(encoding="utf-8")
+
+    result = _run(
+        script,
+        workspace,
+        "--once",
+        "--dry-run",
+        "--pending-timeout-sec",
+        "99999999",
+        "--active-timeout-sec",
+        "99999999",
+        "--report",
+        "logs/controller_dry.json",
+    )
+    assert result.returncode == 0, result.stderr
+
+    report = json.loads((workspace / "logs" / "controller_dry.json").read_text(encoding="utf-8"))
+    assert report["ack_watchdog_stubbed"] is False
+    assert report["ack_watchdog_mode"] == "dry-run"
+    assert report["ack_watchdog_candidate_count"] == 1, "真实入口没扫出这条超阈未 ACK 的任务"
+    assert report["ack_watchdog_redispatched_count"] == 0
+    assert report["ack_watchdog_would_redispatch_count"] == 1
+    assert dispatch_file.read_text(encoding="utf-8") == dispatch_before, "dry-run 改写了 dispatch_state"

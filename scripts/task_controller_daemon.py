@@ -673,6 +673,15 @@ def run_once(args) -> int:
     if not dry_run:
         write_state(workspace, state)
 
+    # 7. ACK 看门狗（强制 dry-run：只观测候选数，绝不重派）
+    #
+    # 〔2026-11-18，台账 N45 复查〕此前 `--once` 这条真实入口**根本不调看门狗**，
+    # 只有 `run_controller_once` 调——而那个函数只有测试在用。于是「看门狗恒
+    # 返回 0」实际是更糟的情况：连 0 都不是它算的，报告里压根没有这几个字段。
+    # 放在 write_state 之后，是为了让 apply 模式下的看门狗看到本轮已收敛的状态，
+    # 而不是它自己即将重派的旧状态。
+    ack_result = run_ack_watchdog(workspace=workspace, dry_run=dry_run)
+
     report = {
         "mode": "dry-run" if dry_run else "apply",
         "drift_detected": len(drifts),
@@ -689,6 +698,13 @@ def run_once(args) -> int:
         "result_consistency_audited": consistency_audited,
         "result_consistency_issue_count": consistency_issues,
         "result_consistency_issues": consistency_details,
+        "ack_watchdog_candidate_count": ack_result["candidate_count"],
+        "ack_watchdog_redispatched_count": ack_result["redispatched_count"],
+        "ack_watchdog_alerted_count": ack_result["alerted_count"],
+        "ack_watchdog_would_redispatch_count": ack_result.get("would_redispatch_count", 0),
+        "ack_watchdog_would_alert_count": ack_result.get("would_alert_count", 0),
+        "ack_watchdog_mode": ack_result.get("mode", "dry-run"),
+        "ack_watchdog_stubbed": ack_result.get("stubbed", False),
         "error_count": len(errors),
         "errors": errors,
         "timestamp": _now().isoformat(),
@@ -714,6 +730,8 @@ def run_once(args) -> int:
         "patches_created": report["patches_created"],
         "result_consistency_audited": report["result_consistency_audited"],
         "result_consistency_issue_count": report["result_consistency_issue_count"],
+        "ack_watchdog_candidate_count": report["ack_watchdog_candidate_count"],
+        "ack_watchdog_would_redispatch_count": report["ack_watchdog_would_redispatch_count"],
         "error_count": report["error_count"],
         "timestamp": report["timestamp"],
     }
