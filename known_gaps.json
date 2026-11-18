@@ -1031,6 +1031,26 @@
       "fix": "已修（2026-11-18）。\n① 锁版本：lint.yml / pyproject [dev] / requirements.txt 三处统一 `ruff==0.17.5`，并在注释里写明「升版本必须与全库 format + check 通过同一个 commit」。选当前最新而非退回本地旧版 0.16.8——用降级来迁就现有字节属于变相放宽。\n② 证据目录排除：`extend-exclude` 加 collaboration/results/real-machine-runs/evidence。依据是本仓既定口径（.gitignore:50「真机回归证据日志属交付物，RESULT 报告以其为最终判定依据」）——格式化会改写「当时实际执行的字节」，而证据的价值正在于字节未变。维护代码（ai_collab/ scripts/ tests/）仍在门禁范围内，未放宽任何判定。\n③ 修掉唯一一条维护代码的 lint：test_result_file_contract.py 的 zip 补 `strict=True`（两个序列等长已在上方 assert，strict 让它从隐含变显式）。\n④ 用锁定版本 `ruff format` 了 11 个维护文件，并用 ast.dump 逐个比对证明其中 10 个是纯格式（零语义变更），第 11 个只多出 strict=True 这一处有意改动。\n验证：`ruff check .` = All checks passed；`ruff format --check .` = 339 files already formatted；格式化后全量单测 3037 passed / 1 skipped / 0 failed。",
       "found_at": "2026-11-18",
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N48",
+      "priority": "P1",
+      "status": "closed",
+      "title": "Mypy 与 Security 两个阻塞工作流在 main 上红：governance.py 3 条类型错误 + 3 条未登记 bandit 发现",
+      "reader": "任何在 main 上提交后只看到「红」而不看是哪个 job 红的人；任何以为 mypy/bandit 门禁在守着自己的人（它其实一直在红，等于没守）。",
+      "where": [
+        "ai_collab/governance.py:16（import subprocess，bandit B404）",
+        "ai_collab/governance.py:415（subprocess.run 调 git，bandit B603/B607）",
+        "ai_collab/governance.py:163-169（locked_json_update 返回 tuple[Any, T]，warn_return_any 在两个调用点报 no-any-return）",
+        "ai_collab/governance.py:273（_base_symbols 里第二个循环复用 node 变量名，AST vs stmt 类型冲突）",
+        ".github/workflows/mypy-gate.yml:41（`pip install mypy` 未锁版本，实测装到 2.4.1）",
+        ".github/workflows/security.yml（bandit baseline 已是 0 known findings，新发现即阻断）"
+      ],
+      "detail": "修完 N47 后逐个查 main 上各工作流的结论，发现除 Code Quality 外还有 3 个红：Test Suite、Mypy Type Check Gate、Security Scan（Nightly 另计）。其中两个的根因都在 ai_collab/governance.py 同一个文件：\n· mypy 2.4.1 报 3 条：`locked_json_update` 声明返回 `tuple[Any, T]`，两个调用点 `merge_state_write:193` 与 `:676` 直接 `return payload`，在 `warn_return_any=true` 下报 no-any-return；`_base_symbols:273` 先用 `for node in tree.body`（stmt）再用 `for node in ast.walk(tree)`（AST），同一变量名两种类型。\n· bandit 报 3 条 NEW（baseline 声明 0 known findings，故新发现即阻断）：B404 import subprocess、B603/B607 `subprocess.run([\"git\", ...])`。该文件在 baseline 收敛之后才新增了 `_git()` 这个 subprocess 用法，没人补 nosec。\n本仓既有的处理口径很明确：`codex_integration.py:21`、`concurrent_guard.py:7/14`、`orchestration.py:15` 都是 `# nosec B404 # 理由：…` + 调用点 `# nosec B603, B607 # 理由：固定命令 / shell=False，无外部可控输入`。",
+      "impact": "两个阻塞门禁长期红 = 类型错误与安全发现都没有守门人。更具体：`ai_collab/` 105 个源文件的类型契约事实上无人校验；bandit baseline 声明的「43 条存量全部收敛」被新的 3 条静默打破，而门禁红着所以没人知道。",
+      "fix": "已修（2026-11-18）。\n① mypy：把 `locked_json_update` 的返回类型从 `tuple[Any, T]` 收窄为 `tuple[dict[str, Any], T]`，并在函数内 `payload: dict[str, Any] = _read_json_strict(...)` 把 Any 在**源头**收敛——两个调用点传的 default 都是 `{}`，返回值必是 JSON 对象；不在调用点 cast，因为那只是把问题挪到下一个调用者。`_base_symbols` 第二个循环改名为 `call`，消掉 stmt/AST 的类型冲突。\n② bandit：按本仓既有写法在 import 处补 `# nosec B404`、在 `_git()` 的 subprocess.run 处补 `# nosec B603, B607`，两处都写明理由（固定命令 git + 内部构造参数 / shell=False；可执行名由 PATH 解析）。未改动 baseline 文件——补 nosec 是「声明这里是安全的」，重生成 baseline 是「把新发现算作已知」，后者会掩盖真问题。\n验证（本地装 CI 同版本 mypy 2.4.1）：`python -m mypy ai_collab/` → Success: no issues found in 105 source files；`bandit -r ai_collab/` → 0 findings（改前 3）；全量单测 3037 passed / 1 skipped。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     }
   ]
 }

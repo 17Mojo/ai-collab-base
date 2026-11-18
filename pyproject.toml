@@ -24,7 +24,7 @@ ai-collab = "ai_collab.cli:main"
 
 [project.optional-dependencies]
 dev = [
-    "mypy>=1.0.0",
+    "mypy==2.4.1",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     # 锁死（2026-11-18）：未锁时 CI 永远装最新，本地却是另一个版本，

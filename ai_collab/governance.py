@@ -13,7 +13,7 @@ import ast
 import hashlib
 import json
 import os
-import subprocess
+import subprocess  # nosec B404  # 理由：本模块 subprocess 调用已在调用点逐处审计
 import tempfile
 import time
 import uuid
@@ -160,10 +160,15 @@ def _read_json_strict(target: Path, default: Any) -> Any:
         raise GovernanceError(f"账本内容损坏，拒绝覆盖: {target}: {exc}") from exc
 
 
-def locked_json_update(target: Path, default: Any, mutate: Callable[[Any], T]) -> tuple[Any, T]:
-    """在同一把锁内完成「读取最新内容 → 修改 → 原子写回」。"""
+def locked_json_update(target: Path, default: Any, mutate: Callable[[Any], T]) -> tuple[dict[str, Any], T]:
+    """在同一把锁内完成「读取最新内容 → 修改 → 原子写回」。
+
+    返回值类型收窄为 `dict[str, Any]`：本仓两个调用点传的 `default` 都是 `{}`，
+    返回的必是 JSON 对象。此前声明成 `Any` 会让 `warn_return_any` 在调用点报
+    no-any-return（mypy 2.4.1，台账 N48），而在调用点 cast 只是把问题挪走。
+    """
     with file_lock(target):
-        payload = _read_json_strict(target, default)
+        payload: dict[str, Any] = _read_json_strict(target, default)
         result = mutate(payload)
         atomic_write_json(target, payload)
     return payload, result
@@ -270,13 +275,13 @@ def _base_symbols(tree: ast.Module) -> tuple[set[str], set[str]]:
                 if isinstance(target, ast.Name) and target.id != "_":
                     symbols.add(target.id)
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and _call_name(node) == "add_argument":
+    for call in ast.walk(tree):
+        if isinstance(call, ast.Call) and _call_name(call) == "add_argument":
             option = next(
-                (a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)),
+                (a.value for a in call.args if isinstance(a, ast.Constant) and isinstance(a.value, str)),
                 "",
             )
-            default = next((kw.value for kw in node.keywords if kw.arg == "default"), None)
+            default = next((kw.value for kw in call.keywords if kw.arg == "default"), None)
             if option.startswith("--") and default is not None and _is_ledger_literal(default):
                 attrs.add(option[2:].replace("-", "_"))
     return symbols, attrs
@@ -412,7 +417,7 @@ def check_direct_writes(workspace: Path) -> dict[str, Any]:
 # 治理登记表
 # --------------------------------------------------------------------------
 def _git(workspace: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return subprocess.run(  # nosec B603, B607  # 理由：固定命令 git + 内部构造参数 / shell=False，无外部可控输入；可执行文件名由 PATH 解析（平台内置工具）
         ["git", "-C", str(workspace), *args],
         capture_output=True,
         text=True,

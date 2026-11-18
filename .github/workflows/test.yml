@@ -85,7 +85,7 @@ jobs:
         # 检查，把 tests/ 里的历史遗留错误也算进来，导致本步骤
         # 失败并遮蔽后续的覆盖率门禁。
         run: |
-          pip install ruff
+          pip install "ruff==0.17.5"
           ruff check ai_collab/ scripts/
 
       - name: Type check (mypy)
@@ -99,7 +99,7 @@ jobs:
         # 新增「上游 mypy 升级引红」这一类风险。
         run: |
           set -o pipefail
-          pip install mypy
+          pip install "mypy==2.4.1"
           mypy ai_collab/ 2>&1 | tail -10
 
       - name: Run unit tests with coverage
