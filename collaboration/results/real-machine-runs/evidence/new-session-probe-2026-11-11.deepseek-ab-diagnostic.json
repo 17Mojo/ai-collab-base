@@ -1,0 +1,138 @@
+{
+  "generatedAt": "2026-11-11T13:30:42.291Z",
+  "mode": "readonly-dom-probe",
+  "redlines": {
+    "clicks": false,
+    "typing": false,
+    "sending": false,
+    "hover": false,
+    "captchaBypass": false,
+    "packImported": false
+  },
+  "needles": [
+    "新对话",
+    "新建对话",
+    "新的对话",
+    "开始新对话",
+    "发起新对话",
+    "开启新对话",
+    "新建聊天",
+    "新建会话",
+    "新会话",
+    "新建",
+    "清空上下文",
+    "清空会话",
+    "New chat",
+    "New Chat",
+    "New conversation"
+  ],
+  "classRe": "new[-_]?chat|new[-_]?session|new[-_]?dialog|newChat|create[-_]?conv|sidebar-new",
+  "platforms": [
+    {
+      "platform": "deepseek",
+      "url": "https://chat.deepseek.com/",
+      "finalUrl": "https://chat.deepseek.com/",
+      "title": "DeepSeek - 探索未至之境",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": null,
+      "adapterMessageList": [
+        "[data-testid=\"conversation-turn\"]",
+        ".chat-message",
+        "[class*=\"message\"]",
+        ".ds-chat-message"
+      ],
+      "bodyTextLen": 1247,
+      "messageListHits": [
+        {
+          "sel": "[data-testid=\"conversation-turn\"]",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": ".chat-message",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": "[class*=\"message\"]",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": ".ds-chat-message",
+          "count": 0,
+          "samples": []
+        }
+      ],
+      "answerChain": null,
+      "textHits": [
+        {
+          "needle": "开启新对话",
+          "tag": "span",
+          "cls": "",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "开启新对话",
+          "innerText": "开启新对话",
+          "rendered": true,
+          "rect": {
+            "x": 106,
+            "y": 80,
+            "w": 70,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "_5a8ac7a",
+              "textLen": 5
+            },
+            {
+              "tag": "div",
+              "cls": "dc1f7bee _4bcc731",
+              "textLen": 5
+            },
+            {
+              "tag": "div",
+              "cls": "_7b40dad",
+              "textLen": 5
+            },
+            {
+              "tag": "div",
+              "cls": "b8812f16 a2f3d50e",
+              "textLen": 1153
+            },
+            {
+              "tag": "div",
+              "cls": "dc04ec1d",
+              "textLen": 1153
+            },
+            {
+              "tag": "div",
+              "cls": "c3ecdb44",
+              "textLen": 1172
+            }
+          ],
+          "outerHTML": "<span>开启新对话</span>"
+        }
+      ],
+      "classHits": [],
+      "labeledControls": [],
+      "novelPhrases": [
+        "开启新对话"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "mode": "three-items-authorization-closure-verdict-2026-11-15",
+  "generatedAt": "2026-11-15T06:56:34+00:00",
+  "source": [
+    "three-items-precondition-2026-11-15.json",
+    "proposition-pursuit-plan-2026-11-14.json",
+    "ab5-final-verdict-2026-11-14.json",
+    "ab4-verdict-2026-11-12.json",
+    "RESULT §26 / §27"
+  ],
+  "principle": "三条指令各自独立判定，不默认打包：② 的意图不构成 ③ 的授权；① 的前提缺失不构成 ② 的自动放行；任何一条都不得靠复述清单升级为授权。",
+  "derivationCorrection": {
+    "what": "首次推导按不存在的字段 changesIndependentVariable 过滤 candidatePaths，得到空列表",
+    "detectedBy": "回读 proposition-pursuit-plan-2026-11-14.json 顶层真实结构",
+    "realFields": [
+      "needsPackChange",
+      "needsSourceOrDistChange"
+    ],
+    "ruling": "以 P2（needsSourceOrDistChange）/ P3（needsPackChange）为改变自变量的路径重算；P1/P4/P5 不改变自变量。原有判定文字不变，本字段留痕。"
+  },
+  "items": [
+    {
+      "id": "①",
+      "intent": "要跑真机",
+      "intentExpressed": true,
+      "dimensions": {
+        "explicitUnfreezeGiven": false,
+        "allowFrozenFlagInThisTurn": false,
+        "platformsNamed": [],
+        "independentVariableSpecified": false,
+        "newCriterionSpecified": false,
+        "platformPolicyStillFrozen": true
+      },
+      "userSetPreconditions": [
+        "用户 2026-11-15 上一轮第 2 条：须逐次明确解冻",
+        "用户 2026-11-15 上一轮第 2 条：并说明本次改变了哪个自变量；否则 §26 已证盲跑不产生新证据"
+      ],
+      "diskEvidence": {
+        "ab5Code": "ABORT_NO_WALL",
+        "ab5RoundsExecuted": null,
+        "ab4Code": "PROPOSITION_NOT_SUPPORTED_ROUNDS_UNUSABLE",
+        "ab6Receipts": 0,
+        "postF1FullARounds": 3,
+        "postF1WallCount": 0,
+        "planCode": null,
+        "pathsChangingIndependentVariable": [
+          "P2",
+          "P3"
+        ]
+      },
+      "whyIndependentVariableMatters": "§26 已证 A 组 no-boundary 本来就是同一会话 8 步串行 / 7 次 AI 往返，自变量结构条件已满足而墙不出现；F1 修复后 3 份完整 A 组回执 8/8、撞墙 0 次。不改变自变量的重跑只能重复 ABORT_NO_WALL。",
+      "costOfRealChange": "P2（回滚 F1 归因对照）需改源码/dist；P3（人工加长会话）需改 Pack。两者都会使既有 dist hash / 变体 Pack sha256 证据链断代，必须重建 dist + 全量 npm test + 全量变异 + dist 一致性并登记新基线。",
+      "code": "NOT_EXECUTED_PRECONDITION_UNMET",
+      "actionsTaken": {
+        "browserLaunched": false,
+        "frozenSiteOpened": false,
+        "messageSent": false,
+        "receiptCreated": false
+      }
+    },
+    {
+      "id": "②",
+      "intent": "要提交",
+      "intentExpressed": true,
+      "dimensions": {
+        "commitActionExplicitlyStated": true,
+        "commitActionSeparatelyConfirmed": false,
+        "fileSetAuthorized": false,
+        "scopeSnapshotFresh": false,
+        "staged": 0
+      },
+      "userSetPreconditions": [
+        "用户 2026-11-15 上一轮第 3 条：提交按「提交动作」与「文件集合」分别重新授权",
+        "用户 2026-11-14 明令：不要默认一次全收"
+      ],
+      "diskEvidence": {
+        "oldScopeTotal": 122,
+        "oldScopeOriginMain": "f98a1a7",
+        "oldScopeBehind": 4,
+        "oldScopeDefect": "modifiedTracked.files[0] = 'hrome-extension/src/background/pack-executor.js'（首字符 c 被切）",
+        "currentStatusItems": 140,
+        "currentBehind": 33
+      },
+      "code": "COMMIT_ACTION_EXPRESSED_BUT_FILE_SET_NOT_AUTHORIZED",
+      "reason": "动作意图有，但文件集合这一维未给，且旧清单已过期并含路径缺陷。staged=0，任何 commit 都必须先显式 git add 指定集合；禁止 git add -A / git commit -a。",
+      "actionsTaken": {
+        "commit": false,
+        "stage": false,
+        "addAll": false
+      }
+    },
+    {
+      "id": "③",
+      "intent": "要 push",
+      "intentExpressed": true,
+      "dimensions": {
+        "userSelfMarkedNeedsSeparateAuthorization": true,
+        "divergenceHandlingAuthorized": false,
+        "pushAuthorized": false,
+        "behindInUserInstruction": 31,
+        "behindDiskTruth": 33,
+        "unpushed": 0
+      },
+      "code": "NOT_AUTHORIZED_NO_ACTION",
+      "reason": "用户自己写明『另需单独授权先处理 behind 31 分歧』，该授权未给；且分歧真值已由外部 fetch 推进到 33。即便 ② 授权完成，push 也须再单独授权分歧处理方式（merge / rebase / 先 pull）并完成集成门禁。",
+      "actionsTaken": {
+        "push": false,
+        "fetch": false,
+        "pull": false,
+        "merge": false,
+        "rebase": false
+      }
+    }
+  ],
+  "overall": {
+    "code": "PARTIAL_INTENT_ONLY_NO_EXECUTABLE_AUTHORIZATION",
+    "executableItemCount": 0,
+    "noBundling": true,
+    "n25StatusChanged": false,
+    "gitUntouched": true,
+    "realMachineRounds": 0,
+    "awaiting": [
+      "① 逐次解冻指令 + 本次改变的自变量（或明确裁定不跑）",
+      "② 提交动作与文件集合分别确认",
+      "③ 单独授权处理 behind=33 分歧后才可 push"
+    ]
+  },
+  "note": "本文件是机器裁定，不是用户授权；后续如用户通过选项补齐，须另写 ruling 文件，不回改本文件。"
+}

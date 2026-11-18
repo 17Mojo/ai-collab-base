@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-11-12T13:24:04.597895Z",
+  "mode": "ab5-preparation-local-gates",
+  "status": "local-only / NO-REAL-MACHINE",
+  "allPass": true,
+  "gates": {
+    "npmTest": {
+      "total": 349,
+      "pass": 349,
+      "fail": 0,
+      "ok": true
+    },
+    "offlineScriptReplay": {
+      "checks": 10,
+      "allPass": true
+    },
+    "planSelfCheck": {
+      "pass": true,
+      "status": "plan-only / NOT-EXECUTED"
+    },
+    "diagnosis": {
+      "code": "PROPOSITION_INDETERMINABLE_WALL_NOT_REPRODUCIBLE",
+      "receiptsExamined": 13,
+      "noRealMachineAction": true
+    },
+    "evidenceJson": {
+      "total": 121,
+      "unparsable": [],
+      "ok": true
+    },
+    "trackedModifiedCount": 15,
+    "trackedModifiedFiles": [
+      "chrome-extension/src/background/pack-executor.js",
+      "chrome-extension/src/content/content-script.js",
+      "chrome-extension/src/content/new-session-control.js",
+      "chrome-extension/src/platforms/deepseek-adapter.js",
+      "chrome-extension/src/platforms/longcat-adapter.js",
+      "chrome-extension/src/utils/retry-policy.js",
+      "chrome-extension/src/utils/wait-policy.js",
+      "chrome-extension/tests/adapter-wait.test.mjs",
+      "chrome-extension/tests/message-list-contract.test.mjs",
+      "chrome-extension/tests/new-session-control.test.mjs",
+      "chrome-extension/tests/real-machine/mutation-check.mjs",
+      "chrome-extension/tests/retry-semantics.test.mjs",
+      "chrome-extension/tests/wait-policy.test.mjs",
+      "collaboration/results/RESULT-L2-MULTIPLATFORM-2026-11-10.md",
+      "known_gaps.json"
+    ]
+  },
+  "note": "本轮未改任何源码/测试/dist；tracked 改动仍是上一轮那 15 个文件，新增物全在 evidence/ 下。",
+  "hardBoundaries": {
+    "browserLaunched": false,
+    "frozenSitesOpened": false,
+    "messagesSent": false,
+    "gitTouched": false
+  }
+}

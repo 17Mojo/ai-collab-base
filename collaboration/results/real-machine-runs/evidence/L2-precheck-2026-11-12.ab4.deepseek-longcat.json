@@ -1,0 +1,192 @@
+{
+  "generatedAt": "2026-11-12T12:18:44.997Z",
+  "mode": "precheck",
+  "candidates": [
+    "deepseek",
+    "longcat"
+  ],
+  "platformPolicy": [
+    {
+      "id": "deepseek",
+      "allowed": true,
+      "active": false,
+      "unfrozenBy": "ALLOW_FROZEN=1",
+      "reason": "frozen-but-explicitly-unfrozen"
+    },
+    {
+      "id": "longcat",
+      "allowed": true,
+      "active": false,
+      "unfrozenBy": "ALLOW_FROZEN=1",
+      "reason": "frozen-but-explicitly-unfrozen"
+    }
+  ],
+  "results": [
+    {
+      "platform": "deepseek",
+      "url": "https://chat.deepseek.com/",
+      "finalUrl": "https://chat.deepseek.com/",
+      "title": "DeepSeek - 探索未至之境",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 0,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "_3098d02",
+            "len": 66,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 86,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "c08e6e93",
+            "len": 41,
+            "attrs": [
+              "class=c08e6e93"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 51,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 48,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "c08e6e93",
+            "len": 41,
+            "attrs": [
+              "class=c08e6e93"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 58,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 48,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "platform": "longcat",
+      "url": "https://longcat.chat/",
+      "finalUrl": "https://longcat.chat/",
+      "title": "LongCat AI",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 16,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "",
+            "len": 285,
+            "attrs": [
+              "id=app",
+              "data-v-app="
+            ]
+          },
+          {
+            "cls": "v-app-container",
+            "len": 285,
+            "attrs": [
+              "data-v-4bb67c65=",
+              "class=v-app-container"
+            ]
+          },
+          {
+            "cls": "app-menus-content",
+            "len": 285,
+            "attrs": [
+              "data-v-4bb67c65=",
+              "class=app-menus-content"
+            ]
+          },
+          {
+            "cls": "slider-menus",
+            "len": 150,
+            "attrs": [
+              "data-v-50da07da=",
+              "data-v-4bb67c65=",
+              "class=slider-menus"
+            ]
+          },
+          {
+            "cls": "slider-menus-content",
+            "len": 150,
+            "attrs": [
+              "data-v-50da07da=",
+              "class=slider-menus-content"
+            ]
+          },
+          {
+            "cls": "conversation-list webkit-scrollbar webkit-scrollbar-hide",
+            "len": 127,
+            "attrs": [
+              "data-v-6d9acd08=",
+              "data-v-50da07da=",
+              "class=conversation-list webkit-scrollbar webki"
+            ]
+          },
+          {
+            "cls": "time-list",
+            "len": 62,
+            "attrs": [
+              "data-v-6d9acd08=",
+              "class=time-list"
+            ]
+          },
+          {
+            "cls": "time-list",
+            "len": 65,
+            "attrs": [
+              "data-v-6d9acd08=",
+              "class=time-list"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

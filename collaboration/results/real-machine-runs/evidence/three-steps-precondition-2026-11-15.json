@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-11-14T22:07:22.528313+00:00",
+  "localTime": "2026-11-15 06:02 GMT+8",
+  "mode": "three-steps-precondition-readonly",
+  "userMandate": "后续步骤（均未授权，按依赖顺序）1、关闭 N25 2、跑真机… 3、提交…",
+  "interpretation": "用户明确标注『均未授权』，因此本文件只做机器前提判定，不把清单本身当作授权",
+  "steps": [
+    {
+      "instruction": "1、关闭 N25",
+      "userLabeledUnauthorized": true,
+      "currentN25": {
+        "status": "open",
+        "closed_at": null,
+        "evidenceCount": 42,
+        "recharacterized": true
+      },
+      "conflict": {
+        "oldRedLine": "用户 2026-11-11 明令：N25 只能在 A/B 跑完且判据成立之后关闭；在此之前保持 open",
+        "criteriaNeverMet": true,
+        "evidence": "ab3/ab4/ab5 三份裁定均 propositionSupported=false；ab5 code=ABORT_NO_WALL",
+        "newBasis": "§26 只读诊断：自变量结构条件已满足但墙不出现，命题不可判定"
+      },
+      "machineVerdict": "REQUIRES_EXPLICIT_USER_RULING",
+      "reason": "用户本条自带「均未授权」标注，且关闭会推翻自己设的旧红线并改写交付口径；不得凭清单本身推断已授权",
+      "recommendation": {
+        "action": "按『命题不可判定而结案』关闭，status=closed、写 closed_at",
+        "mandatoryWording": [
+          "结案理由 = 原始观察对象已重新归因、墙不复现、命题不可判定",
+          "不得写『验证通过』『边界有效』『边界无效』『长会话撞墙已根治』",
+          "显性标记：本次关闭是用户 2026-11-15 显式推翻 2026-11-11『判据成立才关闭』旧红线",
+          "保留 title / detail / fix / reader / where / recharacterization 与全部 42 条证据，不删不改"
+        ]
+      }
+    },
+    {
+      "instruction": "2、跑真机：须逐次明确解冻，并说明本次改变了哪个自变量；否则 §26 已证盲跑不产生新证据",
+      "userSetPreconditions": [
+        "逐次明确解冻 deepseek / longcat",
+        "说明本次改变了哪个自变量"
+      ],
+      "actual": {
+        "explicitUnfreezeGiven": false,
+        "independentVariableSpecified": false,
+        "allowFrozenFlagInThisTurn": false,
+        "platformPolicyUnfrozenBy": null
+      },
+      "diskEvidence": {
+        "ab5": "ABORT_NO_WALL",
+        "planCode": "PROPOSITION_INDETERMINABLE_WALL_NOT_REPRODUCIBLE",
+        "postF1FullARounds": 3,
+        "postF1WallCount": 0,
+        "candidatePathsChangingIndependentVariable": [
+          "P2 回滚 F1 的归因对照实验",
+          "P3 人工加长会话试图复现墙"
+        ],
+        "note": "P2 需改源码/dist、P3 需改 Pack，均违反本轮硬约束；P1/P4/P5 不改变自变量"
+      },
+      "machineVerdict": "NOT_EXECUTED_PRECONDITION_UNMET",
+      "reason": "用户自设的两个前提都没给；§26 已证不存在可控自变量，按用户自己的条件此条自动不成立",
+      "actionsTaken": {
+        "browserLaunched": false,
+        "frozenSiteOpened": false,
+        "messageSent": false,
+        "receiptCreated": false
+      }
+    },
+    {
+      "instruction": "3、提交：按「提交动作」与「文件集合」分别重新授权；若 push，还须单独授权先处理 behind=4 分歧",
+      "userSetPreconditions": [
+        "提交动作单独授权",
+        "文件集合单独授权",
+        "若 push：单独授权先处理分歧"
+      ],
+      "actual": {
+        "commitAuthorized": false,
+        "fileSetAuthorized": false,
+        "pushAuthorized": false,
+        "divergenceHandlingAuthorized": false,
+        "behindAtPreviousTurn": 4,
+        "behindNow": 31
+      },
+      "staleFact": "用户指令里写 behind=4，磁盘真值已是 behind=31；按 disk-truth 以 31 为准并回溯补记",
+      "machineVerdict": "NOT_AUTHORIZED_NO_ACTION",
+      "reason": "两项授权都没给，且 push 的前置分歧处理也没授权；不 commit / 不 push / 不 stage / 不 merge / 不 rebase",
+      "previousRulingStillEffective": {
+        "q0": "暂不提交",
+        "q3": "仅本轮产物（PREFERENCE_ONLY_NOT_AUTHORIZATION）",
+        "file": "commit-authorization-ruling-2026-11-14.json"
+      }
+    }
+  ],
+  "dependencyOrderRespected": true,
+  "executionSummary": {
+    "step1": "待用户显式裁定（推荐按命题不可判定结案，显性标记推翻旧红线）",
+    "step2": "前提未满足 → 不跑",
+    "step3": "未授权 → 不提交"
+  },
+  "remoteDivergence": {
+    "previous": "f98a1a7 / behind 4",
+    "current": "19635c6 / behind 31",
+    "evidence": "remote-divergence-2026-11-15.json"
+  },
+  "hardBoundaries": {
+    "noRealMachineAction": true,
+    "noGitChange": true,
+    "noPackChange": true,
+    "noSourceOrDistChange": true,
+    "n25StatusChanged": false
+  },
+  "diskTruth": {
+    "head": "36d9ec2",
+    "originMain": "19635c6",
+    "ahead": 0,
+    "behind": 31,
+    "unpushed": 0,
+    "staged": 0,
+    "statusItems": 135
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-11-14T11:17:57.787744+00:00",
+  "mode": "proposition-pursuit-p1-execution-readonly-verification",
+  "status": "EXECUTED_LOCAL_ONLY",
+  "realMachineRounds": 0,
+  "diskTruth": {
+    "head": "36d9ec2",
+    "originMain": "f98a1a7",
+    "ahead": 0,
+    "behind": 4,
+    "unpushed": 0,
+    "staged": 0,
+    "statusItems": 132,
+    "resultLines": 1745,
+    "resultSection26Subsections": 8,
+    "knownGapsCount": 25,
+    "n25Status": "open",
+    "n25ClosedAt": null,
+    "n25EvidenceCount": 42,
+    "n25Recharacterized": true,
+    "n25OriginalFieldsPreserved": true,
+    "evidenceJsonTotal": 134,
+    "evidenceJsonParseFailures": 0
+  },
+  "authorizationState": {
+    "A1_追究路径": "P1（已裁定并执行）",
+    "A2_逐次解冻": "未授权（用完仍是冻结，白名单代码未改）",
+    "A3_git_commit": "未授权",
+    "A4_文件集合": "仅偏好登记，未授权",
+    "A5_behind4分歧处理": "未授权（behind=4 保持不动）",
+    "A6_push": "未授权"
+  },
+  "hardBoundaries": {
+    "noRealMachineAction": true,
+    "noBrowserLaunch": true,
+    "noMessageSent": true,
+    "noPackChange": true,
+    "noSourceOrDistChange": true,
+    "noGitChange": true,
+    "noReceiptCreated": true
+  },
+  "note": "只核磁盘真值，不是 L2 回执、不证明命题成立与否。"
+}

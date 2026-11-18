@@ -1,0 +1,54 @@
+{
+  "mode": "three-items-user-ruling-2026-11-15",
+  "generatedAt": "2026-11-15T07:30:28+00:00",
+  "source": "AskUserQuestion 2026-11-15 四问四答",
+  "answers": {
+    "q0_realMachine": "不跑真机（推荐）",
+    "q1_commit": "暂不提交（推荐）",
+    "q2_push": "暂不 push（推荐）",
+    "q3_reopenN25": "不重开（推荐）"
+  },
+  "effectiveRulings": [
+    {
+      "item": "① 要跑真机",
+      "code": "NO_REAL_MACHINE_THIS_TURN",
+      "detail": "冻结站 deepseek / longcat 保持冻结；本轮不解冻、不预检、不打开冻结站、不发消息、不产生真机回执；realMachineRounds=0；ALLOW_FROZEN=1 未出现在本轮任何命令中。"
+    },
+    {
+      "item": "② 要提交",
+      "code": "NO_COMMIT_NO_STAGE",
+      "detail": "提交动作与文件集合均未授权；145 项全留工作区；不 commit / 不 stage / 不 add；staged 保持 0。"
+    },
+    {
+      "item": "③ 要 push",
+      "code": "NO_PUSH_NO_DIVERGENCE_HANDLING",
+      "detail": "不 fetch / 不 pull / 不 merge / 不 rebase / 不 push；behind=33 保持不动；origin/main=915c350 的外部推进只做只读登记。"
+    },
+    {
+      "item": "N25 重开",
+      "code": "N25_REMAINS_CLOSED",
+      "detail": "保持 status=closed / closed_at=2026-11-15 / 43 条证据 / closure 原样保留；不新增 reopen 字段，不改台账。"
+    }
+  ],
+  "scope": {
+    "thisTurnOnly": true,
+    "notAuthorizationForFutureTurns": true,
+    "note": "四项裁定只对本轮生效；后续如需真机 / 提交 / push / 重开，须重新逐项显式授权。"
+  },
+  "unchanged": {
+    "git": true,
+    "sourceOrTests": true,
+    "dist": true,
+    "variantPacks": true,
+    "knownGaps": true,
+    "n25": true,
+    "frozenPlatforms": true
+  },
+  "stillValid": [
+    "只有『A 撞墙且 B 通过』才支持命题",
+    "B 组 available===true && messageCountAfter<Before；边界未执行或 available:false ⇒ 该轮作废 / 本轮不可评估",
+    "observe-first Gate A 判无墙即 ABORT_NO_WALL",
+    "机器裁定 + 磁盘真证；人工视觉判读单列",
+    "提交 / push 按『提交动作』与『文件集合』分别确认；push 另需单独授权分歧处理"
+  ]
+}

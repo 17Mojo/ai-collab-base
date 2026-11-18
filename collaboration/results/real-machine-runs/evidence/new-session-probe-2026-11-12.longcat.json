@@ -1,0 +1,187 @@
+{
+  "generatedAt": "2026-11-12T01:31:41.174Z",
+  "mode": "readonly-dom-probe",
+  "redlines": {
+    "clicks": false,
+    "typing": false,
+    "sending": false,
+    "hover": false,
+    "captchaBypass": false,
+    "packImported": false
+  },
+  "needles": [
+    "新对话",
+    "新建对话",
+    "新的对话",
+    "开始新对话",
+    "发起新对话",
+    "开启新对话",
+    "新建聊天",
+    "新建会话",
+    "新会话",
+    "新建",
+    "清空上下文",
+    "清空会话",
+    "New chat",
+    "New Chat",
+    "New conversation"
+  ],
+  "classRe": "new[-_]?chat|new[-_]?session|new[-_]?dialog|newChat|create[-_]?conv|sidebar-new",
+  "platforms": [
+    {
+      "platform": "longcat",
+      "url": "https://longcat.chat/",
+      "finalUrl": "https://longcat.chat/",
+      "title": "LongCat AI",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": null,
+      "adapterMessageList": [
+        ".assistant-message",
+        ".v-chat-assistant-message"
+      ],
+      "bodyTextLen": 226,
+      "messageListHits": [
+        {
+          "sel": ".assistant-message",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": ".v-chat-assistant-message",
+          "count": 0,
+          "samples": []
+        }
+      ],
+      "answerChain": null,
+      "textHits": [
+        {
+          "needle": "开启新对话",
+          "tag": "span",
+          "cls": "",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "开启新对话",
+          "innerText": "开启新对话",
+          "rendered": true,
+          "rect": {
+            "x": 58,
+            "y": 100,
+            "w": 70,
+            "h": 22
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "new-content",
+              "textLen": 5
+            },
+            {
+              "tag": "div",
+              "cls": "slider-header",
+              "textLen": 5
+            },
+            {
+              "tag": "div",
+              "cls": "v-slider-header",
+              "textLen": 5
+            },
+            {
+              "tag": "div",
+              "cls": "slider-menus-content",
+              "textLen": 120
+            },
+            {
+              "tag": "div",
+              "cls": "slider-menus",
+              "textLen": 120
+            },
+            {
+              "tag": "div",
+              "cls": "app-menus-content",
+              "textLen": 199
+            }
+          ],
+          "outerHTML": "<span data-v-3dbf79c6=\"\">开启新对话</span>"
+        },
+        {
+          "needle": "新对话",
+          "tag": "div",
+          "cls": "conv-title",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新对话",
+          "innerText": "新对话",
+          "rendered": true,
+          "rect": {
+            "x": 20,
+            "y": 364,
+            "w": 224,
+            "h": 22
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "conv-title-wrap",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "conv-item-content",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "conv-item item",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "time-list",
+              "textLen": 65
+            },
+            {
+              "tag": "div",
+              "cls": "conversation-list webkit-scrollbar webkit-scrollbar-hide",
+              "textLen": 97
+            },
+            {
+              "tag": "div",
+              "cls": "slider-menus-content",
+              "textLen": 120
+            }
+          ],
+          "outerHTML": "<div data-v-bc4b067a=\"\" class=\"conv-title\">新对话</div>"
+        }
+      ],
+      "classHits": [],
+      "labeledControls": [],
+      "novelPhrases": [
+        "开启新对话",
+        "新对话"
+      ]
+    }
+  ]
+}

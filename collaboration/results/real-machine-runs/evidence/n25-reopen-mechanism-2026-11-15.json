@@ -1,0 +1,123 @@
+{
+  "mode": "n25-reopen-conditions-and-mechanism-2026-11-15",
+  "generatedAt": "2026-11-15T07:00:11+00:00",
+  "question": "解释下 N25 若需重开",
+  "answerKind": "EXPLANATION_AND_MECHANISM_ONLY",
+  "notAnInstructionToReopen": true,
+  "currentState": {
+    "status": "closed",
+    "closed_at": "2026-11-15",
+    "closureType": "INDETERMINABLE_PROPOSITION_CLOSED",
+    "evidenceCount": 43,
+    "recharacterized": true,
+    "ledgerCounts": {
+      "open": 0,
+      "closed": 24,
+      "wontfix": 1
+    }
+  },
+  "whatClosedMeans": [
+    "结案理由 = 原始观察对象已重新归因、墙不复现、命题不可判定",
+    "不是验证通过（A/B 判据从未成立）",
+    "不是『边界有效』，也不是『边界无效』",
+    "不是『长会话撞墙已根治』",
+    "F1 等待判据修复 / F2 会话入口可达 / ab4 B 组硬判据 2/2 / ab5 判无墙即停，这些事实不受关闭影响"
+  ],
+  "reopenTriggers": [
+    {
+      "id": "T1",
+      "name": "出现新的可控自变量，且『墙』可被稳定复现",
+      "isOnlyPathToDecidability": true,
+      "machineConditions": [
+        "A 组 stepsTotal==8 且 stepSuccess==7",
+        "firstFailedStepId == 'step_8_output'",
+        "失败错误含 Response timeout",
+        "前 7 步全部成功且 sessionResets 为空",
+        "截图人工视觉闸确认末条 AI 回复不是『服务出错啦，请稍后再试。』，且无登录墙 / 验证码",
+        "同一平台相邻时间窗 B 组边界真执行且 available===true && messageCountAfter < messageCountBefore"
+      ],
+      "note": "这是唯一能让『会话边界解掉长会话撞墙』重新变成可判定命题的条件；§26 已证现有 A 组结构条件满足而墙 0 次出现。"
+    },
+    {
+      "id": "T2",
+      "name": "新证据推翻 §24 三条根因之一",
+      "roots": [
+        "F-D1 deepseek 原始超时是等待判据假超时",
+        "F-D2 longcat 是站点随机报错",
+        "F-D3 原始『长会话是变量』归因被隔离实验削弱"
+      ],
+      "note": "须给出可复核的磁盘回执，不能只是重新解读旧证据。"
+    },
+    {
+      "id": "T3",
+      "name": "找到 §9.4 原始观察中可量化的第三变量",
+      "examples": [
+        "真实上下文 token 长度",
+        "站点侧限流 / 并发窗口",
+        "会话累积时长而非轮次"
+      ],
+      "note": "必须能人为控制并写进新判据，否则仍是不可判定。"
+    },
+    {
+      "id": "T4",
+      "name": "审计或交付口径要求改结论性质",
+      "note": "仍须附新证据；单纯改文案不构成重开理由。"
+    }
+  ],
+  "notReopenReasons": [
+    "想再跑一轮完整 4 轮 A/B —— §26 已证不改变自变量的盲跑不产生新证据",
+    "台账里显示 closed 不好看 / 想留个 open 提醒",
+    "把 F1 / F2 的真机验证挪用为『边界有效』的因果证据",
+    "把『边界无效』当成结论",
+    "仅重述旧证据、换一种措辞",
+    "用户只是问『若需重开怎么办』—— 问句不是重开指令"
+  ],
+  "mechanism": {
+    "principle": "append-only，不删不改任何历史字段与证据",
+    "requires": "用户显式重开指令（写明触发条件与新的自变量 / 新证据），机器不得自行重开",
+    "fieldContract": {
+      "status": "closed → open",
+      "closed_at": "\"2026-11-15\" → null",
+      "closure": "必须原样保留，不得删除或改写；可在其中追加 reopenedAt 标记",
+      "reopen": "新增数组，append-only，每条含 reopened_at / decidedBy / trigger / newIndependentVariable / newCriterion / inheritedCriteria / priorClosurePreserved / evidenceCountBefore / relatedEvidence",
+      "appended_evidence": "只追加，不删既有 43 条",
+      "updated_at": "改为重开当天日期",
+      "title/detail/fix/reader/where/recharacterization": "全部原样保留",
+      "known_gaps.topLevel.updated_at": "同步更新；conventions 不动"
+    },
+    "reportContract": "RESULT 追加新章节（§29 顺延），不改写 §26 / §27 / §28；新章节必须写明重开不是验证通过。",
+    "evidenceContract": [
+      "新真机回执必须用新前缀（ab6+），不覆盖 ab3 / ab4 / ab5 任何文件",
+      "长任务 stdout 全程 tee -a；每轮 start / node-exit / verify 即时写 append-only JSONL；回执由驱动即时落盘",
+      "若采用 P2 / P3：改了源码 / dist / Pack 就必须重建 dist、跑全量 npm test + 全量变异 + dist 严格一致性，登记新 hash 基线，并显式标注旧 hash 证据链『断代』"
+    ]
+  },
+  "inheritedCriteria": [
+    "只有『A 撞墙且 B 通过』才支持命题；A/B 都通过不能归功边界；A/B 都失败须另找根因",
+    "observe-first Gate A：先只跑 A 单轮，判无墙即 ABORT_NO_WALL，不跑 B",
+    "B 组硬判据 available===true && messageCountAfter < messageCountBefore",
+    "边界未执行或 available:false ⇒ 明写『该轮作废 / 本轮不可评估』，不得包装成『边界无效』",
+    "冻结站逐次显式解冻并带 ALLOW_FROZEN=1 留痕，用完仍冻结；预检也算碰冻结站",
+    "机器裁定 + 磁盘真证；人工视觉判读单列 nonMachineObservations，不参与机器布尔推导"
+  ],
+  "costComparison": {
+    "keepClosed": "结论保持『命题不可判定』，F1 / F2 / ab4 硬判据 2/2 / ab5 判无墙即停全部不变，零新成本",
+    "reopen": "必须付出 P2（回滚 F1，改源码/dist）或 P3（加长会话，改 Pack）的代价；既有 dist hash 与变体 Pack sha256 证据链断代，须重建全部本地门禁并登记新基线；随后才是逐次解冻 + 串行真机 + 按判据裁定"
+  },
+  "thisTurnAction": {
+    "n25StatusChanged": false,
+    "statusAfter": "closed",
+    "reopenFieldAdded": false,
+    "gitUntouched": true,
+    "realMachineRounds": 0,
+    "note": "本轮只解释机制并落盘；是否重开须用户显式裁定。"
+  },
+  "evidence": [
+    "RESULT §24 / §26 / §27",
+    "wall-observability-diagnosis-2026-11-12.json",
+    "proposition-pursuit-plan-2026-11-14.json",
+    "ab5-final-verdict-2026-11-14.json",
+    "n25-closure-2026-11-15.json",
+    "three-items-authorization-closure-verdict-2026-11-15.json"
+  ]
+}

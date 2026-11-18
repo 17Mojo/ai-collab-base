@@ -1,0 +1,183 @@
+{
+  "generatedAt": "2026-11-11T14:29:54.738Z",
+  "mode": "readonly-message-contract-probe",
+  "redlines": {
+    "sending": false,
+    "typing": false,
+    "packImported": false,
+    "captchaBypass": false
+  },
+  "navigationOnly": {
+    "clickedHistorySession": true
+  },
+  "url": "https://chat.deepseek.com/a/chat/s/4037c20c-01a0-4c80-84da-f7bcbf7ea842",
+  "counts": {
+    "[data-testid=\"conversation-turn\"]": 0,
+    ".chat-message": 0,
+    "[class*=\"message\"]": 8,
+    ".ds-chat-message": 0,
+    "div.ds-message": 5,
+    ".ds-message": 5,
+    ".ds-assistant-message-main-content": 3,
+    ".ds-markdown": 3,
+    "[class*=\"ds-message\"]": 5,
+    ".ds-virtual-list-visible-items": 2
+  },
+  "mixedGroup": [
+    {
+      "i": 0,
+      "tag": "div",
+      "cls": "ds-message _63c77b1",
+      "textLen": 388,
+      "rendered": true,
+      "outer": "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根"
+    },
+    {
+      "i": 1,
+      "tag": "div",
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "textLen": 388,
+      "rendered": true,
+      "outer": "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问"
+    },
+    {
+      "i": 2,
+      "tag": "div",
+      "cls": "d29f3d7d ds-message _63c77b1",
+      "textLen": 80,
+      "rendered": true,
+      "outer": "<div class=\"d29f3d7d ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"fbb737a4\"><div class=\"ds-collapsible-text\" style=\"max-height: 192px; transition: none;\"><div><span"
+    },
+    {
+      "i": 3,
+      "tag": "div",
+      "cls": "ds-message _63c77b1",
+      "textLen": 332,
+      "rendered": true,
+      "outer": "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">场景一：一个做电商的小老"
+    },
+    {
+      "i": 4,
+      "tag": "div",
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "textLen": 332,
+      "rendered": true,
+      "outer": "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">场景一：一个做电商的小老板，每天要盯着几十条客户咨询，问尺码、问发货、问能不能退，他一边打包一边回消息，经常漏单。他用智能体替他值守客服：客户问尺"
+    },
+    {
+      "i": 5,
+      "tag": "div",
+      "cls": "d29f3d7d ds-message _63c77b1",
+      "textLen": 74,
+      "rendered": true,
+      "outer": "<div class=\"d29f3d7d ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"fbb737a4\"><div class=\"ds-collapsible-text\" style=\"max-height: 192px; transition: none;\"><div><span"
+    },
+    {
+      "i": 6,
+      "tag": "div",
+      "cls": "ds-message _63c77b1",
+      "textLen": 219,
+      "rendered": true,
+      "outer": "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看："
+    },
+    {
+      "i": 7,
+      "tag": "div",
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "textLen": 219,
+      "rendered": true,
+      "outer": "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则"
+    }
+  ],
+  "dsMessageGroup": [
+    {
+      "i": 0,
+      "tag": "div",
+      "cls": "ds-message _63c77b1",
+      "textLen": 388,
+      "rendered": true,
+      "outer": "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根"
+    },
+    {
+      "i": 1,
+      "tag": "div",
+      "cls": "d29f3d7d ds-message _63c77b1",
+      "textLen": 80,
+      "rendered": true,
+      "outer": "<div class=\"d29f3d7d ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"fbb737a4\"><div class=\"ds-collapsible-text\" style=\"max-height: 192px; transition: none;\"><div><span"
+    },
+    {
+      "i": 2,
+      "tag": "div",
+      "cls": "ds-message _63c77b1",
+      "textLen": 332,
+      "rendered": true,
+      "outer": "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">场景一：一个做电商的小老"
+    },
+    {
+      "i": 3,
+      "tag": "div",
+      "cls": "d29f3d7d ds-message _63c77b1",
+      "textLen": 74,
+      "rendered": true,
+      "outer": "<div class=\"d29f3d7d ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"fbb737a4\"><div class=\"ds-collapsible-text\" style=\"max-height: 192px; transition: none;\"><div><span"
+    },
+    {
+      "i": 4,
+      "tag": "div",
+      "cls": "ds-message _63c77b1",
+      "textLen": 219,
+      "rendered": true,
+      "outer": "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看："
+    }
+  ],
+  "markdownGroup": [
+    {
+      "i": 0,
+      "tag": "div",
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "textLen": 388,
+      "rendered": true,
+      "outer": "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问"
+    },
+    {
+      "i": 1,
+      "tag": "div",
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "textLen": 332,
+      "rendered": true,
+      "outer": "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">场景一：一个做电商的小老板，每天要盯着几十条客户咨询，问尺码、问发货、问能不能退，他一边打包一边回消息，经常漏单。他用智能体替他值守客服：客户问尺"
+    },
+    {
+      "i": 2,
+      "tag": "div",
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "textLen": 219,
+      "rendered": true,
+      "outer": "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则"
+    }
+  ],
+  "typing": {
+    "button[aria-label=\"Stop generating\"]": {
+      "count": 0,
+      "rendered": 0
+    },
+    "button[aria-label=\"Stop\"]": {
+      "count": 0,
+      "rendered": 0
+    },
+    "[class*=\"loading\"]": {
+      "count": 0,
+      "rendered": 0
+    },
+    "[class*=\"generating\"]": {
+      "count": 0,
+      "rendered": 0
+    },
+    ".typing-indicator": {
+      "count": 0,
+      "rendered": 0
+    }
+  },
+  "bodyTextLen": 2793
+}

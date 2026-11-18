@@ -1,0 +1,112 @@
+{
+  "generatedAt": "2026-11-12T07:30:26.023Z",
+  "mode": "dist-consistency-deepseek-newchat",
+  "scope": "2026-11-12 后续步骤②：deepseek adapter 级精确文案逃生口",
+  "buildLogFirst": "build-2026-11-12.deepseek-newchat.log",
+  "buildLogSecond": "build-2026-11-12.deepseek-newchat-second.log",
+  "secondBuildExit": 0,
+  "idempotent": true,
+  "files": [
+    {
+      "path": "dist/content-script.js",
+      "sha256": "5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7",
+      "bytes": 61464,
+      "sha256AfterRebuild": "5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7",
+      "sameAsFirstBuild": true,
+      "sameAfterRebuild": true
+    },
+    {
+      "path": "dist/service-worker.js",
+      "sha256": "fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da",
+      "bytes": 138861,
+      "sha256AfterRebuild": "fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da",
+      "sameAsFirstBuild": true,
+      "sameAfterRebuild": true
+    }
+  ],
+  "keywordChecks": [
+    {
+      "name": "内容脚本带本轮新增的 adapter 级文案逃生口策略名",
+      "file": "dist/content-script.js",
+      "needle": "adapter-text-match",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本带 deepseek 真入口精确文案",
+      "file": "dist/content-script.js",
+      "needle": "开启新对话",
+      "min": 1,
+      "count": 6,
+      "pass": true
+    },
+    {
+      "name": "内容脚本带 newChatText 声明读取",
+      "file": "dist/content-script.js",
+      "needle": "newChatText",
+      "min": 1,
+      "count": 2,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带 longcat 新会话入口选择器",
+      "file": "dist/content-script.js",
+      "needle": ".v-slider-header .new-content",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带 longcat 入口 span 兜底",
+      "file": "dist/content-script.js",
+      "needle": "div.new-content span",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带内容基准字段（虚拟列表假超时修复）",
+      "file": "dist/content-script.js",
+      "needle": "baselineContent",
+      "min": 1,
+      "count": 22,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带虚拟列表白名单站点",
+      "file": "dist/content-script.js",
+      "needle": "longcat.ai",
+      "min": 1,
+      "count": 3,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带超时错误码",
+      "file": "dist/content-script.js",
+      "needle": "RESPONSE_TIMEOUT",
+      "min": 1,
+      "count": 7,
+      "pass": true
+    },
+    {
+      "name": "后台产物仍带内容基准透传",
+      "file": "dist/service-worker.js",
+      "needle": "baselineContent",
+      "min": 1,
+      "count": 15,
+      "pass": true
+    },
+    {
+      "name": "后台产物仍带续等无基准保护",
+      "file": "dist/service-worker.js",
+      "needle": "RESUME_WAIT_NO_BASELINE",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    }
+  ],
+  "allPass": true,
+  "realMachineVerified": false,
+  "note": "本证据只核 dist 打包产物；冻结站真机效果未验证，N25 保持 open。"
+}

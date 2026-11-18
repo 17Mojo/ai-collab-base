@@ -1,0 +1,14 @@
+{"t":"2026-11-12T03:41:23Z","event":"runner begin","round":"ab3 / 4 rounds"}
+{"t":"2026-11-12T03:41:24Z","event":"start","round":"1 deepseek/no-boundary"}
+{"t":"2026-11-12T03:42:49Z","event":"node-exit","round":"1 exit=0"}
+{"t": "2026-11-12T03:42:49.857015+00:00", "event": "verify", "round": "1", "receipt": "L2-deepseek-auto-2026-11-12.ab3-no-boundary.json", "exists": true, "execSuccess": true, "status": "completed", "stepsTotal": 8, "stepSuccess": 8, "duration": 82223, "sessionResets": 0, "resetAvailable": [], "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+{"t":"2026-11-12T03:42:49Z","event":"start","round":"2 deepseek/with-boundary"}
+{"t":"2026-11-12T03:44:13Z","event":"node-exit","round":"2 exit=0"}
+{"t": "2026-11-12T03:44:13.883692+00:00", "event": "verify", "round": "2", "receipt": "L2-deepseek-auto-2026-11-12.ab3-with-boundary.json", "exists": true, "execSuccess": true, "status": "completed", "stepsTotal": 8, "stepSuccess": 8, "duration": 81289, "sessionResets": 1, "resetAvailable": [false], "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+{"t":"2026-11-12T03:44:13Z","event":"start","round":"3 longcat/no-boundary"}
+{"t":"2026-11-12T03:57:53Z","event":"node-exit","round":"3 exit=0"}
+{"t": "2026-11-12T03:57:53.271709+00:00", "event": "verify", "round": "3", "receipt": "L2-longcat-auto-2026-11-12.ab3-no-boundary.json", "exists": true, "execSuccess": false, "status": "failed", "stepsTotal": 6, "stepSuccess": 5, "duration": 810784, "sessionResets": 0, "resetAvailable": [], "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+{"t":"2026-11-12T03:57:53Z","event":"start","round":"4 longcat/with-boundary"}
+{"t":"2026-11-12T03:57:54Z","event":"node-exit","round":"4 exit=1"}
+{"t": "2026-11-12T03:57:54.633908+00:00", "event": "verify", "round": "4", "receipt": "L2-longcat-auto-2026-11-12.ab3-with-boundary.json", "exists": false, "execSuccess": null, "status": null, "stepsTotal": 0, "stepSuccess": 0, "duration": null, "sessionResets": 0, "resetAvailable": [], "policyUnfrozenBy": null}
+{"t":"2026-11-12T03:57:54Z","event":"runner done","round":"ab3 / 4 rounds"}

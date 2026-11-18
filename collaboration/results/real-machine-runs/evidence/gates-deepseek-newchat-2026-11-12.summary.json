@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-11-12T07:30:26Z",
+  "scope": "2026-11-12 后续步骤②：deepseek adapter 级精确文案逃生口落地后的全量本地门禁",
+  "build1": 0,
+  "build2": 0,
+  "idempotent": true,
+  "npmTest": 0,
+  "mutationFull": 0,
+  "distConsistency": 0,
+  "distAllPass": true,
+  "allPass": true,
+  "realMachineVerified": false,
+  "note": "全绿只证明本地门禁；冻结站真机重跑与提交/推送均需单独授权。"
+}

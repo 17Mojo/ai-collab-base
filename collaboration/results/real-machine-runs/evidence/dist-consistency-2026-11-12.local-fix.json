@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-11-12T02:32:12.785092Z",
+  "mode": "dist-consistency-local-fix",
+  "scope": "2026-11-12 本地修复：公共等待判据 + longcat newChat",
+  "buildLogFirst": "build-2026-11-12.local-fix.log",
+  "buildLogSecond": "build-2026-11-12.local-fix-second.log",
+  "secondBuildExit": 0,
+  "idempotent": true,
+  "files": [
+    {
+      "path": "dist/content-script.js",
+      "sha256": "cffb6eb540abdf113838a1103601ae621d75fac6e0338def77aa13f7a8c9a34c",
+      "bytes": 58727,
+      "sha256AfterRebuild": "cffb6eb540abdf113838a1103601ae621d75fac6e0338def77aa13f7a8c9a34c",
+      "sameAfterRebuild": true
+    },
+    {
+      "path": "dist/service-worker.js",
+      "sha256": "b243c74de2afcecfe37f610c6cad4f297c8ea881d665d60cd30ffb1a53537b18",
+      "bytes": 137165,
+      "sha256AfterRebuild": "b243c74de2afcecfe37f610c6cad4f297c8ea881d665d60cd30ffb1a53537b18",
+      "sameAfterRebuild": true
+    }
+  ],
+  "keywordChecks": [
+    {
+      "name": "内容脚本带内容基准字段",
+      "file": "dist/content-script.js",
+      "needle": "baselineContent",
+      "count": 22,
+      "pass": true
+    },
+    {
+      "name": "内容脚本带虚拟列表白名单站点",
+      "file": "dist/content-script.js",
+      "needle": "longcat.ai",
+      "count": 3,
+      "pass": true
+    },
+    {
+      "name": "内容脚本带 longcat 新会话入口选择器",
+      "file": "dist/content-script.js",
+      "needle": ".v-slider-header .new-content",
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本带 longcat 入口 span 兜底",
+      "file": "dist/content-script.js",
+      "needle": "div.new-content span",
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带超时错误码",
+      "file": "dist/content-script.js",
+      "needle": "RESPONSE_TIMEOUT",
+      "count": 7,
+      "pass": true
+    },
+    {
+      "name": "后台产物带内容基准透传",
+      "file": "dist/service-worker.js",
+      "needle": "baselineContent",
+      "count": 15,
+      "pass": true
+    },
+    {
+      "name": "后台产物仍带续等无基准保护",
+      "file": "dist/service-worker.js",
+      "needle": "RESUME_WAIT_NO_BASELINE",
+      "count": 1,
+      "pass": true
+    }
+  ],
+  "allPass": true,
+  "note": "源码绿不等于交付产物绿；本证据核的是 dist 打包产物本身。真机效果未验证——本轮只做本地修复与门禁。"
+}

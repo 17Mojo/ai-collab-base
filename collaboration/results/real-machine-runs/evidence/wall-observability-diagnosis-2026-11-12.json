@@ -1,0 +1,287 @@
+{
+  "generatedAt": "2026-11-12T13:20:55.401819Z",
+  "mode": "wall-observability-diagnosis-readonly",
+  "status": "read-only / NOT-EXECUTED",
+  "scope": "2026-11-12 后续步骤①的本地准备：判断『A 撞墙』这个自变量还能否被触发",
+  "question": "连续两轮 A/B 都没有「A 撞墙」，是判据写坏了，还是墙本身已经不存在？",
+  "originalObservation": {
+    "source": "RESULT §9.4（2026-11-11）",
+    "deepseek": "7/8，step_8 挂；症状『答案迟到：4×180s 都没稳定，运行结束后才生成完』",
+    "longcat": "7/8，step_8 挂；症状『平台直接报错：服务出错啦，请稍后再试试。』",
+    "isolationExperiment": "L2-longcat-fusion-isolated-2026-11-11.json：同一条 2437 字 fusion 提示词在全新会话 21s 答完、产出 1481 字",
+    "originalConclusion": "长会话是变量，Pack 尾部撞墙是结构问题"
+  },
+  "step8Evolution": {
+    "receiptsExamined": 13,
+    "preF1": [
+      {
+        "receipt": "L2-deepseek-auto-2026-11-11.ab-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "failed",
+        "stepsTotal": 5,
+        "stepSuccess": 4,
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "firstFailedStepId": "step_5_boundary",
+        "firstFailedDurationMs": 723661,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-11.ab2-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "ab2-no-boundary",
+        "status": "failed",
+        "stepsTotal": 5,
+        "stepSuccess": 4,
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "firstFailedStepId": "step_5_boundary",
+        "firstFailedDurationMs": 723572,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab2-with-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "ab2-with-boundary",
+        "status": "failed",
+        "stepsTotal": 5,
+        "stepSuccess": 4,
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "firstFailedStepId": "step_5_boundary",
+        "firstFailedDurationMs": 723826,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab2-no-boundary.json",
+        "platform": "longcat",
+        "packVariant": "ab2-no-boundary",
+        "status": "failed",
+        "stepsTotal": 3,
+        "stepSuccess": 2,
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "firstFailedStepId": "step_3_explain",
+        "firstFailedDurationMs": 723863,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab2-with-boundary.json",
+        "platform": "longcat",
+        "packVariant": "ab2-with-boundary",
+        "status": "failed",
+        "stepsTotal": 8,
+        "stepSuccess": 7,
+        "step8Reached": true,
+        "step8Success": false,
+        "step8DurationMs": 723235,
+        "firstFailedStepId": "step_8_output",
+        "firstFailedDurationMs": 723235,
+        "sessionResets": 1
+      }
+    ],
+    "postF1": [
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab3-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 13333,
+        "firstFailedStepId": null,
+        "firstFailedDurationMs": null,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab3-with-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "with-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 13286,
+        "firstFailedStepId": null,
+        "firstFailedDurationMs": null,
+        "sessionResets": 1
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab4-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 12310,
+        "firstFailedStepId": null,
+        "firstFailedDurationMs": null,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab4-with-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "with-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 13617,
+        "firstFailedStepId": null,
+        "firstFailedDurationMs": null,
+        "sessionResets": 1
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab3-no-boundary.json",
+        "platform": "longcat",
+        "packVariant": "no-boundary",
+        "status": "failed",
+        "stepsTotal": 6,
+        "stepSuccess": 5,
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "firstFailedStepId": "step_6_takeaway",
+        "firstFailedDurationMs": 723637,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab3-with-boundary.json",
+        "platform": "longcat",
+        "packVariant": "with-boundary",
+        "status": "failed",
+        "stepsTotal": 4,
+        "stepSuccess": 3,
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "firstFailedStepId": "step_4_scene",
+        "firstFailedDurationMs": 723219,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab4-no-boundary.json",
+        "platform": "longcat",
+        "packVariant": "no-boundary",
+        "status": "failed",
+        "stepsTotal": 4,
+        "stepSuccess": 3,
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "firstFailedStepId": "step_4_scene",
+        "firstFailedDurationMs": 723310,
+        "sessionResets": 0
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab4-with-boundary.json",
+        "platform": "longcat",
+        "packVariant": "with-boundary",
+        "status": "failed",
+        "stepsTotal": 8,
+        "stepSuccess": 7,
+        "step8Reached": true,
+        "step8Success": false,
+        "step8DurationMs": 724267,
+        "firstFailedStepId": "step_8_output",
+        "firstFailedDurationMs": 724267,
+        "sessionResets": 1
+      }
+    ],
+    "deepseekPreF1AllFailedBeforeStep8": true,
+    "deepseekPostF1AllCompleted8of8": true,
+    "deepseekPostF1Step8DurationsMs": [
+      13333,
+      13286,
+      12310,
+      13617
+    ],
+    "longcatFirstFailedStepPositions": [
+      "step_3_explain",
+      "step_4_scene",
+      "step_6_takeaway",
+      "step_8_output"
+    ],
+    "longcatStep8Failures": [
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab2-with-boundary.json",
+        "durationMs": 723235
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab4-with-boundary.json",
+        "durationMs": 724267
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "F-D1",
+      "claim": "deepseek 侧的『step_8 撞墙』在 F1 修复后完全不复现",
+      "machineEvidence": {
+        "preF1": "3 份 ab/ab2 回执全部在 step_5_boundary 假超时（4×180s），根本没走到 step_8",
+        "postF1": "4 份 ab3/ab4 回执全部 8/8 completed，step_8 耗时 12310–13617 ms"
+      },
+      "interpretation": "§9.4 的『答案迟到 4×180s』正是长会话虚拟列表下 countGrew 恒 false 的假超时，已由 F1 内容型增长信号根治；不是上下文太长导致平台答不出。"
+    },
+    {
+      "id": "F-D2",
+      "claim": "longcat 侧的失败步位置在漂移，不是稳定的 step_8 墙",
+      "machineEvidence": {
+        "firstFailedPositions": [
+          "step_3_explain",
+          "step_4_scene",
+          "step_6_takeaway",
+          "step_8_output"
+        ],
+        "step8Failures": [
+          "L2-longcat-auto-2026-11-12.ab2-with-boundary.json",
+          "L2-longcat-auto-2026-11-12.ab4-with-boundary.json"
+        ],
+        "step8FailureDurationsMs": [
+          723235,
+          724267
+        ]
+      },
+      "interpretation": "同一站点、同一 Pack、同一 dist，失败落在 step_3 / step_4 / step_6 / step_8；两次 step_8 失败都是 4×180s 的 Response timeout，截图人工判读均为『服务出错啦，请稍后再试。』⇒ 站点侧随机报错是外部混杂变量，不是长会话上下文墙。"
+    },
+    {
+      "id": "F-D3",
+      "claim": "§9.4 的隔离实验不足以支持『长会话是变量』",
+      "machineEvidence": {
+        "isolationReceiptExists": true,
+        "originalSymptomAlreadySiteError": true
+      },
+      "interpretation": "空会话 21s 通过只能证明『提示词本身不被平台拒绝』；原始 longcat 症状本身就写着站点报错。新证据下，该因果归因被削弱，不能作为『墙存在』的独立证据。"
+    }
+  ],
+  "conclusion": {
+    "code": "PROPOSITION_INDETERMINABLE_WALL_NOT_REPRODUCIBLE",
+    "statement": "命题的自变量（长会话撞墙）在 F1 修复后不可控、不复现：deepseek 侧是已根治的等待判据假超时，longcat 侧是站点随机报错。因此继续盲跑 4 轮 A/B 大概率仍得到 NO_WALL_THIS_ROUND 或站点错误，无法提供『A 撞墙且 B 通过』的成对证据。",
+    "isNot": [
+      "不是说边界无效",
+      "不是说命题不成立（不成立需有可判定的对照轮次）",
+      "不是说 N25 可以关闭",
+      "不是说 F1 / F2 的真机验证无效"
+    ],
+    "n25": "保持 open；gap 的性质建议改述为『已跑 A/B，但原始观察对象已重新归因、命题不可判定』，是否关闭由用户裁定。"
+  },
+  "nonMachineObservations": [
+    "longcat 各轮截图末条 AI 回复为『服务出错啦，请稍后再试。』、无登录墙/验证码，属人工视觉判读，不参与任何机器布尔推导。",
+    "§9.4 的『答案迟到、运行结束后才生成完』来自当时的截图判读，同样不参与机器布尔推导。"
+  ],
+  "noRealMachineAction": true,
+  "packsUnchanged": true,
+  "distUnchanged": true,
+  "gitUnchanged": true
+}

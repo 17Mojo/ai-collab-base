@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-11-14T07:47:00Z",
+  "mode": "ab5-gate-a-platform-ruling",
+  "question": "observe-first Gate A 只跑 1 轮 A（no-boundary），ab5-observe-first-plan-2026-11-12.json 的 gateA 未钉死首轮平台，需用户裁定",
+  "whyRulingNeeded": "plan 只写『先只跑 A 组（no-boundary）单轮』，未写 platform；真机会对外发送消息，不可逆，不得暗猜判据",
+  "userChoice": {
+    "platform": "deepseek",
+    "label": "deepseek（推荐）",
+    "collectedVia": "AskUserQuestion q-0",
+    "collectedAt": "2026-11-14"
+  },
+  "diskBasis": {
+    "deepseekPostF1": "ab3/ab4 两轮 A 组均 8/8 completed，step_8_output 分别 12310–13617ms；§9.4 原始『答案迟到 4×180s』已由 F1 公共等待判据修复重新归因为虚拟列表假超时",
+    "longcatConfound": "ab3 A 挂 step_6_takeaway、ab4 A 挂 step_4_scene；§9.4 原始症状截图为『服务出错啦，请稍后再试。』，属站点侧外部混杂变量，visualGate 会否掉",
+    "costSaved": "deepseek 单轮约 80s，longcat 历史常 12 分钟超时；判无墙即停可省 3/4 额度"
+  },
+  "rejectedOptions": [
+    {"option": "longcat", "reason": "站点侧随机报错不可控，原始墙已重新归因；未获用户选择"},
+    {"option": "两站各 1 轮 A", "reason": "用户明令『先跑 A 单轮』且裁定为单站；未获用户选择"}
+  ],
+  "effectivePlan": {
+    "roundsTotal": 1,
+    "round1": {
+      "platform": "deepseek",
+      "variant": "no-boundary",
+      "pack": "ab-pack-2026-11-11.no-boundary.json",
+      "out": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.json"
+    },
+    "onGateAFalse": {
+      "code": "ABORT_NO_WALL",
+      "action": "停机，不跑 B、不跑 longcat；落盘『本轮墙不存在』；N25 保持 open；不得说边界有效或无效"
+    },
+    "onGateATrue": {
+      "action": "仅当 6 条机器判据全成立，且人工视觉闸确认截图末条 AI 回复不是站点报错后，才跑同站 B（with-boundary）并按硬判据裁定；视觉闸必须由人确认",
+      "bHardCriteria": "sessionResets[0].available===true && messageCountAfter<messageCountBefore"
+    }
+  },
+  "constraints": [
+    "逐次 ALLOW_FROZEN=1，回执 platformPolicy.unfrozenBy 可复核；用完仍是冻结",
+    "不设置 CODEBUDDY_SAFE_DELETE_ENABLED=0",
+    "OUT 用 *.ab5-* 新路径，不覆盖既有证据",
+    "stdout 全程 tee -a；start/node-exit/verify 即时写 append-only JSONL；回执由驱动自身即时落盘",
+    "提交 / push 单独授权，按「提交」与「文件集合」分别确认"
+  ],
+  "noRealMachineAction": true,
+  "gitUnchanged": true,
+  "note": "本文件只记录用户裁定与计划范围，不是回执、不证明 Gate A 结果。前置对账 ab5-precondition-2026-11-14.json 中的 openCriterion.resolution=PENDING_USER_CONFIRMATION 是裁定前的历史留痕，不改写、不覆盖。"
+}

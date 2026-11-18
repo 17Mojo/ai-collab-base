@@ -1,0 +1,2236 @@
+
+> test
+> node tests/run-tests.mjs
+
+发现 27 个测试文件：
+  - tests/adapter-wait.test.mjs
+  - tests/ci-wiring.test.mjs
+  - tests/deepseek-new-session.test.mjs
+  - tests/editor-injection.test.mjs
+  - tests/extension-wiring.test.mjs
+  - tests/external-user-path.test.mjs
+  - tests/message-list-contract.test.mjs
+  - tests/new-session-control.test.mjs
+  - tests/pack-import-gate.test.mjs
+  - tests/pack-step-types.test.mjs
+  - tests/platform-freeze.test.mjs
+  - tests/platform-registry.test.mjs
+  - tests/probe-readonly.test.mjs
+  - tests/real-machine/clear-sw-cache.test.mjs
+  - tests/real-machine/evidence-paths.test.mjs
+  - tests/real-machine/l2-model.test.mjs
+  - tests/real-machine/message-model.test.mjs
+  - tests/real-machine/multi-platform-selector.test.mjs
+  - tests/real-machine/qianwen-contract.test.mjs
+  - tests/real-machine/sanitize.test.mjs
+  - tests/real-machine/snapshot-fixtures.test.mjs
+  - tests/real-machine/timeout-override-table.test.mjs
+  - tests/retry-semantics.test.mjs
+  - tests/session-boundary.test.mjs
+  - tests/session-wall-ab.test.mjs
+  - tests/typing-indicator-contract.test.mjs
+  - tests/wait-policy.test.mjs
+
+TAP version 13
+# Subtest: 内容没稳住不许返回（太早成功回归锚：旧判据在第一个采样就返回）
+ok 1 - 内容没稳住不许返回（太早成功回归锚：旧判据在第一个采样就返回）
+  ---
+  duration_ms: 2007.227166
+  type: 'test'
+  ...
+# Subtest: 空内容永不判完成（'收到，' 都没有的空壳更不许算）
+ok 2 - 空内容永不判完成（'收到，' 都没有的空壳更不许算）
+  ---
+  duration_ms: 2007.657792
+  type: 'test'
+  ...
+# Subtest: isTyping 期间不许返回（指示器认得准的平台靠它挡思考停顿）
+ok 3 - isTyping 期间不许返回（指示器认得准的平台靠它挡思考停顿）
+  ---
+  duration_ms: 2006.046
+  type: 'test'
+  ...
+# Subtest: 内容稳住后返回全文（messageCount/content/duration 三件套）
+ok 4 - 内容稳住后返回全文（messageCount/content/duration 三件套）
+  ---
+  duration_ms: 1005.1315
+  type: 'test'
+  ...
+# Subtest: 基类 waitForResponse 必须走 _extractContent 钩子取全文
+ok 5 - 基类 waitForResponse 必须走 _extractContent 钩子取全文
+  ---
+  duration_ms: 1005.181792
+  type: 'test'
+  ...
+# Subtest: 无覆写时按 extractMessageContent 兜底（自身→后代→空串契约）
+ok 6 - 无覆写时按 extractMessageContent 兜底（自身→后代→空串契约）
+  ---
+  duration_ms: 1003.855625
+  type: 'test'
+  ...
+# [Prompt Pack] Content Script initialized
+# [Prompt Pack] Using adapter: chat.deepseek.com
+# Subtest: 超时错误带平台前缀（定位是谁家的等待超了）
+ok 7 - 超时错误带平台前缀（定位是谁家的等待超了）
+  ---
+  duration_ms: 1003.864667
+  type: 'test'
+  ...
+# Subtest: 收口不变量：waitForResponseGeneric 与 content-script 同一判据函数（sampleWaitState）
+ok 8 - 收口不变量：waitForResponseGeneric 与 content-script 同一判据函数（sampleWaitState）
+  ---
+  duration_ms: 13.651125
+  type: 'test'
+  ...
+# [Prompt Pack] Content Script initialized
+# [Prompt Pack] Using adapter: qianwen.com
+# Subtest: 虚拟列表：消息数不涨但正文换了，SEND_TO_AI 仍把新回答带回来
+ok 9 - 虚拟列表：消息数不涨但正文换了，SEND_TO_AI 仍把新回答带回来
+  ---
+  duration_ms: 8964.822791
+  type: 'test'
+  ...
+# Subtest: WAIT_FOR_RESPONSE 再超时：失败信封仍带回两个基准，续等链不许断
+ok 10 - WAIT_FOR_RESPONSE 再超时：失败信封仍带回两个基准，续等链不许断
+  ---
+  duration_ms: 526.822209
+  type: 'test'
+  ...
+# Subtest: CI 存在扩展测试作业
+ok 11 - CI 存在扩展测试作业
+  ---
+  duration_ms: 0.436959
+  type: 'test'
+  ...
+# Subtest: CI 跑扩展单测入口（node tests/run-tests.mjs）
+ok 12 - CI 跑扩展单测入口（node tests/run-tests.mjs）
+  ---
+  duration_ms: 0.054542
+  type: 'test'
+  ...
+# Subtest: CI 跑 adapter 矩阵
+ok 13 - CI 跑 adapter 矩阵
+  ---
+  duration_ms: 0.454541
+  type: 'test'
+  ...
+# Subtest: 扩展测试命令后面不许吞掉失败
+ok 14 - 扩展测试命令后面不许吞掉失败
+  ---
+  duration_ms: 0.458
+  type: 'test'
+  ...
+# Subtest: 那个早就失效的旧测试命令不许复活
+ok 15 - 那个早就失效的旧测试命令不许复活
+  ---
+  duration_ms: 0.080916
+  type: 'test'
+  ...
+# Subtest: CI 用的 Node 版本够跑测试入口
+ok 16 - CI 用的 Node 版本够跑测试入口
+  ---
+  duration_ms: 0.103042
+  type: 'test'
+  ...
+# Subtest: 单测入口存在且会跳过 node_modules
+ok 17 - 单测入口存在且会跳过 node_modules
+  ---
+  duration_ms: 32.01925
+  type: 'test'
+  ...
+# Subtest: 变异检查存在且不污染工作区
+ok 18 - 变异检查存在且不污染工作区
+  ---
+  duration_ms: 38.441459
+  type: 'test'
+  ...
+# Subtest: deepseek：裸 span「开启新对话」+ 哈希祖先，仍能找到并真的清空 12→0
+ok 19 - deepseek：裸 span「开启新对话」+ 哈希祖先，仍能找到并真的清空 12→0
+  ---
+  duration_ms: 373.046083
+  type: 'test'
+  ...
+# Subtest: deepseek：文案必须全等，近似文案「开启新对话（Pro）」不许蒙混过关
+ok 20 - deepseek：文案必须全等，近似文案「开启新对话（Pro）」不许蒙混过关
+  ---
+  duration_ms: 13.332542
+  type: 'test'
+  ...
+# Subtest: deepseek：输入区里的同名 span 不许认（COMPOSER_ZONE 闸不能省）
+ok 21 - deepseek：输入区里的同名 span 不许认（COMPOSER_ZONE 闸不能省）
+  ---
+  duration_ms: 13.711209
+  type: 'test'
+  ...
+# Subtest: deepseek：不可见的同名 span 不许认（渲染闸不能省）
+ok 22 - deepseek：不可见的同名 span 不许认（渲染闸不能省）
+  ---
+  duration_ms: 11.279709
+  type: 'test'
+  ...
+# Subtest: 没声明 newChatText 的平台：裸 span「开启新对话」必须找不到，宁可降级
+ok 23 - 没声明 newChatText 的平台：裸 span「开启新对话」必须找不到，宁可降级
+  ---
+  duration_ms: 4.615125
+  type: 'test'
+  ...
+# Subtest: 活跃站不受影响：拿 chatglm 的 SELECTORS 摆在 deepseek 形状里仍不命中
+ok 24 - 活跃站不受影响：拿 chatglm 的 SELECTORS 摆在 deepseek 形状里仍不命中
+  ---
+  duration_ms: 3.667125
+  type: 'test'
+  ...
+# Subtest: 公共层只加文案、不放宽标签：NEW_SESSION_TEXTS 有「开启新对话」，选择器表无裸 span/div
+ok 25 - 公共层只加文案、不放宽标签：NEW_SESSION_TEXTS 有「开启新对话」，选择器表无裸 span/div
+  ---
+  duration_ms: 0.072
+  type: 'test'
+  ...
+# Subtest: deepseek：找到了入口但点了没清空，仍判 available:false（不假装重置）
+ok 26 - deepseek：找到了入口但点了没清空，仍判 available:false（不假装重置）
+  ---
+  duration_ms: 612.956708
+  type: 'test'
+  ...
+# Subtest: Slate：注入后模型收到文本、发送按钮解禁（不靠 execCommand）
+ok 27 - Slate：注入后模型收到文本、发送按钮解禁（不靠 execCommand）
+  ---
+  duration_ms: 37.067459
+  type: 'test'
+  ...
+# Subtest: Slate：编辑器里已有内容时是替换，不是追加
+ok 28 - Slate：编辑器里已有内容时是替换，不是追加
+  ---
+  duration_ms: 11.428208
+  type: 'test'
+  ...
+# Subtest: Slate：多行提示词原样进模型
+ok 29 - Slate：多行提示词原样进模型
+  ---
+  duration_ms: 7.634625
+  type: 'test'
+  ...
+# Subtest: Slate：模型收不到文本时必须抛错，不许假成功
+ok 30 - Slate：模型收不到文本时必须抛错，不许假成功
+  ---
+  duration_ms: 1503.401916
+  type: 'test'
+  ...
+# Subtest: 路由：带 role=textbox 的 Slate 编辑区必须走模型感知路径
+ok 31 - 路由：带 role=textbox 的 Slate 编辑区必须走模型感知路径
+  ---
+  duration_ms: 4.818
+  type: 'test'
+  ...
+# Subtest: 普通 contenteditable：仍走原来的注入路径，不受 Slate 逻辑影响
+ok 32 - 普通 contenteditable：仍走原来的注入路径，不受 Slate 逻辑影响
+  ---
+  duration_ms: 2.586417
+  type: 'test'
+  ...
+# [Prompt Pack] Content Script initialized
+# [Prompt Pack] Using adapter: qianwen.com
+# Subtest: 后台发出去的消息类型，内容脚本必须都认
+ok 33 - 后台发出去的消息类型，内容脚本必须都认
+  ---
+  duration_ms: 498.016917
+  type: 'test'
+  ...
+# Subtest: 内容脚本发出去的消息类型，后台必须都认
+ok 34 - 内容脚本发出去的消息类型，后台必须都认
+  ---
+  duration_ms: 13.004417
+  type: 'test'
+  ...
+# Subtest: Pack 的 AI 步骤发的那条消息，内容脚本必须认
+ok 35 - Pack 的 AI 步骤发的那条消息，内容脚本必须认
+  ---
+  duration_ms: 12.574042
+  type: 'test'
+  ...
+# [Prompt Pack] Content Script initialized
+# [Prompt Pack] Using adapter: qianwen.com
+# Subtest: SEND_TO_AI：提示词进了输入框、发送按钮被点了、AI 的回复被带回来
+ok 36 - SEND_TO_AI：提示词进了输入框、发送按钮被点了、AI 的回复被带回来
+  ---
+  duration_ms: 9565.27125
+  type: 'test'
+  ...
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: SEND_TO_AI：没有提示词就明确报错，不静默发空消息
+ok 37 - SEND_TO_AI：没有提示词就明确报错，不静默发空消息
+  ---
+  duration_ms: 26.452834
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: storage 里的 Pack 要能被执行器找到并执行（不许是 Pack not found）
+ok 38 - storage 里的 Pack 要能被执行器找到并执行（不许是 Pack not found）
+  ---
+  duration_ms: 43.093083
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: storage 里没有的 Pack 仍然要报 Pack not found（别把这条测成永远成功）
+ok 39 - storage 里没有的 Pack 仍然要报 Pack not found（别把这条测成永远成功）
+  ---
+  duration_ms: 10.836917
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: IMPORT_PACKS
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 导入单个 Pack 文件（裸对象）也要进得来
+ok 40 - 导入单个 Pack 文件（裸对象）也要进得来
+  ---
+  duration_ms: 12.821041
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# Subtest: 后台要把目标标签页一路传到 AI 步骤（中间断一截就退回广播）
+ok 41 - 后台要把目标标签页一路传到 AI 步骤（中间断一截就退回广播）
+  ---
+  duration_ms: 13.089083
+  type: 'test'
+  ...
+# Subtest: popup 渲染出来的 data-id 必须是 metadata.pack_id
+ok 42 - popup 渲染出来的 data-id 必须是 metadata.pack_id
+  ---
+  duration_ms: 22.543333
+  type: 'test'
+  ...
+# Subtest: popup 要把用户当前所在的标签页告诉后台（否则 AI 步骤只能广播）
+ok 43 - popup 要把用户当前所在的标签页告诉后台（否则 AI 步骤只能广播）
+  ---
+  duration_ms: 26.752375
+  type: 'test'
+  ...
+# Subtest: popup 必填输入留空不放行（N3：空串出城会拼出残句提示词还报 completed）
+ok 44 - popup 必填输入留空不放行（N3：空串出城会拼出残句提示词还报 completed）
+  ---
+  duration_ms: 21.739791
+  type: 'test'
+  ...
+# Subtest: N2：输入字段名含 HTML 时不得被解析（只当文本）
+ok 45 - N2：输入字段名含 HTML 时不得被解析（只当文本）
+  ---
+  duration_ms: 16.997417
+  type: 'test'
+  ...
+# Subtest: N2：pack 列表 name/description 含 HTML 时不得被解析
+ok 46 - N2：pack 列表 name/description 含 HTML 时不得被解析
+  ---
+  duration_ms: 12.542417
+  type: 'test'
+  ...
+# Subtest: N8：广播投递时 popup 要提示用户（不能让他以为只发了一次）
+ok 47 - N8：广播投递时 popup 要提示用户（不能让他以为只发了一次）
+  ---
+  duration_ms: 16.786042
+  type: 'test'
+  ...
+# Subtest: N20：Studio 回执字段含 HTML 时不得被解析
+ok 48 - N20：Studio 回执字段含 HTML 时不得被解析
+  ---
+  duration_ms: 20.303458
+  type: 'test'
+  ...
+# Subtest: N20：download_url 非 http(s) 时不许进 href
+ok 49 - N20：download_url 非 http(s) 时不许进 href
+  ---
+  duration_ms: 17.158291
+  type: 'test'
+  ...
+# Subtest: N20：错误串（response.error / error.message）含 HTML 时不得被解析
+ok 50 - N20：错误串（response.error / error.message）含 HTML 时不得被解析
+  ---
+  duration_ms: 17.79525
+  type: 'test'
+  ...
+# Subtest: popup 执行成功必须展示产出（N13：不许只报状态把产出丢掉）
+ok 51 - popup 执行成功必须展示产出（N13：不许只报状态把产出丢掉）
+  ---
+  duration_ms: 16.368084
+  type: 'test'
+  ...
+# Subtest: 产出文本必须走 textContent（模型文本不许进 innerHTML）
+ok 52 - 产出文本必须走 textContent（模型文本不许进 innerHTML）
+  ---
+  duration_ms: 17.79625
+  type: 'test'
+  ...
+# Subtest: 产出复制按钮把该字段全文放进剪贴板
+ok 53 - 产出复制按钮把该字段全文放进剪贴板
+  ---
+  duration_ms: 18.365
+  type: 'test'
+  ...
+# Not implemented: navigation to another Document
+# Subtest: 导出 JSON 按钮产出全量产出 JSON
+ok 54 - 导出 JSON 按钮产出全量产出 JSON
+  ---
+  duration_ms: 18.002083
+  type: 'test'
+  ...
+# Subtest: public/ 下的脚本必须语法正确（构建是原样复制的，语法错会一路发到用户手里）
+ok 55 - public/ 下的脚本必须语法正确（构建是原样复制的，语法错会一路发到用户手里）
+  ---
+  duration_ms: 14.039834
+  type: 'test'
+  ...
+# Subtest: 代码里 getURL 指到的页面，在构建产物里必须真的存在
+ok 56 - 代码里 getURL 指到的页面，在构建产物里必须真的存在
+  ---
+  duration_ms: 72.405583
+  type: 'test'
+  ...
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: popup 必须有「导入 Pack」的入口（否则外部用户卡在第一步）
+ok 57 - popup 必须有「导入 Pack」的入口（否则外部用户卡在第一步）
+  ---
+  duration_ms: 13.150042
+  type: 'test'
+  ...
+# Subtest: AI 步骤要发到指定标签页，不能广播给每个打开的 AI 页面
+ok 58 - AI 步骤要发到指定标签页，不能广播给每个打开的 AI 页面
+  ---
+  duration_ms: 7.282875
+  type: 'test'
+  ...
+# Subtest: 没有目标标签页时才广播，并且要标明是广播
+ok 59 - 没有目标标签页时才广播，并且要标明是广播
+  ---
+  duration_ms: 9.053542
+  type: 'test'
+  ...
+# Subtest: 标签页发不过去时要说清楚原因（别让用户看到一串英文）
+ok 60 - 标签页发不过去时要说清楚原因（别让用户看到一串英文）
+  ---
+  duration_ms: 7.186709
+  type: 'test'
+  ...
+# Subtest: 交付给外部用户的那个冒烟 Pack，执行器必须真的能跑起来
+ok 61 - 交付给外部用户的那个冒烟 Pack，执行器必须真的能跑起来
+  ---
+  duration_ms: 10.012667
+  type: 'test'
+  ...
+# [Prompt Pack] Installed: install
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: N10：首次安装且 storage 为空时播种默认 Pack
+ok 62 - N10：首次安装且 storage 为空时播种默认 Pack
+  ---
+  duration_ms: 9.114125
+  type: 'test'
+  ...
+# [Prompt Pack] Installed: install
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: N10：已有 Pack 时不许被默认 Pack 覆盖
+ok 63 - N10：已有 Pack 时不许被默认 Pack 覆盖
+  ---
+  duration_ms: 9.984833
+  type: 'test'
+  ...
+# [Prompt Pack] Installed: update
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# [PackExecutor] 跳过不合法的 Pack： Invalid pack: missing metadata or pack_id (无 id)
+# Subtest: N10：update 不播种——用户可能有意删光
+ok 64 - N10：update 不播种——用户可能有意删光
+  ---
+  duration_ms: 8.9595
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: GET_ALL_PACKS
+# Subtest: N11：GET_ALL_PACKS 给孤儿包打 unrecognized:true（且不静默删数据）
+ok 65 - N11：GET_ALL_PACKS 给孤儿包打 unrecognized:true（且不静默删数据）
+  ---
+  duration_ms: 7.719084
+  type: 'test'
+  ...
+# Subtest: N11：popup 对孤儿包出可见警告（不伪装成正常 Pack）
+ok 66 - N11：popup 对孤儿包出可见警告（不伪装成正常 Pack）
+  ---
+  duration_ms: 13.775625
+  type: 'test'
+  ...
+# Subtest: SEND_TO_AI 的等待上限走过例外表，且表键必须真实存在（防静默失效）
+ok 67 - SEND_TO_AI 的等待上限走过例外表，且表键必须真实存在（防静默失效）
+  ---
+  duration_ms: 33.025459
+  type: 'test'
+  ...
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: manifest 必须盖住平台注册表声称支持的**全部**站点
+ok 68 - manifest 必须盖住平台注册表声称支持的**全部**站点
+  ---
+  duration_ms: 33.690084
+  type: 'test'
+  ...
+# Subtest: host_permissions 与 content_scripts.matches 必须是同一份清单
+ok 69 - host_permissions 与 content_scripts.matches 必须是同一份清单
+  ---
+  duration_ms: 27.567292
+  type: 'test'
+  ...
+# Subtest: 构建产物的 manifest 必须由 manifest.json 生成（不再有手写的第二份）
+ok 70 - 构建产物的 manifest 必须由 manifest.json 生成（不再有手写的第二份）
+  ---
+  duration_ms: 52.275708
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 后台要能从「发消息过来的那个标签页的 URL」认出平台（service worker 里没有 window）
+ok 71 - 后台要能从「发消息过来的那个标签页的 URL」认出平台（service worker 里没有 window）
+  ---
+  duration_ms: 433.560959
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 后台对**每一个**平台都能从 URL 认出适配器（别只测一个）
+ok 72 - 后台对**每一个**平台都能从 URL 认出适配器（别只测一个）
+  ---
+  duration_ms: 17.096875
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: GET_ADAPTER
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 不是 AI 站点的 URL 不该被认成任何平台（别把「什么都认」测成通过）
+ok 73 - 不是 AI 站点的 URL 不该被认成任何平台（别把「什么都认」测成通过）
+  ---
+  duration_ms: 13.144125
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 内容脚本报告失败时，整个 Pack 必须失败（不许 popup 显示「执行成功」）
+ok 74 - 内容脚本报告失败时，整个 Pack 必须失败（不许 popup 显示「执行成功」）
+  ---
+  duration_ms: 13.3545
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 内容脚本成功时，Pack 必须成功（别把这条测成永远失败）
+ok 75 - 内容脚本成功时，Pack 必须成功（别把这条测成永远失败）
+  ---
+  duration_ms: 16.649042
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: AI 步骤取回流式开头碎片时，整个 Pack 必须失败
+ok 76 - AI 步骤取回流式开头碎片时，整个 Pack 必须失败
+  ---
+  duration_ms: 15.173042
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 污染 ack 混入状态条文本也不许冒充正文（真机第二轮压线过闸实锤）
+ok 77 - 污染 ack 混入状态条文本也不许冒充正文（真机第二轮压线过闸实锤）
+  ---
+  duration_ms: 18.131041
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# Subtest: step.config.min_output_length 放宽阈值后，短回复必须成功（别把闸门拆成没有闸门）
+ok 78 - step.config.min_output_length 放宽阈值后，短回复必须成功（别把闸门拆成没有闸门）
+  ---
+  duration_ms: 17.311833
+  type: 'test'
+  ...
+# Subtest: 导入界面不许把「单个 Pack 文件」挡在门外（后台是收的）
+ok 79 - 导入界面不许把「单个 Pack 文件」挡在门外（后台是收的）
+  ---
+  duration_ms: 183.124833
+  type: 'test'
+  ...
+# Subtest: 选完文件后点「确认导入」，状态栏要出现指南承诺的那句话
+ok 80 - 选完文件后点「确认导入」，状态栏要出现指南承诺的那句话
+  ---
+  duration_ms: 339.546292
+  type: 'test'
+  ...
+# Subtest: 真的不是 JSON 仍然要报错（别把闸门拆成没有闸门）
+ok 81 - 真的不是 JSON 仍然要报错（别把闸门拆成没有闸门）
+  ---
+  duration_ms: 121.055375
+  type: 'test'
+  ...
+# Subtest: 文心落地页：通知中心恒在 8 个，但发送前的气泡基准必须是 0
+ok 82 - 文心落地页：通知中心恒在 8 个，但发送前的气泡基准必须是 0
+  ---
+  duration_ms: 30.2765
+  type: 'test'
+  ...
+# Subtest: 文心：回答落地后基准从 0 → 1，countGrew 成立
+ok 83 - 文心：回答落地后基准从 0 → 1，countGrew 成立
+  ---
+  duration_ms: 6.153083
+  type: 'test'
+  ...
+# Subtest: 文心已有会话页：旧回答 1 条 → 新回答 2 条，基准不跳组
+ok 84 - 文心已有会话页：旧回答 1 条 → 新回答 2 条，基准不跳组
+  ---
+  duration_ms: 3.83875
+  type: 'test'
+  ...
+# Subtest: 取回的正文来自答案容器，不是通知中心
+ok 85 - 取回的正文来自答案容器，不是通知中心
+  ---
+  duration_ms: 3.940166
+  type: 'test'
+  ...
+# Subtest: DeepSeek：混合诱饵 8 个，但 messageList 只数 3 条 AI 回答
+ok 86 - DeepSeek：混合诱饵 8 个，但 messageList 只数 3 条 AI 回答
+  ---
+  duration_ms: 3.930458
+  type: 'test'
+  ...
+# Subtest: DeepSeek：空会话基准必须是 0，不许回退到消息卡或通配选择器
+ok 87 - DeepSeek：空会话基准必须是 0，不许回退到消息卡或通配选择器
+  ---
+  duration_ms: 2.482583
+  type: 'test'
+  ...
+# Subtest: DeepSeek：新回答落地 3 → 4，countGrew 成立且基准不跳组
+ok 88 - DeepSeek：新回答落地 3 → 4，countGrew 成立且基准不跳组
+  ---
+  duration_ms: 5.70725
+  type: 'test'
+  ...
+# Subtest: DeepSeek：取回的正文来自最新 AI 回答，不是 human 提示词
+ok 89 - DeepSeek：取回的正文来自最新 AI 回答，不是 human 提示词
+  ---
+  duration_ms: 3.040458
+  type: 'test'
+  ...
+# Subtest: chatglm：div.new-session 不是 button，仍被 adapter-selector 命中并真的清空 12→0
+ok 90 - chatglm：div.new-session 不是 button，仍被 adapter-selector 命中并真的清空 12→0
+  ---
+  duration_ms: 373.911625
+  type: 'test'
+  ...
+# Subtest: 元宝：div.yb-new-chat-entry__item 用「新建对话」措辞，仍走 adapter-selector
+ok 91 - 元宝：div.yb-new-chat-entry__item 用「新建对话」措辞，仍走 adapter-selector
+  ---
+  duration_ms: 316.529375
+  type: 'test'
+  ...
+# Subtest: 文心：div.new-dialog-container-plain 走 adapter-selector（此前只有 DOM 证据）
+ok 92 - 文心：div.new-dialog-container-plain 走 adapter-selector（此前只有 DOM 证据）
+  ---
+  duration_ms: 312.680375
+  type: 'test'
+  ...
+# Subtest: Kimi：a.new-chat-btn 是 <a>，点击时默认跳转必须被拦掉（否则内容脚本被销毁）
+ok 93 - Kimi：a.new-chat-btn 是 <a>，点击时默认跳转必须被拦掉（否则内容脚本被销毁）
+  ---
+  duration_ms: 311.933667
+  type: 'test'
+  ...
+# Subtest: longcat：真入口是 div.new-content 里的「开启新对话」，不是历史项 div.conv-title
+ok 94 - longcat：真入口是 div.new-content 里的「开启新对话」，不是历史项 div.conv-title
+  ---
+  duration_ms: 317.209834
+  type: 'test'
+  ...
+# Subtest: longcat：没声明 newChat 时宁可降级，也不许误点历史会话项
+ok 95 - longcat：没声明 newChat 时宁可降级，也不许误点历史会话项
+  ---
+  duration_ms: 8.377083
+  type: 'test'
+  ...
+# Subtest: 没有 adapter 声明时，「新建会话」文案也要能兜住 Kimi 的 a.logo
+ok 96 - 没有 adapter 声明时，「新建会话」文案也要能兜住 Kimi 的 a.logo
+  ---
+  duration_ms: 309.811583
+  type: 'test'
+  ...
+# Subtest: 千问：入口藏在 opacity-0/pointer-events-none 的 hover-reveal 层里，靠语义属性兜底
+ok 97 - 千问：入口藏在 opacity-0/pointer-events-none 的 hover-reveal 层里，靠语义属性兜底
+  ---
+  duration_ms: 314.638416
+  type: 'test'
+  ...
+# Subtest: 输入区里的同名诱饵不认（chatglm 的 div.enter.is-main-chat）
+ok 98 - 输入区里的同名诱饵不认（chatglm 的 div.enter.is-main-chat）
+  ---
+  duration_ms: 22.880875
+  type: 'test'
+  ...
+# Subtest: 找不到入口：prefer 记 available:false（带原因与耗时），strict 直接抛错
+ok 99 - 找不到入口：prefer 记 available:false（带原因与耗时），strict 直接抛错
+  ---
+  duration_ms: 6.134167
+  type: 'test'
+  ...
+# Subtest: 点了没生效：消息数没下降就不能算成功（不假装重置）
+ok 100 - 点了没生效：消息数没下降就不能算成功（不假装重置）
+  ---
+  duration_ms: 612.996333
+  type: 'test'
+  ...
+# Subtest: 本来就是空会话：不点任何东西，判 already-empty 而不是失败
+ok 101 - 本来就是空会话：不点任何东西，判 already-empty 而不是失败
+  ---
+  duration_ms: 6.829167
+  type: 'test'
+  ...
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# [Prompt Pack] Message received: IMPORT_PACKS
+# [Prompt Pack] Message received: IMPORT_PACKS
+# [Prompt Pack] Message received: IMPORT_PACKS
+# [Prompt Pack] Message received: IMPORT_PACKS
+# Subtest: 只带顶层 pack_id 的 Pack 必须被拒，且报错指出缺 metadata.pack_id
+ok 102 - 只带顶层 pack_id 的 Pack 必须被拒，且报错指出缺 metadata.pack_id
+  ---
+  duration_ms: 1.022208
+  type: 'test'
+  ...
+# Subtest: metadata.pack_id 齐全的 Pack 正常导入
+ok 103 - metadata.pack_id 齐全的 Pack 正常导入
+  ---
+  duration_ms: 0.216042
+  type: 'test'
+  ...
+# Subtest: metadata 在但 metadata.pack_id 缺失的 Pack 也被拒
+ok 104 - metadata 在但 metadata.pack_id 缺失的 Pack 也被拒
+  ---
+  duration_ms: 0.10575
+  type: 'test'
+  ...
+# Subtest: 批量 { packs: [...] } 形状仍可导入，坏包只算自己错
+ok 105 - 批量 { packs: [...] } 形状仍可导入，坏包只算自己错
+  ---
+  duration_ms: 0.151542
+  type: 'test'
+  ...
+# Subtest: PackExecutor 把语义步骤类型统一走 _executeAIStep
+ok 106 - PackExecutor 把语义步骤类型统一走 _executeAIStep
+  ---
+  duration_ms: 210.279584
+  type: 'test'
+  ...
+# Subtest: PackExecutor._executeStepByType 也把语义步骤类型统一走 _executeAIStep
+ok 107 - PackExecutor._executeStepByType 也把语义步骤类型统一走 _executeAIStep
+  ---
+  duration_ms: 0.21775
+  type: 'test'
+  ...
+# Subtest: PackExecutor 仍拒绝未收编的步骤类型
+ok 108 - PackExecutor 仍拒绝未收编的步骤类型
+  ---
+  duration_ms: 0.18925
+  type: 'test'
+  ...
+# Subtest: _buildPrompt 用上游 output 替换占位符
+ok 109 - _buildPrompt 用上游 output 替换占位符
+  ---
+  duration_ms: 0.461708
+  type: 'test'
+  ...
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# Subtest: execute 顺序路径回写 output 且提示词无残留
+ok 110 - execute 顺序路径回写 output 且提示词无残留
+  ---
+  duration_ms: 35.143292
+  type: 'test'
+  ...
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# [pack-executor] 模板变量 {{topic_info}} 的值不是字符串（object），已序列化后替换
+# Subtest: _executeAIStep 解包回复内容，output 全为文本且无 [object Object]
+ok 111 - _executeAIStep 解包回复内容，output 全为文本且无 [object Object]
+  ---
+  duration_ms: 33.6355
+  type: 'test'
+  ...
+# Subtest: _executeStep 拒绝 required_fields 缺失（含空串/纯空白）的步骤
+ok 112 - _executeStep 拒绝 required_fields 缺失（含空串/纯空白）的步骤
+  ---
+  duration_ms: 0.256167
+  type: 'test'
+  ...
+# Subtest: _executeStep 必填校验是确定性失败，不进重试
+ok 113 - _executeStep 必填校验是确定性失败，不进重试
+  ---
+  duration_ms: 0.095833
+  type: 'test'
+  ...
+# Subtest: _executeStep 必填可由上游 output 满足；齐备时 local 步骤照常产出
+ok 114 - _executeStep 必填可由上游 output 满足；齐备时 local 步骤照常产出
+  ---
+  duration_ms: 0.319917
+  type: 'test'
+  ...
+# Subtest: 必填失败会中止整个执行（status=failed，不再有残句提示词出城）
+ok 115 - 必填失败会中止整个执行（status=failed，不再有残句提示词出城）
+  ---
+  duration_ms: 0.361041
+  type: 'test'
+  ...
+# Subtest: _buildPrompt 对对象值 JSON 序列化，不产生 [object Object]
+ok 116 - _buildPrompt 对对象值 JSON 序列化，不产生 [object Object]
+  ---
+  duration_ms: 0.159042
+  type: 'test'
+  ...
+# Subtest: local 步骤对象产出经 {{output_field}} 消费时不出现 [object Object]
+ok 117 - local 步骤对象产出经 {{output_field}} 消费时不出现 [object Object]
+  ---
+  duration_ms: 0.220292
+  type: 'test'
+  ...
+# Subtest: 白名单恰好是 5 个活跃站，不含 deepseek / longcat
+ok 118 - 白名单恰好是 5 个活跃站，不含 deepseek / longcat
+  ---
+  duration_ms: 0.721292
+  type: 'test'
+  ...
+# Subtest: 冻结平台默认被硬闸门拒绝（deepseek / longcat 都拦）
+ok 119 - 冻结平台默认被硬闸门拒绝（deepseek / longcat 都拦）
+  ---
+  duration_ms: 0.70475
+  type: 'test'
+  ...
+# Subtest: 不认识的平台 id 也一律视为冻结，不搞默认放行
+ok 120 - 不认识的平台 id 也一律视为冻结，不搞默认放行
+  ---
+  duration_ms: 0.11725
+  type: 'test'
+  ...
+# Subtest: 活跃 5 站默认放行，且不留解冻痕迹
+ok 121 - 活跃 5 站默认放行，且不留解冻痕迹
+  ---
+  duration_ms: 0.064083
+  type: 'test'
+  ...
+# Subtest: 只有 ALLOW_FROZEN=1 才放行冻结平台，并在回执里留痕
+ok 122 - 只有 ALLOW_FROZEN=1 才放行冻结平台，并在回执里留痕
+  ---
+  duration_ms: 0.122334
+  type: 'test'
+  ...
+# Subtest: 候选集里混进一个冻结站，整个预检都拒绝，不许跳过继续
+ok 123 - 候选集里混进一个冻结站，整个预检都拒绝，不许跳过继续
+  ---
+  duration_ms: 0.078708
+  type: 'test'
+  ...
+# Subtest: 候选集全活跃时放行，逐个可用的策略都写清楚
+ok 124 - 候选集全活跃时放行，逐个可用的策略都写清楚
+  ---
+  duration_ms: 0.141584
+  type: 'test'
+  ...
+# Subtest: L2 真机驱动在 launch() 之前调用了冻结闸门（接线不能断）
+ok 125 - L2 真机驱动在 launch() 之前调用了冻结闸门（接线不能断）
+  ---
+  duration_ms: 31.222
+  type: 'test'
+  ...
+# Subtest: L2 驱动把放行策略与 Pack 变体写进回执
+ok 126 - L2 驱动把放行策略与 Pack 变体写进回执
+  ---
+  duration_ms: 38.264834
+  type: 'test'
+  ...
+# Subtest: 登记表里的每个平台都有对应的生产 adapter 文件
+ok 127 - 登记表里的每个平台都有对应的生产 adapter 文件
+  ---
+  duration_ms: 1.148375
+  type: 'test'
+  ...
+# Subtest: 生产目录下的每个 adapter 都已在登记表里（没有漏登记的平台）
+ok 128 - 生产目录下的每个 adapter 都已在登记表里（没有漏登记的平台）
+  ---
+  duration_ms: 0.481042
+  type: 'test'
+  ...
+# Subtest: 每个平台的 module 字段与 id 对得上（<id>-adapter.js 约定）
+ok 129 - 每个平台的 module 字段与 id 对得上（<id>-adapter.js 约定）
+  ---
+  duration_ms: 0.06775
+  type: 'test'
+  ...
+# Subtest: 登记表 hostname 与 content-script 的 PLATFORM_CONFIGS 完全一致
+ok 130 - 登记表 hostname 与 content-script 的 PLATFORM_CONFIGS 完全一致
+  ---
+  duration_ms: 31.126958
+  type: 'test'
+  ...
+# Subtest: multi-platform-executor 的 platformUrls 不含登记表之外的域名
+ok 131 - multi-platform-executor 的 platformUrls 不含登记表之外的域名
+  ---
+  duration_ms: 39.496292
+  type: 'test'
+  ...
+# Subtest: multi-platform-executor 的 platformUrls 未覆盖全部平台——如实记账，不假装齐全
+ok 132 - multi-platform-executor 的 platformUrls 未覆盖全部平台——如实记账，不假装齐全
+  ---
+  duration_ms: 32.318375
+  type: 'test'
+  ...
+# Subtest: manifest 的 content_scripts matches 覆盖登记表全部 hostname
+ok 133 - manifest 的 content_scripts matches 覆盖登记表全部 hostname
+  ---
+  duration_ms: 34.418334
+  type: 'test'
+  ...
+# Subtest: manifest 的 host_permissions 覆盖登记表全部 hostname
+ok 134 - manifest 的 host_permissions 覆盖登记表全部 hostname
+  ---
+  duration_ms: 30.547958
+  type: 'test'
+  ...
+# Subtest: 每个平台都有对应的模拟层 fixture 文件
+ok 135 - 每个平台都有对应的模拟层 fixture 文件
+  ---
+  duration_ms: 0.440917
+  type: 'test'
+  ...
+# Subtest: fixture 标识与平台 id 一致（避免同一份 fixture 被两个平台共用）
+ok 136 - fixture 标识与平台 id 一致（避免同一份 fixture 被两个平台共用）
+  ---
+  duration_ms: 0.316542
+  type: 'test'
+  ...
+# Subtest: 平台 id 与 hostname 都不得重复
+ok 137 - 平台 id 与 hostname 都不得重复
+  ---
+  duration_ms: 0.161583
+  type: 'test'
+  ...
+# Subtest: getPlatform() 能按 id 查到平台，查不到返回 undefined
+ok 138 - getPlatform() 能按 id 查到平台，查不到返回 undefined
+  ---
+  duration_ms: 0.085041
+  type: 'test'
+  ...
+# Subtest: 登记表覆盖 10 个平台（2026-10-25 基线）
+ok 139 - 登记表覆盖 10 个平台（2026-10-25 基线）
+  ---
+  duration_ms: 0.027917
+  type: 'test'
+  ...
+# Subtest: 模拟层与真机层都从唯一事实源导入平台清单（不再手抄）
+ok 140 - 模拟层与真机层都从唯一事实源导入平台清单（不再手抄）
+  ---
+  duration_ms: 70.233833
+  type: 'test'
+  ...
+# Subtest: 模拟层与真机层里不出现手写的平台条目
+ok 141 - 模拟层与真机层里不出现手写的平台条目
+  ---
+  duration_ms: 65.986583
+  type: 'test'
+  ...
+# Subtest: 探测器里没有任何点击 / 输入 / 悬停 / 键盘调用
+ok 142 - 探测器里没有任何点击 / 输入 / 悬停 / 键盘调用
+  ---
+  duration_ms: 32.201208
+  type: 'test'
+  ...
+# Subtest: 探测器不导入 Pack、不发任何消息类型
+ok 143 - 探测器不导入 Pack、不发任何消息类型
+  ---
+  duration_ms: 40.806542
+  type: 'test'
+  ...
+# Subtest: Playwright 侧只调用「导航 / 读 DOM / 等待」，没有别的
+ok 144 - Playwright 侧只调用「导航 / 读 DOM / 等待」，没有别的
+  ---
+  duration_ms: 38.422
+  type: 'test'
+  ...
+# Subtest: 回执明写 readonly mode 与 redlines 全 false（降级可见）
+ok 145 - 回执明写 readonly mode 与 redlines 全 false（降级可见）
+  ---
+  duration_ms: 39.300667
+  type: 'test'
+  ...
+# Subtest: planCleanup 拒绝空路径
+ok 146 - planCleanup 拒绝空路径
+  ---
+  duration_ms: 0.92325
+  type: 'test'
+  ...
+# Subtest: planCleanup 拒绝非 Chrome profile（缺 Default/）
+ok 147 - planCleanup 拒绝非 Chrome profile（缺 Default/）
+  ---
+  duration_ms: 0.325542
+  type: 'test'
+  ...
+# Subtest: planCleanup 只认三个缓存子目录
+ok 148 - planCleanup 只认三个缓存子目录
+  ---
+  duration_ms: 803.81825
+  type: 'test'
+  ...
+# Subtest: clearSwCaches 删三缓存、留邻居（防过删锚）
+ok 149 - clearSwCaches 删三缓存、留邻居（防过删锚）
+  ---
+  duration_ms: 824.23325
+  type: 'test'
+  ...
+# Subtest: clearSwCaches dry-run 不实际删除
+ok 150 - clearSwCaches dry-run 不实际删除
+  ---
+  duration_ms: 806.335416
+  type: 'test'
+  ...
+# Subtest: clearSwCaches 对缺目录不炸，记 skipped
+ok 151 - clearSwCaches 对缺目录不炸，记 skipped
+  ---
+  duration_ms: 50.914667
+  type: 'test'
+  ...
+# Subtest: clearSwCaches 对非 profile 返回 ok:false 而非抛错
+ok 152 - clearSwCaches 对非 profile 返回 ok:false 而非抛错
+  ---
+  duration_ms: 0.216459
+  type: 'test'
+  ...
+# Subtest: 同日两次不同候选集，不得写同一路径
+ok 153 - 同日两次不同候选集，不得写同一路径
+  ---
+  duration_ms: 0.506
+  type: 'test'
+  ...
+# Subtest: 任意两个不同候选集，路径都必须不同（穷举三个真实组合）
+ok 154 - 任意两个不同候选集，路径都必须不同（穷举三个真实组合）
+  ---
+  duration_ms: 0.248583
+  type: 'test'
+  ...
+# Subtest: 同一组候选集换个顺序，得到同一个路径
+ok 155 - 同一组候选集换个顺序，得到同一个路径
+  ---
+  duration_ms: 0.07025
+  type: 'test'
+  ...
+# Subtest: 重复项与大小写、空白不影响路径
+ok 156 - 重复项与大小写、空白不影响路径
+  ---
+  duration_ms: 0.054833
+  type: 'test'
+  ...
+# Subtest: 空候选集有确定的名字，不退化成空串
+ok 157 - 空候选集有确定的名字，不退化成空串
+  ---
+  duration_ms: 0.209375
+  type: 'test'
+  ...
+# Subtest: 候选集超过上限时退化成「项数-短哈希」，且仍然区分不同组合
+ok 158 - 候选集超过上限时退化成「项数-短哈希」，且仍然区分不同组合
+  ---
+  duration_ms: 0.428
+  type: 'test'
+  ...
+# Subtest: 路径带上日期与 .json 后缀，落在证据目录下
+ok 159 - 路径带上日期与 .json 后缀，落在证据目录下
+  ---
+  duration_ms: 0.109083
+  type: 'test'
+  ...
+# Subtest: 给了 OUT 就原样使用，不做任何加工
+ok 160 - 给了 OUT 就原样使用，不做任何加工
+  ---
+  duration_ms: 0.051667
+  type: 'test'
+  ...
+# Subtest: 文件不存在时不报覆盖（不许出现「原 0 B」这种谎）
+ok 161 - 文件不存在时不报覆盖（不许出现「原 0 B」这种谎）
+  ---
+  duration_ms: 0.263041
+  type: 'test'
+  ...
+# Subtest: 文件存在时提示里带路径与原大小
+ok 162 - 文件存在时提示里带路径与原大小
+  ---
+  duration_ms: 0.296833
+  type: 'test'
+  ...
+# Subtest: 真实文件系统：写过的文件能报出来，没写过的报不出来
+ok 163 - 真实文件系统：写过的文件能报出来，没写过的报不出来
+  ---
+  duration_ms: 79.229083
+  type: 'test'
+  ...
+# Subtest: 采样间隔与生产轮询一致（500ms）
+ok 164 - 采样间隔与生产轮询一致（500ms）
+  ---
+  duration_ms: 0.65
+  type: 'test'
+  ...
+# Subtest: 默认参数不含 --i-will-send（必须显式确认才会发消息）
+ok 165 - 默认参数不含 --i-will-send（必须显式确认才会发消息）
+  ---
+  duration_ms: 0.203792
+  type: 'test'
+  ...
+# Subtest: --i-will-send 会打开发送闸门
+ok 166 - --i-will-send 会打开发送闸门
+  ---
+  duration_ms: 0.058458
+  type: 'test'
+  ...
+# Subtest: --profile-dir / --locale / --timeout 都被解析
+ok 167 - --profile-dir / --locale / --timeout 都被解析
+  ---
+  duration_ms: 0.138875
+  type: 'test'
+  ...
+# Subtest: --headless 会关掉有头模式
+ok 168 - --headless 会关掉有头模式
+  ---
+  duration_ms: 0.057959
+  type: 'test'
+  ...
+# Subtest: 计数增长且生成中解除、内容稳住 —— 会成功
+ok 169 - 计数增长且生成中解除、内容稳住 —— 会成功
+  ---
+  duration_ms: 0.205333
+  type: 'test'
+  ...
+# Subtest: 内容持续在变的流式时间线不许判成功（重放侧太早成功锚）
+ok 170 - 内容持续在变的流式时间线不许判成功（重放侧太早成功锚）
+  ---
+  duration_ms: 0.166625
+  type: 'test'
+  ...
+# Subtest: 计数涨了但 isTyping 恒为 true —— 不会成功（Kimi/ChatGLM 那类缺陷）
+ok 171 - 计数涨了但 isTyping 恒为 true —— 不会成功（Kimi/ChatGLM 那类缺陷）
+  ---
+  duration_ms: 0.0625
+  type: 'test'
+  ...
+# Subtest: 生成中解除但计数没涨 —— 不会成功（取消息列表选错）
+ok 172 - 生成中解除但计数没涨 —— 不会成功（取消息列表选错）
+  ---
+  duration_ms: 0.279666
+  type: 'test'
+  ...
+# Subtest: 页面正文稳住了但生产取到空 —— productionContentNonEmpty 揪出抽取断链
+ok 173 - 页面正文稳住了但生产取到空 —— productionContentNonEmpty 揪出抽取断链
+  ---
+  duration_ms: 0.284208
+  type: 'test'
+  ...
+# Subtest: 页面正文为空时重放绝不判成功（太早成功闸——旧口径这里会放行）
+ok 174 - 页面正文为空时重放绝不判成功（太早成功闸——旧口径这里会放行）
+  ---
+  duration_ms: 0.095833
+  type: 'test'
+  ...
+# Subtest: 生产结果与时间线重放不一致时，consistent 为 false
+ok 175 - 生产结果与时间线重放不一致时，consistent 为 false
+  ---
+  duration_ms: 0.03775
+  type: 'test'
+  ...
+# Subtest: 基准取生产启动那一刻的计数，而不是第一个采样
+ok 176 - 基准取生产启动那一刻的计数，而不是第一个采样
+  ---
+  duration_ms: 0.034708
+  type: 'test'
+  ...
+# Subtest: 没有生产基准时，退回第一个采样的计数
+ok 177 - 没有生产基准时，退回第一个采样的计数
+  ---
+  duration_ms: 0.030917
+  type: 'test'
+  ...
+# Subtest: 空采样不崩
+ok 178 - 空采样不崩
+  ---
+  duration_ms: 0.029083
+  type: 'test'
+  ...
+# Subtest: waitResult 缺失不崩
+ok 179 - waitResult 缺失不崩
+  ---
+  duration_ms: 0.026667
+  type: 'test'
+  ...
+# Subtest: 证据文件里正文被脱敏，但结构保留
+ok 180 - 证据文件里正文被脱敏，但结构保留
+  ---
+  duration_ms: 0.858167
+  type: 'test'
+  ...
+# Subtest: 证据文件里没有样本时也能组装
+ok 181 - 证据文件里没有样本时也能组装
+  ---
+  duration_ms: 0.059209
+  type: 'test'
+  ...
+# Subtest: 登录判定只认白名单里的应用 cookie
+ok 182 - 登录判定只认白名单里的应用 cookie
+  ---
+  duration_ms: 0.112167
+  type: 'test'
+  ...
+# Subtest: 登录判定：匿名会话 cookie（JSESSIONID）永远不算登录
+ok 183 - 登录判定：匿名会话 cookie（JSESSIONID）永远不算登录
+  ---
+  duration_ms: 0.040791
+  type: 'test'
+  ...
+# Subtest: 登录判定：白名单外的 cookie 一律不算
+ok 184 - 登录判定：白名单外的 cookie 一律不算
+  ---
+  duration_ms: 0.028333
+  type: 'test'
+  ...
+# Subtest: 登录判定：空值 / null / 太短的值不算登录
+ok 185 - 登录判定：空值 / null / 太短的值不算登录
+  ---
+  duration_ms: 0.030583
+  type: 'test'
+  ...
+# Subtest: 登录判定：白名单为空时一律不判定（不猜）
+ok 186 - 登录判定：白名单为空时一律不判定（不猜）
+  ---
+  duration_ms: 0.029416
+  type: 'test'
+  ...
+# Subtest: 实际界面语言：按界面文案判（发送按钮 aria）
+ok 187 - 实际界面语言：按界面文案判（发送按钮 aria）
+  ---
+  duration_ms: 0.094291
+  type: 'test'
+  ...
+# Subtest: 实际界面语言：没有文案时退回 document.lang
+ok 188 - 实际界面语言：没有文案时退回 document.lang
+  ---
+  duration_ms: 0.032041
+  type: 'test'
+  ...
+# Subtest: locale 不一致能被识别（要求 en-US、实际是中文界面）
+ok 189 - locale 不一致能被识别（要求 en-US、实际是中文界面）
+  ---
+  duration_ms: 0.068833
+  type: 'test'
+  ...
+# Subtest: 观察不出语言时不算不一致（不能凭猜报红）
+ok 190 - 观察不出语言时不算不一致（不能凭猜报红）
+  ---
+  duration_ms: 0.026916
+  type: 'test'
+  ...
+# Subtest: --locales / --wait-for-login / --login-cookie 都被解析
+ok 191 - --locales / --wait-for-login / --login-cookie 都被解析
+  ---
+  duration_ms: 0.329833
+  type: 'test'
+  ...
+# Subtest: 默认只有一个 locale（--locale），多语言时才用 --locales
+ok 192 - 默认只有一个 locale（--locale），多语言时才用 --locales
+  ---
+  duration_ms: 0.044041
+  type: 'test'
+  ...
+# Subtest: 证据文件里记下实际观察到的语言与不一致判定
+ok 193 - 证据文件里记下实际观察到的语言与不一致判定
+  ---
+  duration_ms: 0.06725
+  type: 'test'
+  ...
+# Subtest: 登录判定按域名收窄：A 站的登录 cookie 不算 B 站已登录
+ok 194 - 登录判定按域名收窄：A 站的登录 cookie 不算 B 站已登录
+  ---
+  duration_ms: 0.157
+  type: 'test'
+  ...
+# Subtest: --platform-locales 被解析成「平台:语言」清单
+ok 195 - --platform-locales 被解析成「平台:语言」清单
+  ---
+  duration_ms: 0.062542
+  type: 'test'
+  ...
+# Subtest: --platform-locales 缺语言时退回 zh-CN
+ok 196 - --platform-locales 缺语言时退回 zh-CN
+  ---
+  duration_ms: 0.081417
+  type: 'test'
+  ...
+# Subtest: 落地页上消息数为 0、isTyping 为 false —— 通过
+ok 197 - 落地页上消息数为 0、isTyping 为 false —— 通过
+  ---
+  duration_ms: 0.748291
+  type: 'test'
+  ...
+# Subtest: 命中界面外壳（Yiyan 的 _chat-container_）—— 判为硬伤
+ok 198 - 命中界面外壳（Yiyan 的 _chat-container_）—— 判为硬伤
+  ---
+  duration_ms: 0.277334
+  type: 'test'
+  ...
+# Subtest: 命中界面按钮（Yuanbao 的 yb-new-chat-entry）—— 判为硬伤
+ok 199 - 命中界面按钮（Yuanbao 的 yb-new-chat-entry）—— 判为硬伤
+  ---
+  duration_ms: 0.066416
+  type: 'test'
+  ...
+# Subtest: 命中空容器（Kimi 的 message-list-container）—— 不算硬伤，但要留痕
+ok 200 - 命中空容器（Kimi 的 message-list-container）—— 不算硬伤，但要留痕
+  ---
+  duration_ms: 0.054625
+  type: 'test'
+  ...
+# Subtest: 空闲页上 isTyping 为 true —— 判为硬伤（必然超时）
+ok 201 - 空闲页上 isTyping 为 true —— 判为硬伤（必然超时）
+  ---
+  duration_ms: 0.075667
+  type: 'test'
+  ...
+# Subtest: 两处硬伤同时出现时，两条都写进 reason
+ok 202 - 两处硬伤同时出现时，两条都写进 reason
+  ---
+  duration_ms: 0.054875
+  type: 'test'
+  ...
+# Subtest: isTyping 为 null（未采到）不算硬伤
+ok 203 - isTyping 为 null（未采到）不算硬伤
+  ---
+  duration_ms: 0.0385
+  type: 'test'
+  ...
+# Subtest: 选择器非法（matched=false）不算命中
+ok 204 - 选择器非法（matched=false）不算命中
+  ---
+  duration_ms: 0.072625
+  type: 'test'
+  ...
+# Subtest: 缺字段的输入不会崩
+ok 205 - 缺字段的输入不会崩
+  ---
+  duration_ms: 0.433208
+  type: 'test'
+  ...
+# Subtest: 元宝消息气泡能被数出来
+ok 206 - 元宝消息气泡能被数出来
+  ---
+  duration_ms: 35.359875
+  type: 'test'
+  ...
+# Subtest: 元宝新回复出现后计数增长
+ok 207 - 元宝新回复出现后计数增长
+  ---
+  duration_ms: 5.273167
+  type: 'test'
+  ...
+# Subtest: 智谱消息气泡能被数出来
+ok 208 - 智谱消息气泡能被数出来
+  ---
+  duration_ms: 4.880875
+  type: 'test'
+  ...
+# Subtest: 智谱新回复出现后计数增长
+ok 209 - 智谱新回复出现后计数增长
+  ---
+  duration_ms: 3.654416
+  type: 'test'
+  ...
+# Subtest: 文心只数 AI 回复容器，不被 answer 附属元素撑大
+ok 210 - 文心只数 AI 回复容器，不被 answer 附属元素撑大
+  ---
+  duration_ms: 6.703709
+  type: 'test'
+  ...
+# Subtest: 文心最新一条取到 AI 正文，而不是用户 prompt
+ok 211 - 文心最新一条取到 AI 正文，而不是用户 prompt
+  ---
+  duration_ms: 5.56025
+  type: 'test'
+  ...
+# Subtest: 文心新回复出现后计数增长
+ok 212 - 文心新回复出现后计数增长
+  ---
+  duration_ms: 3.46975
+  type: 'test'
+  ...
+# Subtest: Kimi 只数 assistant 条目，不把用户消息算进来
+ok 213 - Kimi 只数 assistant 条目，不把用户消息算进来
+  ---
+  duration_ms: 3.398834
+  type: 'test'
+  ...
+# Subtest: Kimi 取到正文而不是 toolcall 思考过程
+ok 214 - Kimi 取到正文而不是 toolcall 思考过程
+  ---
+  duration_ms: 9.75725
+  type: 'test'
+  ...
+# Subtest: Kimi 新回复出现后计数增长
+ok 215 - Kimi 新回复出现后计数增长
+  ---
+  duration_ms: 3.987291
+  type: 'test'
+  ...
+# Subtest: LongCat 只数 AI 条目，不把 human 气泡算进来
+ok 216 - LongCat 只数 AI 条目，不把 human 气泡算进来
+  ---
+  duration_ms: 5.724916
+  type: 'test'
+  ...
+# Subtest: LongCat 取到正文而不是「已搜到 N 个网页」状态行
+ok 217 - LongCat 取到正文而不是「已搜到 N 个网页」状态行
+  ---
+  duration_ms: 5.074875
+  type: 'test'
+  ...
+# Subtest: LongCat 平台报错回复不冒充答案
+ok 218 - LongCat 平台报错回复不冒充答案
+  ---
+  duration_ms: 2.928084
+  type: 'test'
+  ...
+# Subtest: LongCat 新回复出现后计数增长
+ok 219 - LongCat 新回复出现后计数增长
+  ---
+  duration_ms: 2.655375
+  type: 'test'
+  ...
+# Subtest: 消息数只算答案卡：提问卡与消息容器都不算数
+ok 220 - 消息数只算答案卡：提问卡与消息容器都不算数
+  ---
+  duration_ms: 59.704792
+  type: 'test'
+  ...
+# Subtest: 最新消息是最后一轮的答案卡
+ok 221 - 最新消息是最后一轮的答案卡
+  ---
+  duration_ms: 22.653
+  type: 'test'
+  ...
+# Subtest: 答案正文取整个 markdown 容器，两段都要
+ok 222 - 答案正文取整个 markdown 容器，两段都要
+  ---
+  duration_ms: 21.480208
+  type: 'test'
+  ...
+# Subtest: markdown 容器与答案卡是同一个元素时也能取到完整正文
+ok 223 - markdown 容器与答案卡是同一个元素时也能取到完整正文
+  ---
+  duration_ms: 3.764833
+  type: 'test'
+  ...
+# Subtest: 输入框命中 Slate 编辑器
+ok 224 - 输入框命中 Slate 编辑器
+  ---
+  duration_ms: 22.559542
+  type: 'test'
+  ...
+# Subtest: 发送按钮靠稳定属性命中，不依赖本地化文案
+ok 225 - 发送按钮靠稳定属性命中，不依赖本地化文案
+  ---
+  duration_ms: 13.111875
+  type: 'test'
+  ...
+# Subtest: 空闲会话上 isTyping() 为 false
+ok 226 - 空闲会话上 isTyping() 为 false
+  ---
+  duration_ms: 18.109333
+  type: 'test'
+  ...
+# Subtest: 生成中 isTyping() 为 true（识别停止回答按钮）
+ok 227 - 生成中 isTyping() 为 true（识别停止回答按钮）
+  ---
+  duration_ms: 46.931958
+  type: 'test'
+  ...
+# Subtest: 等待首个 token 时 isTyping() 为 true（识别接收中卡片）
+ok 228 - 等待首个 token 时 isTyping() 为 true（识别接收中卡片）
+  ---
+  duration_ms: 32.177125
+  type: 'test'
+  ...
+# Subtest: 只有接收中卡片（没有停止回答按钮）时 isTyping() 仍为 true
+ok 229 - 只有接收中卡片（没有停止回答按钮）时 isTyping() 仍为 true
+  ---
+  duration_ms: 23.95875
+  type: 'test'
+  ...
+# Subtest: 等待首个 token 时消息数不因接收卡片而增加
+ok 230 - 等待首个 token 时消息数不因接收卡片而增加
+  ---
+  duration_ms: 17.472625
+  type: 'test'
+  ...
+# Subtest: 生成中状态行（data-status=working）也判定 isTyping()
+ok 231 - 生成中状态行（data-status=working）也判定 isTyping()
+  ---
+  duration_ms: 6.515542
+  type: 'test'
+  ...
+# Subtest: 已完成状态行（data-status=complete）不算生成中
+ok 232 - 已完成状态行（data-status=complete）不算生成中
+  ---
+  duration_ms: 2.430458
+  type: 'test'
+  ...
+# Subtest: 选择器未命中时不许回退整卡文本（状态条不许混进正文）
+ok 233 - 选择器未命中时不许回退整卡文本（状态条不许混进正文）
+  ---
+  duration_ms: 2.896666
+  type: 'test'
+  ...
+# Subtest: extractMessageContent 同样不许回退整卡文本
+ok 234 - extractMessageContent 同样不许回退整卡文本
+  ---
+  duration_ms: 2.156334
+  type: 'test'
+  ...
+# Subtest: extractMessageContent 先看元素自身再查后代（容器=正文同体不许丢段落）
+ok 235 - extractMessageContent 先看元素自身再查后代（容器=正文同体不许丢段落）
+  ---
+  duration_ms: 1.8925
+  type: 'test'
+  ...
+# Subtest: waitForResponse 等到「内容稳住 且 不再生成」才返回（太早成功闸）
+ok 236 - waitForResponse 等到「内容稳住 且 不再生成」才返回（太早成功闸）
+  ---
+  duration_ms: 8540.122042
+  type: 'test'
+  ...
+# Subtest: 邮箱被替换
+ok 237 - 邮箱被替换
+  ---
+  duration_ms: 0.601541
+  type: 'test'
+  ...
+# Subtest: 中国大陆手机号被替换
+ok 238 - 中国大陆手机号被替换
+  ---
+  duration_ms: 0.139333
+  type: 'test'
+  ...
+# Subtest: 带 +86 前缀的手机号被替换
+ok 239 - 带 +86 前缀的手机号被替换
+  ---
+  duration_ms: 0.122167
+  type: 'test'
+  ...
+# Subtest: 连续 8 位以上数字被替换（uid / 订单号）
+ok 240 - 连续 8 位以上数字被替换（uid / 订单号）
+  ---
+  duration_ms: 0.04425
+  type: 'test'
+  ...
+# Subtest: 短数字不被误伤（版本号、步数）
+ok 241 - 短数字不被误伤（版本号、步数）
+  ---
+  duration_ms: 0.094791
+  type: 'test'
+  ...
+# Subtest: 长随机串被替换（令牌）
+ok 242 - 长随机串被替换（令牌）
+  ---
+  duration_ms: 0.044791
+  type: 'test'
+  ...
+# Subtest: 超长文本被截断并标记
+ok 243 - 超长文本被截断并标记
+  ---
+  duration_ms: 0.10075
+  type: 'test'
+  ...
+# Subtest: 空白被折叠
+ok 244 - 空白被折叠
+  ---
+  duration_ms: 0.036917
+  type: 'test'
+  ...
+# Subtest: URL 的 query 与 hash 被抹掉（令牌常藏在这里）
+ok 245 - URL 的 query 与 hash 被抹掉（令牌常藏在这里）
+  ---
+  duration_ms: 0.272167
+  type: 'test'
+  ...
+# Subtest: URL 的 path 部分保留（结构信息有用）
+ok 246 - URL 的 path 部分保留（结构信息有用）
+  ---
+  duration_ms: 0.291167
+  type: 'test'
+  ...
+# Subtest: class 属性不做长随机串脱敏（CSS Module 哈希类名是结构，不是令牌）
+ok 247 - class 属性不做长随机串脱敏（CSS Module 哈希类名是结构，不是令牌）
+  ---
+  duration_ms: 0.097083
+  type: 'test'
+  ...
+# Subtest: class 属性里的邮箱仍然被脱敏
+ok 248 - class 属性里的邮箱仍然被脱敏
+  ---
+  duration_ms: 0.036208
+  type: 'test'
+  ...
+# Subtest: class 属性里的长数字串仍被脱敏（uid 常常嵌在类名里）
+ok 249 - class 属性里的长数字串仍被脱敏（uid 常常嵌在类名里）
+  ---
+  duration_ms: 0.032708
+  type: 'test'
+  ...
+# Subtest: class 属性不被 200 字符上限截断（截断会毁掉选择器命中依据）
+ok 250 - class 属性不被 200 字符上限截断（截断会毁掉选择器命中依据）
+  ---
+  duration_ms: 2.757625
+  type: 'test'
+  ...
+# Subtest: 普通属性受 200 字符上限约束
+ok 251 - 普通属性受 200 字符上限约束
+  ---
+  duration_ms: 0.10725
+  type: 'test'
+  ...
+# Subtest: script 元素被整段删除
+ok 252 - script 元素被整段删除
+  ---
+  duration_ms: 28.988708
+  type: 'test'
+  ...
+# Subtest: noscript / template 被整段删除
+ok 253 - noscript / template 被整段删除
+  ---
+  duration_ms: 4.962708
+  type: 'test'
+  ...
+# Subtest: on* 事件属性被删除
+ok 254 - on* 事件属性被删除
+  ---
+  duration_ms: 3.611958
+  type: 'test'
+  ...
+# Subtest: value 属性被删除（输入框内容）
+ok 255 - value 属性被删除（输入框内容）
+  ---
+  duration_ms: 3.429334
+  type: 'test'
+  ...
+# Subtest: data-token / data-uid 等可能带令牌的属性被删除
+ok 256 - data-token / data-uid 等可能带令牌的属性被删除
+  ---
+  duration_ms: 2.964541
+  type: 'test'
+  ...
+# Subtest: 文本节点里的邮箱被脱敏
+ok 257 - 文本节点里的邮箱被脱敏
+  ---
+  duration_ms: 2.608083
+  type: 'test'
+  ...
+# Subtest: 结构（标签、class）被保留——脱敏不能毁掉要守的东西
+ok 258 - 结构（标签、class）被保留——脱敏不能毁掉要守的东西
+  ---
+  duration_ms: 2.877375
+  type: 'test'
+  ...
+# Subtest: 空输入返回空串
+ok 259 - 空输入返回空串
+  ---
+  duration_ms: 0.051
+  type: 'test'
+  ...
+# Subtest: sanitizeHtmlPretty 输出可读缩进
+ok 260 - sanitizeHtmlPretty 输出可读缩进
+  ---
+  duration_ms: 4.521625
+  type: 'test'
+  ...
+# Subtest: 每家平台都有采集记录（采不到也必须有原因）
+ok 261 - 每家平台都有采集记录（采不到也必须有原因）
+  ---
+  duration_ms: 352.46375
+  type: 'test'
+  ...
+# Subtest: 采到的平台必须有 HTML 快照，没采到的不能有
+ok 262 - 采到的平台必须有 HTML 快照，没采到的不能有
+  ---
+  duration_ms: 357.916542
+  type: 'test'
+  ...
+# Subtest: 采到的平台的 HTML 里必须有探针标注
+ok 263 - 采到的平台的 HTML 里必须有探针标注
+  ---
+  duration_ms: 607.12975
+  type: 'test'
+  ...
+# Subtest: 采到的平台的消息计数模型必须站得住两条不变量
+ok 264 - 采到的平台的消息计数模型必须站得住两条不变量
+  ---
+  duration_ms: 355.455625
+  type: 'test'
+  ...
+# Subtest: 采到的平台的空闲态必须是 isTyping=false
+ok 265 - 采到的平台的空闲态必须是 isTyping=false
+  ---
+  duration_ms: 330.3595
+  type: 'test'
+  ...
+# Subtest: 快照 HTML 里不得残留未脱敏的个人信息 / 令牌
+ok 266 - 快照 HTML 里不得残留未脱敏的个人信息 / 令牌
+  ---
+  duration_ms: 561.289666
+  type: 'test'
+  ...
+# Subtest: 快照不得使用 data-role 命名空间（真实站点自己会用它）
+ok 267 - 快照不得使用 data-role 命名空间（真实站点自己会用它）
+  ---
+  duration_ms: 512.458
+  type: 'test'
+  ...
+# Subtest: 快照记录里标注了采集时刻与来源
+ok 268 - 快照记录里标注了采集时刻与来源
+  ---
+  duration_ms: 319.5435
+  type: 'test'
+  ...
+# Subtest: 等待上限表的每个 key 都是真实存在的平台 hostname
+ok 269 - 等待上限表的每个 key 都是真实存在的平台 hostname
+  ---
+  duration_ms: 0.672417
+  type: 'test'
+  ...
+# Subtest: 等待上限表的每个值都是 >= 60s 的数字
+ok 270 - 等待上限表的每个值都是 >= 60s 的数字
+  ---
+  duration_ms: 0.179167
+  type: 'test'
+  ...
+# Subtest: 已知慢站确实被登记（deepseek / longcat / chatglm）
+ok 271 - 已知慢站确实被登记（deepseek / longcat / chatglm）
+  ---
+  duration_ms: 0.441625
+  type: 'test'
+  ...
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 错误码是 RESPONSE_TIMEOUT ⇒ 只能续等，不能重发
+ok 272 - 错误码是 RESPONSE_TIMEOUT ⇒ 只能续等，不能重发
+  ---
+  duration_ms: 0.560208
+  type: 'test'
+  ...
+# Subtest: 老路径没有错误码时，按整串文案兜底认超时
+ok 273 - 老路径没有错误码时，按整串文案兜底认超时
+  ---
+  duration_ms: 0.1755
+  type: 'test'
+  ...
+# Subtest: 文案里只是**提到**超时，不算超时（不许用子串包含误判）
+ok 274 - 文案里只是**提到**超时，不算超时（不许用子串包含误判）
+  ---
+  duration_ms: 0.071833
+  type: 'test'
+  ...
+# Subtest: 续等要用发送前的基准条数，不许重新数
+ok 275 - 续等要用发送前的基准条数，不许重新数
+  ---
+  duration_ms: 0.141542
+  type: 'test'
+  ...
+# Subtest: 续等的内容基准只认字符串，缺失/null 就关掉内容通道（不就地猜一个基准）
+ok 276 - 续等的内容基准只认字符串，缺失/null 就关掉内容通道（不就地猜一个基准）
+  ---
+  duration_ms: 0.156417
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 超时后 SEND_TO_AI 只发一次，随后是带 baselineCount 的续等
+ok 277 - 超时后 SEND_TO_AI 只发一次，随后是带 baselineCount 的续等
+  ---
+  duration_ms: 2347.241875
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 虚拟列表站点超时：续等消息必须把发送前的内容基准一并带回页面
+ok 278 - 虚拟列表站点超时：续等消息必须把发送前的内容基准一并带回页面
+  ---
+  duration_ms: 1075.51175
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 信封里没有内容基准：续等不许凭空编一个字符串
+ok 279 - 信封里没有内容基准：续等不许凭空编一个字符串
+  ---
+  duration_ms: 1074.723458
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 非超时的失败照样重试（别为了修超时把重试一起废了）
+ok 280 - 非超时的失败照样重试（别为了修超时把重试一起废了）
+  ---
+  duration_ms: 1066.587833
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# Subtest: 广播投递遇到超时：宁可失败也不重发
+ok 281 - 广播投递遇到超时：宁可失败也不重发
+  ---
+  duration_ms: 67.170833
+  type: 'test'
+  ...
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 声明 fresh_session ⇒ 先开新会话，再发提示词（同一标签页）
+ok 282 - 声明 fresh_session ⇒ 先开新会话，再发提示词（同一标签页）
+  ---
+  duration_ms: 1350.119792
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: 没声明 fresh_session ⇒ 不许凭空开新会话
+ok 283 - 没声明 fresh_session ⇒ 不许凭空开新会话
+  ---
+  duration_ms: 64.669083
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: strict：开新会话失败 ⇒ 一条提示词都不许发，Pack 必须失败
+ok 284 - strict：开新会话失败 ⇒ 一条提示词都不许发，Pack 必须失败
+  ---
+  duration_ms: 1071.942958
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [pack-executor] 步骤 step_ai 未能开新会话（找不到「新对话」入口）——按 fresh_session="prefer" 继续，行为与修复前一致。
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: prefer：开不成也照常发送，但回执里必须留下 available:false
+ok 285 - prefer：开不成也照常发送，但回执里必须留下 available:false
+  ---
+  duration_ms: 67.322708
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: NEW_SESSION 上报的 durationMs 原样进回执（重置开销可复核）
+ok 286 - NEW_SESSION 上报的 durationMs 原样进回执（重置开销可复核）
+  ---
+  duration_ms: 66.620875
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# [Prompt Pack] Service Worker initialized — 16 platform adapters registered
+# Subtest: prefer：开成功时回执记录 available:true 与所用策略
+ok 287 - prefer：开成功时回执记录 available:true 与所用策略
+  ---
+  duration_ms: 69.471583
+  type: 'test'
+  ...
+# [Prompt Pack] Message received: EXECUTE_PACK
+# Subtest: 广播投递声明 fresh_session ⇒ 明确失败，且不发提示词
+ok 288 - 广播投递声明 fresh_session ⇒ 明确失败，且不发提示词
+  ---
+  duration_ms: 68.404208
+  type: 'test'
+  ...
+# Subtest: 真实 Pack 的 step_8_output 声明了 fresh_session=prefer
+ok 289 - 真实 Pack 的 step_8_output 声明了 fresh_session=prefer
+  ---
+  duration_ms: 36.604792
+  type: 'test'
+  ...
+# Subtest: 声明 fresh_session 的步骤，提示词引用的变量必须全部来自上游
+ok 290 - 声明 fresh_session 的步骤，提示词引用的变量必须全部来自上游
+  ---
+  duration_ms: 33.826666
+  type: 'test'
+  ...
+# Subtest: 方案默认标注「未执行」，不冒充真机回执
+ok 291 - 方案默认标注「未执行」，不冒充真机回执
+  ---
+  duration_ms: 0.717333
+  type: 'test'
+  ...
+# Subtest: 冻结的两个站恰好是当初真正撞墙的 deepseek / longcat
+ok 292 - 冻结的两个站恰好是当初真正撞墙的 deepseek / longcat
+  ---
+  duration_ms: 0.374958
+  type: 'test'
+  ...
+# Subtest: 变体是 A/B 两组，且只差 fresh_session 一个变量
+ok 293 - 变体是 A/B 两组，且只差 fresh_session 一个变量
+  ---
+  duration_ms: 0.078333
+  type: 'test'
+  ...
+# Subtest: A 组真的删掉了出厂 Pack 的 fresh_session，B 组原样保留
+ok 294 - A 组真的删掉了出厂 Pack 的 fresh_session，B 组原样保留
+  ---
+  duration_ms: 31.67925
+  type: 'test'
+  ...
+# Subtest: derivePackVariant 拒绝未知变体，不静默回退
+ok 295 - derivePackVariant 拒绝未知变体，不静默回退
+  ---
+  duration_ms: 0.210916
+  type: 'test'
+  ...
+# Subtest: 验收判据含「B 组必须真的重置成功」，否则对照作废
+ok 296 - 验收判据含「B 组必须真的重置成功」，否则对照作废
+  ---
+  duration_ms: 0.099583
+  type: 'test'
+  ...
+# Subtest: 归因边界明写「不能归因给重置」，也明写「不能说重置免费」
+ok 297 - 归因边界明写「不能归因给重置」，也明写「不能说重置免费」
+  ---
+  duration_ms: 0.180667
+  type: 'test'
+  ...
+# Subtest: 脚本不启动浏览器、不导入 Pack、不发消息（红线仍是事实）
+ok 298 - 脚本不启动浏览器、不导入 Pack、不发消息（红线仍是事实）
+  ---
+  duration_ms: 62.018208
+  type: 'test'
+  ...
+# Subtest: 解冻前置条件写全：用户授权 / 登录态 / dist 一致 / 额度
+ok 299 - 解冻前置条件写全：用户授权 / 登录态 / dist 一致 / 额度
+  ---
+  duration_ms: 0.453042
+  type: 'test'
+  ...
+# Subtest: 计划命令里不许再出现 <...> 占位符
+ok 300 - 计划命令里不许再出现 <...> 占位符
+  ---
+  duration_ms: 0.531166
+  type: 'test'
+  ...
+# Subtest: 4 条 L2 命令的 PACK_PATH 指向真实绝对路径，且 A/B 各用各的文件
+ok 301 - 4 条 L2 命令的 PACK_PATH 指向真实绝对路径，且 A/B 各用各的文件
+  ---
+  duration_ms: 0.294958
+  type: 'test'
+  ...
+# Subtest: 预检命令也要显式解冻（打开冻结站页面本身受守卫拦截）
+ok 302 - 预检命令也要显式解冻（打开冻结站页面本身受守卫拦截）
+  ---
+  duration_ms: 0.062625
+  type: 'test'
+  ...
+# Subtest: 执行顺序写明 4 轮必须串行，且 B 组降级要作废
+ok 303 - 执行顺序写明 4 轮必须串行，且 B 组降级要作废
+  ---
+  duration_ms: 0.045583
+  type: 'test'
+  ...
+# Subtest: emitVariantPacks 纯本地生成两个文件，自检通过且标注未导入未执行
+ok 304 - emitVariantPacks 纯本地生成两个文件，自检通过且标注未导入未执行
+  ---
+  duration_ms: 243.396875
+  type: 'test'
+  ...
+# Subtest: emitVariantPacks 遇到出厂 Pack 契约变化必须拒绝，不静默生成坏变体
+ok 305 - emitVariantPacks 遇到出厂 Pack 契约变化必须拒绝，不静默生成坏变体
+  ---
+  duration_ms: 232.819542
+  type: 'test'
+  ...
+# Subtest: 文心：thinking-loading 自定义元素判定 isTyping（普查证据）
+ok 306 - 文心：thinking-loading 自定义元素判定 isTyping（普查证据）
+  ---
+  duration_ms: 58.578791
+  type: 'test'
+  ...
+# Subtest: 文心：thinking-loading 类名变体判定 isTyping（普查证据）
+ok 307 - 文心：thinking-loading 类名变体判定 isTyping（普查证据）
+  ---
+  duration_ms: 11.771209
+  type: 'test'
+  ...
+# Subtest: 文心：text-loading「生成中...」加载行判定 isTyping（普查证据）
+ok 308 - 文心：text-loading「生成中...」加载行判定 isTyping（普查证据）
+  ---
+  duration_ms: 8.65075
+  type: 'test'
+  ...
+# Subtest: 文心：停止回答按钮（answer-generate-state-button data-module=stop）判定 isTyping（普查证据）
+ok 309 - 文心：停止回答按钮（answer-generate-state-button data-module=stop）判定 isTyping（普查证据）
+  ---
+  duration_ms: 8.669791
+  type: 'test'
+  ...
+# Subtest: 文心：statusbox aria 停止回答兜底判定 isTyping（普查证据）
+ok 310 - 文心：statusbox aria 停止回答兜底判定 isTyping（普查证据）
+  ---
+  duration_ms: 9.136417
+  type: 'test'
+  ...
+# Subtest: 文心：空闲 DOM 不判定为生成中
+ok 311 - 文心：空闲 DOM 不判定为生成中
+  ---
+  duration_ms: 3.055
+  type: 'test'
+  ...
+# Subtest: LongCat：stop-generate 停止生成按钮判定 isTyping（普查证据）
+ok 312 - LongCat：stop-generate 停止生成按钮判定 isTyping（普查证据）
+  ---
+  duration_ms: 5.970584
+  type: 'test'
+  ...
+# Subtest: LongCat：v-loading-dot 打字点判定 isTyping（普查证据）
+ok 313 - LongCat：v-loading-dot 打字点判定 isTyping（普查证据）
+  ---
+  duration_ms: 7.977917
+  type: 'test'
+  ...
+# Subtest: LongCat：assistant-main 消息气泡内的 v-loading-dot 判定 isTyping（普查证据）
+ok 314 - LongCat：assistant-main 消息气泡内的 v-loading-dot 判定 isTyping（普查证据）
+  ---
+  duration_ms: 11.38175
+  type: 'test'
+  ...
+# Subtest: LongCat：loading-dot-box 深研点点点判定 isTyping（普查证据）
+ok 315 - LongCat：loading-dot-box 深研点点点判定 isTyping（普查证据）
+  ---
+  duration_ms: 6.913416
+  type: 'test'
+  ...
+# Subtest: LongCat：loading-text「正在生成图片...」判定 isTyping（普查证据）
+ok 316 - LongCat：loading-text「正在生成图片...」判定 isTyping（普查证据）
+  ---
+  duration_ms: 6.512792
+  type: 'test'
+  ...
+# Subtest: LongCat：思考完成后的 reason-title（文案变『已深度思考』）不许算生成中
+ok 317 - LongCat：思考完成后的 reason-title（文案变『已深度思考』）不许算生成中
+  ---
+  duration_ms: 4.38525
+  type: 'test'
+  ...
+# Subtest: LongCat：空闲 DOM 不判定为生成中
+ok 318 - LongCat：空闲 DOM 不判定为生成中
+  ---
+  duration_ms: 2.383875
+  type: 'test'
+  ...
+# Subtest: 元宝：data-conv-outputting 状态属性判定 isTyping（普查证据）
+ok 319 - 元宝：data-conv-outputting 状态属性判定 isTyping（普查证据）
+  ---
+  duration_ms: 4.564833
+  type: 'test'
+  ...
+# Subtest: 元宝：ai-placeholder 等待首 token 占位判定 isTyping（普查证据）
+ok 320 - 元宝：ai-placeholder 等待首 token 占位判定 isTyping（普查证据）
+  ---
+  duration_ms: 4.979917
+  type: 'test'
+  ...
+# Subtest: 元宝：停止回答按钮（yuanbao-send-btn aria）判定 isTyping（普查证据）
+ok 321 - 元宝：停止回答按钮（yuanbao-send-btn aria）判定 isTyping（普查证据）
+  ---
+  duration_ms: 6.956542
+  type: 'test'
+  ...
+# Subtest: 元宝：SendButton_sendStop 类名（带哈希后缀）判定 isTyping（普查证据）
+ok 322 - 元宝：SendButton_sendStop 类名（带哈希后缀）判定 isTyping（普查证据）
+  ---
+  duration_ms: 8.47175
+  type: 'test'
+  ...
+# Subtest: 元宝：深思考骨架屏 anim 图标判定 isTyping（普查证据）
+ok 323 - 元宝：深思考骨架屏 anim 图标判定 isTyping（普查证据）
+  ---
+  duration_ms: 7.581292
+  type: 'test'
+  ...
+# Subtest: 元宝：markdown 流式打字点判定 isTyping（普查证据）
+ok 324 - 元宝：markdown 流式打字点判定 isTyping（普查证据）
+  ---
+  duration_ms: 5.605958
+  type: 'test'
+  ...
+# Subtest: 元宝：空闲 DOM 不判定为生成中
+ok 325 - 元宝：空闲 DOM 不判定为生成中
+  ---
+  duration_ms: 3.078
+  type: 'test'
+  ...
+# Subtest: Kimi：segment-generate-tip 生成中状态行判定 isTyping（普查证据）
+ok 326 - Kimi：segment-generate-tip 生成中状态行判定 isTyping（普查证据）
+  ---
+  duration_ms: 4.671791
+  type: 'test'
+  ...
+# Subtest: Kimi：awaiting-first-response 等待首响应判定 isTyping（普查证据）
+ok 327 - Kimi：awaiting-first-response 等待首响应判定 isTyping（普查证据）
+  ---
+  duration_ms: 4.24675
+  type: 'test'
+  ...
+# Subtest: Kimi：segment-pending-loading PENDING 态判定 isTyping（普查证据）
+ok 328 - Kimi：segment-pending-loading PENDING 态判定 isTyping（普查证据）
+  ---
+  duration_ms: 6.152667
+  type: 'test'
+  ...
+# Subtest: Kimi：send-button-container.stop 停止输出按钮判定 isTyping（普查证据）
+ok 329 - Kimi：send-button-container.stop 停止输出按钮判定 isTyping（普查证据）
+  ---
+  duration_ms: 5.263042
+  type: 'test'
+  ...
+# Subtest: Kimi：core-spiral-loading（历史/文件卡复用，无 role=status）不许算生成中
+ok 330 - Kimi：core-spiral-loading（历史/文件卡复用，无 role=status）不许算生成中
+  ---
+  duration_ms: 1.967334
+  type: 'test'
+  ...
+# Subtest: Kimi：空闲 DOM 不判定为生成中
+ok 331 - Kimi：空闲 DOM 不判定为生成中
+  ---
+  duration_ms: 2.041542
+  type: 'test'
+  ...
+# Subtest: ChatGLM：button ga-data=stop 停止回答按钮判定 isTyping（普查证据）
+ok 332 - ChatGLM：button ga-data=stop 停止回答按钮判定 isTyping（普查证据）
+  ---
+  duration_ms: 4.230958
+  type: 'test'
+  ...
+# Subtest: ChatGLM：markdown 流式 loadingGif 光标判定 isTyping（普查证据）
+ok 333 - ChatGLM：markdown 流式 loadingGif 光标判定 isTyping（普查证据）
+  ---
+  duration_ms: 6.606792
+  type: 'test'
+  ...
+# Subtest: ChatGLM：loading-text is-no-data 心跳思考态判定 isTyping（普查证据）
+ok 334 - ChatGLM：loading-text is-no-data 心跳思考态判定 isTyping（普查证据）
+  ---
+  duration_ms: 4.309916
+  type: 'test'
+  ...
+# Subtest: ChatGLM：stop-generate 编辑器停止生成按钮判定 isTyping（普查证据）
+ok 335 - ChatGLM：stop-generate 编辑器停止生成按钮判定 isTyping（普查证据）
+  ---
+  duration_ms: 4.542584
+  type: 'test'
+  ...
+# Subtest: ChatGLM：div.sensitive[ga-data=stop]（内容安全敏感态）不许算生成中
+ok 336 - ChatGLM：div.sensitive[ga-data=stop]（内容安全敏感态）不许算生成中
+  ---
+  duration_ms: 2.449958
+  type: 'test'
+  ...
+# Subtest: ChatGLM：空闲 DOM 不判定为生成中
+ok 337 - ChatGLM：空闲 DOM 不判定为生成中
+  ---
+  duration_ms: 1.654417
+  type: 'test'
+  ...
+# Subtest: display:none 的生成中指示器不判定为 isTyping（可见性纪律）
+ok 338 - display:none 的生成中指示器不判定为 isTyping（可见性纪律）
+  ---
+  duration_ms: 7.31775
+  type: 'test'
+  ...
+# Subtest: 空内容永不判完成（防把流式开头当回复）
+ok 339 - 空内容永不判完成（防把流式开头当回复）
+  ---
+  duration_ms: 0.609958
+  type: 'test'
+  ...
+# Subtest: 内容还在变化时不判完成
+ok 340 - 内容还在变化时不判完成
+  ---
+  duration_ms: 0.136875
+  type: 'test'
+  ...
+# Subtest: 内容连续稳定满窗口才算完成
+ok 341 - 内容连续稳定满窗口才算完成
+  ---
+  duration_ms: 0.509458
+  type: 'test'
+  ...
+# Subtest: 计数没涨不判完成（别把静止的旧消息当新回复）
+ok 342 - 计数没涨不判完成（别把静止的旧消息当新回复）
+  ---
+  duration_ms: 0.053167
+  type: 'test'
+  ...
+# Subtest: contentGrew：只认「非空且与基准不同」，空串和旧回答都不算新回复
+ok 343 - contentGrew：只认「非空且与基准不同」，空串和旧回答都不算新回复
+  ---
+  duration_ms: 0.076333
+  type: 'test'
+  ...
+# Subtest: 没有内容基准时，计数不涨一律不算新回复（不许静默放宽全局判据）
+ok 344 - 没有内容基准时，计数不涨一律不算新回复（不许静默放宽全局判据）
+  ---
+  duration_ms: 0.071542
+  type: 'test'
+  ...
+# Subtest: 虚拟列表：消息数不涨、正文换了，稳定满 8 秒仍判完成（deepseek/longcat 假超时根治）
+ok 345 - 虚拟列表：消息数不涨、正文换了，稳定满 8 秒仍判完成（deepseek/longcat 假超时根治）
+  ---
+  duration_ms: 0.075625
+  type: 'test'
+  ...
+# Subtest: 虚拟列表：正文一直是发送前那条旧回答，稳定再久也不判完成
+ok 346 - 虚拟列表：正文一直是发送前那条旧回答，稳定再久也不判完成
+  ---
+  duration_ms: 0.037542
+  type: 'test'
+  ...
+# Subtest: 内容型增长信号只开给有真机假超时证据的站点，已绿的 5 站行为不变
+ok 347 - 内容型增长信号只开给有真机假超时证据的站点，已绿的 5 站行为不变
+  ---
+  duration_ms: 0.53825
+  type: 'test'
+  ...
+# Subtest: isUsableAIContent：空串/碎片/非字符串不可用，长文可用；minLen 可覆盖
+ok 348 - isUsableAIContent：空串/碎片/非字符串不可用，长文可用；minLen 可覆盖
+  ---
+  duration_ms: 0.335292
+  type: 'test'
+  ...
+# Subtest: 默认稳定窗是 8 秒：5 秒定格不算完成，8 秒才算（防思考停顿误判）
+ok 349 - 默认稳定窗是 8 秒：5 秒定格不算完成，8 秒才算（防思考停顿误判）
+  ---
+  duration_ms: 0.103042
+  type: 'test'
+  ...
+1..349
+# tests 349
+# suites 0
+# pass 349
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 46695.609292

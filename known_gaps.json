@@ -864,6 +864,31 @@
         "回归：`node --check tests/run-tests.mjs` 通过；`npm test` 369 条全绿，退出码沿用 node --test 语义未被改动。"
       ],
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N40",
+      "priority": "P1",
+      "status": "closed",
+      "title": "真机证据文件大量漏 git add：92 份被报告引用的证据从未入库，干净 clone 上引用全部悬空",
+      "reader": "拿 `collaboration/results/RESULT-L2-MULTIPLATFORM-2026-11-10.md` 复核结论的人 —— 尤其在新 clone、别的 worktree 或 CI 上复核的人。报告正文逐份点名证据文件与截图，你照着路径去找，文件不存在；而本机工作区里它们都在，于是「复核不通过」既不能归因到结论错，也不能用『重新跑一遍』解决。另外，任何按本仓口径声称『真机证据可追溯』的对外说明，在干净检出上都不成立。",
+      "where": [
+        "collaboration/results/real-machine-runs/evidence/（已跟踪 203 个，另有 135 个从未 add，其中 92 个被受跟踪报告引用）",
+        "collaboration/results/RESULT-L2-MULTIPLATFORM-2026-11-10.md（引用方，逐条点名证据文件）",
+        ".gitignore:50（`!collaboration/results/real-machine-runs/evidence/*.log`，注释写明证据属交付物 ⇒ 漏 add 不是有意忽略）",
+        "tests/unit/test_evidence_citations.py（本次新增的绊线）"
+      ],
+      "detail": "2026-11-18 核查历史遗留时发现：证据目录 `git ls-files` 203 个、`git status` 里却是 135 个 `??`（7.5 MB）。逐个比对文件名与受跟踪文档的引用后，**92 份**属于「磁盘上有 + 文档引用了 + git 里没有」——例如 `L2-deepseek-auto-2026-11-11.ab-no-boundary.json`、`ab5-final-verdict-2026-11-14.json`、`dist-consistency-2026-11-12.deepseek-newchat.json` 等。\n\n这不是「有意不提交」：`.gitignore:50` 有一条专门的反例放行规则，注释写着「真机回归证据日志属交付物（RESULT 报告以其为最终判定依据）」，说明本仓的既定口径是证据要入库。结论成立、证据在盘、报告引用齐全，唯独中间那一步 `git add` 漏了 —— 且因为文件一直在本机，`npm test`、preflight、变异检查全都看不见它。",
+      "impact": "① 干净 clone 上这 92 条证据引用全部悬空，报告的可复核性归零，而报告本身不会报错；② 「结论可复现」这条基本口径在这批报告上不成立，且失效方式静默——校验命令全绿；③ 若有人据此声称『真机证据可追溯』，属于无法在干净环境验证的陈述；④ 证据是交付物的一部分，漏提交等于把交付物留在个人磁盘上。",
+      "fix": "已修（2026-11-18）：\n① **补齐入库**：135 个未跟踪证据文件全部 `git add` 并提交（100 份被直接引用 + 35 份为同批证据的截图对照 `.png`、产出脚本 `.py`、构建/变异日志 `.log`）。没有只挑被引用的 100 份——同一批 run 的 png 是被引用 json 的截图，py 是把判定写回文档的脚本，拆开会让证据链半截。\n② **加绊线** `tests/unit/test_evidence_citations.py`：扫描证据目录里磁盘存在的文件，凡其文件名出现在受跟踪 markdown 中，就必须在 git 索引里；另加一条反向保险（证据目录受跟踪文件数不得跌破 100，防止整个目录被移出仓库后第一条因『没有引用』而空跑）。\n③ **变异验证**：把 135 份全部 `git reset` 出索引后，第一条立刻红并列出违规文件；重新 add 后 2 passed。\n残余（明确不在本条范围）：全仓还有 **176 个**被文档提到、但 git 与磁盘都找不到的名字（playwright 截图、被 gitignore 覆盖的 test-results、历史占位名等）。把它们一并纳入判据会让绊线一出生就红然后被当噪音关掉，比没有更糟；需要单独定口径（区分「生成物」与「真缺失交付物」）后再处理。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18",
+      "appended_evidence": [
+        "计数实测：`git ls-files collaboration/results/real-machine-runs/evidence | wc -l` → 203；`git status --porcelain | grep '^??' | grep -c evidence/` → 135。",
+        "引用核对：逐个 basename 在受跟踪 `*.md` / `*.json` 中 `git grep`，命中 100 份（其中 92 份在 git 里没有同名文件，另 8 份存在同名文件但 evidence 目录里这份未跟踪）。",
+        "口径证据：`.gitignore:50` 反例放行 `evidence/*.log`，注释「真机回归证据日志属交付物（RESULT 报告以其为最终判定依据），例外放行」。",
+        "体积：135 份合计 7.51 MB，最大单文件 0.74 MB（`L2-deepseek-auto-2026-11-12.ab3-with-boundary.png`），无超大 blob 风险。",
+        "绊线验证：`pytest tests/unit/test_evidence_citations.py -q` → 2 passed；将 135 份 reset 出索引后 → 1 failed（列出违规清单）/ 1 passed；重新 add 后恢复 2 passed。"
+      ]
     }
   ]
 }

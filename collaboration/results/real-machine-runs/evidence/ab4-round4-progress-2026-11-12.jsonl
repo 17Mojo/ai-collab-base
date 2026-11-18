@@ -1,0 +1,7 @@
+{"t":"2026-11-12T12:37:36Z","event":"rerun begin","round":"ab4 round 4 longcat/with-boundary"}
+{"t":"2026-11-12T12:37:36Z","event":"rerun aborted","round":"precondition failed"}
+{"t":"2026-11-12T12:38:45Z","event":"rerun begin","round":"ab4 round 4 longcat/with-boundary"}
+{"t":"2026-11-12T12:38:45Z","event":"start","round":"4 longcat/with-boundary"}
+{"t":"2026-11-12T12:53:16Z","event":"node-exit","round":"4 exit=0"}
+{"t":"2026-11-12T12:53:16Z","event":"rerun done","round":"4 allReceipts=1"}
+{"t": "2026-11-12T12:54:38.887260Z", "event": "verify", "round": "4-rerun-post-hoc", "source": "post-hoc-readonly-finalize", "note": "runner 的即时 verify 因收尾脚本 bug 缺失；本行是事后只读补齐，不冒充即时记录。", "receipt": "L2-longcat-auto-2026-11-12.ab4-with-boundary.json", "exists": true, "bytes": 16750, "generatedAt": "2026-11-12T12:53:16.260Z", "packVariant": "with-boundary", "unfrozenBy": "ALLOW_FROZEN=1", "status": "failed", "duration": 861811, "stepsTotal": 8, "stepSuccess": 7, "sessionResets": 1, "resetAvailable": true, "resetStrategy": "adapter-selector", "messageCountBefore": 6, "messageCountAfter": 0, "resetActuallyHappened": true, "firstFailedStepId": "step_8_output"}

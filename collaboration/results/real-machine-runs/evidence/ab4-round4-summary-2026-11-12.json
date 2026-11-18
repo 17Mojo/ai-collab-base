@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-11-12T12:54:38.887260Z",
+  "runner": "ab4-round4-rerun-2026-11-12.sh",
+  "receipt": "L2-longcat-auto-2026-11-12.ab4-with-boundary.json",
+  "receiptExists": true,
+  "nodeExit": 0,
+  "nodeExitSource": "ab4-round4-2026-11-12.log 的 ROUND 4/4 RERUN NODE_EXIT=0",
+  "processExitWas": 1,
+  "processExitReason": "verify 段 TypeError（收尾脚本 bug），非真机执行失败",
+  "likeForLikeNote": "补跑与第 3 轮结束不在相邻时间窗；间隔如实保留。",
+  "safeDeleteShimDisabled": false,
+  "verify": {
+    "receipt": "L2-longcat-auto-2026-11-12.ab4-with-boundary.json",
+    "exists": true,
+    "bytes": 16750,
+    "generatedAt": "2026-11-12T12:53:16.260Z",
+    "packVariant": "with-boundary",
+    "unfrozenBy": "ALLOW_FROZEN=1",
+    "status": "failed",
+    "duration": 861811,
+    "stepsTotal": 8,
+    "stepSuccess": 7,
+    "sessionResets": 1,
+    "resetAvailable": true,
+    "resetStrategy": "adapter-selector",
+    "messageCountBefore": 6,
+    "messageCountAfter": 0,
+    "resetActuallyHappened": true,
+    "firstFailedStepId": "step_8_output"
+  },
+  "finalizeSource": "ab4-finalize-2026-11-12.py（只读补齐，不重跑真机、不覆盖证据）"
+}

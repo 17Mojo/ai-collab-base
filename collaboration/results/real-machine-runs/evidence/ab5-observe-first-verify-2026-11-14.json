@@ -1,0 +1,21 @@
+{
+  "t": "2026-11-14T09:54:26.702030+00:00",
+  "event": "verify",
+  "round": "1/1",
+  "receipt": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.json",
+  "nodeExit": 0,
+  "exists": true,
+  "platform": "deepseek",
+  "packVariant": "no-boundary",
+  "policyUnfrozenBy": "ALLOW_FROZEN=1",
+  "execSuccess": true,
+  "status": "completed",
+  "duration": 74558,
+  "stepsTotal": 8,
+  "stepSuccess": 8,
+  "firstFailedStepId": null,
+  "firstFailedStepError": null,
+  "earlierStepsAllSucceeded": true,
+  "sessionResets": 0,
+  "wallStepDurationMs": 11736
+}

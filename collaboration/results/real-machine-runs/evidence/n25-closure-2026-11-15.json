@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-11-14T22:09:46.907280+00:00",
+  "mode": "n25-closure-2026-11-15",
+  "statusBefore": "open",
+  "statusAfter": "closed",
+  "closedAt": "2026-11-15",
+  "closure": {
+    "closed_at": "2026-11-15",
+    "type": "INDETERMINABLE_PROPOSITION_CLOSED",
+    "decidedBy": "用户 2026-11-15 指令第 1 条『关闭 N25』",
+    "🔧_explicitRedLineOverride": {
+      "oldRedLine": "用户 2026-11-11 明令：N25 只能在 A/B 跑完且判据成立之后关闭；在此之前保持 open",
+      "criteriaNeverMet": true,
+      "overrideReason": "§26 只读诊断证明命题的自变量（长会话撞墙）在 F1 修复后不复现，A 组结构条件已满足仍 3/3 全 8/8、撞墙 0 次 ⇒ 判据永远不会成立，保持 open 只会固化『待验证』的假状态",
+      "authorizedBy": "用户本条指令本身；用户是红线制定者，有权显式推翻"
+    },
+    "closingReason": "原始观察对象已重新归因、墙不复现、命题不可判定 —— 以此结案",
+    "isNot": [
+      "不是验证通过（A/B 判据从未成立）",
+      "不是『边界有效』",
+      "不是『边界无效』",
+      "不是『长会话撞墙已根治』",
+      "不是 F1 / F2 真机验证的因果结论"
+    ],
+    "whatRemainsTrue": [
+      "F1 公共等待判据修复在真机上生效（§21）",
+      "F2 newChat / newChatText 入口真机可达（§23）",
+      "ab4 B 组硬判据 2/2 成立、ab5 observe-first 判无墙即停",
+      "原始 §9.4 的『长会话是变量』归因已被 F-D1/F-D2/F-D3 削弱"
+    ],
+    "reader": "接手时想把 N25 重新打开、或想据它写『会话边界解掉了长会话撞墙』的人。本条已结案但结案理由是命题不可判定，不是验证通过；若要重新验证，须先提出一个可控、可复现的自变量，否则按 §26 盲跑不产生新证据。",
+    "evidence": [
+      "wall-observability-diagnosis-2026-11-12.json",
+      "proposition-pursuit-plan-2026-11-14.json",
+      "ab5-final-verdict-2026-11-14.json",
+      "proposition-pursuit-ruling-2026-11-14.json",
+      "RESULT §26 / §27"
+    ],
+    "historicalFieldsPreserved": true,
+    "note": "关闭只改 status / closed_at 并新增 closure；title / detail / fix / reader / where / recharacterization / appended_evidence 全部原样保留。"
+  },
+  "evidenceCountBefore": 42,
+  "evidenceCountAfter": 43,
+  "historicalFieldsPreserved": true,
+  "noRealMachineAction": true,
+  "gitUntouched": true
+}

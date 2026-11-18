@@ -1,0 +1,67 @@
+=== ab2 rerun begin 2026-11-12T07:40:13.601477 ===
+dist CS=cd5c799785380518 SW=3e489d43a617671d
+=== START 1/3 : deepseek ab2-with-boundary ===
+23:40:14 ⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: deepseek —— 请确认用户已明确解冻
+23:40:14 已清 SW 缓存: 2 项
+23:40:17 extension id: npganfoebdcmdjkagnignnkcncaepjfc
+23:40:17 SW 自检: {"hasGate":true,"hasStatusSelector":true,"hasMin50":true,"size":117948}
+23:40:17 DeepSeek 已打开；未登录请在窗口里扫码，最多等 15 分钟
+23:40:17 ✅ 检测到输入框，视为已登录
+23:40:17 导入结果: {"imported":["xiaohongshu-knowledge-creator"],"errors":[]}
+23:40:17 目标 tabId: 1785654513 （精确投递）
+23:40:17 ▶ 触发 Pack，topic = AI 智能体（Agent）到底是什么
+23:52:53 回执已写: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab2-with-boundary.json
+23:52:53   hook_statement: len=38
+23:52:53   explanation_text: len=412
+23:52:53   use_cases: len=196
+23:52:53 success: false | status: failed
+23:53:23 会话截图: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab2-with-boundary.png
+23:53:24 DONE
+=== END 1/3 : rc=0 ===
+VERIFY: deepseek ab2-with-boundary success= False steps= 4 / 5 failedAt= ['step_5_boundary'] resets= 0
+=== START 2/3 : longcat ab2-no-boundary ===
+23:53:25 ⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: longcat —— 请确认用户已明确解冻
+23:53:25 已清 SW 缓存: 2 项
+23:53:26 extension id: npganfoebdcmdjkagnignnkcncaepjfc
+23:53:26 SW 自检: {"hasGate":true,"hasStatusSelector":true,"hasMin50":true,"size":117948}
+23:53:28 LongCat AI 已打开；未登录请在窗口里扫码，最多等 15 分钟
+23:53:33 ✅ 检测到输入框，视为已登录
+23:53:34 导入结果: {"imported":["xiaohongshu-knowledge-creator"],"errors":[]}
+23:53:34 目标 tabId: 1785654641 （精确投递）
+23:53:34 ▶ 触发 Pack，topic = AI 智能体（Agent）到底是什么
+00:05:57 回执已写: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-no-boundary.json
+00:05:57   hook_statement: len=43
+00:05:57 success: false | status: failed
+00:05:57 会话截图: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-no-boundary.png
+00:05:57 DONE
+=== END 2/3 : rc=0 ===
+VERIFY: longcat ab2-no-boundary success= False steps= 2 / 3 failedAt= ['step_3_explain'] resets= 0
+=== START 3/3 : longcat ab2-with-boundary ===
+00:05:58 ⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: longcat —— 请确认用户已明确解冻
+00:05:58 已清 SW 缓存: 2 项
+00:05:59 extension id: npganfoebdcmdjkagnignnkcncaepjfc
+00:05:59 SW 自检: {"hasGate":true,"hasStatusSelector":true,"hasMin50":true,"size":117948}
+00:06:00 LongCat AI 已打开；未登录请在窗口里扫码，最多等 15 分钟
+00:06:05 ✅ 检测到输入框，视为已登录
+00:06:05 导入结果: {"imported":["xiaohongshu-knowledge-creator"],"errors":[]}
+00:06:05 目标 tabId: 1785654772 （精确投递）
+00:06:05 ▶ 触发 Pack，topic = AI 智能体（Agent）到底是什么
+00:20:16 回执已写: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-with-boundary.json
+00:20:16   hook_statement: len=38
+00:20:16   explanation_text: len=417
+00:20:16   use_cases: len=142
+00:20:16   boundary_notes: len=373
+00:20:16   takeaway_content: len=209
+00:20:16   visual_content: len=603
+00:20:16 success: false | status: failed
+00:20:16 会话截图: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-with-boundary.png
+00:20:16 DONE
+=== END 3/3 : rc=0 ===
+VERIFY: longcat ab2-with-boundary success= False steps= 7 / 8 failedAt= ['step_8_output'] resets= 1
+=== ALL THREE ROUNDS DONE ===
+SUMMARY WRITTEN
+  deepseek ab2-no-boundary success= False passed= 4 / 5 failedAt= ['step_5_boundary'] resets= 0
+  deepseek ab2-with-boundary success= False passed= 4 / 5 failedAt= ['step_5_boundary'] resets= 0
+  longcat ab2-no-boundary success= False passed= 2 / 3 failedAt= ['step_3_explain'] resets= 0
+  longcat ab2-with-boundary success= False passed= 7 / 8 failedAt= ['step_8_output'] resets= 1
+RUNNER_FINISHED

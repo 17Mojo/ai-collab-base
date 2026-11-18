@@ -1,0 +1,381 @@
+{
+  "generatedAt": "2026-11-14T11:12:11.430508+00:00",
+  "mode": "proposition-pursuit-readonly-plan",
+  "status": "plan-only / NOT-EXECUTED",
+  "scope": "用户 2026-11-14 明令『1、追究命题；2、重新授权』中的第 1 项",
+  "formal": {
+    "proposition": "fresh_session 会话边界能解掉 deepseek / longcat 的 step_8 长会话撞墙",
+    "independentVariable": "单会话串行累积到 step_8 时的「长会话撞墙」状态",
+    "dependentVariable": "step_8_output 是否失败（Response timeout / 站点报错）",
+    "decidableIff": "存在至少一次 A 组（no-boundary）能稳定复现『前 7 步全成功、step_8_output 失败、且失败不是站点侧随机报错、不是等待判据 bug』的墙状态；并且同站相邻时间窗内的 B 组（with-boundary）在边界真执行后通过。",
+    "currentState": {
+      "structuralConditionAlreadyMet": true,
+      "structuralConditionNote": "A 组 no-boundary 本来就是同一会话 8 步串行、7 次 AI 往返、无任何 fresh_session；这正是 §9.4 宣称的『会话已累积 7 轮』条件。F1 后多轮已复现该结构，仍不撞墙。",
+      "postF1FullARounds": 3,
+      "postF1FullARoundsWithWall": 0,
+      "code": "PROPOSITION_INDETERMINABLE_WALL_NOT_REPRODUCIBLE",
+      "strengthenedByAb5": "ab5 observe-first 单轮再次 8/8 completed、step_8 11.7s、sessionResets=0，是第 3 份同型结构复现证据；§24 的『墙不复现』从推论升级为多次真机同型观察。"
+    },
+    "isNot": [
+      "不是说边界无效",
+      "不是说命题不成立（不成立需可判定的对照轮次）",
+      "不是说 N25 可关闭",
+      "不是说 F1 / F2 真机验证无效",
+      "不是说『长会话从未被复现』——结构条件已复现，只是墙不出现"
+    ]
+  },
+  "machineEvidence": {
+    "aGroupRoundsExamined": 8,
+    "aGroupRounds": [
+      {
+        "receipt": "L2-deepseek-auto-2026-11-11.ab-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "failed",
+        "stepsTotal": 5,
+        "stepSuccess": 4,
+        "aiRoundTrips": 4,
+        "outputChars": 834,
+        "sessionResets": 0,
+        "firstFailedStepId": "step_5_boundary",
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "durationMs": 756858
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-11.ab2-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "ab2-no-boundary",
+        "status": "failed",
+        "stepsTotal": 5,
+        "stepSuccess": 4,
+        "aiRoundTrips": 4,
+        "outputChars": 830,
+        "sessionResets": 0,
+        "firstFailedStepId": "step_5_boundary",
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "durationMs": 757122
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab3-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "aiRoundTrips": 7,
+        "outputChars": 3341,
+        "sessionResets": 0,
+        "firstFailedStepId": null,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 13333,
+        "durationMs": 82223
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab4-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "aiRoundTrips": 7,
+        "outputChars": 2940,
+        "sessionResets": 0,
+        "firstFailedStepId": null,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 12310,
+        "durationMs": 80535
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "aiRoundTrips": 7,
+        "outputChars": 2357,
+        "sessionResets": 0,
+        "firstFailedStepId": null,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 11736,
+        "durationMs": 74558
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab2-no-boundary.json",
+        "platform": "longcat",
+        "packVariant": "ab2-no-boundary",
+        "status": "failed",
+        "stepsTotal": 3,
+        "stepSuccess": 2,
+        "aiRoundTrips": 2,
+        "outputChars": 108,
+        "sessionResets": 0,
+        "firstFailedStepId": "step_3_explain",
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "durationMs": 743043
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab3-no-boundary.json",
+        "platform": "longcat",
+        "packVariant": "no-boundary",
+        "status": "failed",
+        "stepsTotal": 6,
+        "stepSuccess": 5,
+        "aiRoundTrips": 5,
+        "outputChars": 1051,
+        "sessionResets": 0,
+        "firstFailedStepId": "step_6_takeaway",
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "durationMs": 810784
+      },
+      {
+        "receipt": "L2-longcat-auto-2026-11-12.ab4-no-boundary.json",
+        "platform": "longcat",
+        "packVariant": "no-boundary",
+        "status": "failed",
+        "stepsTotal": 4,
+        "stepSuccess": 3,
+        "aiRoundTrips": 3,
+        "outputChars": 615,
+        "sessionResets": 0,
+        "firstFailedStepId": "step_4_scene",
+        "step8Reached": false,
+        "step8Success": null,
+        "step8DurationMs": null,
+        "durationMs": 765162
+      }
+    ],
+    "postF1FullARounds": [
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab3-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "aiRoundTrips": 7,
+        "outputChars": 3341,
+        "sessionResets": 0,
+        "firstFailedStepId": null,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 13333,
+        "durationMs": 82223
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-12.ab4-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "aiRoundTrips": 7,
+        "outputChars": 2940,
+        "sessionResets": 0,
+        "firstFailedStepId": null,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 12310,
+        "durationMs": 80535
+      },
+      {
+        "receipt": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.json",
+        "platform": "deepseek",
+        "packVariant": "no-boundary",
+        "status": "completed",
+        "stepsTotal": 8,
+        "stepSuccess": 8,
+        "aiRoundTrips": 7,
+        "outputChars": 2357,
+        "sessionResets": 0,
+        "firstFailedStepId": null,
+        "step8Reached": true,
+        "step8Success": true,
+        "step8DurationMs": 11736,
+        "durationMs": 74558
+      }
+    ],
+    "isolationExperiment": {
+      "receipt": "L2-longcat-fusion-isolated-2026-11-11.json",
+      "verdict": "answered",
+      "durationSeconds": 21,
+      "promptLen": 2437,
+      "textLen": 1481,
+      "interpretation": "空会话 21s 通过只能证明提示词本身不被拒；不能独立证明『长会话是变量』"
+    },
+    "diagnosisFindings": [
+      "F-D1: deepseek 侧的『step_8 撞墙』在 F1 修复后完全不复现",
+      "F-D2: longcat 侧的失败步位置在漂移，不是稳定的 step_8 墙",
+      "F-D3: §9.4 的隔离实验不足以支持『长会话是变量』"
+    ],
+    "ab4F2": {
+      "f2RealMachineVerified": true,
+      "allBoundariesActuallyExecuted": true,
+      "bHardCriteriaMetCount": 2
+    },
+    "ab5": {
+      "code": "ABORT_NO_WALL",
+      "roundsExecuted": 1,
+      "bActuallyRun": false
+    },
+    "packsSha256": {
+      "ab-pack-2026-11-11.no-boundary.json": "89b197cf99f2fcac835bc78269f89315a9740bfe57222da207d5851796692d03",
+      "ab-pack-2026-11-11.with-boundary.json": "0e1b4b9816545e52e74abaee117d96fba3b449cfa5a71c5370a0e22b2516f46f"
+    }
+  },
+  "candidatePaths": [
+    {
+      "id": "P1",
+      "name": "按不可判定收口 / 改述 N25",
+      "realMachineRounds": 0,
+      "changes": [
+        "只回写 RESULT 与 known_gaps.json 的性质描述"
+      ],
+      "needsUnfreeze": false,
+      "needsPackChange": false,
+      "needsSourceOrDistChange": false,
+      "redLineConflicts": [
+        "是否关闭 N25 必须由用户裁定；判据未成立前默认保持 open"
+      ],
+      "expectedOutcome": "把 N25 从『待 A/B 验证』改述为『已跑 A/B，原始观察对象已重新归因、命题不可判定』，零额度成本",
+      "recommendation": "推荐：唯一不消耗站点额度、不制造新混杂变量的诚实路径"
+    },
+    {
+      "id": "P2",
+      "name": "回滚 F1 的归因对照实验",
+      "realMachineRounds": "2–4",
+      "changes": [
+        "临时把等待判据退回 countGrew-only",
+        "重建 dist",
+        "跑门禁",
+        "真机 A/B"
+      ],
+      "needsUnfreeze": true,
+      "needsPackChange": false,
+      "needsSourceOrDistChange": true,
+      "redLineConflicts": [
+        "主动制造一个已知 bug，违反『不改源码 / 不改 dist』的本轮边界",
+        "即便重现假超时，也只证明 F-D1 归因正确，不能证明 fresh_session 有效",
+        "需要新的机器判据，且用完必须把 F1 恢复并重新全量门禁"
+      ],
+      "expectedOutcome": "把 F-D1 从推论升级为对照实验证据；对原命题的因果结论无直接贡献",
+      "recommendation": "不推荐作为追究原命题的手段（答的是另一个问题）"
+    },
+    {
+      "id": "P3",
+      "name": "人工加长会话试图复现墙",
+      "realMachineRounds": "2–4",
+      "changes": [
+        "改 Pack 增加轮次 / 加长 prompt",
+        "生成新变体",
+        "重定 Gate 判据"
+      ],
+      "needsUnfreeze": true,
+      "needsPackChange": true,
+      "needsSourceOrDistChange": false,
+      "redLineConflicts": [
+        "违反 ab5 plan 硬约束『A/B 只差 fresh_session 一个变量、Pack hash 不变』",
+        "§9.4 的『长会话是变量』归因已被 F-D3 削弱，加长会话属换命题而非追究原命题",
+        "deepseek 侧原始症状已证伪为等待判据假超时，加长大概率只拉长耗时"
+      ],
+      "expectedOutcome": "大概率仍无墙，或引入新的上下文长度混杂变量",
+      "recommendation": "不推荐：换命题 + 破坏单变量约束"
+    },
+    {
+      "id": "P4",
+      "name": "按原判据再跑一次完整 4 轮 A/B",
+      "realMachineRounds": 4,
+      "changes": [
+        "无（复用现有 dist / Pack / 判据）"
+      ],
+      "needsUnfreeze": true,
+      "needsPackChange": false,
+      "needsSourceOrDistChange": false,
+      "redLineConflicts": [
+        "§24 已判定为盲跑；用户 2026-11-14 明令『而不是盲跑 4 轮』"
+      ],
+      "expectedOutcome": "大概率 NO_WALL_THIS_ROUND 或站点报错，无法提供成对证据",
+      "recommendation": "不推荐：与用户最新明令冲突"
+    },
+    {
+      "id": "P5",
+      "name": "换活跃 5 站做替代对照",
+      "realMachineRounds": "2–4",
+      "changes": [
+        "换平台",
+        "重定命题"
+      ],
+      "needsUnfreeze": false,
+      "needsPackChange": false,
+      "needsSourceOrDistChange": false,
+      "redLineConflicts": [
+        "N25 原始观察对象明确是 deepseek / longcat，换站等于换命题，不能代偿",
+        "N23 已证明活跃 5 站『重置真的做到了』，不是因果证据"
+      ],
+      "expectedOutcome": "得到另一条命题的结论，N25 仍不可判定",
+      "recommendation": "不推荐：答非所问"
+    }
+  ],
+  "authorizationRequired": {
+    "note": "『重新授权』未指明宾语。以下维度必须分别确认，不得默认全收或凭上下文推断：",
+    "dimensions": [
+      {
+        "id": "A1",
+        "name": "追究命题走哪条路径（P1–P5）",
+        "default": "未裁定，不擅自选 P1"
+      },
+      {
+        "id": "A2",
+        "name": "逐次解冻 deepseek / longcat（ALLOW_FROZEN=1）",
+        "default": "未授权"
+      },
+      {
+        "id": "A3",
+        "name": "提交动作（git commit）",
+        "default": "未授权；上轮 q-0=暂不提交"
+      },
+      {
+        "id": "A4",
+        "name": "提交文件集合",
+        "default": "上轮 q-1 仅为 PREFERENCE_ONLY_NOT_AUTHORIZATION"
+      },
+      {
+        "id": "A5",
+        "name": "behind=4 分歧处理（merge / rebase / pull）",
+        "default": "未授权"
+      },
+      {
+        "id": "A6",
+        "name": "push 到远端",
+        "default": "未授权"
+      }
+    ]
+  },
+  "hardBoundaries": {
+    "noRealMachineAction": true,
+    "noPackChange": true,
+    "noSourceOrDistChange": true,
+    "noGitChange": true,
+    "noBrowserLaunch": true,
+    "noMessageSent": true
+  },
+  "n25": "remain open",
+  "note": "本文件是只读裁定与方案，不是回执、不证明命题成立与否。任何真机执行都须先取得明确解冻授权。",
+  "selfCheck": {
+    "pass": true,
+    "errors": [],
+    "checkedAt": "2026-11-14T11:12:11.430684+00:00",
+    "note": "自检只核引用证据存在与 JSON 可解析，不启动浏览器、不产生回执"
+  }
+}

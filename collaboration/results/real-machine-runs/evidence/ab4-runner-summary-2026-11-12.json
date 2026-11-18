@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-11-12T12:35:54.588993+00:00",
+  "runner": "ab4-runner-2026-11-12.sh",
+  "allFourRoundsExecuted": false,
+  "rounds": [
+    {
+      "round": 1,
+      "receipt": "L2-deepseek-auto-2026-11-12.ab4-no-boundary.json",
+      "exists": true,
+      "bytes": 21519
+    },
+    {
+      "round": 2,
+      "receipt": "L2-deepseek-auto-2026-11-12.ab4-with-boundary.json",
+      "exists": true,
+      "bytes": 19583
+    },
+    {
+      "round": 3,
+      "receipt": "L2-longcat-auto-2026-11-12.ab4-no-boundary.json",
+      "exists": true,
+      "bytes": 6718
+    },
+    {
+      "round": 4,
+      "receipt": "L2-longcat-auto-2026-11-12.ab4-with-boundary.json",
+      "exists": false,
+      "bytes": 0
+    }
+  ],
+  "note": "allFourRoundsExecuted=true 只表示 4 份回执都落盘，不代表 A/B 判据成立；裁定另由 verdict 生成器机械推导。"
+}

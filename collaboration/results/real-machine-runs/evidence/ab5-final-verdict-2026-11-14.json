@@ -1,0 +1,177 @@
+{
+  "generatedAt": "2026-11-14T09:56:12.519459+00:00",
+  "mode": "ab5-observe-first-final-verdict",
+  "userMandate": {
+    "verbatim": "解冻并按 observe-first gate 重跑（先跑 A 单轮，判无墙即停），而不是盲跑 4 轮；Gate A 判「墙不存在」→ ABORT_NO_WALL，N25 仍 open；仅当 Gate A 成立才跑 B 并按判据裁定",
+    "date": "2026-11-14",
+    "platformRuling": "用户 AskUserQuestion q-0 裁定首轮 = deepseek（见 ab5-gate-a-platform-ruling-2026-11-14.json）"
+  },
+  "code": "ABORT_NO_WALL",
+  "gateA": {
+    "description": "A 组（no-boundary）单轮是否真的在 step_8_output 撞墙",
+    "machineCriteria": {
+      "C1_stepsTotal_eq_8": true,
+      "C2_stepSuccess_eq_7": false,
+      "C3_firstFailedStepId_eq_step_8_output": false,
+      "C4_failedErrorContainsResponseTimeout": false,
+      "C5_earlierStepsAllSucceeded": true,
+      "C6_A_hasNoSessionResets": true
+    },
+    "machinePass": false,
+    "visualGate": {
+      "required": true,
+      "kind": "nonMachineObservation",
+      "participatesInMachineBoolean": false,
+      "status": "NOT_EVALUATED_BY_MACHINE",
+      "note": "截图人工视觉判读：末条 AI 回复不得是『服务出错啦，请稍后再试。』；放行必须由人确认。",
+      "screenshot": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.png",
+      "screenshotExists": true
+    }
+  },
+  "observed": {
+    "execSuccess": true,
+    "status": "completed",
+    "durationMs": 74558,
+    "stepsTotal": 8,
+    "stepSuccess": 8,
+    "firstFailedStepId": null,
+    "firstFailedStepError": null,
+    "sessionResets": 0,
+    "wallStep": {
+      "id": "step_8_output",
+      "success": true,
+      "durationMs": 11736
+    },
+    "steps": [
+      {
+        "id": "step_1_topic",
+        "success": true,
+        "duration": 0
+      },
+      {
+        "id": "step_2_hook",
+        "success": true,
+        "duration": 9745
+      },
+      {
+        "id": "step_3_explain",
+        "success": true,
+        "duration": 11830
+      },
+      {
+        "id": "step_4_scene",
+        "success": true,
+        "duration": 10855
+      },
+      {
+        "id": "step_5_boundary",
+        "success": true,
+        "duration": 10374
+      },
+      {
+        "id": "step_6_takeaway",
+        "success": true,
+        "duration": 9741
+      },
+      {
+        "id": "step_7_visual",
+        "success": true,
+        "duration": 10277
+      },
+      {
+        "id": "step_8_output",
+        "success": true,
+        "duration": 11736
+      }
+    ]
+  },
+  "visualObservation": {
+    "kind": "nonMachineObservation",
+    "participatesInMachineBoolean": false,
+    "screenshot": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.png",
+    "readBy": "人工视觉巡检（ViewImage）",
+    "lastAIReply": "正常中文长文本答案（AI 智能体定义与场景说明），不是站点报错",
+    "siteErrorMessagePresent": false,
+    "loginWallPresent": false,
+    "captchaOrSliderPresent": false,
+    "sidebarNewChatEntryVisible": true,
+    "sidebarNote": "左栏可见「开启新对话」入口，但本轮是 no-boundary，未触发任何 NEW_SESSION；不得据此说 F2 在本轮真机生效",
+    "conclusion": "截图与机器回执一致：A 组正常答完，无站点侧报错、无登录墙；本轮不构成 A 撞墙"
+  },
+  "abortBranch": {
+    "executed": true,
+    "bShouldRun": false,
+    "bActuallyRun": false,
+    "longcatActuallyRun": false,
+    "roundsExecuted": 1,
+    "roundsPlanned": 1,
+    "messagesSent": "A 单轮 8 步 Pack",
+    "diskCheck": {
+      "bReceipt": {
+        "file": "L2-deepseek-auto-2026-11-14.ab5-with-boundary.json",
+        "exists": false
+      },
+      "longcatAReceipt": {
+        "file": "L2-longcat-auto-2026-11-14.ab5-no-boundary.json",
+        "exists": false
+      },
+      "longcatBReceipt": {
+        "file": "L2-longcat-auto-2026-11-14.ab5-with-boundary.json",
+        "exists": false
+      }
+    },
+    "progressEvents": [
+      "runner begin",
+      "start",
+      "node-exit",
+      "verify",
+      "verify written",
+      "runner done"
+    ],
+    "stopReason": "Gate A 6 条机器判据中 C2/C3/C4 不成立（8/8 全成功、无失败步、step_8 11.7s 完成）"
+  },
+  "f1F2Attribution": {
+    "f1RealMachineVerifiedThisRound": false,
+    "f2RealMachineVerifiedThisRound": false,
+    "note": "本轮 A 是 no-boundary，sessionResets=0，没有触发会话边界；不能用本轮回执新增任何 F1/F2 因果结论。既往 F1/F2 真机验证结论（§21/§23）保持原状，不翻案、不挪用。"
+  },
+  "propositionSupported": false,
+  "boundaryIneffectiveClaimed": false,
+  "n25": {
+    "status": "remain open",
+    "closedAt": null,
+    "reason": "只有「A 撞墙且 B 通过」才支持命题；本轮 A 未撞墙且 B 未跑，无成对证据"
+  },
+  "attributionBoundaries": [
+    "不得说会话边界有效，也不得说边界无效",
+    "不得把 A/B 都通过归功边界；本轮未跑 B，无成对证据",
+    "不得把 F1 / F2 真机验证挪用为因果证据",
+    "站点侧报错属外部混杂变量，不得与『墙』合并归因"
+  ],
+  "evidence": {
+    "precondition": "ab5-precondition-2026-11-14.json",
+    "ruling": "ab5-gate-a-platform-ruling-2026-11-14.json",
+    "precheck": "L2-precheck-2026-11-14.ab5.deepseek-longcat.json",
+    "runner": "ab5-observe-first-runner-2026-11-14.sh",
+    "runnerLog": "ab5-observe-first-2026-11-14.log",
+    "progress": "ab5-observe-first-progress-2026-11-14.jsonl",
+    "verify": "ab5-observe-first-verify-2026-11-14.json",
+    "receipt": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.json",
+    "receiptSha256": "ca71edc3d10946cec6bcea4ef7e3672f4a4600bb05c3c649e2eb090597d506b1",
+    "gateAVerdict": "ab5-gate-a-verdict-2026-11-14.json",
+    "gateAVerdictScript": "ab5-gate-a-verdict-2026-11-14.py"
+  },
+  "authorizationTrace": {
+    "platformPolicyUnfrozenBy": "ALLOW_FROZEN=1",
+    "precheckUnfrozenBoth": true,
+    "whitelistCodeChanged": false,
+    "usageRule": "逐次显式放行，用完仍是冻结；下次再跑须重新明确解冻"
+  },
+  "git": {
+    "commitExecuted": false,
+    "pushExecuted": false,
+    "note": "提交 / push 用户明示单独授权，按「提交」与「文件集合」分别确认，本轮未碰 git"
+  },
+  "noFurtherRealMachineAction": true,
+  "note": "本文件是只读合并裁定，不是 L2 回执。ABORT_NO_WALL 只表示『本轮墙不存在』，不表示边界有效/无效、不表示命题不成立、不表示 N25 可关闭。"
+}

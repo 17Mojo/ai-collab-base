@@ -1,0 +1,78 @@
+=== RUNNER_BEGIN 2026-11-12T03:41:23Z ===
+PRECHECK 2026-11-12T03:38:18.611Z candidates ['deepseek', 'longcat']
+DIST [('dist/content-script.js', 'cffb6eb540abdf11'), ('dist/service-worker.js', 'b243c74de2afcecf')]
+PACKS [('no-boundary', '89b197cf99f2fcac'), ('with-boundary', '0e1b4b9816545e52')]
+TARGETS_EMPTY True
+PRECONDITION_OK
+=== ROUND 1/4 START platform=deepseek variant=no-boundary 2026-11-12T03:41:24Z ===
+03:41:25 ⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: deepseek —— 请确认用户已明确解冻
+03:41:25 已清 SW 缓存: 2 项
+03:41:25 extension id: npganfoebdcmdjkagnignnkcncaepjfc
+03:41:26 SW 自检: {"hasGate":true,"hasStatusSelector":true,"hasMin50":true,"size":119526}
+03:41:26 DeepSeek 已打开；未登录请在窗口里扫码，最多等 15 分钟
+03:41:26 ✅ 检测到输入框，视为已登录
+03:41:26 导入结果: {"imported":["xiaohongshu-knowledge-creator"],"errors":[]}
+03:41:26 目标 tabId: 1785655174 （精确投递）
+03:41:26 ▶ 触发 Pack，topic = AI 智能体（Agent）到底是什么
+03:42:48 回执已写: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-no-boundary.json
+03:42:48   hook_statement: len=40
+03:42:48   explanation_text: len=493
+03:42:48   use_cases: len=383
+03:42:48   boundary_notes: len=280
+03:42:48   takeaway_content: len=257
+03:42:48   visual_content: len=487
+03:42:48   final_content: len=1336
+03:42:48 success: true | status: completed
+03:42:48 会话截图: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-no-boundary.png
+03:42:49 DONE
+=== ROUND 1/4 NODE_EXIT=0 2026-11-12T03:42:49Z ===
+VERIFY {"t": "2026-11-12T03:42:49.857015+00:00", "event": "verify", "round": "1", "receipt": "L2-deepseek-auto-2026-11-12.ab3-no-boundary.json", "exists": true, "execSuccess": true, "status": "completed", "stepsTotal": 8, "stepSuccess": 8, "duration": 82223, "sessionResets": 0, "resetAvailable": [], "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+=== ROUND 2/4 START platform=deepseek variant=with-boundary 2026-11-12T03:42:49Z ===
+03:42:50 ⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: deepseek —— 请确认用户已明确解冻
+03:42:51 已清 SW 缓存: 2 项
+03:42:51 extension id: npganfoebdcmdjkagnignnkcncaepjfc
+03:42:51 SW 自检: {"hasGate":true,"hasStatusSelector":true,"hasMin50":true,"size":119526}
+03:42:52 DeepSeek 已打开；未登录请在窗口里扫码，最多等 15 分钟
+03:42:52 ✅ 检测到输入框，视为已登录
+03:42:52 导入结果: {"imported":["xiaohongshu-knowledge-creator"],"errors":[]}
+03:42:52 目标 tabId: 1785655300 （精确投递）
+03:42:52 ▶ 触发 Pack，topic = AI 智能体（Agent）到底是什么
+03:44:13 回执已写: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-with-boundary.json
+03:44:13   hook_statement: len=41
+03:44:13   explanation_text: len=494
+03:44:13   use_cases: len=348
+03:44:13   boundary_notes: len=249
+03:44:13   takeaway_content: len=241
+03:44:13   visual_content: len=280
+03:44:13   final_content: len=1302
+03:44:13 success: true | status: completed
+03:44:13 会话截图: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-with-boundary.png
+03:44:13 DONE
+=== ROUND 2/4 NODE_EXIT=0 2026-11-12T03:44:13Z ===
+VERIFY {"t": "2026-11-12T03:44:13.883692+00:00", "event": "verify", "round": "2", "receipt": "L2-deepseek-auto-2026-11-12.ab3-with-boundary.json", "exists": true, "execSuccess": true, "status": "completed", "stepsTotal": 8, "stepSuccess": 8, "duration": 81289, "sessionResets": 1, "resetAvailable": [false], "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+=== ROUND 3/4 START platform=longcat variant=no-boundary 2026-11-12T03:44:13Z ===
+03:44:15 ⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: longcat —— 请确认用户已明确解冻
+03:44:15 已清 SW 缓存: 2 项
+03:44:15 extension id: npganfoebdcmdjkagnignnkcncaepjfc
+03:44:15 SW 自检: {"hasGate":true,"hasStatusSelector":true,"hasMin50":true,"size":119526}
+03:44:16 LongCat AI 已打开；未登录请在窗口里扫码，最多等 15 分钟
+03:44:21 ✅ 检测到输入框，视为已登录
+03:44:21 导入结果: {"imported":["xiaohongshu-knowledge-creator"],"errors":[]}
+03:44:21 目标 tabId: 1785655429 （精确投递）
+03:44:21 ▶ 触发 Pack，topic = AI 智能体（Agent）到底是什么
+03:57:52 回执已写: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab3-no-boundary.json
+03:57:52   hook_statement: len=32
+03:57:52   explanation_text: len=507
+03:57:52   use_cases: len=182
+03:57:52   boundary_notes: len=265
+03:57:52 success: false | status: failed
+03:57:52 会话截图: /Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab3-no-boundary.png
+03:57:53 DONE
+=== ROUND 3/4 NODE_EXIT=0 2026-11-12T03:57:53Z ===
+VERIFY {"t": "2026-11-12T03:57:53.271709+00:00", "event": "verify", "round": "3", "receipt": "L2-longcat-auto-2026-11-12.ab3-no-boundary.json", "exists": true, "execSuccess": false, "status": "failed", "stepsTotal": 6, "stepSuccess": 5, "duration": 810784, "sessionResets": 0, "resetAvailable": [], "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+=== ROUND 4/4 START platform=longcat variant=with-boundary 2026-11-12T03:57:53Z ===
+03:57:54 ⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: longcat —— 请确认用户已明确解冻
+FAIL: [safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {"count":52,"threshold":50,"scope":"turn","targets":["/Users/raymondna/Library/Application Support/rm-qianwen-l2-profile/Default/Extension Scripts"],"targetCount":1}
+=== ROUND 4/4 NODE_EXIT=1 2026-11-12T03:57:54Z ===
+VERIFY {"t": "2026-11-12T03:57:54.633908+00:00", "event": "verify", "round": "4", "receipt": "L2-longcat-auto-2026-11-12.ab3-with-boundary.json", "exists": false, "execSuccess": null, "status": null, "stepsTotal": 0, "stepSuccess": 0, "duration": null, "sessionResets": 0, "resetAvailable": [], "policyUnfrozenBy": null}
+=== RUNNER_FINISHED 2026-11-12T03:57:54Z ===

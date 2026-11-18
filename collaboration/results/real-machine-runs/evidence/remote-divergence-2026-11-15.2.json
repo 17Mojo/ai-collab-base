@@ -1,0 +1,35 @@
+{
+  "mode": "remote-divergence-readonly-2026-11-15.2",
+  "generatedAt": "2026-11-15T06:54:43+00:00",
+  "head": "36d9ec2",
+  "originMain": "915c350",
+  "ahead": 0,
+  "behind": 33,
+  "previousSnapshot": {
+    "originMain": "19635c6",
+    "behind": 31,
+    "evidence": "remote-divergence-2026-11-15.json"
+  },
+  "newCommits": [
+    "915c350 Merge pull request #62 from 17Mojo/fix/ci-clear-continue-on-error-2026-11-15",
+    "08ab0f9 fix(ci): 清掉最后 2 处 continue-on-error 及其脚本内吞码"
+  ],
+  "changedFilesInDelta": [
+    ".github/workflows/security.yml",
+    ".github/workflows/test.yml"
+  ],
+  "cumulativeChangedFiles": [
+    ".github/workflows/build.yml",
+    ".github/workflows/healthcheck.yml",
+    ".github/workflows/lint.yml",
+    ".github/workflows/mypy-gate.yml",
+    ".github/workflows/nightly.yml",
+    ".github/workflows/security.yml",
+    ".github/workflows/test.yml",
+    "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-kimi.html",
+    "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-longcat.html",
+    "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-yiyan.html"
+  ],
+  "ourInputsTouched": [],
+  "note": "外部 fetch 推进，非本会话操作。若授权 push，须先单独授权处理 behind=33 分歧。"
+}

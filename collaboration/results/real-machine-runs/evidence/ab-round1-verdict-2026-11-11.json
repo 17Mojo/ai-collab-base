@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-11-11T21:34:08.118819",
+  "mode": "machine-verdict",
+  "round": "1/4",
+  "platform": "deepseek",
+  "variant": "no-boundary",
+  "receipt": {
+    "path": "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.json",
+    "sha256": "619ba3eae26600537a3803cf41419eb43c242ab2029a91dc646eac8d9ece82f2"
+  },
+  "observed": {
+    "execSuccess": false,
+    "resultStatus": "failed",
+    "duration": 756858,
+    "stepsCompleted": 5,
+    "stepsSucceeded": 4,
+    "failedStep": "step_5_boundary",
+    "failedStepDuration": 723661,
+    "error": "标签页 1785653796没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。",
+    "sessionResets": []
+  },
+  "visualEvidence": {
+    "screenshot": "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.png",
+    "aiAnswerPresent": true,
+    "loginWallPresent": false,
+    "composerVisible": true,
+    "note": "人工视觉巡检只作旁证；下方 DOM 命中数才是机器判据。"
+  },
+  "domEvidence": {
+    "readonlyProbe": {
+      "path": "collaboration/results/real-machine-runs/evidence/new-session-probe-2026-11-11.deepseek-ab-diagnostic.json",
+      "sha256": "d57de230ed4d3c5b0c3c88e8e992f04592e5f1aaeb2d6fbc624478f3e407d5d0",
+      "messageListHits": {
+        "[data-testid=\"conversation-turn\"]": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 0,
+        ".ds-chat-message": 0
+      }
+    },
+    "sessionPage": {
+      "path": "collaboration/results/real-machine-runs/evidence/deepseek-session-page-diagnostic-2026-11-11.json",
+      "sha256": "c64533db56d8c251bc1fcaf26e011827d214b900a25bab7d71e46749e7751104",
+      "url": "https://chat.deepseek.com/a/chat/s/4037c20c-01a0-4c80-84da-f7bcbf7ea842",
+      "answerFound": true,
+      "adapterMessageListHits": {
+        "[data-testid=\"conversation-turn\"]": 0,
+        ".chat-message": 0,
+        "[class*=\"message\"]": 8,
+        ".ds-chat-message": 0
+      }
+    },
+    "firstHitSelector": "[class*=\"message\"]",
+    "trueAnswerContainer": "div.ds-message._63c77b1 > .ds-markdown.ds-assistant-message-main-content"
+  },
+  "boundaryDeclaration": {
+    "stepsWithFreshSession": [
+      "step_8_output"
+    ],
+    "pack": "collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-11.with-boundary.json"
+  },
+  "machineVerdict": {
+    "code": "AB_UNVERIFIABLE_PRECONDITION_FAILED",
+    "failedBeforeBoundaryStep": true,
+    "reason": "A 组在声明 fresh_session 的 step_8_output 之前就失败；B 组的边界只在该步生效，结构上不可能影响失败位置 ⇒ 本轮对照无法支持或否证命题。",
+    "rootCauseClass": "DOM_CONTRACT_FALSE_TIMEOUT",
+    "rootCauseEvidence": "首个命中的 messageList 选择器是 [class*=\"message\"]（8 个混合/虚拟列表元素），不是真实消息卡；AI 已作答却等到 4x180s 超时，与 N24 文心假基准同型。",
+    "isLongSessionWall": false,
+    "executionOrderGate": "下一轮不应启动：计划要求每轮先核 8/8 + sessionResets，本轮 5 步 failed、sessionResets=[]。",
+    "n25": "remain open"
+  }
+}

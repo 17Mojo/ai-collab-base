@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2026-11-12T07:30:44.603815Z",
+  "mode": "deepseek-newchat-local-fix-verdict",
+  "scope": "2026-11-12 后续步骤①–③：deepseek adapter 级精确文案逃生口 + 全量本地门禁",
+  "code": "LOCAL_FIX_GATES_PASS_REAL_MACHINE_NOT_VERIFIED",
+  "localFixComplete": true,
+  "allGatesPass": true,
+  "realMachineVerified": false,
+  "propositionSupported": false,
+  "n25": {
+    "status": "open",
+    "decision": "remain open",
+    "reason": "只有 A/B 跑完且「A 撞墙且 B 通过」判据成立才允许关闭；本轮没有真机 A/B 回执。"
+  },
+  "evidence": {
+    "gatesSummary": "gates-deepseek-newchat-2026-11-12.summary.json",
+    "gatesLog": "gates-deepseek-newchat-2026-11-12.log",
+    "gatesProgress": "gates-deepseek-newchat-2026-11-12.jsonl",
+    "npmTestLog": "npm-test-2026-11-12.deepseek-newchat.log",
+    "mutationLog": "mutation-check-2026-11-12.deepseek-newchat.full.log",
+    "distConsistency": "dist-consistency-2026-11-12.deepseek-newchat.json",
+    "buildLogs": [
+      "build-2026-11-12.deepseek-newchat.log",
+      "build-2026-11-12.deepseek-newchat-second.log"
+    ]
+  },
+  "gates": {
+    "build1": 0,
+    "build2": 0,
+    "idempotent": true,
+    "npmTest": 0,
+    "npmTestTotals": {
+      "total": 349,
+      "pass": 349,
+      "fail": 0,
+      "ok": true
+    },
+    "mutationFull": 0,
+    "mutationTotals": {
+      "declaredKilled": 151,
+      "tickLines": 151,
+      "ok": true
+    },
+    "distConsistency": 0,
+    "distAllPass": true,
+    "keywordChecks": {
+      "total": 10,
+      "allPass": true
+    }
+  },
+  "sourceChecks": {
+    "newChatTextDeclaredInDeepseekAdapter": true,
+    "exactTextLayerPresent": true,
+    "publicSelectorNotWidenedToSpan": true
+  },
+  "git": {
+    "head": "36d9ec2",
+    "originMain": "36d9ec2",
+    "statusItems": 73,
+    "committed": false,
+    "pushed": false
+  },
+  "newRealMachineReceipts": [],
+  "attributionBoundaries": [
+    "全绿只证明本地门禁；不能说 deepseek 的会话边界在真机上生效。",
+    "不能说会话边界解掉 step_8 撞墙，也不能说边界无效。",
+    "不能把 F1 公共等待判据的真机成功挪用为 fresh_session 的因果证据。",
+    "不能说重置免费，不能把耗时差异归因给重置。",
+    "本轮未打开冻结站、未导入 Pack、未发送任何消息、未 commit / push。"
+  ],
+  "nextRequiresAuthorization": [
+    "明确解冻 deepseek / longcat 并授权真机重跑（逐次 ALLOW_FROZEN=1 留痕）。",
+    "预检核登录态 → 相邻时间窗串行跑 4 轮 A/B（B 组须 available===true && messageCountAfter<Before）。",
+    "按判据裁定 N25；此前保持 open。",
+    "提交 / push 需单独授权，且按提交与文件集合分清。"
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "generatedAt": "2026-11-12T12:58:13.934562Z",
+  "mode": "commit-scope-inventory-readonly",
+  "head": "36d9ec2",
+  "originMain": "36d9ec2",
+  "unpushed": 0,
+  "authorization": "用户 2026-11-12 明示「提交 / push 单独授权」⇒ 本轮未 commit、未 push；本清单仅供后续按文件集合授权时核对。",
+  "total": 96,
+  "modifiedTracked": {
+    "count": 15,
+    "files": [
+      "chrome-extension/src/background/pack-executor.js",
+      "chrome-extension/src/content/content-script.js",
+      "chrome-extension/src/content/new-session-control.js",
+      "chrome-extension/src/platforms/deepseek-adapter.js",
+      "chrome-extension/src/platforms/longcat-adapter.js",
+      "chrome-extension/src/utils/retry-policy.js",
+      "chrome-extension/src/utils/wait-policy.js",
+      "chrome-extension/tests/adapter-wait.test.mjs",
+      "chrome-extension/tests/message-list-contract.test.mjs",
+      "chrome-extension/tests/new-session-control.test.mjs",
+      "chrome-extension/tests/real-machine/mutation-check.mjs",
+      "chrome-extension/tests/retry-semantics.test.mjs",
+      "chrome-extension/tests/wait-policy.test.mjs",
+      "collaboration/results/RESULT-L2-MULTIPLATFORM-2026-11-10.md",
+      "known_gaps.json"
+    ]
+  },
+  "untracked": {
+    "count": 81,
+    "byExtension": {
+      ".json": 34,
+      ".jsonl": 6,
+      ".log": 18,
+      ".mjs": 2,
+      ".png": 12,
+      ".py": 4,
+      ".sh": 5
+    },
+    "byBucket": {
+      "ab/ab2 真机证据/脚本": {
+        "count": 17,
+        "files": [
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab2-no-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-11.ab2-no-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab2-with-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-no-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-no-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-with-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab2-with-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/ab-round1-verdict-2026-11-11.json",
+          "collaboration/results/real-machine-runs/evidence/ab2-four-round-summary-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/ab2-rerun-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/ab2-rerun-progress-2026-11-12.jsonl",
+          "collaboration/results/real-machine-runs/evidence/ab2-verdict-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/dist-consistency-2026-11-11.ab2.json",
+          "collaboration/results/real-machine-runs/evidence/new-session-probe-2026-11-11.deepseek-ab-diagnostic.json",
+          "collaboration/results/real-machine-runs/evidence/npm-test-2026-11-11.ab2.log"
+        ]
+      },
+      "ab3 真机证据/脚本": {
+        "count": 17,
+        "files": [
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-no-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-no-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-with-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab3-with-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab3-no-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab3-no-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab3-with-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab3-with-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/ab3-precheck-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/ab3-rerun-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/ab3-rerun-progress-2026-11-12.jsonl",
+          "collaboration/results/real-machine-runs/evidence/ab3-round4-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/ab3-round4-progress-2026-11-12.jsonl",
+          "collaboration/results/real-machine-runs/evidence/ab3-round4-rerun-2026-11-12.sh",
+          "collaboration/results/real-machine-runs/evidence/ab3-runner-2026-11-12.sh",
+          "collaboration/results/real-machine-runs/evidence/ab3-verdict-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/ab3-verdict-2026-11-12.py"
+        ]
+      },
+      "§22 本地修复门禁证据/脚本": {
+        "count": 12,
+        "files": [
+          "collaboration/results/real-machine-runs/evidence/build-2026-11-12.deepseek-newchat-second.log",
+          "collaboration/results/real-machine-runs/evidence/build-2026-11-12.deepseek-newchat.log",
+          "collaboration/results/real-machine-runs/evidence/deepseek-newchat-verdict-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/deepseek-newchat-verdict-2026-11-12.py",
+          "collaboration/results/real-machine-runs/evidence/dist-consistency-2026-11-12.deepseek-newchat.json",
+          "collaboration/results/real-machine-runs/evidence/dist-consistency-deepseek-newchat-2026-11-12.mjs",
+          "collaboration/results/real-machine-runs/evidence/gates-deepseek-newchat-2026-11-12.jsonl",
+          "collaboration/results/real-machine-runs/evidence/gates-deepseek-newchat-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/gates-deepseek-newchat-2026-11-12.sh",
+          "collaboration/results/real-machine-runs/evidence/gates-deepseek-newchat-2026-11-12.summary.json",
+          "collaboration/results/real-machine-runs/evidence/mutation-check-2026-11-12.deepseek-newchat.full.log",
+          "collaboration/results/real-machine-runs/evidence/npm-test-2026-11-12.deepseek-newchat.log"
+        ]
+      },
+      "其他历史证据": {
+        "count": 12,
+        "files": [
+          "collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-11.deepseek-longcat.json",
+          "collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-12.deepseek-longcat.json",
+          "collaboration/results/real-machine-runs/evidence/build-2026-11-12.local-fix-second.log",
+          "collaboration/results/real-machine-runs/evidence/build-2026-11-12.local-fix.log",
+          "collaboration/results/real-machine-runs/evidence/deepseek-message-contract-probe-2026-11-11.json",
+          "collaboration/results/real-machine-runs/evidence/deepseek-session-page-diagnostic-2026-11-11.json",
+          "collaboration/results/real-machine-runs/evidence/dist-consistency-2026-11-12.local-fix.json",
+          "collaboration/results/real-machine-runs/evidence/local-fix-verdict-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/mutation-check-2026-11-11.full-127.log",
+          "collaboration/results/real-machine-runs/evidence/mutation-check-2026-11-12.full.log",
+          "collaboration/results/real-machine-runs/evidence/new-session-probe-2026-11-12.longcat.json",
+          "collaboration/results/real-machine-runs/evidence/npm-test-2026-11-12.local-fix.log"
+        ]
+      },
+      "本轮 ab4 真机证据/脚本": {
+        "count": 22,
+        "files": [
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab4-no-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab4-no-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab4-with-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-12.ab4-with-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab4-no-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab4-no-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab4-with-boundary.json",
+          "collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-12.ab4-with-boundary.png",
+          "collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-12.ab4.deepseek-longcat.json",
+          "collaboration/results/real-machine-runs/evidence/ab4-final-receipts-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/ab4-finalize-2026-11-12.py",
+          "collaboration/results/real-machine-runs/evidence/ab4-precheck-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/ab4-rerun-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/ab4-rerun-progress-2026-11-12.jsonl",
+          "collaboration/results/real-machine-runs/evidence/ab4-round4-2026-11-12.log",
+          "collaboration/results/real-machine-runs/evidence/ab4-round4-progress-2026-11-12.jsonl",
+          "collaboration/results/real-machine-runs/evidence/ab4-round4-rerun-2026-11-12.sh",
+          "collaboration/results/real-machine-runs/evidence/ab4-round4-summary-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/ab4-runner-2026-11-12.sh",
+          "collaboration/results/real-machine-runs/evidence/ab4-runner-summary-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/ab4-verdict-2026-11-12.json",
+          "collaboration/results/real-machine-runs/evidence/ab4-verdict-2026-11-12.py"
+        ]
+      },
+      "源码与测试改动": {
+        "count": 1,
+        "files": [
+          "chrome-extension/tests/deepseek-new-session.test.mjs"
+        ]
+      }
+    }
+  },
+  "note": "只读盘点，不产生任何 git 变更。授权范围请按「提交 / 文件集合」分别确认，不要一次性默认全收。"
+}

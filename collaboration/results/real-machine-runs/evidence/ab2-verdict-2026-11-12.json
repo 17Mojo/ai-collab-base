@@ -1,0 +1,160 @@
+{
+  "generatedAt": "2026-11-12T08:21:44.957426",
+  "mode": "machine-verdict",
+  "subject": "N25 A/B 会话墙验证",
+  "acceptance": {
+    "packCompleted": "exec.success===true && status===completed && 8/8",
+    "resetActuallyHappened": "B 组 sessionResets[0].available===true && messageCountAfter<messageCountBefore",
+    "verdictRule": "只有 A 撞墙且 B 通过才支持命题；A/B 都通过=本轮墙不存在不能归功边界；A/B 都撞墙=另找根因"
+  },
+  "platforms": {
+    "deepseek": {
+      "A": {
+        "file": "L2-deepseek-auto-2026-11-11.ab2-no-boundary.json",
+        "sha256": "879359be256cda979a4c90a91134c926f9b5873003dcd88fa76abd2069c3659b",
+        "generatedAt": "2026-11-11T15:00:04.756Z",
+        "variant": "ab2-no-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": false,
+        "resultStatus": "failed",
+        "stepsTotal": 5,
+        "stepsPassed": 4,
+        "failedAt": [
+          "step_5_boundary"
+        ],
+        "failedStepDuration": [
+          723572
+        ],
+        "failedStepErrors": [
+          "标签页 1785654263没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。"
+        ],
+        "sessionResets": []
+      },
+      "B": {
+        "file": "L2-deepseek-auto-2026-11-12.ab2-with-boundary.json",
+        "sha256": "73c16105e18a7dc008b65afd352ffe6c802598a30d78c684ea6112cc46809b68",
+        "generatedAt": "2026-11-11T23:52:53.704Z",
+        "variant": "ab2-with-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": false,
+        "resultStatus": "failed",
+        "stepsTotal": 5,
+        "stepsPassed": 4,
+        "failedAt": [
+          "step_5_boundary"
+        ],
+        "failedStepDuration": [
+          723826
+        ],
+        "failedStepErrors": [
+          "标签页 1785654513没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。"
+        ],
+        "sessionResets": []
+      },
+      "machineChecks": {
+        "aHitWall": true,
+        "bPassed8of8": false,
+        "bResetActuallyHappened": false,
+        "boundaryAttempted": false,
+        "boundaryExecuted": false,
+        "bRoundUsable": false,
+        "failedAtSameStep": true
+      },
+      "roundStatus": "NOT_SUPPORTS",
+      "why": "A/B 都停在 step_5_boundary，边界声明在 step_8_output 从未触发，sessionResets 均为空 ⇒ 不可评估，不是边界无效"
+    },
+    "longcat": {
+      "A": {
+        "file": "L2-longcat-auto-2026-11-12.ab2-no-boundary.json",
+        "sha256": "08b0ca22617096a335713c3aa513d950399e87d598554561d75c62ebde25f2f3",
+        "generatedAt": "2026-11-12T00:05:57.184Z",
+        "variant": "ab2-no-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": false,
+        "resultStatus": "failed",
+        "stepsTotal": 3,
+        "stepsPassed": 2,
+        "failedAt": [
+          "step_3_explain"
+        ],
+        "failedStepDuration": [
+          723863
+        ],
+        "failedStepErrors": [
+          "标签页 1785654641没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。"
+        ],
+        "sessionResets": []
+      },
+      "B": {
+        "file": "L2-longcat-auto-2026-11-12.ab2-with-boundary.json",
+        "sha256": "ba8bd64d2cb27295408a479903f280742fc1653892ce07ff4f4018e592da663a",
+        "generatedAt": "2026-11-12T00:20:16.537Z",
+        "variant": "ab2-with-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": false,
+        "resultStatus": "failed",
+        "stepsTotal": 8,
+        "stepsPassed": 7,
+        "failedAt": [
+          "step_8_output"
+        ],
+        "failedStepDuration": [
+          723235
+        ],
+        "failedStepErrors": [
+          "标签页 1785654772没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。"
+        ],
+        "sessionResets": [
+          {
+            "stepId": "step_8_output",
+            "mode": "prefer",
+            "available": false,
+            "strategy": "none",
+            "reason": "找不到「新对话」入口：adapter 没有声明 newChat 选择器，页面上也没有文案为 新对话 / 新建对话 / 新的对话 / 开始新对话 等的可见控件。",
+            "messageCountBefore": 6,
+            "messageCountAfter": 6,
+            "durationMs": 0
+          }
+        ]
+      },
+      "machineChecks": {
+        "aHitWall": true,
+        "bPassed8of8": false,
+        "bResetActuallyHappened": false,
+        "boundaryAttempted": true,
+        "boundaryExecuted": false,
+        "bRoundUsable": false,
+        "failedAtSameStep": false
+      },
+      "roundStatus": "INVALID_ROUND_RESET_UNAVAILABLE",
+      "why": "B 组 sessionResets[0].available=false（longcat adapter 未声明 newChat，prefer 降级照发，6→6），按判据该轮作废"
+    }
+  },
+  "crossRound": {
+    "allFourRoundsFailed": true,
+    "allFailuresAreResponseTimeout": true,
+    "failedStepDurations": [
+      723572,
+      723826,
+      723863,
+      723235
+    ],
+    "allDurationsMatch4x180s": true,
+    "commonRootCause": "长会话下虚拟列表卸载旧回答，令公共判据 countGrew（消息数必须增长）恒不成立 ⇒ AI 已作答仍判 Response timeout；跨 deepseek/longcat 两站同型，与 fresh_session 无关",
+    "likeForLikeCaveat": "deepseek A(11-11 23:00) 与 B(11-12 07:53) 跨约 8.5 小时，违反计划「相邻时间窗」；longcat A/B 相邻串行(08:05/08:20)",
+    "newFinding": "longcat adapter 未声明 newChat 选择器 ⇒ fresh_session:prefer 在 step_8 降级 available:false（N23 只覆盖 5 个活跃站，冻结站未纳入）"
+  },
+  "verdict": {
+    "code": "PROPOSITION_NOT_SUPPORTED_ROUNDS_UNUSABLE",
+    "propositionSupported": false,
+    "reason": "4 轮无一 execSuccess；deepseek 两轮边界从未触发，longcat B 边界尝试失败且按判据作废。既没有「A 撞墙且 B 通过」，也不能把「都失败」包装成「边界无效」。",
+    "n25": "remain open",
+    "mustNotClaim": [
+      "不能说会话边界解掉了 step_8 撞墙",
+      "不能说边界无效（两站边界都没有真正生效）",
+      "不能把 longcat B 从 2/3 推进到 7/8 归功边界（边界在 step_8 且 available:false，前 7 步差异属站点抖动）",
+      "不能说重置免费或把耗时差异归因给重置"
+    ],
+    "nextAction": "先修公共等待判据（长会话/虚拟列表下不依赖消息计数增长），并给 longcat 补 newChat 入口；之后才可能重跑有效 A/B。"
+  }
+}

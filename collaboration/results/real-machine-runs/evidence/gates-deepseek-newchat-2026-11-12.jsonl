@@ -1,0 +1,12 @@
+{"at":"2026-11-12T07:12:38Z","event":"start","step":"init","exit":0}
+{"at":"2026-11-12T07:12:38Z","event":"start","step":"build1","exit":null}
+{"at":"2026-11-12T07:12:44Z","event":"exit","step":"build1","exit":0}
+{"at":"2026-11-12T07:12:44Z","event":"start","step":"build2","exit":null}
+{"at":"2026-11-12T07:12:50Z","event":"exit","step":"build2","exit":0}
+{"at":"2026-11-12T07:12:51Z","event":"start","step":"npm-test","exit":null}
+{"at":"2026-11-12T07:13:38Z","event":"exit","step":"npm-test","exit":0}
+{"at":"2026-11-12T07:13:39Z","event":"start","step":"mutation-full","exit":null}
+{"at":"2026-11-12T07:30:25Z","event":"exit","step":"mutation-full","exit":0}
+{"at":"2026-11-12T07:30:25Z","event":"start","step":"dist-consistency","exit":null}
+{"at":"2026-11-12T07:30:26Z","event":"exit","step":"dist-consistency","exit":0}
+{"at":"2026-11-12T07:30:26Z","event":"done","step":"summary","exit":0}

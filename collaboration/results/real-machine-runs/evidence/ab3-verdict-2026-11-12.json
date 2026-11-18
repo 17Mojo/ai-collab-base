@@ -1,0 +1,190 @@
+{
+  "generatedAt": "2026-11-12T04:46:18.401216+00:00",
+  "mode": "machine-verdict",
+  "subject": "N25 A/B 会话墙验证 / ab3 四轮（修复后 dist）",
+  "evidenceSet": "ab3 / 2026-11-12",
+  "acceptance": {
+    "packCompleted": "exec.success===true && status===completed && 8/8",
+    "resetActuallyHappened": "B 组 sessionResets[0].available===true && messageCountAfter<messageCountBefore",
+    "verdictRule": "只有 A 撞墙且 B 通过才支持命题；A/B 都通过=本轮墙不存在不能归功边界；A/B 都撞墙=另找根因",
+    "unusableRule": "B 组边界未执行 / available:false ⇒ 明写本轮不可评估或该轮作废"
+  },
+  "platforms": {
+    "deepseek": {
+      "A": {
+        "file": "L2-deepseek-auto-2026-11-12.ab3-no-boundary.json",
+        "exists": true,
+        "sha256": "08f97b9857589ed910123e9ca2da98db65025b28596024e4445837966eb26fe3",
+        "generatedAt": "2026-11-12T03:42:48.804Z",
+        "variant": "no-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": true,
+        "resultStatus": "completed",
+        "stepsTotal": 8,
+        "stepsPassed": 8,
+        "duration": 82223,
+        "failedAt": [],
+        "failedStepDuration": [],
+        "failedStepErrors": [],
+        "sessionResets": [],
+        "boundaryStepReached": true
+      },
+      "B": {
+        "file": "L2-deepseek-auto-2026-11-12.ab3-with-boundary.json",
+        "exists": true,
+        "sha256": "8ce269be8393809be9cea9c65e615663266c1d8c67d08060207131ba09a79563",
+        "generatedAt": "2026-11-12T03:44:13.475Z",
+        "variant": "with-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": true,
+        "resultStatus": "completed",
+        "stepsTotal": 8,
+        "stepsPassed": 8,
+        "duration": 81289,
+        "failedAt": [],
+        "failedStepDuration": [],
+        "failedStepErrors": [],
+        "sessionResets": [
+          {
+            "stepId": "step_8_output",
+            "mode": "prefer",
+            "available": false,
+            "strategy": "none",
+            "reason": "找不到「新对话」入口：adapter 没有声明 newChat 选择器，页面上也没有文案为 新对话 / 新建对话 / 新的对话 / 开始新对话 等的可见控件。",
+            "messageCountBefore": 3,
+            "messageCountAfter": 3,
+            "durationMs": 4
+          }
+        ],
+        "boundaryStepReached": true
+      },
+      "machineChecks": {
+        "aExists": true,
+        "bExists": true,
+        "aPassed8of8": true,
+        "bPassed8of8": true,
+        "aHitWall": false,
+        "aHitWallAtBoundaryStep": false,
+        "aBoundaryStepReached": true,
+        "bBoundaryStepReached": true,
+        "bBoundaryAttempted": true,
+        "bResetActuallyHappened": false,
+        "bRoundUsable": false,
+        "supportsProposition": false,
+        "bothPassed": true
+      },
+      "roundStatus": "NO_WALL_THIS_ROUND",
+      "why": "A/B 都 8/8 通过 ⇒ 本轮墙不存在，不能把 B 的通过归功于会话边界；B 组 sessionResets[0].available=False / strategy='none' / 3→3，按判据该轮作废（prefer 降级照发不等于开了新会话）",
+      "reasons": [
+        "A/B 都 8/8 通过 ⇒ 本轮墙不存在，不能把 B 的通过归功于会话边界",
+        "B 组 sessionResets[0].available=False / strategy='none' / 3→3，按判据该轮作废（prefer 降级照发不等于开了新会话）"
+      ]
+    },
+    "longcat": {
+      "A": {
+        "file": "L2-longcat-auto-2026-11-12.ab3-no-boundary.json",
+        "exists": true,
+        "sha256": "a899e8e8adf3fe4ee316b8a069fe82564a3bd76f7ec4e94793b631e3c4cf868d",
+        "generatedAt": "2026-11-12T03:57:52.736Z",
+        "variant": "no-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": false,
+        "resultStatus": "failed",
+        "stepsTotal": 6,
+        "stepsPassed": 5,
+        "duration": 810784,
+        "failedAt": [
+          "step_6_takeaway"
+        ],
+        "failedStepDuration": [
+          723637
+        ],
+        "failedStepErrors": [
+          "标签页 1785655429没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。"
+        ],
+        "sessionResets": [],
+        "boundaryStepReached": false
+      },
+      "B": {
+        "file": "L2-longcat-auto-2026-11-12.ab3-with-boundary.json",
+        "exists": true,
+        "sha256": "577c9c1823ad5fcb20e3b4600aa92937cec65fc497d3c0614178afdde95692fb",
+        "generatedAt": "2026-11-12T04:41:50.050Z",
+        "variant": "with-boundary",
+        "unfrozenBy": "ALLOW_FROZEN=1",
+        "execSuccess": false,
+        "resultStatus": "failed",
+        "stepsTotal": 4,
+        "stepsPassed": 3,
+        "duration": 764066,
+        "failedAt": [
+          "step_4_scene"
+        ],
+        "failedStepDuration": [
+          723219
+        ],
+        "failedStepErrors": [
+          "标签页 1785655560没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。"
+        ],
+        "sessionResets": [],
+        "boundaryStepReached": false
+      },
+      "machineChecks": {
+        "aExists": true,
+        "bExists": true,
+        "aPassed8of8": false,
+        "bPassed8of8": false,
+        "aHitWall": true,
+        "aHitWallAtBoundaryStep": false,
+        "aBoundaryStepReached": false,
+        "bBoundaryStepReached": false,
+        "bBoundaryAttempted": false,
+        "bResetActuallyHappened": false,
+        "bRoundUsable": false,
+        "supportsProposition": false,
+        "bothPassed": false
+      },
+      "roundStatus": "BOUNDARY_NEVER_ATTEMPTED",
+      "why": "B 组 sessionResets 为空：边界步骤从未到达或未尝试，本轮不可评估，不能归功边界，也不能说边界无效；A/B 都没跑完，不能把「都失败」包装成「边界无效」",
+      "reasons": [
+        "B 组 sessionResets 为空：边界步骤从未到达或未尝试，本轮不可评估，不能归功边界，也不能说边界无效",
+        "A/B 都没跑完，不能把「都失败」包装成「边界无效」"
+      ]
+    }
+  },
+  "crossRound": {
+    "allFourRoundsExecuted": true,
+    "allBoundariesActuallyExecuted": false,
+    "f1WaitPolicyFixRealMachineEvidence": [
+      "deepseek/A: 8/8 completed，duration=82223ms",
+      "deepseek/B: 8/8 completed，duration=81289ms",
+      "longcat/A: 前 5 步成功，失败于 ['step_6_takeaway']，失败步骤耗时 [723637]ms"
+    ],
+    "f1RealMachineVerified": true,
+    "note": "f1RealMachineVerified 只说明公共等待判据修复在真机上生效，与「会话边界解掉撞墙」是两条独立命题，不得互相替代"
+  },
+  "nonMachineObservations": {
+    "label": "人工视觉巡检，仅供归因参考，不参与机器裁定",
+    "items": [
+      "longcat A 截图 L2-longcat-auto-2026-11-12.ab3-no-boundary.png：最后一条 AI 回复为「服务出错啦，请稍后再试。」，非长会话回答，无登录墙/验证码；输入框可用。⇒ step_6 失败属站点侧错误，不是 step_8 长会话撞墙，也不是等待判据假超时。",
+      "longcat B 截图 L2-longcat-auto-2026-11-12.ab3-with-boundary.png：同一句「服务出错啦，请稍后再试。」，左栏「开启新对话」入口可见。⇒ step_4 失败同属站点侧错误；F2 的 newChat 选择器本轮仍未被触发验证。"
+    ]
+  },
+  "verdict": {
+    "code": "PROPOSITION_NOT_SUPPORTED",
+    "propositionSupported": false,
+    "n25": "remain open",
+    "mustNotClaim": [
+      "不能说会话边界解掉了 step_8 撞墙（没有「A 撞墙且 B 通过」的成对证据）",
+      "不能说边界无效（B 组边界多次未真正执行，不可用「都失败」反推无效）",
+      "不能把 B 组「prefer 降级照发」当成「开了新会话」",
+      "不能说重置免费，也不能把耗时差异归因给重置（§14.4 继续有效）",
+      "不能把 F1 等待判据修复在真机上的成功归因给会话边界（两者是不同变量）"
+    ]
+  },
+  "regeneratedFrom": {
+    "previousGeneratedAt": "2026-11-12T04:42:05.548400+00:00",
+    "previousVerdictCode": "PROPOSITION_NOT_SUPPORTED",
+    "reason": "初版 classify() 把 deepseek 标成 INVALID_ROUND_RESET_UNAVAILABLE，埋没了更根本的 A/B 都 8/8 通过（本轮墙不存在）；改为并列 reasons + 主状态 NO_WALL_THIS_ROUND。底层布尔判据与最终 code 均未改变，仍是 PROPOSITION_NOT_SUPPORTED。"
+  }
+}

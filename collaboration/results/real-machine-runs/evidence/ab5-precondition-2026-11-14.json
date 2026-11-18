@@ -1,0 +1,116 @@
+{
+  "generatedAt": "2026-11-14T07:42:40.877301+00:00",
+  "mode": "ab5-observe-first-precondition-readonly",
+  "checkedAt": "2026-11-14",
+  "daysSincePlan": 2,
+  "checks": {
+    "git": {
+      "head": "36d9ec2",
+      "originMain": "36d9ec2",
+      "unpushed": 0,
+      "statusItems": 106
+    },
+    "dist": {
+      "evidence": "dist-consistency-2026-11-12.deepseek-newchat.json",
+      "allPass": true,
+      "idempotent": true,
+      "files": [
+        {
+          "path": "dist/content-script.js",
+          "expected": "5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7",
+          "actual": "5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7",
+          "pass": true
+        },
+        {
+          "path": "dist/service-worker.js",
+          "expected": "fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da",
+          "actual": "fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da",
+          "pass": true
+        }
+      ]
+    },
+    "packs": [
+      {
+        "variant": "no-boundary",
+        "file": "ab-pack-2026-11-11.no-boundary.json",
+        "expected": "89b197cf99f2fcac835bc78269f89315a9740bfe57222da207d5851796692d03",
+        "actual": "89b197cf99f2fcac835bc78269f89315a9740bfe57222da207d5851796692d03",
+        "pass": true
+      },
+      {
+        "variant": "with-boundary",
+        "file": "ab-pack-2026-11-11.with-boundary.json",
+        "expected": "0e1b4b9816545e52e74abaee117d96fba3b449cfa5a71c5370a0e22b2516f46f",
+        "actual": "0e1b4b9816545e52e74abaee117d96fba3b449cfa5a71c5370a0e22b2516f46f",
+        "pass": true
+      }
+    ],
+    "targetPaths": {
+      "checked": 12,
+      "occupied": 0
+    },
+    "swCache": {
+      "dirs": {
+        "Service Worker": {
+          "exists": true,
+          "fileCount": 8
+        },
+        "Code Cache": {
+          "exists": false,
+          "fileCount": 0
+        },
+        "Extension Scripts": {
+          "exists": true,
+          "fileCount": 5
+        }
+      },
+      "totalFiles": 13,
+      "shimThreshold": 50,
+      "belowThreshold": true
+    },
+    "plan": {
+      "file": "ab5-observe-first-plan-2026-11-12.json",
+      "status": "plan-only / NOT-EXECUTED",
+      "noRealMachineAction": true,
+      "selfCheckPass": true
+    },
+    "commitScope": {
+      "file": "commit-scope-2026-11-12.json",
+      "totalAtInventory": 96,
+      "currentStatusItems": 106,
+      "note": "本轮新增证据落盘后 status_items 会再增加，属预期"
+    },
+    "openCriterion": {
+      "item": "Gate A 首轮平台",
+      "planSays": "gateA.description = 「先只跑 A 组（no-boundary）单轮」，未指定 platform",
+      "mustNotGuess": true,
+      "candidates": {
+        "deepseek": "§24 诊断：F1 修复后 4 轮 step_8 全在 12.3–13.6s 成功，墙最确定不复现，单轮即可得 ABORT_NO_WALL，最省额度",
+        "longcat": "§24 诊断：失败步在 step_3/4/6/8 漂移，截图同型「服务出错啦，请稍后再试。」，属站点侧外部混杂变量"
+      },
+      "resolution": "PENDING_USER_CONFIRMATION",
+      "note": "不暗猜判据。未确认前不启动任何真机轮次。"
+    }
+  },
+  "authorization": {
+    "source": "用户 2026-11-14 明令（本轮 continue 之前的最后一条动作指令）",
+    "verbatim": "后续步骤：1、解冻并按 observe-first gate 重跑（先跑 A 单轮，判无墙即停），而不是盲跑 4 轮；逐次 ALLOW_FROZEN=1 留痕。2、Gate A 判「墙不存在」→ ABORT_NO_WALL，N25 仍 open；仅当 Gate A 成立才跑 B 并按判据裁定。3、提交 / push 按「提交」与「文件集合」分别确认；commit-scope-2026-11-12.json 已有分类清单，当前工作区 105 项，不要默认一次全收。",
+    "unfrozenPlatforms": [
+      "deepseek",
+      "longcat"
+    ],
+    "scope": "只跑 observe-first 的 A 单轮；Gate A 不成立即停机；B 组仅 Gate A 成立后才跑",
+    "perCommandFlag": "ALLOW_FROZEN=1",
+    "appliesToPrecheck": true,
+    "whitelistCodeChanged": false,
+    "receiptTrace": "回执 platformPolicy.unfrozenBy 必须逐轮可复核",
+    "usageRule": "逐次显式放行，用完仍是冻结；下次再跑须重新明确解冻",
+    "commitPush": "未授权；按「提交」与「文件集合」分别确认，禁止默认一次全收",
+    "outboundSend": "仅 A 单轮（Gate A 成立时才追加同站 B 单轮），不跑 4 轮"
+  },
+  "errors": [],
+  "preconditionPass": true,
+  "noRealMachineAction": true,
+  "gitUnchanged": true,
+  "note": "本文件只核磁盘真值与授权边界，不是回执、不证明 Gate A。preconditionPass=true 仅表示前置条件齐备，不代表真机已跑或命题成立。"
+}

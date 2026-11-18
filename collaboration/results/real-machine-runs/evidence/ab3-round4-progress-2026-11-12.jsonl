@@ -1,0 +1,5 @@
+{"t":"2026-11-12T04:28:57Z","event":"runner begin","round":"ab3 round 4 / longcat with-boundary"}
+{"t":"2026-11-12T04:28:58Z","event":"start","round":"4 longcat/with-boundary"}
+{"t":"2026-11-12T04:41:50Z","event":"node-exit","round":"4 exit=0"}
+{"t": "2026-11-12T04:41:50.481434+00:00", "event": "verify", "round": "4", "receipt": "L2-longcat-auto-2026-11-12.ab3-with-boundary.json", "exists": true, "execSuccess": false, "status": "failed", "stepsTotal": 4, "stepSuccess": 3, "duration": 764066, "sessionResets": 0, "resetAvailable": [], "resetStrategy": [], "messageCountBefore": [], "messageCountAfter": [], "failedSteps": [{"id": "step_4_scene", "duration": 723219, "error": "标签页 1785655560没能完成这次发送：Response timeout。如果那个网站要求先登录，请先在页面上登录再重试。"}], "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+{"t":"2026-11-12T04:41:50Z","event":"runner done","round":"ab3 round 4"}

@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-11-11T22:47:15.649020",
+  "mode": "dist-consistency-after-deepseek-contract-fix",
+  "note": "本轮改了 src/platforms/deepseek-adapter.js，产物 hash 变化是**预期**；一致性口径改为「连续两次 build 幂等 + 关键字齐 + 新契约确实进了产物」。",
+  "beforeBuild": {
+    "content-script.js": "0e842dc2c5e1f15c7c67ccc051b9f446174d6dce2746e37fd30833d131b10efc",
+    "service-worker.js": "108055dc455ca6cf36d43a41d61d15635d7ac0849309f2f9d348068ecfa83a65"
+  },
+  "afterBuild": {
+    "content-script.js": "cd5c799785380518e74d7bf1f5ce45ed785d338e5634d4b1f0f8d1b032e98c94",
+    "service-worker.js": "3e489d43a617671d0a53793b8a40e4c209841aa66475dd5e621d2f3808921cc9"
+  },
+  "rebuildIdempotent": true,
+  "rebuildHashesIdentical": "两次 npm run build 后 sha256 完全一致（cd5c7997… / 3e489d43…）",
+  "contentScriptKeywords": {
+    "ds-assistant-message-main-content": 3,
+    "durationMs": 1,
+    "hidden-semantic": 2
+  },
+  "serviceWorkerKeywords": {
+    "sessionResets": 7,
+    "fresh_session": 8,
+    "FRESH_SESSION_UNSUPPORTED": 2,
+    "...result": 3,
+    "ds-assistant-message-main-content": 3
+  },
+  "deepseekMessageListInBuiltCS": true,
+  "gates": {
+    "npmTest": "329/329 pass, 0 fail",
+    "mutation": "127/127 killed, 0 survivor, EXIT=0"
+  },
+  "gateLogs": [
+    "collaboration/results/real-machine-runs/evidence/npm-test-2026-11-11.ab2.log",
+    "collaboration/results/real-machine-runs/evidence/mutation-check-2026-11-11.full-127.log"
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-11-14T11:17:57.308977+00:00",
+  "mode": "proposition-pursuit-and-reauthorization-ruling",
+  "userMandate": "处理后续步骤：1、追究命题；2、重新授权（2026-11-14）",
+  "answers": [
+    {
+      "id": "q-0",
+      "header": "追究路径",
+      "answer": "P1 收口改述 N25（推荐）"
+    },
+    {
+      "id": "q-1",
+      "header": "解冻真机",
+      "answer": "不解冻（推荐）"
+    },
+    {
+      "id": "q-2",
+      "header": "提交动作",
+      "answer": "暂不提交（推荐）"
+    },
+    {
+      "id": "q-3",
+      "header": "文件集合",
+      "answer": "仅本轮产物（推荐）"
+    }
+  ],
+  "effective": {
+    "p1RecharacterizeN25": true,
+    "closeN25": false,
+    "unfreezeDeepseekLongcat": false,
+    "commit": false,
+    "push": false,
+    "stage": false,
+    "resolveRemoteDivergence": false,
+    "realMachineRounds": 0
+  },
+  "scopeClarification": {
+    "reauthorizationObject": "用户只说『重新授权』，宾语未指明；已拆成 6 个独立维度分别确认，未默认打包",
+    "q3IsPreferenceOnly": true,
+    "q3Note": "q-2 裁定『暂不提交』，因此 q-3『仅本轮产物』仍是 PREFERENCE_ONLY_NOT_AUTHORIZATION，不是本次提交授权，也不是一次全收 127+ 项",
+    "dimensions": {
+      "A1_追究路径": "P1（已裁定并执行）",
+      "A2_逐次解冻": "未授权（用完仍是冻结，白名单代码未改）",
+      "A3_git_commit": "未授权",
+      "A4_文件集合": "仅偏好登记，未授权",
+      "A5_behind4分歧处理": "未授权（behind=4 保持不动）",
+      "A6_push": "未授权"
+    }
+  },
+  "sourceEvidence": {
+    "plan": "proposition-pursuit-readonly-plan / plan-only / NOT-EXECUTED",
+    "diagnosis": "wall-observability-diagnosis-2026-11-12.json",
+    "ab5": "ABORT_NO_WALL",
+    "resultSection": "§26"
+  },
+  "noRealMachineAction": true,
+  "gitUntouched": true,
+  "diskTruthAtRuling": {
+    "head": "36d9ec2",
+    "originMain": "f98a1a7",
+    "ahead": 0,
+    "behind": 4,
+    "unpushed": 0,
+    "staged": 0,
+    "statusItems": 131
+  }
+}

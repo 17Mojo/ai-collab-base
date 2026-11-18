@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-11-14T10:00:09.958501+00:00",
+  "mode": "remote-divergence-readonly",
+  "observedAt": "2026-11-14 最终收口对账",
+  "openingSnapshot": {
+    "head": "36d9ec2",
+    "originMain": "36d9ec2",
+    "at": "2026-11-14T07:34Z"
+  },
+  "closingSnapshot": {
+    "head": "36d9ec2",
+    "originMain": "f98a1a7",
+    "behind": 4,
+    "ahead": 0
+  },
+  "newRemoteCommits": [
+    "f98a1a7 Merge pull request #48 from 17Mojo/fix/nightly-pipefail-2026-11-14",
+    "9dc4da9 ci(nightly): 给 pytest 管道显式开 pipefail，别让 tee 吞掉失败",
+    "3173dd7 Merge pull request #47 from 17Mojo/fix/adapter-matrix-fixtures-2026-11-14",
+    "b577d05 test(adapter-matrix): 同步 kimi/longcat/yiyan 快照到 11-11 真机选择器"
+  ],
+  "changedFiles": [
+    ".github/workflows/nightly.yml",
+    "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-kimi.html",
+    "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-longcat.html",
+    "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-yiyan.html"
+  ],
+  "source": "git reflog origin/main 两次 fetch --quiet origin: fast-forward（外部推进，非本会话操作）",
+  "ourInputsTouched": [],
+  "impactOnAb5": "none：未触碰 dist / 变体 Pack / evidence / known_gaps / RESULT；ab5 前置 hash 复核、Gate A 裁定、ABORT_NO_WALL 结论全部保持有效",
+  "correction": "§25.1 表格里的『HEAD/origin 均 36d9ec2』是开工时（07:34Z）磁盘真值，不是收口时真值；收口时本地 behind=4、ahead=0，未推送提交数仍为 0。原文保留留痕，本条为回溯补记。",
+  "localAction": "本会话未执行 fetch / pull / merge / rebase / commit / push；本地 HEAD 未移动",
+  "implicationForCommit": "若后续授权提交：本地落后远端 4 个提交，push 前需先处理分歧（合并/rebase），该动作须单独授权，不得默认执行",
+  "gitUntouched": true
+}

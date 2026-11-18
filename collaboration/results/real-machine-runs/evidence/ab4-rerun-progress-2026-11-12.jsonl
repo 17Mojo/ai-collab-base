@@ -1,0 +1,15 @@
+{"t":"2026-11-12T12:20:11Z","event":"runner begin","round":"ab4 / 4 rounds"}
+{"t":"2026-11-12T12:20:11Z","event":"start","round":"1 deepseek/no-boundary"}
+{"t":"2026-11-12T12:21:35Z","event":"node-exit","round":"1 exit=0"}
+{"t": "2026-11-12T12:21:35.678167+00:00", "event": "verify", "round": "1", "receipt": "L2-deepseek-auto-2026-11-12.ab4-no-boundary.json", "nodeExit": 0, "exists": true, "execSuccess": true, "status": "completed", "stepsTotal": 8, "stepSuccess": 8, "duration": 80535, "sessionResets": 0, "resetAvailable": null, "resetBefore": null, "resetAfter": null, "resetActuallyHappened": false, "boundaryStepReached": false, "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+{"t":"2026-11-12T12:21:35Z","event":"start","round":"2 deepseek/with-boundary"}
+{"t":"2026-11-12T12:22:58Z","event":"node-exit","round":"2 exit=0"}
+{"t": "2026-11-12T12:22:58.930057+00:00", "event": "verify", "round": "2", "receipt": "L2-deepseek-auto-2026-11-12.ab4-with-boundary.json", "nodeExit": 0, "exists": true, "execSuccess": true, "status": "completed", "stepsTotal": 8, "stepSuccess": 8, "duration": 79644, "sessionResets": 1, "resetAvailable": true, "resetBefore": 3, "resetAfter": 0, "resetActuallyHappened": true, "boundaryStepReached": false, "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+{"t":"2026-11-12T12:22:59Z","event":"start","round":"3 longcat/no-boundary"}
+{"t":"2026-11-12T12:35:52Z","event":"node-exit","round":"3 exit=0"}
+{"t": "2026-11-12T12:35:52.899928+00:00", "event": "verify", "round": "3", "receipt": "L2-longcat-auto-2026-11-12.ab4-no-boundary.json", "nodeExit": 0, "exists": true, "execSuccess": false, "status": "failed", "stepsTotal": 4, "stepSuccess": 3, "duration": 765162, "sessionResets": 0, "resetAvailable": null, "resetBefore": null, "resetAfter": null, "resetActuallyHappened": false, "boundaryStepReached": false, "policyUnfrozenBy": "ALLOW_FROZEN=1"}
+{"t":"2026-11-12T12:35:53Z","event":"start","round":"4 longcat/with-boundary"}
+{"t":"2026-11-12T12:35:54Z","event":"node-exit","round":"4 exit=1"}
+{"t": "2026-11-12T12:35:54.448191+00:00", "event": "verify", "round": "4", "receipt": "L2-longcat-auto-2026-11-12.ab4-with-boundary.json", "nodeExit": 1, "exists": false, "execSuccess": null, "status": null, "stepsTotal": 0, "stepSuccess": 0, "duration": null, "sessionResets": 0, "resetAvailable": null, "resetBefore": null, "resetAfter": null, "resetActuallyHappened": false, "boundaryStepReached": false, "policyUnfrozenBy": null}
+{"t": "2026-11-12T12:35:54.588993+00:00", "event": "runner-summary", "allReceiptsPresent": false, "rounds": 4}
+{"t":"2026-11-12T12:35:54Z","event":"runner done","round":"ab4 / 4 rounds / allReceipts=1"}

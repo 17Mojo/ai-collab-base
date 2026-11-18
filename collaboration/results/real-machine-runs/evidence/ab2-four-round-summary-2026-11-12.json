@@ -1,0 +1,82 @@
+{
+  "generatedAt": "2026-11-12T08:20:16.937631",
+  "mode": "ab2-four-round-summary",
+  "likeForLikeCaveat": "deepseek A 组跑于 2026-11-11 23:00，B 组补跑于 2026-11-12，跨约 8.5 小时；计划要求「相邻时间窗」，此对因果强度受限。longcat A/B 两轮为相邻串行，未受此限。",
+  "rounds": [
+    {
+      "file": "L2-deepseek-auto-2026-11-11.ab2-no-boundary.json",
+      "generatedAt": "2026-11-11T15:00:04.756Z",
+      "platform": "deepseek",
+      "variant": "ab2-no-boundary",
+      "execSuccess": false,
+      "status": "failed",
+      "steps": 5,
+      "passed": 4,
+      "failedAt": [
+        "step_5_boundary"
+      ],
+      "duration": 757122,
+      "sessionResets": [],
+      "sha256": "879359be256cda97"
+    },
+    {
+      "file": "L2-deepseek-auto-2026-11-12.ab2-with-boundary.json",
+      "generatedAt": "2026-11-11T23:52:53.704Z",
+      "platform": "deepseek",
+      "variant": "ab2-with-boundary",
+      "execSuccess": false,
+      "status": "failed",
+      "steps": 5,
+      "passed": 4,
+      "failedAt": [
+        "step_5_boundary"
+      ],
+      "duration": 755900,
+      "sessionResets": [],
+      "sha256": "73c16105e18a7dc0"
+    },
+    {
+      "file": "L2-longcat-auto-2026-11-12.ab2-no-boundary.json",
+      "generatedAt": "2026-11-12T00:05:57.184Z",
+      "platform": "longcat",
+      "variant": "ab2-no-boundary",
+      "execSuccess": false,
+      "status": "failed",
+      "steps": 3,
+      "passed": 2,
+      "failedAt": [
+        "step_3_explain"
+      ],
+      "duration": 743043,
+      "sessionResets": [],
+      "sha256": "08b0ca22617096a3"
+    },
+    {
+      "file": "L2-longcat-auto-2026-11-12.ab2-with-boundary.json",
+      "generatedAt": "2026-11-12T00:20:16.537Z",
+      "platform": "longcat",
+      "variant": "ab2-with-boundary",
+      "execSuccess": false,
+      "status": "failed",
+      "steps": 8,
+      "passed": 7,
+      "failedAt": [
+        "step_8_output"
+      ],
+      "duration": 850805,
+      "sessionResets": [
+        {
+          "stepId": "step_8_output",
+          "mode": "prefer",
+          "available": false,
+          "strategy": "none",
+          "reason": "找不到「新对话」入口：adapter 没有声明 newChat 选择器，页面上也没有文案为 新对话 / 新建对话 / 新的对话 / 开始新对话 等的可见控件。",
+          "messageCountBefore": 6,
+          "messageCountAfter": 6,
+          "durationMs": 0
+        }
+      ],
+      "sha256": "ba8bd64d2cb27295"
+    }
+  ]
+}

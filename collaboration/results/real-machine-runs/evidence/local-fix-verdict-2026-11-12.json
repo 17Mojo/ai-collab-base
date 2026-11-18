@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-11-12T02:50:26.268433Z",
+  "mode": "local-fix-verdict",
+  "trigger": "用户「按依赖顺序执行」：先修公共等待判据与 longcat newChat，再重建 dist + 全量门禁",
+  "authorization": {
+    "localFix": true,
+    "gates": true,
+    "realMachineRerun": false,
+    "unfreezeDeepseekLongcat": false,
+    "commit": false,
+    "push": false,
+    "note": "本轮只做本地修复与门禁。冻结站未打开、未发送、未导入 Pack；未执行 git commit / git push。"
+  },
+  "baseline": {
+    "head": "36d9ec2",
+    "originMain": "36d9ec2",
+    "previousGates": {
+      "npmTest": "329/329",
+      "mutation": "127/127"
+    },
+    "n25Before": "open"
+  },
+  "fixes": [
+    {
+      "id": "F1",
+      "title": "公共等待判据：长会话/虚拟列表下不再只依赖消息计数增长",
+      "rootCause": "deepseek / longcat 长会话卸载旧回答，新回答落地时消息条数不涨 ⇒ countGrew 恒 false ⇒ AI 答完仍判 Response timeout（4 轮 A/B 全失败在 723.x s = 4×180s）",
+      "design": "wait-policy.hasNewReply = 计数通道 OR 内容通道；内容通道仅在显式给了字符串基准且平台在实测证据白名单内启用；仍保留正文非空 + 连续 8 秒稳定两道闸",
+      "whiteList": [
+        "chat.deepseek.com",
+        "longcat.chat",
+        "longcat.ai"
+      ],
+      "files": [
+        "chrome-extension/src/utils/wait-policy.js",
+        "chrome-extension/src/utils/retry-policy.js",
+        "chrome-extension/src/content/content-script.js",
+        "chrome-extension/src/background/pack-executor.js"
+      ],
+      "behaviorTest": "tests/adapter-wait.test.mjs 在 jsdom 里跑生产内容脚本，重放「3 条旧回答 → 卸 1 条 + 落 1 条新回答」的虚拟列表时间线，断言仍取回新回答",
+      "sideFix": "handleWaitForResponse 超时分支原先不挂 baselineCount/baselineContent，续等再超时会让后台抛 RESUME_WAIT_NO_BASELINE；现已把两个基准沿续等链一路透传"
+    },
+    {
+      "id": "F2",
+      "title": "longcat adapter 补 newChat 入口",
+      "evidenceSource": "collaboration/results/real-machine-runs/evidence/new-session-probe-2026-11-12.longcat.json（只读 DOM 探针）",
+      "realControl": "div.new-content 内的 span「开启新对话」，祖先 div.slider-header > div.v-slider-header；clickableAncestor 为 null ⇒ 公共文案兜底扫不到",
+      "decoy": "div.conv-title「新对话」是历史会话列表项，点它只会切回旧会话；因此只靠 adapter 精确声明，不放宽公共标签兜底",
+      "selectors": [
+        ".v-slider-header .new-content",
+        ".slider-header .new-content",
+        "div.new-content span"
+      ],
+      "file": "chrome-extension/src/platforms/longcat-adapter.js"
+    }
+  ],
+  "gates": {
+    "npmTest": {
+      "passed": 341,
+      "total": 341,
+      "failed": 0,
+      "exit": 0,
+      "log": "evidence/npm-test-2026-11-12.local-fix.log"
+    },
+    "mutation": {
+      "killed": 143,
+      "total": 143,
+      "survivors": 0,
+      "exit": 0,
+      "log": "evidence/mutation-check-2026-11-12.full.log"
+    },
+    "build": {
+      "firstExit": 0,
+      "secondExit": 0,
+      "idempotent": true,
+      "log": "evidence/build-2026-11-12.local-fix.log"
+    },
+    "distConsistency": {
+      "allPass": true,
+      "keywordChecks": 7,
+      "contentScriptSha256Prefix": "cffb6eb540abdf11",
+      "serviceWorkerSha256Prefix": "b243c74de2afcecf",
+      "evidence": "evidence/dist-consistency-2026-11-12.local-fix.json"
+    }
+  },
+  "verdict": {
+    "code": "LOCAL_FIX_GATES_PASS_REAL_MACHINE_NOT_VERIFIED",
+    "localFixComplete": true,
+    "allGatesPass": true,
+    "propositionSupported": false,
+    "n25": "remain open",
+    "n25Status": "open",
+    "n25ClosedAt": null,
+    "realMachineVerified": false,
+    "claimsNotAllowed": [
+      "不能说「会话边界解掉了 step_8 长会话撞墙」——4 轮 A/B 仍是 PROPOSITION_NOT_SUPPORTED_ROUNDS_UNUSABLE，本轮没有新真机回执",
+      "不能说「边界无效」——两站边界当时都没真正生效（deepseek 未走到 step_8；longcat B available:false 降级）",
+      "不能把 longcat B 前 7 步差异归功边界，也不能说重置免费或把耗时归因给重置（§14.4 继续有效）",
+      "不能说「假超时已在真机上修好」——本轮只有 jsdom 行为测试 + 单测 + 变异 + dist 关键字证据，没有 deepseek / longcat 真机回执",
+      "不能把内容型增长信号说成全局默认——它是按实测证据开的白名单，未验证平台一律不启用"
+    ],
+    "limitations": [
+      "内容型信号要求「新回答正文 != 发送前最新正文」；若两次回答文本完全相同，仍会退化成超时（真机未测）",
+      "白名单是实验开关：新增平台必须有该平台真机假超时证据，未实测不得晋升为 production default",
+      "deepseek A/B 跨约 8.5 小时的 likeForLike 缺口仍在，重跑时要重新安排相邻时间窗",
+      "本轮所有证据均为本地产物（jsdom / node:test / 静态产物核对），不是站点回执"
+    ]
+  },
+  "nextSteps": [
+    "① 需要用户明确解冻并授权真机重跑（每条命令仍带 ALLOW_FROZEN=1 留痕）",
+    "② 先跑预检核登录态，再串行跑 4 轮 A/B（B 组须 available===true && messageCountAfter<Before）",
+    "③ 只有「A 撞墙且 B 通过」才支持命题；跑完按判据裁定，之前 N25 保持 open",
+    "④ 提交 / push 需单独授权：当前 HEAD == origin/main == 36d9ec2，14 个 tracked 改动 + 28 个 untracked 证据/回执文件均未提交"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-11-14T10:05:19.416560+00:00",
+  "mode": "commit-authorization-ruling",
+  "questions": [
+    {
+      "id": "q-0",
+      "header": "提交动作",
+      "answer": "暂不提交（推荐）"
+    },
+    {
+      "id": "q-1",
+      "header": "文件集合",
+      "answer": "仅本轮 ab5 产物（推荐）"
+    }
+  ],
+  "effectiveDecision": {
+    "commitNow": false,
+    "pushNow": false,
+    "stageNow": false,
+    "resolveRemoteDivergenceNow": false,
+    "allChangesStayInWorkingTree": true,
+    "note": "q-0 是本次的实际裁定：本轮不碰 git。远端 behind=4 的分歧不处理。"
+  },
+  "fileSetPreference": {
+    "status": "PREFERENCE_ONLY_NOT_AUTHORIZATION",
+    "appliesWhen": "仅当用户下一次明确授权『提交』动作时才生效；不得据此推断本轮已授权提交",
+    "scope": "19 项 ab5 observe-first 新产物 + RESULT 报告 + known_gaps.json 台账",
+    "excludes": [
+      "15 个 tracked 源码/测试改动",
+      "deepseek-newchat 本地修复门禁产物 13 项",
+      "ab4 21 项 / ab3 17 项 / ab / ab2 14 项历史真机证据",
+      "其他 evidence 23 项"
+    ],
+    "note": "q-1 的题面是『若后续授权提交』，属文件集合偏好登记，不是一次全收 125 项的授权。"
+  },
+  "diskTruthBefore": {
+    "head": "36d9ec2",
+    "originMain": "f98a1a7",
+    "behind": 4,
+    "ahead": 0,
+    "unpushed": 0,
+    "statusItems": 125,
+    "staged": 0
+  },
+  "diskTruthAfter": {
+    "head": "36d9ec2",
+    "originMain": "f98a1a7",
+    "unpushed": 0,
+    "behind": 4,
+    "statusItems": 126,
+    "staged": 0
+  },
+  "gitUntouched": true,
+  "noRealMachineAction": true
+}

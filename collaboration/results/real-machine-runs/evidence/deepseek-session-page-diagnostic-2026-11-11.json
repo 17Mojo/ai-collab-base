@@ -1,0 +1,182 @@
+{
+  "generatedAt": "2026-11-11T13:32:39.034Z",
+  "mode": "readonly-session-page-diagnostic",
+  "redlines": {
+    "sending": false,
+    "typing": false,
+    "packImported": false,
+    "captchaBypass": false
+  },
+  "navigationOnly": {
+    "clickedHistorySession": true,
+    "clickError": null
+  },
+  "url": "https://chat.deepseek.com/a/chat/s/4037c20c-01a0-4c80-84da-f7bcbf7ea842",
+  "title": "AI智能体定义开头 - DeepSeek",
+  "bodyTextLen": 2793,
+  "answerFound": true,
+  "answerChain": [
+    {
+      "tag": "span",
+      "cls": "",
+      "textLen": 219,
+      "outer": "<span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则和权限先设好。如果你只是偶尔问个问题、写段文字，用普通AI聊天就够了，没必要上智能体；如果你指望它完全不用管、自己搞定一切，那也不现实——目前的智能体在步骤一多、情况一变的时候就容易卡住或跑偏，涉及付款、对外发消息这类操作，最好还是留个人把关。它是个能替你跑腿的助理，不是个能替你担责的员工。</span>"
+    },
+    {
+      "tag": "p",
+      "cls": "ds-markdown-paragraph",
+      "textLen": 219,
+      "outer": "<p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则和权限先设好。如果你只是偶尔问个问题、写段文字，用普通AI聊天就够了，没必要上智能体；如果你指望它完全不用管、自己搞定一切，那也不现实——目前的智能体在步骤一多、情况一变的时候就容易卡住或跑偏，涉及付款、对外发消息这类操作，最好还是留个人把关。它是个能替你跑腿的助理，不是个能替"
+    },
+    {
+      "tag": "div",
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "textLen": 219,
+      "outer": "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则和权限先设好。如果你只是偶尔问个问题、写段文字，用普通AI聊天就够了，没必要上智能体；如果你指望它完全不用管、自己搞定一切，那也不现实——目前的智能体在步骤一多"
+    },
+    {
+      "tag": "div",
+      "cls": "ds-message _63c77b1",
+      "textLen": 219,
+      "outer": "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则和权限先设好。如果你只是偶尔问个问题、"
+    },
+    {
+      "tag": "div",
+      "cls": "_4f9bf79 d7dc56a8 _43c05b5",
+      "textLen": 219,
+      "outer": "<div class=\"_4f9bf79 d7dc56a8 _43c05b5\" data-virtual-list-item-key=\"8\"><div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤"
+    },
+    {
+      "tag": "div",
+      "cls": "ds-virtual-list-visible-items",
+      "textLen": 1093,
+      "outer": "<div class=\"ds-virtual-list-visible-items\" style=\"position: relative; transform: translateY(420px); --dsl-virtual-list-transform-y: 420px; --dsl-virtual-list-ios-compensation-y: 0px;\"><div class=\"_4f9bf79 _43c05b5\" data-virtual-list-item-key=\"4\"><div class=\"ds"
+    },
+    {
+      "tag": "div",
+      "cls": "ds-virtual-list-items _6f2c522",
+      "textLen": 1093,
+      "outer": "<div class=\"ds-virtual-list-items _6f2c522\" style=\"box-sizing: content-box; padding-top: 0px; padding-left: calc((100% - var(--message-list-max-width)) / 2); padding-right: calc((100% - var(--message-list-max-width)) / 2); flex-shrink: 0; flex-grow: 1; min-hei"
+    },
+    {
+      "tag": "div",
+      "cls": "ds-virtual-list ds-virtual-list--printable ds-scroll-area ds-scroll-area--show-on-focus-within ds-scroll-area--enabled _2bd7b35",
+      "textLen": 1117,
+      "outer": "<div class=\"ds-virtual-list ds-virtual-list--printable ds-scroll-area ds-scroll-area--show-on-focus-within ds-scroll-area--enabled _2bd7b35\" tabindex=\"0\" style=\"display: flex; flex-direction: column; --container-height: 863px; --dsl-virtual-list-width: 1021px;"
+    },
+    {
+      "tag": "div",
+      "cls": "_765a5cd",
+      "textLen": 1552,
+      "outer": "<div class=\"_765a5cd\"><div class=\"_2be88ba\"><div class=\"f8d1e4c0 the-header\"><div class=\"_9fcbeda _7ee190f\"><div class=\"afa34042 e0a1edb7 e37a04e4\" tabindex=\"0\" style=\"outline: none;\">AI智能体定义开头</div></div></div><div class=\"_1aa2651 the-header\"><div role=\"butto"
+    }
+  ],
+  "adapterMessageListHits": [
+    {
+      "sel": "[data-testid=\"conversation-turn\"]",
+      "count": 0,
+      "samples": []
+    },
+    {
+      "sel": ".chat-message",
+      "count": 0,
+      "samples": []
+    },
+    {
+      "sel": "[class*=\"message\"]",
+      "count": 8,
+      "samples": [
+        "<div class=\"ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海",
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海的行程安排好”，它只会给你列一堆建议，订票、查酒店、排时间还得你自己动手。它不动手，只动嘴。</span></p><p c",
+        "<div class=\"d29f3d7d ds-message _63c77b1\" style=\"--panel-width: 0px;\"><div class=\"fbb737a4\"><div class=\"ds-collapsible-text\" style=\"max-height: 192px; transition: none;\"><div><span>为“AI 智能体（Agent）到底是什么”写两个具体使用场景，格式都是“谁+在做什么+为什么用到它”。要写得让人一看就知道自己是不是这个场景。只输出这两个场景"
+      ]
+    },
+    {
+      "sel": ".ds-chat-message",
+      "count": 0,
+      "samples": []
+    }
+  ],
+  "extraSelectorHits": [
+    {
+      "sel": ".ds-markdown",
+      "count": 3,
+      "samples": [
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海的行程安排好”，它只会给你列一堆建议，订票、查酒店、排时间还得你自己动手。它不动手，只动嘴。</span></p><p c",
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">场景一：一个做电商的小老板，每天要盯着几十条客户咨询，问尺码、问发货、问能不能退，他一边打包一边回消息，经常漏单。他用智能体替他值守客服：客户问尺码它去查库存表，问物流它去调快递接口，遇到要退换的它按规则直接给方案，搞不定的才转给他本人。因为他要的不是一个会聊天的机器人，而是一个能自己查、自己判断、把大多",
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则和权限先设好。如果你只是偶尔问个问题、写段文字，用普通AI聊天就够了，没必要上智能体；如果你指望它完全不用管、自己搞定一切，那也不现实——目前的智能体在步骤一多"
+      ]
+    },
+    {
+      "sel": "[class*=\"ds-markdown\"]",
+      "count": 9,
+      "samples": [
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海的行程安排好”，它只会给你列一堆建议，订票、查酒店、排时间还得你自己动手。它不动手，只动嘴。</span></p><p c",
+        "<p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海的行程安排好”，它只会给你列一堆建议，订票、查酒店、排时间还得你自己动手。它不动手，只动嘴。</span></p>",
+        "<p class=\"ds-markdown-paragraph\"><span class=\"\">智能体就不一样了，它像你雇的一个助理。你跟它说“下周三去上海出差两天，帮我安排一下”，它会自己把这事拆成几件小事：先查你那天有没有别的会，再比价订机票和酒店，然后把这些写进你的日历，最后回来告诉你“都办好了，这是行程单”。中间不用你一步一步盯着，它自己会想办法、自己会动手。</span></p>"
+      ]
+    },
+    {
+      "sel": "[class*=\"markdown\"]",
+      "count": 9,
+      "samples": [
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海的行程安排好”，它只会给你列一堆建议，订票、查酒店、排时间还得你自己动手。它不动手，只动嘴。</span></p><p c",
+        "<p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海的行程安排好”，它只会给你列一堆建议，订票、查酒店、排时间还得你自己动手。它不动手，只动嘴。</span></p>",
+        "<p class=\"ds-markdown-paragraph\"><span class=\"\">智能体就不一样了，它像你雇的一个助理。你跟它说“下周三去上海出差两天，帮我安排一下”，它会自己把这事拆成几件小事：先查你那天有没有别的会，再比价订机票和酒店，然后把这些写进你的日历，最后回来告诉你“都办好了，这是行程单”。中间不用你一步一步盯着，它自己会想办法、自己会动手。</span></p>"
+      ]
+    },
+    {
+      "sel": "[class*=\"assistant\"]",
+      "count": 3,
+      "samples": [
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">你每天用的“AI”其实根本不会自己做事，真正能自己拆任务、调工具、把事办完的那个东西，才叫智能体。打个比方，你现在用的AI像个只会答题的同事：你问一句它答一句，你让它“帮我把下周去上海的行程安排好”，它只会给你列一堆建议，订票、查酒店、排时间还得你自己动手。它不动手，只动嘴。</span></p><p c",
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">场景一：一个做电商的小老板，每天要盯着几十条客户咨询，问尺码、问发货、问能不能退，他一边打包一边回消息，经常漏单。他用智能体替他值守客服：客户问尺码它去查库存表，问物流它去调快递接口，遇到要退换的它按规则直接给方案，搞不定的才转给他本人。因为他要的不是一个会聊天的机器人，而是一个能自己查、自己判断、把大多",
+        "<div class=\"ds-markdown ds-assistant-message-main-content\"><p class=\"ds-markdown-paragraph\"><span class=\"\">这段内容适合这样的人看：你手头有那种“步骤多、要来回查信息、还得动手操作几个软件”的重复活儿，比如盯客服、收周报、排行程，而且你愿意花点时间把规则和权限先设好。如果你只是偶尔问个问题、写段文字，用普通AI聊天就够了，没必要上智能体；如果你指望它完全不用管、自己搞定一切，那也不现实——目前的智能体在步骤一多"
+      ]
+    },
+    {
+      "sel": "[class*=\"answer\"]",
+      "count": 0,
+      "samples": []
+    },
+    {
+      "sel": "[class*=\"chat\"]",
+      "count": 0,
+      "samples": []
+    },
+    {
+      "sel": "[role=\"article\"]",
+      "count": 0,
+      "samples": []
+    },
+    {
+      "sel": "[data-conv-speaker]",
+      "count": 0,
+      "samples": []
+    },
+    {
+      "sel": "[data-message-id]",
+      "count": 0,
+      "samples": []
+    },
+    {
+      "sel": "._3098d02",
+      "count": 16,
+      "samples": [
+        "<div class=\"_3098d02\"><div class=\"f3d18f6a\">今天</div><a class=\"_546d736 b64fb9ae\" href=\"/a/chat/s/4037c20c-01a0-4c80-84da-f7bcbf7ea842\" tabindex=\"0\"><div class=\"ds-focus-ring\"></div><div class=\"c08e6e93\">AI智能体定义开头</div><div class=\"_254829d\"><div role=\"button\" c",
+        "<div class=\"_3098d02\"><div class=\"f3d18f6a\">30 天内</div><a class=\"_546d736\" href=\"/a/chat/s/18b6c5c7-df7a-4a79-aef8-babf1e51217f\" tabindex=\"0\"><div class=\"ds-focus-ring\"></div><div class=\"c08e6e93\">AI课程店铺分析</div><div class=\"_254829d\"><div role=\"button\" class=\"d",
+        "<div class=\"_3098d02\"><div class=\"f3d18f6a\">2026-09</div><a class=\"_546d736\" href=\"/a/chat/s/34e427e3-3569-4d14-9dcb-b28a50e77c6e\" tabindex=\"0\"><div class=\"ds-focus-ring\"></div><div class=\"c08e6e93\">吉林省房产税细则</div><div class=\"_254829d\"><div role=\"button\" class="
+      ]
+    },
+    {
+      "sel": ".c08e6e93",
+      "count": 56,
+      "samples": [
+        "<div class=\"c08e6e93\">AI智能体定义开头</div>",
+        "<div class=\"c08e6e93\">AI智能体本质揭秘</div>",
+        "<div class=\"c08e6e93\">AI智能体开头观点</div>"
+      ]
+    }
+  ],
+  "bodyPreview": "开启新对话 今天 AI智能体定义开头 AI智能体本质揭秘 AI智能体开头观点 AI智能体反常识开头 AI智能体本质揭秘 30 天内 AI课程店铺分析 2026-09 吉林省房产税细则 AI免费资源整理 2026-08 Hilbert AI Suite分析 图像识别模型介绍 2026-06 古代肠道战伤处置 2026-02 AI模型在代码项目中的协作分工 2026-01 AI助手DeepSeek自我介绍 短链接内容解析方法咨询 2025-12 Understanding Codebuddy Code and Its Uses Mac Studio M1 Max 32GB 参数详解 户型图信息咨询方向指导 2025-11 LM Studio调用云端大模型方法 GPU数量与显存消耗关系分析 福寿鱼与罗非鱼的关系解析 2025-09 Mac mini M4外置SSD选购指南 2025-07 小米2025财报及发展展望分析 2025-06 Orchid Mountain, Rice Fields, Autumn Poem 2025-05 Possible meanings of hxmz explained LLM判断Excel文件方法总结 2025-04 图片转JSON代码方法总结 Docker替代方案及容器运行时介绍 鸟巢建筑结构特点解析 2025-03 瓷砖胶泥铺贴厚度及施工方法 Ma"
+}

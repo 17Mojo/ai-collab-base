@@ -1,0 +1,112 @@
+{
+  "generatedAt": "2026-11-14T09:54:39.304254+00:00",
+  "mode": "ab5-gate-a-machine-verdict",
+  "sourceReceipt": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.json",
+  "sourceReceiptSha256": "ca71edc3d10946cec6bcea4ef7e3672f4a4600bb05c3c649e2eb090597d506b1",
+  "sourceReceiptGeneratedAt": "2026-11-14T09:54:25.829Z",
+  "platform": "deepseek",
+  "packVariant": "no-boundary",
+  "policyUnfrozenBy": "ALLOW_FROZEN=1",
+  "gateA": {
+    "description": "A 组（no-boundary）单轮是否真的在 step_8_output 撞墙",
+    "machineCriteria": {
+      "C1_stepsTotal_eq_8": true,
+      "C2_stepSuccess_eq_7": false,
+      "C3_firstFailedStepId_eq_step_8_output": false,
+      "C4_failedErrorContainsResponseTimeout": false,
+      "C5_earlierStepsAllSucceeded": true,
+      "C6_A_hasNoSessionResets": true
+    },
+    "machinePass": false,
+    "visualGate": {
+      "required": true,
+      "kind": "nonMachineObservation",
+      "participatesInMachineBoolean": false,
+      "status": "NOT_EVALUATED_BY_MACHINE",
+      "note": "截图人工视觉判读：末条 AI 回复不得是『服务出错啦，请稍后再试。』；放行必须由人确认。",
+      "screenshot": "L2-deepseek-auto-2026-11-14.ab5-no-boundary.png",
+      "screenshotExists": true
+    }
+  },
+  "observed": {
+    "execSuccess": true,
+    "status": "completed",
+    "durationMs": 74558,
+    "stepsTotal": 8,
+    "stepSuccess": 8,
+    "firstFailedStepId": null,
+    "firstFailedStepError": null,
+    "sessionResets": 0,
+    "wallStep": {
+      "id": "step_8_output",
+      "success": true,
+      "durationMs": 11736
+    },
+    "steps": [
+      {
+        "id": "step_1_topic",
+        "success": true,
+        "duration": 0
+      },
+      {
+        "id": "step_2_hook",
+        "success": true,
+        "duration": 9745
+      },
+      {
+        "id": "step_3_explain",
+        "success": true,
+        "duration": 11830
+      },
+      {
+        "id": "step_4_scene",
+        "success": true,
+        "duration": 10855
+      },
+      {
+        "id": "step_5_boundary",
+        "success": true,
+        "duration": 10374
+      },
+      {
+        "id": "step_6_takeaway",
+        "success": true,
+        "duration": 9741
+      },
+      {
+        "id": "step_7_visual",
+        "success": true,
+        "duration": 10277
+      },
+      {
+        "id": "step_8_output",
+        "success": true,
+        "duration": 11736
+      }
+    ]
+  },
+  "code": "ABORT_NO_WALL",
+  "decision": "判『墙不存在 / 本轮不构成 A 撞墙』：停机，不跑 B、不跑 longcat；N25 保持 open",
+  "bShouldRun": false,
+  "bActuallyRun": false,
+  "longcatActuallyRun": false,
+  "propositionSupported": false,
+  "n25": "remain open",
+  "attributionBoundaries": [
+    "不得说会话边界有效，也不得说边界无效",
+    "不得把 A/B 都通过归功边界；本轮未跑 B，无成对证据",
+    "不得把 F1 / F2 真机验证挪用为因果证据",
+    "站点侧报错属外部混杂变量，不得与『墙』合并归因"
+  ],
+  "evidence": {
+    "plan": "ab5-observe-first-plan-2026-11-12.json",
+    "ruling": "ab5-gate-a-platform-ruling-2026-11-14.json",
+    "precheck": "L2-precheck-2026-11-14.ab5.deepseek-longcat.json",
+    "precondition": "ab5-precondition-2026-11-14.json",
+    "runnerVerify": "ab5-observe-first-verify-2026-11-14.json",
+    "progress": "ab5-observe-first-progress-2026-11-14.jsonl"
+  },
+  "noRealMachineAction": true,
+  "gitUnchanged": true,
+  "note": "本文件是只读裁定，不是回执。machinePass 只表示 6 条机器判据成立与否；命题成立还需 B 组硬判据 + 人工视觉闸。"
+}

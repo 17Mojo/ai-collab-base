@@ -1,0 +1,150 @@
+[2026-11-12T07:12:37Z] REPO_ROOT=/Users/raymondna/Documents/AI-collab/ai-collab-base
+[2026-11-12T07:12:38Z] EXT_ROOT=/Users/raymondna/Documents/AI-collab/ai-collab-base/chrome-extension
+[2026-11-12T07:12:38Z] HEAD=36d9ec2
+[2026-11-12T07:12:38Z] === STEP 1: npm run build (#1) ===
+[2026-11-12T07:12:44Z] build#1 exit=0
+[2026-11-12T07:12:44Z] dist/content-script.js  #1 sha256=5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7
+[2026-11-12T07:12:44Z] dist/service-worker.js  #1 sha256=fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da
+[2026-11-12T07:12:44Z] === STEP 2: npm run build (#2, 幂等复核) ===
+[2026-11-12T07:12:50Z] build#2 exit=0
+[2026-11-12T07:12:50Z] dist/content-script.js  #2 sha256=5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7
+[2026-11-12T07:12:51Z] dist/service-worker.js  #2 sha256=fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da
+[2026-11-12T07:12:51Z] idempotent=true
+[2026-11-12T07:12:51Z] === STEP 3: 全量 npm test ===
+[2026-11-12T07:13:38Z] npm test exit=0
+  duration_ms: 0.101709
+  type: 'test'
+  ...
+1..349
+# tests 349
+# suites 0
+# pass 349
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 46779.194042
+[2026-11-12T07:13:39Z] === STEP 4: 全量变异检查 ===
+[2026-11-12T07:30:25Z] mutation exit=0
+✓ 为了让 deepseek 找到入口把公共标签兜底放宽到所有 span
+    被 公共层只加文案、不放宽标签：NEW_SESSION_TEXTS 有「开启新对话」，选择器表无裸 span/div 杀死
+✓ waitForSessionReset 被改成「点过就算重置」
+    被 deepseek：找到了入口但点了没清空，仍判 available:false（不假装重置） 杀死
+
+全部 151 条变异都被杀死。
+[2026-11-12T07:30:25Z] === STEP 5: dist 产物关键字 / hash 核对 ===
+[2026-11-12T07:30:26Z] dist-consistency exit=0
+{
+  "generatedAt": "2026-11-12T07:30:26.023Z",
+  "mode": "dist-consistency-deepseek-newchat",
+  "scope": "2026-11-12 后续步骤②：deepseek adapter 级精确文案逃生口",
+  "buildLogFirst": "build-2026-11-12.deepseek-newchat.log",
+  "buildLogSecond": "build-2026-11-12.deepseek-newchat-second.log",
+  "secondBuildExit": 0,
+  "idempotent": true,
+  "files": [
+    {
+      "path": "dist/content-script.js",
+      "sha256": "5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7",
+      "bytes": 61464,
+      "sha256AfterRebuild": "5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7",
+      "sameAsFirstBuild": true,
+      "sameAfterRebuild": true
+    },
+    {
+      "path": "dist/service-worker.js",
+      "sha256": "fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da",
+      "bytes": 138861,
+      "sha256AfterRebuild": "fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da",
+      "sameAsFirstBuild": true,
+      "sameAfterRebuild": true
+    }
+  ],
+  "keywordChecks": [
+    {
+      "name": "内容脚本带本轮新增的 adapter 级文案逃生口策略名",
+      "file": "dist/content-script.js",
+      "needle": "adapter-text-match",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本带 deepseek 真入口精确文案",
+      "file": "dist/content-script.js",
+      "needle": "开启新对话",
+      "min": 1,
+      "count": 6,
+      "pass": true
+    },
+    {
+      "name": "内容脚本带 newChatText 声明读取",
+      "file": "dist/content-script.js",
+      "needle": "newChatText",
+      "min": 1,
+      "count": 2,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带 longcat 新会话入口选择器",
+      "file": "dist/content-script.js",
+      "needle": ".v-slider-header .new-content",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带 longcat 入口 span 兜底",
+      "file": "dist/content-script.js",
+      "needle": "div.new-content span",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带内容基准字段（虚拟列表假超时修复）",
+      "file": "dist/content-script.js",
+      "needle": "baselineContent",
+      "min": 1,
+      "count": 22,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带虚拟列表白名单站点",
+      "file": "dist/content-script.js",
+      "needle": "longcat.ai",
+      "min": 1,
+      "count": 3,
+      "pass": true
+    },
+    {
+      "name": "内容脚本仍带超时错误码",
+      "file": "dist/content-script.js",
+      "needle": "RESPONSE_TIMEOUT",
+      "min": 1,
+      "count": 7,
+      "pass": true
+    },
+    {
+      "name": "后台产物仍带内容基准透传",
+      "file": "dist/service-worker.js",
+      "needle": "baselineContent",
+      "min": 1,
+      "count": 15,
+      "pass": true
+    },
+    {
+      "name": "后台产物仍带续等无基准保护",
+      "file": "dist/service-worker.js",
+      "needle": "RESUME_WAIT_NO_BASELINE",
+      "min": 1,
+      "count": 1,
+      "pass": true
+    }
+  ],
+  "allPass": true,
+  "realMachineVerified": false,
+  "note": "本证据只核 dist 打包产物；冻结站真机效果未验证，N25 保持 open。"
+}
+[2026-11-12T07:30:26Z] ALL_PASS=true
+[2026-11-12T07:30:26Z] SUMMARY=/Users/raymondna/Documents/AI-collab/ai-collab-base/collaboration/results/real-machine-runs/evidence/gates-deepseek-newchat-2026-11-12.summary.json
