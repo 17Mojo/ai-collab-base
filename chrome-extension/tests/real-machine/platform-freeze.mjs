@@ -9,6 +9,13 @@
  * 生产 adapter 保留，但本轮真机不再碰它；deepseek / longcat 仍冻结。
  * 下面的红线注释保留原文，便于对账「谁在什么时候改过白名单」。
  *
+ * 同日第二次裁定（N25 收口）：deepseek / longcat 真机 A/B 只跑了 deepseek
+ * 两轮（A/B 都撞在 step_5，fresh_session 在 step_8 未获触发机会），用户据
+ * 现场反自动化判断裁定停止并收口，两站**降级为目标源外平台**。本文件把
+ * 它们从活跃白名单排除的事实不变；「目标源外」是治理定性，不通过改白名单
+ * 常量或 adapter 表达——避免动到变异锚点。详见
+ * collaboration/results/RESULT-N25-AB-2026-11-18.md。
+ *
  * ## 为什么必须是代码，不能只是报告里的一句话
  *
  * 真机驱动 `l2-platform-auto.mjs` 只要给一个 `PLATFORM=deepseek` 就会照跑：

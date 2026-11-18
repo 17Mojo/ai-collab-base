@@ -1,0 +1,122 @@
+{
+  "status": "plan-only / NOT-EXECUTED",
+  "proposition": "fresh_session 会话边界能解掉 deepseek / longcat 的 step_8 长会话撞墙",
+  "generatedAt": "2026-11-18T02:49:02.026Z",
+  "whyNotRunNow": [
+    "用户 2026-11-11 红线：仅保留 qianwen / yuanbao / chatglm / yiyan / kimi，其他冻结不去碰。",
+    "platform-freeze.mjs 已把这条红线落成代码级闸门；ALLOW_FROZEN=1 只有用户明确解冻后才可以加。",
+    "本轮活跃 5 站只验到「重置真的做到了」（N23），没有碰过真正撞墙的两个站。"
+  ],
+  "unfreezeConditions": [
+    "用户给出明确的解冻指令（点名平台 + 允许范围）。**当前未满足**：用户只授权了本地准备与 push，没有解冻。",
+    "两站登录态可用：PRECHECK=1 且 ALLOW_FROZEN=1、显式 CANDIDATES=deepseek,longcat；deepseek 此前从未被预检过，longcat 只有 2026-11-10 的旧快照，都不是当前态。**当前未满足**。",
+    "dist 产物与源码一致（npm run build 后比对 hash 与关键字，G1–G10 口径）。本轮本地准备会核，结果写进 RESULT。",
+    "确认账号额度：2 站 × 2 变体 × 8 步 = 32 步真实发送 + 1 轮预检。**当前未满足/未核**：账号侧信息，我无法核，需用户确认。"
+  ],
+  "activePlatforms": [
+    "stepfun",
+    "yuanbao",
+    "chatglm",
+    "yiyan",
+    "kimi"
+  ],
+  "frozenPlatforms": [
+    "deepseek",
+    "longcat"
+  ],
+  "platformPolicy": [
+    {
+      "id": "deepseek",
+      "allowed": false,
+      "active": false,
+      "unfrozenBy": null,
+      "reason": "frozen-by-user-redline"
+    },
+    {
+      "id": "longcat",
+      "allowed": false,
+      "active": false,
+      "unfrozenBy": null,
+      "reason": "frozen-by-user-redline"
+    }
+  ],
+  "variants": [
+    {
+      "id": "A-control",
+      "packVariant": "no-boundary",
+      "freshSession": "removed",
+      "role": "对照组：复现 step_8 长会话撞墙"
+    },
+    {
+      "id": "B-boundary",
+      "packVariant": "with-boundary",
+      "freshSession": "prefer",
+      "role": "实验组：出厂 Pack，step_8_output 声明 fresh_session=prefer"
+    }
+  ],
+  "runMatrix": [
+    {
+      "platform": "deepseek",
+      "variant": "no-boundary",
+      "out": "L2-deepseek-auto-2026-11-18.ab-no-boundary.json"
+    },
+    {
+      "platform": "deepseek",
+      "variant": "with-boundary",
+      "out": "L2-deepseek-auto-2026-11-18.ab-with-boundary.json"
+    },
+    {
+      "platform": "longcat",
+      "variant": "no-boundary",
+      "out": "L2-longcat-auto-2026-11-18.ab-no-boundary.json"
+    },
+    {
+      "platform": "longcat",
+      "variant": "with-boundary",
+      "out": "L2-longcat-auto-2026-11-18.ab-with-boundary.json"
+    }
+  ],
+  "variantPacks": [
+    {
+      "variant": "no-boundary",
+      "path": "/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-18.no-boundary.json",
+      "sha256": "89b197cf99f2fcac835bc78269f89315a9740bfe57222da207d5851796692d03",
+      "imported": false,
+      "executed": false
+    },
+    {
+      "variant": "with-boundary",
+      "path": "/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-18.with-boundary.json",
+      "sha256": "0e1b4b9816545e52e74abaee117d96fba3b449cfa5a71c5370a0e22b2516f46f",
+      "imported": false,
+      "executed": false
+    }
+  ],
+  "executionOrder": [
+    "4 条命令必须**串行**，禁止并行：两轮都用 mergeStrategy=overwrite 导入同一个 pack_id，并行会互相覆盖 storage 里的 Pack。",
+    "每轮结束后先核回执（8/8 + sessionResets），再跑下一轮；B 组若 available:false 这轮作废，不要直接拿去判定。",
+    "预检登录态也要显式解冻：PRECHECK=1 会打开冻结站页面，本身受 assertCandidatesAllowed 拦截，必须带 ALLOW_FROZEN=1 与显式 CANDIDATES。"
+  ],
+  "commands": [
+    "# 解冻后由人逐条执行（本脚本不代跑）；先预检，再串行跑 4 轮：",
+    "CANDIDATES=deepseek,longcat PRECHECK=1 ALLOW_FROZEN=1 OUT=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-18.deepseek-longcat.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-18.no-boundary.json OUT=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-18.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=deepseek ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-18.with-boundary.json OUT=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/L2-deepseek-auto-2026-11-18.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=no-boundary PACK_PATH=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-18.no-boundary.json OUT=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-18.ab-no-boundary.json node tests/real-machine/l2-platform-auto.mjs",
+    "PLATFORM=longcat ALLOW_FROZEN=1 PACK_VARIANT=with-boundary PACK_PATH=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/ab-pack-2026-11-18.with-boundary.json OUT=/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/L2-longcat-auto-2026-11-18.ab-with-boundary.json node tests/real-machine/l2-platform-auto.mjs"
+  ],
+  "acceptance": {
+    "packCompleted": "exec.success === true && exec.result.status === completed && 8/8 steps success",
+    "resetActuallyHappened": "B 组回执 sessionResets[0].available === true && messageCountAfter < messageCountBefore —— 否则 B 不能算「开了新会话」，这轮对照作废",
+    "noDuplicateSend": "截图里每个 step 只有一条提问气泡；N21 的续等只发 WAIT_FOR_RESPONSE，不重发",
+    "likeForLike": "同站、同账号态、同 prompt、相邻时间窗；A 与 B 只允许差 fresh_session 一个变量",
+    "verdictRule": "只有 A 撞墙且 B 通过才支持命题；A/B 都通过 ⇒ 本轮墙不存在，不能归功边界；A/B 都撞墙 ⇒ 边界无效，另找根因"
+  },
+  "attributionBoundaries": [
+    "不能把整包耗时差异归因给会话重置——RESULT §14.1/§14.2 已判否（重置只在 step_8，step_1~7 的差值与它无关）。",
+    "也不能说「重置免费」——durationMs 非零，4 站实测 304–319ms，代码上界 8s。",
+    "B 单轮通过 ≠ 边界有效：N21 续等修复、N24 文心假基准修复是同期混杂变量，必须在 A/B 两轮里同时固定。",
+    "chatglm 那轮 419.6s vs 349.8s 的差异主要在 step_2 抖动（28.7→70.2s），既不能归因给重置，也不能反过来当「重置无代价」的证据。"
+  ],
+  "precheckPath": "/private/tmp/wt-g11/collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-18.deepseek-longcat.json"
+}
