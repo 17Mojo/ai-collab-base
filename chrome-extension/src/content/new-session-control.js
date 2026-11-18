@@ -74,14 +74,29 @@ export const HIDDEN_SEMANTIC_SELECTORS = [
 ];
 
 /**
- * 找「新对话」控件。三层兜底，逐层放宽，命中即停。
+ * 语义属性入口的判定：文案全等 / aria-label 全等 / 带 new_chat 的锚点。
+ * 可见语义层和隐藏兜底层共用同一判据，避免两层对「什么算入口」理解不一致。
+ */
+function semanticControlMatches(el, wanted) {
+  if (el.closest(COMPOSER_ZONE_SELECTOR)) return false;
+  const text = (el.textContent || "").trim();
+  if (text && wanted.has(text)) return true;
+  const label = (el.getAttribute("aria-label") || "").trim();
+  if ((label && wanted.has(label)) || el.matches('a[href*="new_chat"]')) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * 找「新对话」控件。四层兜底，逐层放宽，命中即停。
  *
  * @param {object} deps
  * @param {Document} deps.document
  * @param {object} deps.config 当前平台 adapter 的 SELECTORS
  * @param {(selectors: string[]) => Element|null} deps.findVisibleElement
  * @param {(el: Element) => boolean} deps.isElementRendered
- * @returns {{el: Element, how: "adapter-selector"|"text-match"|"hidden-semantic"}|null}
+ * @returns {{el: Element, how: "adapter-selector"|"semantic"|"text-match"|"hidden-semantic"}|null}
  */
 export function findNewSessionControl({
   document,
@@ -95,8 +110,26 @@ export function findNewSessionControl({
     if (el) return { el, how: "adapter-selector" };
   }
 
-  // 2) 可见控件 + 文案/aria/title 精确匹配（跨站覆盖）
   const wanted = new Set(NEW_SESSION_TEXTS);
+
+  // 2) 可见的语义属性入口（窄，先于宽泛文案层）
+  //
+  // 2026-11-18 N29：千问把 hover-reveal 面板从 opacity-0/pointer-events-none
+  // 改成了默认可见。于是 div.newChatReveal-* 这个**外层容器**自身也通过了
+  // isElementRendered，而它的 textContent 恰好是「新对话」，且类名命中
+  // [class*="newChat"] ⇒ 下面的文案层会先点这个没有 click handler 的容器，
+  // 真入口 div[data-session-switch-target="new-chat"] 永远轮不到，
+  // 回执就变成 click-no-effect 6→6。
+  // 窄语义属性层放在文案层之前，只认「属性直接声明了 new-chat」的元素，
+  // 且必须真的可见；隐藏兜底层仍留在最后，不改原先的安全边界。
+  for (const sel of HIDDEN_SEMANTIC_SELECTORS) {
+    for (const el of document.querySelectorAll(sel)) {
+      if (!isElementRendered(el)) continue;
+      if (semanticControlMatches(el, wanted)) return { el, how: "semantic" };
+    }
+  }
+
+  // 3) 可见控件 + 文案/aria/title 精确匹配（跨站覆盖）
   for (const el of document.querySelectorAll(NEW_SESSION_CONTROL_SELECTOR)) {
     if (!isElementRendered(el)) continue;
     if (el.closest(COMPOSER_ZONE_SELECTOR)) continue; // 发送区旁边的同名元素不认
@@ -110,18 +143,10 @@ export function findNewSessionControl({
     }
   }
 
-  // 3) 隐藏但语义明确的入口（千问的 hover-reveal 层）
+  // 4) 隐藏但语义明确的入口（千问的 hover-reveal 层）
   for (const sel of HIDDEN_SEMANTIC_SELECTORS) {
     for (const el of document.querySelectorAll(sel)) {
-      if (el.closest(COMPOSER_ZONE_SELECTOR)) continue;
-      const text = (el.textContent || "").trim();
-      if (text && wanted.has(text)) return { el, how: "hidden-semantic" };
-      // 有些入口是纯图标（Kimi 的 a.new-chat-btn），文本为空也认，
-      // 但必须同时命中「语义属性」和「带 href 的锚点」才算数。
-      const label = (el.getAttribute("aria-label") || "").trim();
-      if ((label && wanted.has(label)) || el.matches('a[href*="new_chat"]')) {
-        return { el, how: "hidden-semantic" };
-      }
+      if (semanticControlMatches(el, wanted)) return { el, how: "hidden-semantic" };
     }
   }
   return null;

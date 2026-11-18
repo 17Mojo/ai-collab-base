@@ -164,6 +164,43 @@ test("千问：入口藏在 opacity-0/pointer-events-none 的 hover-reveal 层�
   assert.equal(r.messageCountAfter, 0);
 });
 
+test("千问 2026-11-18：hover-reveal 面板默认可见时，newChatReveal 容器不许抢在语义入口前面", async () => {
+  // 证据：evidence/new-session-probe-2026-11-18.qianwen-n29.json。
+  // 外层 newChatReveal-* 现在 rendered=true、textContent 也是「新对话」，
+  // 宽泛文案层的 [class*="newChat"] 会先命中这个**没有 click handler 的容器**。
+  const { deps, wireReset, doc } = makeSite(
+    '<div class="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col">' +
+      '<div class="newChatReveal-OikAdB newChatRevealFlat-hnO8At">' +
+        '<div class="flex h-full gap-0.5">' +
+          '<div data-session-switch-target="new-chat" class="flex h-full cursor-pointer">' +
+            '<span class="truncate font-400">新对话</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>',
+    {},
+    { messages: 6 },
+  );
+  const control = doc.querySelector('[data-session-switch-target="new-chat"]');
+  assert.equal(isElementRendered(control), true, "这层已经可见，不能再当作 hover 隐藏态");
+  wireReset(control);
+
+  const found = findNewSessionControl({
+    document: doc,
+    config: deps.config,
+    findVisibleElement,
+    isElementRendered,
+  });
+  assert.equal(found?.el, control, "必须点真入口，不是外层 newChatReveal 容器");
+  assert.equal(found?.how, "semantic");
+
+  const r = await handleNewSession(deps);
+  assert.equal(r.available, true);
+  assert.equal(r.strategy, "semantic");
+  assert.equal(r.messageCountBefore, 6);
+  assert.equal(r.messageCountAfter, 0);
+});
+
 test("输入区里的同名诱饵不认（chatglm 的 div.enter.is-main-chat）", async () => {
   const { deps, doc } = makeSite(
     // 合成一个「本来会被选中」的输入区诱饵（真站那处是 div + display:none，
