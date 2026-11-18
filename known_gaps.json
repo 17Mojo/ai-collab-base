@@ -564,6 +564,27 @@
         "守卫落地后对本仓实跑：`concurrent guard` → `worktrees: 7 (collisions: none)`，7 个 worktree 各在不同分支或 detached，无误报。",
         "2026-11-16 接入 preflight：六项实测 —— `[FAIL] 必读清单声明 / [FAIL] 状态机时效 / [FAIL] 门禁输入完整性 / [PASS] HEAD 治理登记 / [FAIL] 显式 ACK 证据 / [PASS] 工作树分支冲突: 8 个工作树，无重复分支`。前五项仍按各自原口径判定，新项只追加在末位。"
       ]
+    },
+    {
+      "id": "N29",
+      "priority": "P1",
+      "status": "open",
+      "title": "qianwen 的 step_8 新会话重置回落到 click-no-effect（6→6），不满足 A/B 的 B 组前置",
+      "reader": "解冻后要跑 deepseek/longcat A/B 的人；以及任何依赖 fresh_session 已在活跃站生效这一结论的人——qianwen 现在不能作为该结论的证据。",
+      "where": [
+        "chrome-extension/src/content/new-session-control.js:277-297（waitForSessionReset 失败即 refuse 为 click-no-effect）",
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-18.full8.json（exec.result.sessionResets）",
+        "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-11.n23.json（当时 available=true，hidden-semantic，12→0）"
+      ],
+      "detail": "2026-11-18 活跃 5 站验证：5/5 Pack 均 8/8 completed，platformPolicy 全部 active/unfrozenBy=null。但 qianwen 的 step_8 会话重置为 available=false / strategy=click-no-effect / messageCountBefore=6 → messageCountAfter=6 / durationMs=8232，原因写的是「点了「新对话」但消息数没有下降（6 → 6），无法确认会话已重置。」其余 4 站（chatglm/kimi/yiyan/yuanbao）均为 adapter-selector，消息数 12→0 或 6→0，available=true。\n\n对照 2026-11-11 同一站：L2-qianwen-auto-2026-11-11.n23.json 为 available=true / strategy=hidden-semantic / 12→0；同日的 fresh-session.json 也有一次 available=false / none / 12→12。git log 显示 new-session-control.js 自 11-11 起未改（唯一提交 2297186 在 N23 期间），因此这是**页面 DOM 或会话状态变化**导致的回落，不是代码 commit 回归——但尚无磁盘证据判定是哪一种。",
+      "impact": "① N25 的 A/B 判据写明「B 组回执 sessionResets[0].available === true 且 messageCountAfter < messageCountBefore —— 否则 B 不能算开了新会话，这轮对照作废」。若冻结站出现同样回落，32 步真实发送跑完也拿不到有效结论。② 不能用「qianwen Pack 8/8 通过」外推成「会话边界在活跃站生效」——这两件事在本轮是分离的。",
+      "fix": "待查。候选方向：qianwen adapter 的 newChat 选择器是否仍命中；「新对话」入口是否需要确认弹窗；消息列表选择器是否随页面改版失效。诊断须用 new-session-probe.mjs 在活跃站取证，不得改判据来让 B 组通过。在诊断完成前，解冻 A/B 不应启动。",
+      "found_at": "2026-11-18",
+      "closed_at": null,
+      "appended_evidence": [
+        "5 站统一对账（2026-11-18）：chatglm/kimi/yiyan/yuanbao 的 sessionResets.available=true，strategy=adapter-selector，消息数分别 12→0 / 6→0 / 6→0 / 12→0；qianwen 为 available=false / click-no-effect / 6→6。",
+        "冻结闸门留痕：5 份回执的 platformPolicy 均为 {allowed:true, active:true, unfrozenBy:null, reason:\"active\"}，本轮未使用 ALLOW_FROZEN=1，未碰 deepseek/longcat。"
+      ]
     }
   ]
 }
