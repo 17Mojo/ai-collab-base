@@ -30,6 +30,8 @@ import {
   listProductionAdapterModules,
   getRoleElements,
   getProbeRoleElements,
+  judgeSendButtonCrossCheck,
+  readRealSnapshotMeta,
   isWithin,
   runTest,
   formatResults,
@@ -56,6 +58,17 @@ import { existsSync, readFileSync } from "node:fs";
 const TEST_TEXT = "Hello from adapter test!";
 
 /**
+ * send-button 对账的严格模式（N59）。
+ *
+ * 默认：真机 `sendButtonFound=false` 而 mock 命中时，这条降级为 **SKIP 并写明原因**——
+ * 「未验证」不该被判成「坏了」，否则 main 会因为一条未验证长期红，红久了就没人看了。
+ *
+ * `STRICT_SENDBUTTON=1`：同样的情形判 **FAIL**。解冻验收（PLAN-UNFREEZE-DEEPSEEK §5 A）
+ * 必须用严格模式跑——那时候「真机没有发送按钮」是必须挡住的事实，不能靠 SKIP 绕过去。
+ */
+const STRICT_SENDBUTTON = process.env.STRICT_SENDBUTTON === "1";
+
+/**
  * 载入生产 adapter 模块。
  * @param {object} spec
  * @returns {Promise<object>} 模块命名空间（含 SELECTORS 与 default 适配器类）
@@ -75,7 +88,13 @@ async function runTestAsync(name, fn) {
   try {
     const result = await fn();
     if (result === "SKIP") {
-      return { name, pass: true, skipped: true, error: null };
+      return { name, pass: true, skipped: true, error: null, reason: null };
+    }
+    // 带原因的 SKIP：`{ skip: "为什么没验" }`。
+    // 裸 "SKIP" 已经够用，但它不说明原因——而「无声跳过」正是这个项目反复踩的坑
+    // （deepseek 的 send-button 假绿就是这么长出来的，见 N59）。所以能写原因就必须写。
+    if (result && typeof result === "object" && typeof result.skip === "string") {
+      return { name, pass: true, skipped: true, error: null, reason: result.skip };
     }
     if (result === false) {
       return { name, pass: false, skipped: false, error: "Test returned false" };
@@ -152,11 +171,44 @@ function buildCases(spec, mod) {
       name: "getSendButton() 命中 fixture 标注的发送按钮",
       fn: () => {
         const { doc, adapter } = setup();
+        const el = adapter.getSendButton();
         const expected = getRoleElements(doc, "send-button");
+
+        // 🔧 2026-11-19 对账（N59）：这条此前只用 mock，而 mock 是照着 adapter 的选择器写的，
+        // 于是「选择器命中」在自己身上闭环了——真机快照同时写着 sendButtonFound=false 也没人看。
+        // 现在先问真机快照，再谈 mock：
+        const verdict = judgeSendButtonCrossCheck({
+          realMeta: readRealSnapshotMeta(spec.id),
+          mockHit: el !== null,
+          id: spec.id,
+        });
+        if (verdict.status === "fail") throw new Error(verdict.reason);
+        if (verdict.status === "contradiction") {
+          if (STRICT_SENDBUTTON) {
+            throw new Error(`[STRICT_SENDBUTTON=1] ${verdict.reason}`);
+          }
+          return { skip: verdict.reason };
+        }
+        if (verdict.status === "unusable" || verdict.status === "no-snapshot") {
+          return { skip: verdict.reason };
+        }
+
+        // 到这里说明真机与 mock 一致。fixture 契约照旧守：
+        // 有标注就必须命中同一个；没有标注就必须承认「本站没有 button 形态的发送控件」。
+        if (expected.length === 0) {
+          if (el !== null) {
+            throw new Error(
+              "fixture 没标注 send-button，但 getSendButton() 却返回了元素——" +
+                "要么 fixture 漏标，要么选择器靠猜命中了个不相干的元素",
+            );
+          }
+          // 两边都没有按钮 ⇒ 断言「必须返回 null」已经执行且成立，这是**验过的 PASS**，
+          // 不是 SKIP。报成 SKIP 会把「验过」说成「没验」，方向上也是一种撒谎。
+          return;
+        }
         if (expected.length !== 1) {
           throw new Error(`fixture 应当标注 1 个 send-button，实际 ${expected.length} 个`);
         }
-        const el = adapter.getSendButton();
         if (!el) throw new Error("getSendButton() 返回 null");
         if (el !== expected[0]) {
           throw new Error(`getSendButton() 返回 ${describe(el)}，不是标注的 ${describe(expected[0])}`);

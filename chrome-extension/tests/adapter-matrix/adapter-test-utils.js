@@ -250,6 +250,74 @@ export function runTest(name, fn) {
 }
 
 /**
+ * 读同站真实快照的元数据（`fixtures/real/<id>.json`），拿不到返回 null。
+ *
+ * 为什么要单独给一个读入口：矩阵的 send-button 断言此前只用 mock——而 mock 是
+ * **照着 adapter 的选择器写的**，于是「选择器命中」这件事在自己身上闭环了。
+ * 真机快照里 `sendButtonFound` 是采集器用**同一个** `adapter.getSendButton()`
+ * 在真实 DOM 上跑出来的结论，把它拉进来才有对账可言。见 N59。
+ *
+ * @param {string} fixtureId
+ * @returns {object|null}
+ */
+export function readRealSnapshotMeta(fixtureId) {
+  const metaPath = path.join(REAL_FIXTURES_DIR, `${fixtureId}.json`);
+  if (!existsSync(metaPath)) return null;
+  try {
+    return JSON.parse(readFileSync(metaPath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * send-button 断言与真机快照的对账判据（纯函数，不碰 DOM，便于单测）。
+ *
+ * 状态与含义：
+ *   pass          两边一致（都命中 / 都没有），断言照常走
+ *   contradiction 真机 `sendButtonFound=false`，但 mock 上命中了
+ *                 ⇒ mock 的命中**不构成真机证据**（N59 的假绿），默认降级为 SKIP
+ *   unusable      快照没采成（outcome≠captured 或 composerFound=false，登录墙）
+ *                 ⇒ 它的 false 不能当「没有按钮」的证据（别把环境限制当事实）
+ *   no-snapshot   没有真机快照，未对账
+ *   fail          真机 `sendButtonFound=true` 但 mock 上取不到 ⇒ fixture 与真机脱节
+ *
+ * @param {{realMeta: object|null, mockHit: boolean, id?: string}} arg
+ * @returns {{status: "pass"|"contradiction"|"unusable"|"no-snapshot"|"fail", reason: string}}
+ */
+export function judgeSendButtonCrossCheck({ realMeta, mockHit, id = "?" }) {
+  if (!realMeta) {
+    return { status: "no-snapshot", reason: `无真机快照（fixtures/real/${id}.json），未与真机对账` };
+  }
+  const usable = realMeta.outcome === "captured" && realMeta.composerFound === true;
+  if (!usable) {
+    return {
+      status: "unusable",
+      reason:
+        `真机快照不可用（outcome=${realMeta.outcome}, composerFound=${realMeta.composerFound}）` +
+        `——它的 sendButtonFound=${realMeta.sendButtonFound} 不能作为「没有发送按钮」的证据`,
+    };
+  }
+  const realFound = realMeta.sendButtonFound === true;
+  if (realFound && mockHit) return { status: "pass", reason: "真机命中、mock 也命中（一致）" };
+  if (!realFound && !mockHit) return { status: "pass", reason: "真机未命中、mock 也未命中（一致）" };
+  if (realFound && !mockHit) {
+    return {
+      status: "fail",
+      reason:
+        `真机快照 sendButtonFound=true，但 getSendButton() 在 mock 上返回 null` +
+        `——fixture 与真机脱节（fixtures/real/${id}.json vs fixtures/mock-dom-${id}.html）`,
+    };
+  }
+  return {
+    status: "contradiction",
+    reason:
+      `真机快照 sendButtonFound=false（采集器用的是同一个 adapter.getSendButton()），` +
+      `mock 却命中——那命中不构成真机证据（N59 假绿），本条降级为未验证`,
+  };
+}
+
+/**
  * 打印一个平台的用例结果。
  * @param {string} platformName
  * @param {Array} results
@@ -266,7 +334,9 @@ export function formatResults(platformName, results) {
 
   for (const r of results) {
     const icon = r.skipped ? "SKIP" : r.pass ? "PASS" : "FAIL";
-    const detail = r.error ? ` (${r.error})` : "";
+    // SKIP 必须带上「为什么没验」：无声跳过去等于把「没验」记成「验过了」，
+    // deepseek 的 send-button 假绿就是这么长出来的（N59）。
+    const detail = r.error ? ` (${r.error})` : r.reason ? ` — ${r.reason}` : "";
     console.log(`    [${icon}] ${r.name}${detail}`);
   }
 

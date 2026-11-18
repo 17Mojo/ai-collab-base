@@ -1388,6 +1388,41 @@ const MUTATIONS = [
     expectTest: "非导航点击必须挂在 EXPAND_CLICK 开关后面，且坐标只来自 pickChevron",
   },
 
+  // ── send-button 对账（N59，2026-11-19） ────────────────────────────
+  // 假绿的形状：mock 是照着 adapter 的选择器写的，于是「选择器能命中」在自己身上闭环。
+  // 下面三条各守一环：判据不放水、假绿不许回到 pass、严格模式不许形同虚设。
+  {
+    name: "send-button 对账放宽「快照可用」闸门（登录墙的 false 也能当证据）",
+    why: "去掉 composerFound 这一条，chatgpt/claude 那种连输入框都没采到的快照就会被当成「真机确认没有发送按钮」——就是又一次「环境限制当事实」",
+    // 指到「采集成功但没找着输入框」那条用例，而不是「登录墙」那条：
+    // 真机 11 站里 outcome 与 composerFound 恰好同真同假，登录墙用例的 fixture
+    // 两个条件同时为假 ⇒ 删掉任一条它都不变色，它不是这一行的守门人。
+    // 首轮实测这条变异存活过一次，就是被这个巧合掩护的（2026-11-19）。
+    target: "adapter-matrix/adapter-test-utils.js",
+    find: '  const usable = realMeta.outcome === "captured" && realMeta.composerFound === true;',
+    replace: '  const usable = realMeta.outcome === "captured";',
+    testFile: "sendbutton-crosscheck.test.mjs",
+    expectTest: "对账判据：采集成功但没找着输入框（composer 选择器漂移）⇒ 同样 unusable",
+  },
+  {
+    name: "send-button 对账把「矛盾」改判成 pass（N59 假绿原样复活）",
+    why: "真机 sendButtonFound=false 而 mock 命中，这是两份证据互相打架；判 pass 等于宣布「矩阵全绿 ⇒ 发送按钮可用」，而这正是本条要杀掉的结论",
+    target: "adapter-matrix/adapter-test-utils.js",
+    find: '    status: "contradiction",',
+    replace: '    status: "pass",',
+    testFile: "sendbutton-crosscheck.test.mjs",
+    expectTest: "对账判据：真机 false + mock 命中 ⇒ contradiction（这就是假绿）",
+  },
+  {
+    name: "STRICT_SENDBUTTON 不再让门禁变红（解冻验收再也拦不住）",
+    why: "严格模式下「真机没有发送按钮」是必须挡住的事实；开关哑掉，P7 命题就会靠 SKIP 绕过去，看似验收通过实则没验",
+    target: "adapter-matrix/adapter-test-runner.js",
+    find: "          if (STRICT_SENDBUTTON) {",
+    replace: "          if (false) {",
+    testFile: "sendbutton-crosscheck.test.mjs",
+    expectTest: "STRICT_SENDBUTTON=1：同一个平台判 FAIL，退出码 1（解冻验收必须用它）",
+  },
+
   // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────
   // 四轮 A/B 全部 723.x s 失败、截图却显示 AI 已答完：长会话卸载旧回答，
   // 计数不涨 ⇒ countGrew 恒 false。下面把「内容型增长信号」的每一环

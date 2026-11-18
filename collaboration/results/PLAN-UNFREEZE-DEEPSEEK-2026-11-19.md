@@ -162,6 +162,23 @@ Totals: 2 passed, 4 failed (6 items)
 验收：变异锚「删掉 Enter 兜底」被杀；deepseek 的 send-button 断言从**自证 PASS** 变成
 **「显式断言 null」的绿**（有真机依据）。
 
+**A1 实测（2026-11-19，已完成；A2/A3 未做）**
+
+- 落地：`adapter-test-utils.js` 加 `readRealSnapshotMeta()` + 纯函数 `judgeSendButtonCrossCheck()`（5 态）；
+  `adapter-test-runner.js` 的 send-button 断言改成「先问真机快照再断言」，`runTestAsync` 认 `{ skip: "原因" }`，
+  `formatResults` 把原因打在同一行；新增 `tests/sendbutton-crosscheck.test.mjs`（12 用例）+ 3 条变异锚（3/3 被杀）。
+- **偏离计划一处，且有理由**：上面第 1 步写的是「把 9 条假绿**变成红**」。实际做成 **SKIP 并写明原因**，
+  红由 `STRICT_SENDBUTTON=1` 提供。理由：9 条里有 2 条（chatgpt / claude）是**快照不可用**而非矛盾，
+  把它们判红等于用「环境限制」当缺陷；剩下 7 条判红则会让 main 长期带着 7 条红，红久了没人看。
+  「未验证」与「坏了」必须能区分 —— 这正是 N59 想修的那个毛病（把未验证说成已验证）的镜像，
+  只是方向相反：把未验证说成坏了，同样让人读不懂门禁。
+- 数字：矩阵 `116/125 passed, 0 failed, 9 skipped` → `107/125 passed, 0 failed, 18 skipped`；
+  严格模式单跑 deepseek `9/11, 1 failed, 1 skipped`、退出码 1。
+- **顺带挖出的测试洞**：真机 11 站里 `outcome` 与 `composerFound` 恰好同真同假，所以删掉
+  `composerFound === true` 这半句，「登录墙」那条用例照样全绿 —— 首轮变异锚实测**存活**。
+  补了「采集成功但没找着输入框（composer 选择器漂移）」用例后才杀死。记在 N59 fix 里。
+  这类洞只有变异检查能发现：用例在跑、结果也对，只是它守的不是那一行。
+
 ### B · session-wall-ab：拆掉「一个常量当两个用」
 
 这套工件本身没错，错在**耦合**：`FROZEN_AB_PLATFORMS` 同时承担「不许碰」与「A/B 实验对象」，
@@ -190,7 +207,7 @@ N25 的历史证据一分不丢（回执与计划都还在 `evidence/`），只�
 ### 执行顺序（依赖关系）
 
 ```
-A1 证据对账  →  B1/B2 解耦  →  A2/A3 fixture 与 adapter 收口  →  B3 计划退役
+A1 证据对账 ✅ →  B1/B2 解耦  →  A2/A3 fixture 与 adapter 收口  →  B3 计划退役
             →  P0 立项  →  P2 常量改动  →  P3 离线门禁  →  P4 真机验收
 ```
 
