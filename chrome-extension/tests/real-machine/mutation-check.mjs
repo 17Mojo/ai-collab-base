@@ -1365,6 +1365,10 @@ const MUTATIONS = [
     testFile: "typing-indicator.test.mjs",
     expectTest: "DeepSeek：空闲页上的搜索来源图标（class 带 loading）不得被判成「正在生成」",
   },
+  // ⚠️ 下面两条的 `target` 写的是 `real-machine/...`，**没有** `tests/` 前缀。
+  // 原因：非 src/ public/ packs/ 开头的目标会拼到 `COPY_ROOT = .mutation-tmp/tests` 上
+  // （见本文件末尾的 targetAbs 计算）。写成 `tests/real-machine/xxx` 会报
+  // 「目标文件不存在」，而工作区里的文件其实好好的——2026-11-18 踩过一次。
   {
     name: "text-length-probe 去掉「在输入区上沿之上」那条闸门",
     why: "少这一条就可能点到输入框或发送键——探针从「只读」变成「可能发消息」，而这正是 N57 取证时唯一被允许的例外点击",
