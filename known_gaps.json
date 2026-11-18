@@ -993,6 +993,25 @@
       ],
       "found_at": "2026-11-18",
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N46",
+      "priority": "P3",
+      "status": "closed",
+      "title": "本地把「缺 pytest-asyncio 导致的异步用例失败」当成「环境基线」接受了 50 条红",
+      "reader": "任何看到本地全量 pytest 有约 50 条红就跳过的人，以及任何读到 RESULT-GOV-RESTORE-001 / 归档 tasks.md 里「50 条失败为本地环境基线（外部服务/网络类）」这句话并据此认为不可修的人。",
+      "where": [
+        "pyproject.toml:25-33（[project.optional-dependencies].dev 声明 pytest-asyncio>=0.21.0）",
+        "requirements.txt:20（同一依赖，CI 装）",
+        "pyproject.toml:47-48（asyncio_mode = auto / asyncio_default_fixture_loop_scope，缺插件时这两条静默失效）",
+        "collaboration/results/RESULT-GOV-RESTORE-001.md:164（原归因，已追加勘误）",
+        ".github/workflows/lint.yml:42（51 个「环境基线失败」的原始表述，已加回溯更正）"
+      ],
+      "detail": "2026-11-18 修 N44/N45 后跑全量单测，得 `50 failed, 3057 passed`，失败全部集中在 7 个文件（consensus_engine* / soul_injection* / ai_integration_mock_flags），报错文本一模一样：`async def functions are not natively supported. You need to install a suitable plugin`。查证后发现：pytest-asyncio 同时列在 pyproject 的 [dev] extra 与 requirements.txt，CI 的 `pip install -r requirements.txt` 会装，但本机解释器（workbuddy Python 3.13.12）没有；仓库里的 .venv 是 2026-11-03 由 uv 建的空壳（连 pytest 都没有），也没人用它跑测试。上一轮治理 change 把同一批失败记为「本地环境基线（外部服务/网络类），与 origin/main 逐条一致，非本 change 引入」——**两侧对照本身是对的，错的只是把「同环境同红」进一步读成「不可归因」**。",
+      "impact": "把可修的依赖缺失正常化：每次改动都带着 50 条噪音红做回归，「新增失败」必须靠 comm 逐条比对才能分辨，任何一条真红都容易被淹没在这 50 条里。更坏的是它污染了归档证据——后续读者会认为这批失败只能接受。",
+      "fix": "已修（2026-11-18）。`python3 -m pip install \"pytest-asyncio>=0.21.0\"`（实装 1.5.0）后，原先 50 条失败所属的 7 个文件 `82 passed`，`tests/unit` 全量 `3037 passed, 1 skipped, 0 failed`（唯一 skip 是 test_database_indexes 依赖的本地 backend 库不存在，属真实前置条件）。同时在 collaboration/results/RESULT-GOV-RESTORE-001.md 末尾追加「勘误」章节、在 .github/workflows/lint.yml:42 加回溯更正——两处都保留原文数字，只更正归因，因为原表记录的观测没错。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     }
   ]
 }

@@ -278,3 +278,20 @@ All checks passed!
 **结果报告与工单状态仍成立**：`audited=1 consistent=1 mismatch=0`；工单 `TASK-GOV-RESTORE-001`
 状态 `completed`，ACK 已由 CLI 生成。归档与登记均落在 main，主工作区另一 session 的在途改动
 数量在全程保持 153 未变。
+
+## 勘误（2026-11-18 · §6「50 条失败是本地环境基线」的归因更正）
+
+原文把 `50 failed` 归因为「外部服务/网络类」。该归因**不成立**：50 条失败全部是同一条
+`async def functions are not natively supported` —— 解释器缺 `pytest-asyncio`。它同时声明在
+`pyproject.toml` 的 `[project.optional-dependencies].dev` 与 `requirements.txt:20`，CI 装了、
+本地没装，于是 `asyncio_mode = "auto"` 这条配置也一并失效（pytest 报 unknown config option）。
+它们不属于「外部服务/网络」这种不可控基线。
+
+2026-11-18 在本机执行 `python3 -m pip install "pytest-asyncio>=0.21.0"`（实际装到 1.5.0）后，
+`tests/unit` 全量为 `3037 passed, 1 skipped, 0 failed`。
+
+**原表的两侧对照结论仍然有效**：基线侧与当前侧同环境、同失败集合、`cmp` IDENTICAL ——
+方法学没被推翻，被推翻的只是「这些失败不可归因、只能当基线接受」这一步推断。
+
+留勘误而不改原文：原表记录的是当时环境下的观测，数字没错，错的是归因。
+教训——把「一直红」称作「环境基线」，会让下一个人直接跳过归因；而这次归因只花了一条命令。
