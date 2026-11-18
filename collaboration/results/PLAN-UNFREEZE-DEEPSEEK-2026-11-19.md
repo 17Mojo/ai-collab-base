@@ -44,6 +44,7 @@
 | `tests/platform-freeze.test.mjs:134` | N35 回归：用 deepseek 当「真的解冻过」的样本 | 换 longcat |
 | `tests/platform-freeze.test.mjs:154` | 同上 | 换 longcat |
 | `tests/session-wall-ab.test.mjs:53/59/68/154/163` | 断言 A/B 计划的冻结对**恰好是 deepseek + longcat**、4 条命令里两站齐现 | 只针对 longcat，或整体退役（见 §5 裁定 B） |
+| `tests/platform-freeze.test.mjs:55` | 测试名「活跃 5 站默认放行」——断言是遍历式的，不会红 | 仅需改名（**假绿**：名字说 5 站，实际跑 6 站） |
 | `tests/real-machine/mutation-check.mjs:1205-1213` | 锚点「把 deepseek 悄悄加进活跃白名单」，`find` 匹配 `[\n  "stepfun",` | 换成注入 longcat / 未登记 id；`expectTest` 跟着改（见 2.3） |
 
 ### 2.2 跟着语义漂移、但不报错的地方
@@ -70,7 +71,7 @@
 ⇒ 解冻时必须**同时**改写这个锚点（建议改成「把 longcat 悄悄加进白名单」，并且
 `expectTest` 跟着测试改名一起更新）。
 
-## 3 · 解冻前必须证明的 8 条（这是「论证」的主体）
+## 3 · 解冻前必须证明的 8 条 + 1 条跨站（这是「论证」的主体）
 
 每条都写成**可证伪**的形式：给判据、给当前证据、给结论。结论只有三种：已证 / 未证 / 不可证。
 
