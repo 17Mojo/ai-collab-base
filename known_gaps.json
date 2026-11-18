@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-18",
+  "updated_at": "2026-11-19",
   "purpose": "已确认但本次未修的缺陷台账。宁可写下来也不要留在某人脑子里——下一个人接手时不必重新考古一遍。",
   "conventions": {
     "id": "N1、N2……递增，永不复用。关闭后把 status 改 closed 并保留条目与结论，不要删。",
@@ -1149,9 +1149,9 @@
         "chrome-extension/src/platforms/deepseek-adapter.js:138-160（clickSend：取不到按钮就派发 Enter keydown）",
         "chrome-extension/tests/real-machine/fixtures/real/deepseek.json（sendButtonFound=false）"
       ],
-      "detail": "2026-11-18 用登录态实采落地页后 `sendButtonFound=false`。复查真实 DOM：`document.querySelectorAll(\"button\")` 在落地页上命中 0 个；输入区右侧那个紫色的发送箭头是 `div.ds-icon > svg`，祖先六层全是构建期哈希类名（`_020ab5b` / `_77cefa5 _9996a53` / `aaff8b8f` / `_9a2f8e4` / `_660ca72`），没有 aria-label / data-testid / role / 稳定 class。所以 `button[...]` 这四条选择器**不可能命中**，与漂移无关，是形状不匹配。\n矩阵里 deepseek 的「getSendButton() 命中 fixture 标注的发送按钮」长期是 SKIP（fixture 没标 send-button），真实快照段也是 SKIP（没有标注可对），于是这条一直没被任何门禁问过。",
-      "impact": "功能上不致命：`clickSend()` 取不到按钮会派发 Enter keydown，历史 L2 也确实发出去了。但它意味着「发送按钮」这条链路在 deepseek 上从未被验证，且**看起来是被验证过的**（矩阵全绿，只是那条是 SKIP）。若将来 Enter 兜底被移除或站点改成「Enter 换行」，这条会静默变成发不出去。",
-      "fix": "未修（deepseek 已按 N25 退出目标源、属冻结平台，本轮不动生产选择器）。\n若将来要修：不要写哈希类名。可考虑 `textarea` 的兄弟位置锚定（如 composer 容器内最后一个 `div[tabindex=\"0\"]`）+ 可见性闸，或干脆承认「走 Enter」，把 `sendButton` 留空并在注释里写明「本站无 button 形态的发送控件」，同时让矩阵对 deepseek 的 send-button 断言显式记 SKIP 原因（现在是无声跳过）。",
+      "detail": "2026-11-18 用登录态实采落地页后 `sendButtonFound=false`。复查真实 DOM：`document.querySelectorAll(\"button\")` 在落地页上命中 0 个；输入区右侧那个紫色的发送箭头是 `div.ds-icon > svg`，祖先六层全是构建期哈希类名（`_020ab5b` / `_77cefa5 _9996a53` / `aaff8b8f` / `_9a2f8e4` / `_660ca72`），没有 aria-label / data-testid / role / 稳定 class。所以 `button[...]` 这四条选择器**不可能命中**，与漂移无关，是形状不匹配。\n**更正（2026-11-19）**：此前这里写「矩阵那条长期是 SKIP」——错了，写反了。实测矩阵输出是\n`[PASS] getSendButton() 命中 fixture 标注的发送按钮`：mock fixture 里放了一个真机上根本不存在的\n`<button data-testid=\"send-button\" aria-label=\"发送\" class=\"send-button\" data-role=\"send-button\">`，\n它同时命中 adapter 的 4 条选择器，于是测试绿了。这不是「没人问过」，是**用选择器写 fixture、再用 fixture 验选择器**的自证循环。\n真机快照 `fixtures/real/deepseek.json` 自己写着 `sendButtonFound: false`（采集器调的也是 `adapter.getSendButton()`，\n同一函数两种 DOM 结论相反），两份证据从未对账。系统性面见 N59。",
+      "impact": "功能上不致命：`clickSend()` 取不到按钮会派发 Enter keydown，历史 L2 也确实发出去了。但它意味着「发送按钮」这条链路在 deepseek 上从未被验证，且**看起来是被验证过的**——更糟的是它不是 SKIP 而是 **PASS**（见 detail 的更正），所以连「这条被跳过了」这层提醒都没有。若将来 Enter 兜底被移除或站点改成「Enter 换行」，这条会静默变成发不出去，而矩阵依旧全绿。",
+      "fix": "**未修**（deepseek 已按 N25 退出目标源、属冻结平台，本轮不动生产选择器）。\n修法见 PLAN-UNFREEZE-DEEPSEEK §5 裁定 A：先修假阳性（fixture 按真机重建、删掉那个假 button、\n矩阵加 `data-expect-send-button=\"none\"` 显式断言 `getSendButton()` 必须返回 null），\n再把 4 条死选择器清空并给 Enter 兜底补测试 + 变异锚。**不要**写哈希类名或位置锚定。",
       "found_at": "2026-11-18"
     },
     {
@@ -1225,6 +1225,23 @@
       "detail": "2026-11-19 实测 `openspec validate --specs --strict`：`Totals: 2 passed, 4 failed (6 items)`，通过的只有 concurrent-workspace-safety 与 governance-coverage。四条失败原因完全一样：`## Purpose` 仍是归档时自动写入的占位符（`TBD - created by archiving change xxx. Update Purpose after archive.`）。\n为什么以前没暴露：`openspec validate <change> --strict` 只验**那个 change 的 delta**，delta 里不写 Purpose；把 spec 当整体验才会命中——而 N25 / stepfun 两轮报告里写的都是「validate --strict 零错误」，语境是 change，不是 spec 全集。两类结论不能互相冒充。",
       "impact": "解冻 deepseek 必须改 `active-platform-registry` 的 Scenario（它现在写着「`ACTIVE_PLATFORM_IDS` 仍是不含这两站的 5 站白名单」）。如果改完仍留着占位 Purpose，交付时只能说「新 change 严格通过」，不能说「这个能力被规范干净地描述着」——前者是过程证据，后者才是治理状态。",
       "fix": "未修。逐份补一两句 Purpose（说清这条能力为了什么、约束谁），然后跑 `openspec validate --specs --strict` 直到 6/6 通过。改 `active-platform-registry` 时顺手做，别单开一轮。",
+      "found_at": "2026-11-19"
+    },
+    {
+      "id": "N59",
+      "priority": "P2",
+      "status": "open",
+      "title": "矩阵的「getSendButton() 命中 fixture 标注的发送按钮」是自证循环：9/11 站真机快照写的是 sendButtonFound=false，mock 里却都摆着一个按钮 ⇒ 9 条 PASS 与真机事实相反，且两份证据从不互相对账",
+      "reader": "任何相信「矩阵全绿 ⇒ 发送按钮可用」的人；任何拿适配器矩阵当平台合格证据的人（解冻 deepseek 的 P7 命题就栽在这上面）；以及任何要给某站补 sendButton 选择器的人——你会以为只要 fixture 变绿就成了。",
+      "where": [
+        "chrome-extension/tests/adapter-matrix/adapter-test-runner.js:153-166（断言：fixture 必须标注恰好 1 个 send-button，且 getSendButton() 必须返回它）",
+        "chrome-extension/tests/adapter-matrix/fixtures/mock-dom-deepseek.html:45（真机上不存在的 button[data-testid=send-button][aria-label=发送][class=send-button]）",
+        "chrome-extension/tests/real-machine/snapshot-capture.mjs:243-256（采集器用的也是 adapter.getSendButton()，同一个函数，真实 DOM 上返回 null）",
+        "chrome-extension/tests/real-machine/fixtures/real/*.json（9 份 sendButtonFound=false，只有 qianwen / stepfun 为 true）"
+      ],
+      "detail": "2026-11-19 实测：对 11 份真机快照逐个读 `sendButtonFound`——chatglm / chatgpt / claude / deepseek / gemini / kimi / longcat / yiyan / yuanbao **9 站为 false**，只有 qianwen / stepfun 为 true。而同一次矩阵跑出来，几乎所有站都是 `[PASS] getSendButton() 命中 fixture 标注的发送按钮`。\n两边用的是**同一个函数**（采集器里也是 `adapter.getSendButton()`），只是 DOM 不同：真机页面回 null，mock 页面回按钮。也就是说这条 PASS 唯一的信息量是「mock 里有个按钮」，与真机有没有按钮无关——而 mock 里的按钮是照着 adapter 的选择器写的（`data-testid=send-button` / `aria-label=发送` / `class=send-button` 三条同时命中），等于**用选择器写 fixture，再用 fixture 验选择器**。\ndeepseek 有独立复核（落地页 `querySelectorAll(\"button\")` = 0 个，见 N54）；其余 8 站的 false 尚未复核，可能是真没有按钮，也可能是采集器探针不够——**两种情况下这条 PASS 都不成立**，因为它压根没用真机事实。",
+      "impact": "它把「未验证」显示成「已验证」，而且比 SKIP 更坏：SKIP 至少留了个「这里没测」的痕迹。解冻论证里 P7（发送链路可用）就卡在这——想拿矩阵当证据，翻出来的是一条自证出来的绿。整个适配器矩阵的可信度也因此被拉低：凡是用 mock 断言「选择器命中」的条目，都可能同构。",
+      "fix": "未修。修法（PLAN-UNFREEZE-DEEPSEEK §5 裁定 A）：\n① 先让两份证据对账：矩阵跑 send-button 断言前读同站真实快照的 `sendButtonFound`，两者矛盾时**记 FAIL 并指名道姓**（「真机没按钮，mock 有」），不许静默绿；\n② 支持 fixture 显式声明 `data-expect-send-button=\"none\"`：此时断言改成「`getSendButton()` 必须返回 null」，站点将来真加了 button 就变红，逼着重新评估；\n③ 逐站复核那 8 个 false（只读探针数 `document.querySelectorAll(\"button\")` 与输入区邻居），把「真没有」与「探针不够」分开。\n顺序上 ① 先做：它不改任何 fixture 就能立刻把假绿变成红，是唯一能在一天内恢复矩阵可信度的一步。",
       "found_at": "2026-11-19"
     }
   ]
