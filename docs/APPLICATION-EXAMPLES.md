@@ -12,7 +12,9 @@
 > - **第四轮（2026-11-18，基线 `ada4ceb`）**：活跃五站（stepfun / yuanbao / chatglm / yiyan / kimi）
 >   真机点按实测，**范例一 5/5 PASS**（每站 8/8 步、`precise` 投递）；
 >   **范例二~四本次未获得点按实证**，原因逐条列在 `RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §2。
->   本轮另登记三条未修缺陷：N34（登录判据假阳性）、N35（冻结守卫日志误报）、N36（多平台执行器未接线）。
+>   本轮另登记三条缺陷：N34（登录判据假阳性）、N35（冻结守卫日志误报）、N36（多平台执行器未接线）。
+>   **处置状态（回填）：** N34 / N35 已修并关闭；N36 按裁定「标注未实现」关闭——代码保留并在文件头加
+>   `@unwired` 标记，范例二阶段 1 降级为规划态，配套绊线 `tests/multiplatform-unwired.test.mjs`。
 >
 > 口径：**实测成立**（真机验证过）/ **代码层成立**（源码实证，未跑端到端）/ **规划态**（尚不存在，勿照抄）。
 
@@ -103,11 +105,16 @@
   - multi-platform-executor.js: findPlatformTabs → Promise.allSettled 并发注入
   - 每 2 秒轮询 typing 状态直至全部完成（60s+ 超时策略以 wait-policy 为准，
     默认稳定窗 8 秒防思考停顿误判），收集各平台响应文本
-      〔修订注 — 2026-11-18 实测，查 N36〕上面这三行描述的是「算法」，不是「可用功能」。
-      `MultiPlatformExecutor` 在 `multi-platform-executor.js:16` 定义、`:432` 导出，
+      〔修订注 — 2026-11-18 已裁定，查 N36〕上面这三行是「规划态」，不是可用功能。
+      `MultiPlatformExecutor` 在 `multi-platform-executor.js:45` 定义、`:461` 导出，
       但 `src/` 全仓无任何 import，`dist/service-worker.js` 与 `dist/content-script.js`
-      各 0 命中，`public/popup.html` / `popup.js` 也没有多平台勾选 UI。
+      各 0 命中，`public/popup.html` / `popup.js` 也没有多平台勾选 UI，
+      `service-worker.js` 的消息 switch 同样没有对应分支。
       也就是说：阶段 1 目前无法点按触发，属于「代码在、未接线」。
+      代码不删（阶段 2 / 3 是实盘能力，阶段 1 是它们的入口），但已按裁定在文件头加
+      `@unwired` 显式标记，写明现状证据与「启用必须同时做三件事」；
+      `chrome-extension/tests/multiplatform-unwired.test.mjs` 是配套绊线，
+      「接线了但本文没改」或「标记删了但仍无入口」都会让它变红。
       阶段 2 / 阶段 3 的后端 API 可独立调用（下面两段实测成立），
       但「多平台并发注入」这一步走不通。读本文时请勿据此认为多平台共创已可用。
 
@@ -152,7 +159,8 @@ Body: { "consensus": "<共识文本>", "profile_name": "dongyuhui" }
 ```
 
 ### 涉及文件
-- `chrome-extension/src/background/multi-platform-executor.js` — 多平台执行
+- `chrome-extension/src/background/multi-platform-executor.js` — 多平台执行（⚠️ 规划态，`@unwired` 未接线，见 N36）
+- `chrome-extension/tests/multiplatform-unwired.test.mjs` — 上述「未接线」状态的绊线
 - `local-backend/app/api/consensus.py` / `soul.py` — 共识/风格 API（前缀 `/api/consensus`、`/api/soul`）
 - `ai_collab/engines/consensus_engine.py` / `soul_injection_engine.py` — 双引擎
 - `local-backend/app/db/style_db.py` — 风格预设库（含 dongyuhui）

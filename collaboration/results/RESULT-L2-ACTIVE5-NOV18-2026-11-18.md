@@ -51,7 +51,7 @@
 
 | 范例 | 结论 | 磁盘证据 |
 |---|---|---|
-| 范例二 多平台并发注入 + 共识 + 风格注入 | **不可点按实测 —— 多平台执行器未接线** | `MultiPlatformExecutor` 仅 `multi-platform-executor.js:16` 定义、`:432` 导出；`executeAll` 只有类内自调用 `:341`；`src/` 全仓无 import；`dist/service-worker.js` 与 `dist/content-script.js` 各 **0 命中**；`public/popup.*` 无多平台 UI；`service-worker.js` 消息 switch 无多平台分支 |
+| 范例二 多平台并发注入 + 共识 + 风格注入 | **不可点按实测 —— 多平台执行器未接线**（2026-11-18 已裁定「标注未实现」，N36 closed） | `MultiPlatformExecutor` 仅 `multi-platform-executor.js:45` 定义、`:461` 导出（初记 :16/:432，文件变长后重核）；`executeAll` 只有类内自调用 `:370`（初记 :341）；`src/` 全仓无 import；`dist/service-worker.js` 与 `dist/content-script.js` 各 **0 命中**；`public/popup.*` 无多平台 UI；`service-worker.js` 消息 switch 无多平台分支 |
 | 范例三 多 Agent ACK 协议 | **无浏览器点按对象** | `agent_orchestrator.py`、`ack_protocol.py` 对 `playwright/chromium/page.` 引用数均为 **0**；该范例是 CLI + 状态机协议 |
 | 范例四 NotebookLM 深度研究 | **REAL 通路不可达，且非活跃五站** | `notebooklm.py:49-62` 健康检查依赖 `builtins.mcp__plugin_notebooklm__get_health`（普通进程无此属性）；`integration_flags.py:22` 为 `IntegrationMode.FALLBACK`；五站白名单不含 NotebookLM |
 
@@ -61,7 +61,7 @@
 ## 3. 本次实测顺带发现的三条缺陷
 
 > **立项状态（2026-11-18 回填）**：三条均已登记进 `known_gaps.json`，**不是「待登记」**：
-> D1 → **N34**（P2，**已修 closed**）、D2 → **N35**（P3，**已修 closed**）、D3 → **N36**（P1，open）。
+> D1 → **N34**（P2，**已修 closed**）、D2 → **N35**（P3，**已修 closed**）、D3 → **N36**（P1，**已裁定「标注未实现」closed**）。
 > 本节保留发现时的原始写法以便追溯，编号映射以本行为准；后续状态只看 `known_gaps.json`。
 > 〔回填说明〕本节此前写「建议登记为独立 gap」，与磁盘不符——那三条在 `f8eeb0f` 就已入库，
 > 是本节漏了交叉引用，导致读者以为尚未立项。2026-11-18 修正。
@@ -91,10 +91,15 @@
 
 - `MultiPlatformExecutor` 是死代码，无任何生产入口。若文档/对外材料称"多平台并发共创可用"，
   与磁盘不符。
-- **已登记（2026-11-18）**：`known_gaps.json` **N36**（P1 / open）。性质与 N31（Hook 脚本齐全
+- **已登记（2026-11-18）**：`known_gaps.json` **N36**。性质与 N31（Hook 脚本齐全
   但从未接线）同类——「文件存在 + 符号存在」但调用链没接上，自检全绿而能力为零。
-  待裁定的仍是同一个岔路：接线上线，或明确标注未实现；倾向后者。
-- 文档侧已同步：`docs/APPLICATION-EXAMPLES.md` 范例二阶段 1 已加〔修订注〕指向 N36。
+- **已裁定并关闭（2026-11-18）**：走「标注未实现」，不删代码、暂不接线。落地三件：
+  ① `multi-platform-executor.js` 文件头加 `@unwired` 标记块（四路证据 + 启用三件事 + 保留理由）；
+  ② `docs/APPLICATION-EXAMPLES.md` 范例二阶段 1 的〔修订注〕改为「规划态」，`docs/ARCHAEOLOGY_CODE_INVENTORY.md`
+  同一文件条目加 ⚠️ 未接线提示；③ 新增绊线 `chrome-extension/tests/multiplatform-unwired.test.mjs`
+  （标记与现状双向印证），配套 3 条变异锚全部被杀死。
+- **残余事实**：阶段 1 仍无法点按触发。本条 closed 只表示「已诚实标注且有人守」，不表示能力可用；
+  解除时须补真机点按实证（静态判据证明不了「点一下真的能跑」）。
 
 ## 4. 口径声明
 

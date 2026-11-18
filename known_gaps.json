@@ -749,29 +749,38 @@
     {
       "id": "N36",
       "priority": "P1",
-      "status": "open",
+      "status": "closed",
       "title": "范例二「多平台并发注入」的执行器是死代码：无任何生产入口，popup 也没有多平台 UI",
       "reader": "读 `docs/APPLICATION-EXAMPLES.md` 范例二并打算照做的人——文档阶段 1 写的是 `findPlatformTabs → Promise.allSettled 并发注入`，读者会去找「多平台执行模式」的勾选界面，找不到；以及任何对外说「AI Collab Base 支持多平台 AI 共创」的人——阶段 1 这一步在磁盘上完全没有入口，只有阶段 2/3 的后端 API 可独立调用。",
       "where": [
-        "chrome-extension/src/background/multi-platform-executor.js:16（class MultiPlatformExecutor 定义）",
-        "chrome-extension/src/background/multi-platform-executor.js:432（export default）",
-        "chrome-extension/src/background/multi-platform-executor.js:341（executeAll 仅类内自调用）",
+        "chrome-extension/src/background/multi-platform-executor.js:45（class MultiPlatformExecutor 定义；条目初记 :16，已按 2026-11-18 文件变长重核）",
+        "chrome-extension/src/background/multi-platform-executor.js:461（export default；初记 :432）",
+        "chrome-extension/src/background/multi-platform-executor.js:370（executeAll 唯一调用点，类内自调；初记 :341）",
+        "chrome-extension/src/background/multi-platform-executor.js:1-35（@unwired 标记块：四路证据 + 启用三件事 + 保留理由）",
         "chrome-extension/src/（全仓对 multi-platform-executor 的 import 数：0）",
         "chrome-extension/dist/service-worker.js / dist/content-script.js（MultiPlatformExecutor 命中数：各 0）",
         "chrome-extension/public/popup.html / popup.js（多平台勾选 UI 命中数：各 0）",
-        "docs/APPLICATION-EXAMPLES.md 范例二 阶段 1（2026-11-18 已加〔修订注〕指向本条）"
+        "chrome-extension/tests/multiplatform-unwired.test.mjs（配套绊线，4 条用例）",
+        "docs/APPLICATION-EXAMPLES.md 范例二 阶段 1（〔修订注〕已改为「规划态」并指向本条）"
       ],
-      "detail": "四路证据一致指向「代码在、未接线」：① 类只在自身文件内定义（:16）与导出（:432）；② `executeAll` 唯一调用点在同一类的 :341，属类内自调用；③ `chrome-extension/src/` 下没有任何文件 import 它；④ 构建产物 `dist/service-worker.js`、`dist/content-script.js` 各 0 命中——打包器不会把未引用的模块打进产物，0 命中即证明它没进运行时。另查 popup：`popup.html` / `popup.js` 对 multi / 多平台 / checkbox / executeAll 的命中数均为 0，说明连触发界面都不存在。因此范例二的阶段 1 不是「跑不通」，是「没有入口」。",
+      "detail": "四路证据一致指向「代码在、未接线」：① 类只在自身文件内定义（:45）与导出（:461）；② `executeAll` 唯一调用点在同一类的 :370，属类内自调用；③ `chrome-extension/src/` 下没有任何文件 import 它；④ 构建产物 `dist/service-worker.js`、`dist/content-script.js` 各 0 命中——打包器不会把未引用的模块打进产物，0 命中即证明它没进运行时。另查 popup：`popup.html` / `popup.js` 对 multi / 多平台 / checkbox / executeAll 的命中数均为 0，说明连触发界面都不存在。因此范例二的阶段 1 不是「跑不通」，是「没有入口」。",
       "impact": "① 文档描述与磁盘能力不符，读者按文档去找多平台执行模式必然落空；② 对外若宣称「多平台 AI 共创」，属于无法点按验证的能力，与本项目 disk-truth 口径冲突；③ 这段代码会持续被误认为「现成能力」，后续维护者可能去修一个从未被调用的实现；④ 范例二整条链路的实证只能覆盖阶段 2/3，阶段 1 恒为空白。",
-      "fix": "未修，需先裁定方向（二选一，不宜悬置）：\n① **接线上线**：在 service-worker 增加消息分支、popup 增加平台勾选与触发 UI，并把 `executeAll` 接进真实调用链；同时补真机点按实证。\n② **明确标注未实现**：文档把阶段 1 降级为「规划态」，代码侧或删除死代码、或加显式 TODO 注释说明未接线，并登记到本台账。\n倾向 ②：当前无证据表明该能力在近期路线内，且把它当「现成可用」传播的代价高于删除一个从未被调用的实现。无论选哪条，`docs/APPLICATION-EXAMPLES.md` 范例二都必须在改完后复核〔修订注〕是否仍然成立。",
+      "fix": "已按裁定处置（2026-11-18，用户裁定方向 ②「标注未实现」：不删代码、暂不接线）：\n① **代码侧标记**：`multi-platform-executor.js` 文件头加 `@unwired` 标记块，内含四路现状证据、「多平台并发共创是规划态，不是可用功能」的显式结论、「要启用它必须同时做三件事」（service-worker 加消息分支 + popup 加勾选/触发 UI → 删标记并同步改文档与本条 → 跑绊线）、以及「为什么保留而不删除」的理由（阶段 2/3 是实盘能力，阶段 1 是它们的入口，删掉等于扔掉接线说明书）。\n② **文档侧降级**：`docs/APPLICATION-EXAMPLES.md` 范例二阶段 1 的〔修订注〕改为「已裁定，规划态」，写明标记位置、绊线与行号（:45/:461），保留「无法点按触发」的事实陈述；「涉及文件」小节给该文件加 ⚠️ 规划态标注。\n③ **绊线**：新增 `chrome-extension/tests/multiplatform-unwired.test.mjs`（4 条用例）。核心判据是**标记与现状必须互相印证**——未接线必须带 `@unwired`，已接线必须不带；任一方向不一致即红。另三条分别断言：标记块必须写明 N36、未接线时 src/ 零引用（防半接线）、范例二文档说法与代码现状一致。\n④ **变异验证**：4 个变异全部被对应用例杀死——接线但不删标记 → 用例 1/3/4 红；删标记但仍无入口 → 1/2 红；完整接线但文档未改 → 仅 4 红、2/3 正确 skip；文档谎称可用 → 仅 4 红。\n⑤ **顺带修掉一个自造的反向脆弱**：初版用例 2/3 无条件要求「标记在、零引用」，将来若正常接线并删标记会**永久红**——已改为接线时 skip，避免绊线变成拦路石。\n残余事实（裁定的代价，不是缺陷）：阶段 1 仍无法点按触发，「多平台 AI 共创」在磁盘上仍非可用能力；本条 closed 只表示「已诚实标注且有人守」，不表示能力可用。\n附属建议（未做，属 N38 范围）：范例二与两份 plan 里的门禁编号口径问题另见 N38。",
       "found_at": "2026-11-18",
       "appended_evidence": [
         "import 计数：`grep -rn 'multi-platform-executor\\|MultiPlatformExecutor' chrome-extension/src/` 排除自身文件后为 0 条。",
         "构建产物计数：`grep -c 'MultiPlatformExecutor' chrome-extension/dist/service-worker.js` → 0；`.../dist/content-script.js` → 0。",
         "UI 计数：`grep -c 'multi\\|多平台\\|executeAll' chrome-extension/public/popup.html` → 0；`popup.js` → 0。",
         "范例三/四同批核查（非本条范围，仅说明范例二~四为何都拿不到点按实证）：`agent_orchestrator.py` / `ack_protocol.py` 对 playwright/chromium/page. 引用数为 0（范例三是 CLI + 状态机，无点按对象）；范例四 `notebooklm.py:49-62` 的健康检查依赖 `builtins.mcp__plugin_notebooklm__get_health`，普通进程无此属性，且 `integration_flags.py:22` 为 `IntegrationMode.FALLBACK`，五站白名单不含 NotebookLM。",
-        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §2 与 §3 D3 段。"
-      ]
+        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §2 与 §3 D3 段。",
+        "处置落地（2026-11-18）：文件头标记块落于 `multi-platform-executor.js:1-35`；行号重核结果 `grep -n '^class MultiPlatformExecutor\\|^export default MultiPlatformExecutor'` → 45 / 461（初记 16 / 432），`grep -n executeAll` → 类内自调 :370（初记 :341）。",
+        "绊线实测：`node --test tests/multiplatform-unwired.test.mjs` → 4 条 pass。",
+        "变异清单与结果：M1 在 service-worker 追加 import 但保留标记 → not ok 1/3/4（接线未销标记被逮）；M2 删除 @unwired 但代码仍无入口 → not ok 1/2（谎称已接被逮）；M3 接线+删标记但文档未改 → 仅 not ok 4，2/3 正确 SKIP；M4 文档把「未接线」改成「已接线」而代码无入口 → 仅 not ok 4。四个变异无存活。",
+        "变异过程中发现的测试缺陷（已修）：初版用例 2/3 无条件断言，若将来合规接线会永久红；改为 `t.skip()` 于 wired 分支后重跑，M3 下正确 skip 而非 fail。",
+        "变异已固化进 `chrome-extension/tests/real-machine/mutation-check.mjs`（不再是一次性手工验证）：新增 3 条锚——service-worker 接 import 但保留标记 / popup 长出「多平台」UI 但无执行器 / 删掉标记行但无入口，全部由「标记与接线现状必须互相印证」杀死；`MUTATION_TESTFILE=multiplatform-unwired.test.mjs` 单跑 3/3，全量 `node tests/real-machine/mutation-check.mjs` → **159/159 被杀死**（原 156 + 本 3 条）。",
+        "判据收紧（2026-11-18 变异过程中发现）：初版用 `implRaw.includes(\"@unwired\")` 判定标记，但文件头「启用三件事」正文里也引用了一次该 token ⇒ 只删标记行、留下正文提及，绊线仍认为「标记在」，即最该响的时候不响。已改为只认行首标记行 `/^\\s*\\*\\s*@unwired\\b/m`。"
+      ],
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N37",

@@ -58,8 +58,10 @@
   - `on_error` / `on_timeout` 错误跳转
   - `_buildPrompt()`：模板替换，优先使用 runtime_overrides 白名单字段
 
-**`chrome-extension/src/background/multi-platform-executor.js`**（431 行）
-- `MultiPlatformExecutor` 类：多平台并发执行器
+**`chrome-extension/src/background/multi-platform-executor.js`**（460 行 · ⚠️ **未接线**，见台账 N36）
+> 本清单描述的是它的**内部能力**，不是可用功能：`src/` 全仓 0 个 import、构建产物各 0 命中、
+> popup 无多平台勾选 UI、service-worker 无对应消息分支。文件头有 `@unwired` 标记块写明启用步骤。
+- `MultiPlatformExecutor` 类：多平台并发执行器（规划态）
   - Phase 1：并发注入（`injectToAllPlatforms`），同时向所有 tab 发送 prompt，不等待响应
   - Phase 2：轮询收集（`collectResponses`），每 2 秒检查 typing 状态，max 60 秒
   - `executeAll()`：完整并发流程

@@ -1,6 +1,35 @@
 /**
  * Prompt Pack - Multi-Platform Executor (优化版)
  * 真正的并发执行多平台 AI 查询
+ *
+ * @unwired 未接线 —— 本模块目前**没有任何生产入口**（台账 N36，2026-11-18 裁定）
+ *
+ * ## 现状（读之前必看）
+ *
+ * 这段代码实现的是「同一 prompt 并发注入多个平台」，但**调用链没接上**：
+ *   - 全仓 `src/` 对 `multi-platform-executor` 的 import 数：0；
+ *   - 构建产物 `dist/service-worker.js` / `dist/content-script.js` 命中数：各 0
+ *     （打包器不会把未被引用的模块打进产物，0 命中即证明没进运行时）；
+ *   - `public/popup.html` / `popup.js` 没有多平台勾选 UI（multi / 多平台 / executeAll 命中 0）；
+ *   - `service-worker.js` 的消息 switch 也没有多平台分支。
+ *
+ * 也就是说：**「多平台并发共创」是规划态，不是可用功能。**
+ * `docs/APPLICATION-EXAMPLES.md` 范例二阶段 1 已据此加〔修订注〕，把那一步标为规划态；
+ * 阶段 2/3 的后端 API（consensus / soul）可独立调用，是实测成立的，别把两者混为一谈。
+ *
+ * ## 要启用它，必须同时做三件事
+ *
+ * 1. 在 `service-worker.js` 增加消息分支、在 popup 增加平台勾选与触发 UI；
+ * 2. 把这个 `@unwired` 标记删掉，并同步改 `docs/APPLICATION-EXAMPLES.md` 范例二的
+ *    〔修订注〕与 `known_gaps.json` N36；
+ * 3. 跑 `tests/multiplatform-unwired.test.mjs`——它会在「代码被接线但文档没改」时变红，
+ *    这是故意的绊线，不是误报。
+ *
+ * ## 为什么保留而不删除
+ *
+ * 2026-11-18 用户裁定「标注未实现」而非删除：三阶段流水线的阶段 2/3 是实盘能力，
+ * 阶段 1 是其入口；删掉等于把将来接线的说明书一起扔掉。保留 + 显式标记的代价是
+ * 仓里多一份 460 行、从未被 import 过的实现，收益是「读的人一眼知道它没生效」。
  */
 
 /**

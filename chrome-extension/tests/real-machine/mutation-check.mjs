@@ -1672,6 +1672,45 @@ const MUTATIONS = [
     testFile: "platform-freeze.test.mjs",
     expectTest: "N35 回归：冻结但未解冻 ⇒ 不打（旧实现会在这里误报）",
   },
+  // ── 未接线状态绊线（N36：MultiPlatformExecutor 是规划态，不是可用功能）──
+  // 注意方向：这两条模拟的是「接线了但没销标记」，是绊线最该响的那个方向。
+  {
+    name: "把多平台执行器接进 service-worker，但保留 @unwired 标记（N36）",
+    why:
+      "这就是「改了代码没改文档」的现场：功能已经有入口，文件头却还在说「没有任何生产入口」，" +
+      "读的人会以为不能用；绊线必须当场变红，逼人去做启用三件事里的后两步",
+    target: "src/background/service-worker.js",
+    find: 'import PlatformAdapter from "../platforms/adapter.js";',
+    replace:
+      'import PlatformAdapter from "../platforms/adapter.js";\n' +
+      'import MultiPlatformExecutor from "./multi-platform-executor.js";',
+    testFile: "multiplatform-unwired.test.mjs",
+    expectTest: "标记与接线现状必须互相印证",
+  },
+  {
+    name: "popup 长出多平台勾选 UI，但代码仍无生产入口（N36 半接线）",
+    why:
+      "只做界面不接执行器，是比完全没做更糟的状态：用户点得到、点下去没反应。" +
+      "绊线要能看出「某一面已接线」并强制整体复核",
+    target: "public/popup.js",
+    find: "const packList = document.getElementById('packList');",
+    replace:
+      'const multiPlatformModeLabel = "多平台并发执行";\n' +
+      "const packList = document.getElementById('packList');",
+    testFile: "multiplatform-unwired.test.mjs",
+    expectTest: "标记与接线现状必须互相印证",
+  },
+  {
+    name: "删掉 @unwired 标记行，但代码仍无任何入口（N36 谎称已接）",
+    why:
+      "最坏的状态：既没能力，又失去「读的人一眼知道它没生效」的保护。" +
+      "标记行是唯一判据，删了就必须有真入口兜着",
+    target: "src/background/multi-platform-executor.js",
+    find: " * @unwired 未接线",
+    replace: " * @wired 已接线",
+    testFile: "multiplatform-unwired.test.mjs",
+    expectTest: "标记与接线现状必须互相印证",
+  },
 ];
 
 /**
