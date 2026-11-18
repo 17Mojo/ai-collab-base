@@ -372,8 +372,15 @@ def test_controller_apply_reconciles_stale_and_creates_patch_with_explicit_ack(t
     assert report["patches_created"] == 1
     assert report["task_contract_checked"] == 2
     assert report["task_contract_invalid"] == 2
-    assert report["result_consistency_audited"] == 1
-    assert report["result_consistency_issue_count"] == 1
+    # 〔2026-11-18，台账 N45〕这两个数字曾是 1 / 1，因为守护进程自带一份弱审计：
+    # 它只统计「有结果文件但状态未闭合」的任务。改为委托权威实现后变成 2 / 2，
+    # 多出来的是两条真实问题——旧副本根本报不出来的那种：
+    #   - TASK-DRIFT-001  ack_without_artifact（ok ACK 但任务没声明 result_file、
+    #                     状态仍 implementing；正是 N42 的「双网盲区」实例）
+    #   - TASK-REVIEW-001 missing_result_file（completed 但没交产物）
+    # 数字变大不是回归，是审计变严。若这里回到 1，说明又接回了弱副本。
+    assert report["result_consistency_audited"] == 2
+    assert report["result_consistency_issue_count"] == 2
     assert report["error_count"] == 0
 
 
@@ -565,3 +572,155 @@ def test_controller_supports_custom_history_path(tmp_path):
     assert history_file.exists()
     lines = [line for line in history_file.read_text(encoding="utf-8").splitlines() if line.strip()]
     assert len(lines) == 1
+
+
+# ---------------------------------------------------------------------------
+# ACK 看门狗：真扫描、零重派（台账 N45，2026-11-18）
+#
+# 此前 `run_ack_watchdog` 是恒返回 0 的空壳，而它只被读三个计数，
+# 所以「0 个候选」和「根本没扫描」在输出上完全一样。现在接真实现但**强制
+# dry-run**：候选数是真的，重派永远是零。下面三条各自守一个侧面。
+# ---------------------------------------------------------------------------
+
+import pytest  # noqa: E402
+
+daemon = pytest.importorskip("scripts.task_controller_daemon", reason="scripts/task_controller_daemon.py not present")
+
+
+def _seed_silent_dispatch(workspace: Path, *, task_id: str = "TASK-SILENT-001") -> None:
+    """造一条「派发很久、未 ACK、未 receipt、仍在 pending」的任务。"""
+    state = _base_state(workspace)
+    state["tasks"][task_id] = {
+        "task_id": task_id,
+        "ai_type": "codex",
+        "assignee": "codex",
+        "description": "silent task",
+        "status": "pending",
+        "created_at": "2026-03-02T10:00:00+08:00",
+        "updated_at": "2026-03-02T10:00:00+08:00",
+        "notes": [],
+    }
+    _write_state(workspace, state)
+
+    dispatch_file = workspace / "logs" / "agent_dispatch_state.json"
+    dispatch_file.parent.mkdir(parents=True, exist_ok=True)
+    dispatch_file.write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "items": {
+                    task_id: {
+                        "task_id": task_id,
+                        "assignee": "codex",
+                        "dispatched_at": "2026-03-02T10:00:00+08:00",
+                        "dispatch_count": 1,
+                    }
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_daemon_watchdog_scans_for_real(tmp_path):
+    """候选数必须是真扫描结果，不是常量 0。
+
+    变异检查：把 `run_ack_watchdog` 改回 `return {...: 0}` 的空壳，本用例红。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_silent_dispatch(workspace)
+
+    result = daemon.run_ack_watchdog(workspace=workspace, dry_run=False)
+
+    assert result["candidate_count"] == 1, f"空壳式实现会报 0：{result}"
+    assert result["mode"] == "dry-run"
+    assert result["stubbed"] is False
+
+
+def test_daemon_watchdog_never_redispatches_even_in_apply_mode(tmp_path):
+    """守护进程的 apply 模式也不许改派单状态、不许重写派单文件。
+
+    变异检查：把 `_watchdog(...)` 的 `dry_run=True` 换成透传 `dry_run`，
+    本用例红——`dispatch_count` 会 +1，且 AGENT_TRIGGER 文件会被写出来。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _seed_silent_dispatch(workspace)
+
+    dispatch_file = workspace / "logs" / "agent_dispatch_state.json"
+    before = dispatch_file.read_text(encoding="utf-8")
+
+    result = daemon.run_ack_watchdog(workspace=workspace, dry_run=False)
+
+    # 实际动作恒为 0，计划值单列——这两行一起才说明「扫到了，但没动手」
+    assert result["redispatched_count"] == 0
+    assert result["alerted_count"] == 0
+    assert result["would_redispatch_count"] == 1
+    assert dispatch_file.read_text(encoding="utf-8") == before, "dispatch_state 被改写了"
+    item = json.loads(before)["items"]["TASK-SILENT-001"]
+    assert "watchdog_redispatch_count" not in item
+    assert not list((workspace / "collaboration" / "monitoring").glob("AGENT_TRIGGER_*"))
+
+
+def test_daemon_watchdog_zero_is_distinguishable_from_stub(tmp_path):
+    """没有候选时也必须能看出「扫过且为空」，而不是「没扫」。"""
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    _write_state(workspace, _base_state(workspace))
+
+    result = daemon.run_ack_watchdog(workspace=workspace, dry_run=True)
+
+    assert result["candidate_count"] == 0
+    assert result["mode"] == "dry-run" and result["stubbed"] is False
+    assert result["report_file"], "真实现会落报告，空壳不会——这是可核对的存在性证据"
+
+
+def test_once_path_flags_terminal_task_without_result_file(tmp_path):
+    """`--once` 走的审计必须能报 `missing_result_file`（台账 N45 复查）。
+
+    `--once` 才是真实 CLI 入口，`run_controller_once` 只有测试在调。
+    这里钉住「弱副本根本做不到」的判据：completed 但没交产物的任务。
+    变异检查：把 `audit_result_consistency` 改回只看
+    `status not in RESULT_FILE_EXPECTED_STATUSES`，本用例红——
+    那条判据只遍历「有结果文件」的任务，永远不会报 missing_result_file。
+    """
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    script = Path(__file__).resolve().parents[2] / "scripts" / "task_controller_daemon.py"
+
+    payload = _base_state(workspace)
+    payload["tasks"]["TASK-NOART-001"] = {
+        "task_id": "TASK-NOART-001",
+        "ai_type": "codex",
+        "description": "completed without artifact",
+        "files": ["src/d.py"],
+        "status": "completed",
+        "created_at": "2026-03-01T07:00:00+08:00",
+        "updated_at": "2026-03-01T07:10:00+08:00",
+        "completed_at": "2026-03-01T07:10:00+08:00",
+        "notes": [],
+        "vscode_context": {},
+    }
+    payload["completed_tasks"] = ["TASK-NOART-001"]
+    _write_state(workspace, payload)
+
+    result = _run(
+        script,
+        workspace,
+        "--once",
+        "--dry-run",
+        "--active-timeout-sec",
+        "99999999",
+        "--pending-timeout-sec",
+        "99999999",
+        "--report",
+        "logs/controller_dry.json",
+    )
+    assert result.returncode == 0, result.stderr
+
+    report = json.loads((workspace / "logs" / "controller_dry.json").read_text(encoding="utf-8"))
+    kinds = {issue.get("issue_type") for issue in report["result_consistency_issues"]}
+    assert "missing_result_file" in kinds, f"审计没看出终态缺产物，实际 issue 类型: {kinds}"

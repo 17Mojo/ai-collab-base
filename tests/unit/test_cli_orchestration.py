@@ -229,3 +229,83 @@ class TestOrchestrationHistory:
         assert result == 0
         out = capsys.readouterr().out
         assert "role_activated" in out
+
+
+# ---------------------------------------------------------------------------
+# 可用性标注（台账 N44，2026-11-18）
+#
+# 守的是一条真实误读：`status` 用 `●` 标角色，读者自然把 `●` 读成「能干活」；
+# 而 `●` 只表示 binding.status == active。与此同时 `detect` 报 unavailable。
+# 两个输出说的事不同，却都不告诉读者，于是「主执行者绑在不可用服务商上」
+# 被当成绑定错误去改绑，而真问题是诊断输出不可信。
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def bound_workspace():
+    """AGENT_EXEC 绑定 codearts_agent 且状态 active 的工作区。"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        workspace = Path(tmpdir)
+        config = OrchestrationConfig(workspace_path=str(workspace))
+        config.load()
+        config.roles["AGENT_EXEC"].activate("codearts_agent")
+        config.save()
+        yield workspace
+
+
+def _no_vscode_env(monkeypatch):
+    """模拟普通终端：没有任何 VSCode 标记。"""
+    for key in ("VSCODE_PID", "CODEARTS_SESSION"):
+        monkeypatch.delenv(key, raising=False)
+
+
+def test_status_marks_bound_but_unavailable_provider(bound_workspace, capsys, monkeypatch):
+    _no_vscode_env(monkeypatch)
+    result = cli.cmd_orchestration(_args(bound_workspace, subcommand="status"))
+
+    assert result == 0
+    out = capsys.readouterr().out
+    assert "⚠ unavailable" in out, "已绑定但探针不可用的角色必须被打出来"
+    assert "AGENT_EXEC → codearts_agent" in out
+    # 绑定激活标记不能因为不可用就消失——两者是正交维度
+    assert "● AGENT_EXEC" in out
+
+
+def test_status_explains_that_marker_is_not_availability(bound_workspace, capsys, monkeypatch):
+    _no_vscode_env(monkeypatch)
+    cli.cmd_orchestration(_args(bound_workspace, subcommand="status"))
+
+    out = capsys.readouterr().out
+    assert "与可用性无关" in out
+    assert "VSCODE_PID" in out, "必须说明判据，否则 unavailable 仍会被读成通道故障"
+    assert "不会让任务卡住" in out, "必须写明没有派单门禁，否则会被当成阻断"
+
+
+def test_status_probes_instead_of_reading_the_persisted_snapshot(bound_workspace, capsys, monkeypatch):
+    """落盘快照说 connected，探针说 unavailable —— 必须信探针。
+
+    变异检查：把 status 里 `config.detect_providers()` 换成读
+    `provider_registry[*].connection_status`，本用例立刻红。
+    """
+    _no_vscode_env(monkeypatch)
+    config_file = bound_workspace / "config" / "agent-orchestration.json"
+    payload = json.loads(config_file.read_text(encoding="utf-8"))
+    payload["provider_registry"]["codearts_agent"]["connection_status"] = "connected"
+    config_file.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    cli.cmd_orchestration(_args(bound_workspace, subcommand="status"))
+
+    out = capsys.readouterr().out
+    exec_line = next(line for line in out.splitlines() if "AGENT_EXEC →" in line)
+    assert "unavailable" in exec_line, f"读了落盘快照而不是现探：{exec_line}"
+    assert "connected" not in exec_line.replace("unavailable", "")
+
+
+def test_detect_prints_the_probe_criterion(capsys, temp_workspace):
+    result = cli.cmd_orchestration(_args(temp_workspace, subcommand="detect"))
+
+    assert result == 0
+    out = capsys.readouterr().out
+    assert "判据" in out
+    assert "VSCODE_PID" in out, "codearts_agent 的判据必须显式写出来"
+    assert "不等于 CodeArts 通道故障" in out

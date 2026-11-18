@@ -99,7 +99,7 @@
     "codearts_agent": {
       "provider_name": "codearts_agent",
       "display_name": "CodeArts Agent",
-      "connection_status": "detected",
+      "connection_status": "unavailable",
       "supports_sub_agent": false,
       "model_variants": [],
       "capabilities": [

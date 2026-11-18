@@ -322,6 +322,13 @@ class OrchestrationConfig:
                 role.activated_at = datetime.fromisoformat(role_data["activated_at"])
             self.roles[role_id] = role
 
+        # 注意：provider_registry 里的 connection_status / last_check 是
+        # **上一次探测的快照**，不是当前可用性。这里恢复它只为保住
+        # display_name / capabilities / fallback_ack_prefix 等元数据，
+        # 任何「现在能不能用」的判断都必须先跑 detect_providers()。
+        # 历史教训（台账 N44）：快照里 codearts_agent 被写成 `detected`
+        # ——一个该 provider 的 check_availability() 永远产出不了的值——
+        # 冷启动向导据此把它判为可用，与 detect 的实时结论相反。
         for provider_id, provider_data in self.config.get("provider_registry", {}).items():
             provider = AgentProvider(provider_id, provider_data)
             if provider_data.get("last_check"):
@@ -336,10 +343,23 @@ class OrchestrationConfig:
             self.config["roles"] = {role_id: role.to_dict() for role_id, role in self.roles.items()}
             # self.providers 为空时不要清空已有注册表，否则 provider 元数据
             # （display_name / capabilities / fallback_ack_prefix）会被静默抹掉。
+            #
+            # 〔2026-11-18，台账 N44 追溯〕而且非空时也不能**整体替换**：
+            # `provider_registry` 是按 assignee（ACK 前缀命名空间）建键的
+            # （claude_code / codearts_agent / codex，见 ack_protocol._ACK_PREFIX），
+            # 而 `detect_providers()` 填进 self.providers 的是**探测器**键
+            # （claude_code / codex_cli / gemini_cli / codearts_agent）。
+            # 两者只是恰好有三个同名键。实测 `load → detect_providers → save`
+            # 会把 `codex` 条目整条抹掉，连带丢掉 ACK 前缀 `O`——之后 assignee
+            # 为 codex 的 ACK 行就无法被识别。改为合并：只覆盖同名键，
+            # 其余（assignee 命名空间里的 `codex`）原样保留。
             if self.providers:
-                self.config["provider_registry"] = {
-                    provider_id: provider.to_dict() for provider_id, provider in self.providers.items()
-                }
+                registry: dict[str, Any] = dict(self.config.get("provider_registry", {}))
+                for provider_id, provider in self.providers.items():
+                    payload = provider.to_dict()
+                    existing = registry.get(provider_id)
+                    registry[provider_id] = {**existing, **payload} if isinstance(existing, dict) else payload
+                self.config["provider_registry"] = registry
             else:
                 self.config.setdefault("provider_registry", {})
 
@@ -660,7 +680,14 @@ class ColdStartWizard:
 
         # Step 1: Detect providers
         print("\n[步骤 1] 检测可用 Agent 服务商...")
-        # providers detection moved to available
+        # 必须现探测再取可用列表。`get_available_providers()` 读的是
+        # self.providers，而 `load()` 会把 provider_registry 里上一次探测的
+        # **快照**灌进 self.providers（本仓库三处 last_check 都停在
+        # 2026-10-22T17:49:34）。不重探等于拿 27 天前的结论决定能否冷启动——
+        # 实测该快照把 codearts_agent 记成 `detected`，而该 provider 的
+        # check_availability() 只可能产出 connected / unavailable，`detected`
+        # 是它永远产出不了的值，于是向导会误判它可用（台账 N44）。
+        self.config.detect_providers()
 
         available = self.config.get_available_providers()
 

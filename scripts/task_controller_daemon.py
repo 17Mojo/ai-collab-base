@@ -28,6 +28,11 @@ DEFAULT_REPORT = "logs/task_controller_report.json"
 # 视为"已闭环"的终态
 TERMINAL_STATUSES = {"completed", "failed", "cancelled"}
 # 结果文件存在时，期望的任务状态
+#
+# 〔2026-11-18，台账 N45 已弃用〕这条判据只被 `audit_result_consistency` 的旧副本
+# 用过，现已改为委托 ai_collab.result_consistency_audit。**不要再拿它做判断**：
+# 它既不看产物是否缺失，也不解析结果文件状态行，还漏掉 ack_without_artifact。
+# 保留常量只为不让可能的外部引用当场炸掉。
 RESULT_FILE_EXPECTED_STATUSES = {"completed", "testing"}
 
 
@@ -232,18 +237,23 @@ def audit_result_consistency(
     *,
     snapshot: dict[str, Any] | None = None,
 ) -> tuple[int, int, list[dict[str, Any]]]:
-    """审计结果一致性（优先使用本轮开始时的快照）。"""
-    basis = snapshot if snapshot is not None else state
-    audited = 0
-    issues = []
-    for tid, task in basis.get("tasks", {}).items():
-        if not result_file_exists(workspace, task):
-            continue
-        audited += 1
-        status = task.get("status", "")
-        if status not in RESULT_FILE_EXPECTED_STATUSES:
-            issues.append({"kind": "task", "item_id": tid, "issue": "result_file exists but status not closed"})
-    return audited, len(issues), issues
+    """兼容层：委托 `ai_collab.result_consistency_audit` 的权威实现。
+
+    〔2026-11-18，台账 N45 复查〕这里原本是**第三份**一致性判断：只看
+    `status not in RESULT_FILE_EXPECTED_STATUSES`，不解析结果文件的状态行、
+    不查产物缺失、不查 `ack_without_artifact`、不校验章节契约，却和权威实现
+    产出同名的 `result_consistency_audited` / `result_consistency_issue_count`
+    两个指标。而 `--once`（真实的 CLI 入口）走的正是这里——
+    `run_controller_once` 反而只有测试在调。于是「守护进程已改为委托」这句话
+    曾只对一个没人调的路径成立。
+
+    `state` / `snapshot` 参数保留是为了不打断调用方签名：权威实现自己读盘，
+    而调用点保证「先审计、后 write_state」，所以它读到的就是本轮开始时的状态，
+    与快照同义。传进来的 state 不再参与判断——这正是要害：判断只有一份。
+    """
+    report = run_terminal_result_consistency_audit(workspace=Path(workspace))
+    details = list(report.get("issues", []) or [])
+    return int(report.get("audited_count", 0)), int(report.get("issue_count", 0)), details
 
 
 # ---------------- 主流程 ----------------
@@ -334,17 +344,54 @@ def run_terminal_result_consistency_audit(*, workspace: Path) -> dict[str, Any]:
 
 
 def run_ack_watchdog(*, workspace: Path, dry_run: bool) -> dict[str, Any]:
-    """ACK watchdog —— **当前是空壳，恒返回 0**（台账 N45）。
+    """ACK watchdog —— 委托 `ai_collab.ack_watchdog.run_ack_watchdog`，但**强制 dry-run**。
 
-    这不是「本工作区没有候选任务」，而是「这里根本没做扫描」。真实现是
-    `ai_collab.ack_watchdog.run_ack_watchdog`（扫 dispatch/receipt/ack-bridge，
-    揪出超阈未 ACK 的静默任务），但它的 `dry_run=False` 会真的重派任务。
-    是否让守护进程拿到这个副作用，属于运行策略决定，不在此处悄悄改。
+    〔2026-11-18，台账 N45〕此前这里是恒返回
+    `{candidate_count: 0, redispatched_count: 0, alerted_count: 0}` 的空壳。
+    它只被读这三个计数，所以从输出上完全看不出「这里根本没做扫描」——
+    看到 0 的人会以为「没有超阈未 ACK 的任务」。改为委托真实现后，
+    candidate_count 是真实扫描结果。
 
-    所以：**看到这三个计数为 0，不能推断「没有需要看门狗处理的任务」**。
-    要拿真实结论请跑 `python3 -m ai_collab.cli check` 或直接调用真实现。
+    但**不**把守护进程自己的 dry_run 透传下去。真实现的 apply 模式会：
+    `dispatched_at=now`、`dispatch_count+1`、`watchdog_redispatch_count+1`，
+    并重写 `collaboration/monitoring/AGENT_TRIGGER_<assignee>_latest.md`
+    ——那是 agent 读取的派单入口，等于在本进程里重新下达指令；还会对
+    该 assignee 的在途 intervention 执行 rearm。守护进程的定位是周期巡检，
+    不是派单器，所以固定 `dry_run=True`：
+
+      - 拿到真实 candidate_count（可观测，不再是假 0）；
+      - 报告 mode 恒为 "dry-run"，读的人不会误以为本轮重派过；
+      - 零重派风险。
+
+    要真正执行重派，用 `python3 -m ai_collab.cli check`，或显式调用
+    `ai_collab.ack_watchdog.run_ack_watchdog(dry_run=False)`。
+    把它升格为 apply 需要单独裁定，不要在这里悄悄改（`stubbed: False`
+    表示「已接真实现」，便于上层区分本轮是「没候选」还是「没扫描」）。
     """
-    return {"candidate_count": 0, "redispatched_count": 0, "alerted_count": 0}
+    from ai_collab.ack_watchdog import DEFAULT_REPORT_PATH as _REPORT_PATH
+    from ai_collab.ack_watchdog import run_ack_watchdog as _watchdog
+
+    report = _watchdog(workspace=Path(workspace), dry_run=True)
+
+    # 注意真实现的口径：它的 `redispatched_count` / `alerted_count` 是
+    # 「按计划该这么做」的数量，dry-run 下也照样计数（因为 report 在
+    # `if not dry_run` 之外汇总 handled）。守护进程既然强制 dry-run，
+    # **实际动作恒为 0**，所以那两个字段必须报实际值，把计划值单列成
+    # would_*。否则报告会写「redispatched 1」而守护进程其实什么都没做。
+    return {
+        "candidate_count": int(report.get("candidate_count", 0) or 0),
+        "redispatched_count": 0,
+        "alerted_count": 0,
+        "would_redispatch_count": int(report.get("redispatched_count", 0) or 0),
+        "would_alert_count": int(report.get("alerted_count", 0) or 0),
+        # 下面两个字段是给读报告的人用的：0 到底是「没候选」还是「没扫描」
+        "mode": report.get("mode", "dry-run"),
+        "stubbed": False,
+        # 调用方的 dry_run 被刻意忽略，回传以便自查
+        "daemon_dry_run": dry_run,
+        "report_file": _REPORT_PATH,
+        "summary_file": report.get("summary_file"),
+    }
 
 
 def run_controller_once(
@@ -491,6 +538,12 @@ def run_controller_once(
         "ack_watchdog_candidate_count": ack_result["candidate_count"],
         "ack_watchdog_redispatched_count": ack_result["redispatched_count"],
         "ack_watchdog_alerted_count": ack_result["alerted_count"],
+        # 强制 dry-run：上面两个「实际动作」恒为 0，计划值在这里
+        "ack_watchdog_would_redispatch_count": ack_result.get("would_redispatch_count", 0),
+        "ack_watchdog_would_alert_count": ack_result.get("would_alert_count", 0),
+        # 「0 个候选」和「没扫描」必须能从报告里分开（台账 N45）
+        "ack_watchdog_mode": ack_result.get("mode", "dry-run"),
+        "ack_watchdog_stubbed": ack_result.get("stubbed", False),
         "error_count": len(errors),
         "errors": errors,
         "timestamp": _now().isoformat(),

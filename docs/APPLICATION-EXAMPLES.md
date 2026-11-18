@@ -234,6 +234,17 @@ $ python3 -m ai_collab.cli orchestration status   # 绑定状态 + 角色 + 命�
     （传 str 会 TypeError）。`python3 -m ai_collab.cli check` 走冲突检查分支时不触发它。
       from pathlib import Path; from ai_collab.ack_watchdog import run_ack_watchdog
       run_ack_watchdog(workspace=Path('.'), dry_run=False)
+    〔2026-11-18 更新，台账 N45〕守护进程 `scripts/task_controller_daemon.py`
+    里的看门狗曾是一个**恒返回 0 的空壳**（只被读三个计数，输出上完全看不出
+    「没扫描」）。现接真实现但**固定 `dry_run=True`**：
+      · `ack_watchdog_candidate_count` 是真扫描结果；
+      · `ack_watchdog_redispatched_count` / `alerted_count` **恒为 0**（实际动作）；
+      · 计划值单列在 `would_redispatch_count` / `would_alert_count`；
+      · `ack_watchdog_mode` / `ack_watchdog_stubbed` 让「0 个候选」与「没扫描」可区分。
+    要真的重派，仍用上面两行直接调真实现（`dry_run=False`），或用
+    `python3 -m ai_collab.cli check`。把守护进程升格为 apply 需单独裁定。
+    同文件 `--once` 路径（真实 CLI 入口）的一致性审计也已改为委托
+    `result_consistency_audit.py`，不再自带弱化副本。
   - result_consistency_audit.run_terminal_result_consistency_audit:
     终态任务 vs result_file 对账 + 「已 ACK 却无产物」扫描
     （默认产物路径 collaboration/results/RESULT_{task_id}.md，实测成立）

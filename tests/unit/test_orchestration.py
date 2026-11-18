@@ -493,12 +493,23 @@ class TestOrchestrationColdStartWizard:
         # wizard 暴露 config 属性
         assert wizard.config is cfg
 
-    def test_cold_start_wizard_run_returns_bool(self, tmp_path):
-        """ColdStartWizard.run 返回 bool"""
+    def test_cold_start_wizard_run_returns_bool(self, tmp_path, monkeypatch):
+        """ColdStartWizard.run 返回 bool
+
+        注意（台账 N44）：这条用例以前是**因为向导探测不到任何服务商、
+        在第一屏就返回 False** 才通过的——即它从未真正走过交互流程。
+        向导改为先跑探针后，claude_code 恒可用，于是会走到 input()。
+        这里补上输入桩，让它真的走完流程。
+        """
         from ai_collab.orchestration import ColdStartWizard, OrchestrationConfig
 
         cfg = OrchestrationConfig(workspace_path=str(tmp_path))
+        # 必须先 load()：roles 是 load() 时构造的，否则 activate_role 找不到角色。
+        # 旧的「提前返回 False」路径恰好掩盖了这一点。
+        cfg.load()
         wizard = ColdStartWizard(cfg)
+        answers = iter(["3", "n"])
+        monkeypatch.setattr("builtins.input", lambda *a, **k: next(answers, "n"))
         # run() 可能返回 True/False(取决于环境),只要不抛异常
         result = wizard.run()
         assert isinstance(result, bool)

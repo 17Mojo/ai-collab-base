@@ -947,35 +947,52 @@
     {
       "id": "N44",
       "priority": "P3",
-      "status": "open",
-      "title": "orchestration 把主执行者 AGENT_EXEC 绑定在 detect 结果为 unavailable 的 codearts_agent 上",
-      "reader": "任何准备真正启用三 agent 协作、或按角色表把任务派给「主执行者」的人。detect 说 codearts_agent 不可用，status 说它是主执行者——按角色派发就会派进一条检测不通的通道，而现象是任务卡住而不是报错。",
+      "status": "closed",
+      "title": "`orchestration status` 不标注可用性：● 只表示绑定激活，与 `detect` 的 unavailable 互不参照",
+      "reader": "任何靠 `orchestration status` 判断「主执行者能不能干活」的人，以及任何看到 `detect` 报 `codearts_agent: unavailable` 就以为 CodeArts 通道坏了的人。",
       "where": [
-        "config/agent-orchestration.json（binding_status=active，AGENT_EXEC → codearts_agent）",
-        "python3 -m ai_collab.cli orchestration detect（实盘输出 codearts_agent: unavailable）",
-        "python3 -m ai_collab.cli orchestration status（实盘输出 AGENT_EXEC → codearts_agent [主执行者]）"
+        "ai_collab/cli/_cli_main.py（status 分支现探可用性 + ⚠ 标记 + 判据说明；detect 分支补判据行）",
+        "ai_collab/orchestration.py:128-136（codearts_agent 判据 = VSCODE_PID / CODEARTS_SESSION 环境变量）",
+        "ai_collab/orchestration.py:194-196（is_active 只看 binding.status == active，与可用性无关）",
+        "ai_collab/orchestration.py save()（provider_registry 合并而非整体替换）",
+        "ai_collab/orchestration.py ColdStartWizard.run()（先 detect_providers 再 get_available_providers）",
+        "config/agent-orchestration.json（codearts_agent.connection_status 由不可能的 detected 改为 unavailable）"
       ],
-      "detail": "2026-11-18 实测一对自相矛盾的输出：`orchestration detect` 报 `claude_code: connected / codex_cli: unavailable / gemini_cli: unavailable / codearts_agent: unavailable`，而 `orchestration status` 同时报 `AGENT_EXEC → codearts_agent [主执行者]`。即唯一被声明为「主执行者」的角色指向唯一不可用的服务商。本轮只走 AGENT_ARCH（claude_code）路径，未被此矛盾阻塞，所以它是隐性配置债而非当下故障。",
-      "impact": "启用三 agent 协作时，派给 AGENT_EXEC 的任务会进入不可用通道；因为不是立即报错，排查成本高。",
-      "fix": "需用户裁定：① 把 AGENT_EXEC 改绑到 claude_code（当前唯一 connected）；② 保留 codearts_agent 绑定但把 binding_status 降级，并在 `orchestration status` 输出里对「已绑定但 detect 不可用」的角色加显式告警标记；③ 在 `orchestration status` 里直接对比 detect 结果，不一致即打出 ⚠️。推荐 ③ + ①，因为它是唯一能防止同类隐性矛盾的方案。",
-      "found_at": "2026-11-18"
+      "detail": "2026-11-18 实测一对表面矛盾的输出：`orchestration detect` 报 `claude_code: connected / codex_cli: unavailable / gemini_cli: unavailable / codearts_agent: unavailable`，而 `orchestration status` 同时报 `● AGENT_EXEC → codearts_agent [主执行者]`。原记录有两处与磁盘不符，已自纠：① 不可用的是 3 个 provider，不是「唯一不可用」；② **不存在**「派给 AGENT_EXEC 就进入不可用通道」这条门禁——`check_availability()` 全仓只有 `detect_providers()`（orchestration.py:459）与 `get_available_providers()`（:665，冷启动向导用）两个调用点，派单链路（scripts/agent_dispatch_bridge.py:281 只判配置文件是否存在；state_manager.py:1817 只用 provider→role 反查角色代号）一律不查可用性。更关键的是 unavailable 的语义：codearts_agent 的判据是 `VSCODE_PID or CODEARTS_SESSION` 环境变量（orchestration.py:131），检测的是「跑这段代码的进程在不在 VSCode 终端里」，不是「CodeArts 通道是否健康」——普通终端里必然报 unavailable，这是设计如此而非故障（docs/ARCHAEOLOGY_CODE_INVENTORY.md:216 写同一口径）。所以真正的问题不是绑定错，而是 status 的 ● 与 detect 的 unavailable 在说两件不同的事，而两个输出都不告诉读者这件事。",
+      "impact": "零功能影响：没有任何代码路径依据可用性拦截或路由任务，因此「绑定在 unavailable 的 provider 上」不会让任务卡住（原记录此处为未经验证的推断，已删）。实际损害是诊断不可信——人读到 ● 以为主执行者就绪，读到 unavailable 以为通道坏了；两种误读都会导致错误决策（无故改绑，或去排查并不存在的通道故障）。",
+      "fix": "已修（2026-11-18），按用户裁定 A+B 落地。\n① `orchestration status` 按实时探针标注可用性（ai_collab/cli/_cli_main.py）：新增 `_PROVIDER_PROBE_HINTS` 与 `_availability_cell()`；status 分支先 `config.detect_providers()` 再逐角色打 `✔ connected / ✓ detected / ⚠ unavailable`，并对「绑定已激活但探针不可用」单列 ⚠ 段、同屏写清判据与「没有任何派单路径依据可用性拦截或路由任务，不会卡任务」。`detect` 分支为每个 provider 补打判据行。改后实跑：`● AGENT_EXEC → codearts_agent [主执行者]  ⚠ unavailable`，与 `● AGENT_ARCH → claude_code  ✔ connected` 并列，读者不必再自己对照两个命令。\n② 修两条同源缺陷：\n   - `OrchestrationConfig.save()` 从「整体替换 provider_registry」改为「合并」：`provider_registry` 是按 assignee（ACK 前缀命名空间）建键的，`detect_providers()` 却按探测器键集写回（codex_cli / gemini_cli）。实测 `load → detect_providers → save` 会把 `codex` 条目整条抹掉、连带丢掉 ACK 前缀 `O`。合并后只覆盖同名键，assignee 键原样保留，探测器键仍会写入。\n   - `ColdStartWizard.run()` 改为先 `detect_providers()` 再 `get_available_providers()`，不再拿 provider_registry 里停在 2026-10-22T17:49:34 的快照当当前可用性（实测该快照让 `get_available_providers()` 返回 ['claude_code','codearts_agent']，与 detect 结论相反）；同时把 config 里 codearts_agent 那个该 provider **永远产出不了**的 `detected` 值改成 `unavailable`，并在 `load()` 处注明「快照≠可用性，判断当前可用性必须先跑 detect_providers()」。\n自纠（第二次）：初判「provider_registry 键集漂移——codex 应为 codex_cli、gemini_cli 缺失」是**错的**。`codex` 是 ack_protocol._ACK_PREFIX 的 assignee 键，`gemini_cli` 缺失是因为 gemini 不是 SUPPORTED_ASSIGNEES 成员；tests/unit/test_ack_prefix_consistency.py:236 附近的注释也早已写明 codex 的席位语义是刻意的。真正的缺陷是**两套命名空间共用一个字典，且 save() 整体替换会互删**。\n绊线：tests/unit/test_cli_orchestration.py 新增 4 条（打标 / 说明判据 / 现探不读快照 / detect 判据）；tests/unit/test_orchestration_provider_snapshot.py 新增 4 条（save 合并保住 assignee 键 / 探针结果仍写回 / 向导先探测 / 向导不信快照）。另修正 tests/unit/test_orchestration.py::test_cold_start_wizard_run_returns_bool——它此前是**因为向导探测不到任何服务商、在第一屏就返回**才通过的，从未走过交互流程。6 条变异全部被杀（status 读快照 / save 整体替换 / 向导不重探测 / 看门狗退回空壳 / 透传 dry_run / 弱审计回归）。",
+      "appended_evidence": [
+        "2026-11-18 只读复核（HEAD 6fc4f47）：当前环境 VSCODE_PID / CODEARTS_SESSION / TERM_PROGRAM 三个变量均未设置；`AgentProvider('codearts_agent').check_availability()` 实跑返回 False，connection_status=unavailable。",
+        "调用点全量枚举：`grep -rn check_availability ai_collab/ scripts/` 只命中 orchestration.py:116（定义）、:459（detect_providers）、:665（get_available_providers 消费者），无派单路径引用。",
+        "键集漂移实测：detector keys = ['claude_code','codex_cli','gemini_cli','codearts_agent']；config provider_registry keys = ['claude_code','codearts_agent','codex']。另 `which codex` / `which gemini` 均 not found。",
+        "`git log -S'VSCODE_PID' -- ai_collab/orchestration.py` 只命中 902747a（从 c42d404 提取真实项目改动的整批提交），无法从提交信息判断该判据是设计决策还是旁路；但 docs/ARCHAEOLOGY_CODE_INVENTORY.md:216 明确写「通过 VSCODE_PID / CODEARTS_SESSION 环境变量检测」，与「检测宿主环境」的设计意图一致，故按设计意图处理。"
+      ],
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N45",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "守护进程自带一份弱化版一致性审计（覆写同一报告文件）与一个恒返回 0 的看门狗空壳",
       "reader": "任何读 logs/task_result_consistency_report.json 或 TASK_RESULT_CONSISTENCY_SUMMARY_latest.md 判断「有没有问题」的人，以及任何以为守护进程在跑 ACK 看门狗的人。前者看到的结论取决于最后跑的是守护进程还是真实现；后者看到 ack_watchdog_candidate_count: 0 会以为「没有静默任务」，实际是「根本没扫描」。",
       "where": [
-        "scripts/task_controller_daemon.py:315（run_terminal_result_consistency_audit 的独立副本，2026-11-18 已改为委托）",
-        "scripts/task_controller_daemon.py:380（run_ack_watchdog 空壳，恒返回 0）",
-        "ai_collab/result_consistency_audit.py（真实现）",
+        "scripts/task_controller_daemon.py:229（audit_result_consistency，第三份副本，2026-11-18 已改为委托；--once 走的就是它）",
+        "scripts/task_controller_daemon.py:315（run_terminal_result_consistency_audit 委托层）",
+        "scripts/task_controller_daemon.py:336（run_ack_watchdog，2026-11-18 已改为委托 + 强制 dry-run）",
+        "ai_collab/result_consistency_audit.py（权威实现）",
         "ai_collab/ack_watchdog.py（真实现，apply 模式会真重派任务）"
       ],
       "detail": "N42 排查时发现守护进程里有两份「同名不同实」的东西。① 审计：它不校验终态（把 testing 也算进 consistent）、仍用 N41 之前的 `\"## 执行命令\" in text` 子串判据、不解析结果文件状态行，**却覆写真实现用的同一个报告与 summary 文件**——于是「谁后跑谁说了算」，守护进程跑一次就把权威结论覆盖成弱化结论。已在本次改为委托真实现（并验证 8 条守护进程测试全过）。② 看门狗：`run_ack_watchdog` 恒返回 {candidate_count:0, redispatched_count:0, alerted_count:0}，只被读这三个字段，所以从输出上完全看不出它是空壳；真实现存在且能工作，只是 apply 模式会真的重派任务，是否让守护进程承担这个副作用属于运行策略决定，故本次只把「这是空壳」写进 docstring，未改行为。",
       "impact": "① 报告文件的结论不稳定：人工按它判断「一切正常」时，可能读到的是弱化副本的结论（它连 terminal_status_mismatch 都报不出来）。② 看门狗计数恒为 0 会被误读成「没有超阈未 ACK 的任务」，而真实的静默任务不会被发现——与 N27/N31/N36 同一类「符号在、能力为零」。",
-      "fix": "① 审计副本已改为委托（本次完成，见 where 第一条）。② 看门狗空壳待裁定：要么委托真实现并明确守护进程是否允许 apply 模式重派（推荐：dry_run 透传 + apply 需显式开关），要么删除该函数并让上层直接调真实现，并在守护进程报告里写 `ack_watchdog_stubbed: true` 以免 0 被误读。无论选哪条，都加一条绊线：守护进程与 ai_collab 侧同名函数必须指向同一实现（可用 `func.__module__` 或 `is` 断言）。",
-      "found_at": "2026-11-18"
+      "fix": "已修（2026-11-18），两半都落地；第二半按用户裁定走「强制 dry-run 观测一阶段」。\n① 审计：`scripts/task_controller_daemon.py` 的 `audit_result_consistency`（**第三份**副本，且 `--once` 真实 CLI 入口走的就是它；此前改造的 `run_controller_once` 只有测试在调）改为委托 `ai_collab.result_consistency_audit`。三元组返回签名保留以免打断调用方，`state` / `snapshot` 参数保留但不再参与判断——调用点保证「先审计、后 write_state」，权威实现读盘读到的正是本轮开始时的状态。改后 test_controller_apply_reconciles_stale_... 的 audited / issue_count 由 1/1 变为 2/2，多出的两条正是弱副本报不出的真问题：TASK-DRIFT-001 的 `ack_without_artifact`（ok ACK 但任务没声明 result_file、状态仍 implementing，即 N42 的双网盲区实例）与 TASK-REVIEW-001 的 `missing_result_file`。数字变大不是回归，是审计变严。\n② 看门狗：`run_ack_watchdog` 改为委托真实现但**固定 dry_run=True**，不再透传守护进程的 dry_run。报告新增 `ack_watchdog_mode` / `ack_watchdog_stubbed` 让「0 个候选」与「根本没扫描」可区分；并把真实现 dry-run 下仍会照常计数的 `redispatched_count` / `alerted_count` 归零、计划值单列为 `would_redispatch_count` / `would_alert_count`——否则报告会写「重派 1 个」而守护进程其实什么都没做。要真重派请走 `python3 -m ai_collab.cli check` 或显式调 `run_ack_watchdog(dry_run=False)`；把看门狗升格为 apply 需单独裁定。\n绊线：tests/unit/test_task_controller_daemon.py 新增 4 条（真扫描出 1 个候选 / apply 模式也不改 dispatch_state 不写 AGENT_TRIGGER / 0 可区分于空壳 / `--once` 能报 missing_result_file）。实跑 `--once --dry-run` 确认新字段落盘。",
+      "appended_evidence": [
+        "2026-11-18 复核真实现的 dry_run 语义（ai_collab/ack_watchdog.py:335-470）：dry_run=True 时仍然写 logs/ack_watchdog_report.json、collaboration/monitoring/ACK_WATCHDOG_SUMMARY_latest.md 与 history jsonl；但**不**写 dispatch_state、**不**调 _refresh_assignee_payload、**不**调 rearm_interventions。dry_run=False 时额外：dispatch_item 的 watchdog_redispatch_count +1 / dispatch_count +1 / dispatched_at=now、写回 collaboration/dispatch_state.json、**重写 collaboration/monitoring/AGENT_TRIGGER_<assignee>_latest.md**（该文件正是 agent 读取的派单入口，同目录还有 codearts_inbox/ 与 codearts_pull_events/）、并对该 assignee 在途 intervention 执行 rearm。故「重派」的副作用是写文件而非直接发消息，但写的就是派单文件，副作用成立。",
+        "当前工作区真值（只读跑 collect_ack_watchdog_candidates，不写盘）：tasks_in_state=20、dispatch_items=13、candidates=0、skipped=0。13 条派单全部为终态且已 ACK（12 completed + 1 cancelled），无在途任务。⇒ 空壳今天打印的 0 恰好等于真值，该缺陷目前**零可见症状**：既不能靠观察发现它在撒谎，也不能因为「看了几个月都是 0」就断定不需要它。",
+        "守护进程侧已具备裁定所需的前提：scripts/task_controller_daemon.py:682 的 --dry-run 是 store_true（默认 False=apply），且 :465 已把 dry_run 透传给 run_ack_watchdog。因此「委托真实现 + 透传 dry_run」是数行改动，不需要新增配置。"
+      ],
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     }
   ]
 }

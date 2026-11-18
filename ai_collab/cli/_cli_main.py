@@ -175,9 +175,7 @@ def _generate_reports_and_summaries(
             "unparseable_count": result_consistency_report.get("unparseable_count", 0),
             "missing_result_count": result_consistency_report.get("missing_result_count", 0),
             "artifact_optional_count": result_consistency_report.get("artifact_optional_count", 0),
-            "missing_failure_reason_count": result_consistency_report.get(
-                "missing_failure_reason_count", 0
-            ),
+            "missing_failure_reason_count": result_consistency_report.get("missing_failure_reason_count", 0),
             "ack_without_artifact_count": result_consistency_report.get("ack_without_artifact_count", 0),
             "issue_count": result_consistency_report.get("issue_count", 0),
         }
@@ -3008,6 +3006,30 @@ def cmd_controller(args):
     return 0
 
 
+# 各 provider 的可用性「判据」是一句话能说清的事，但此前只有 `detect` 打印
+# 结论、不打印判据，导致 unavailable 被读成「通道坏了」（台账 N44）。
+_PROVIDER_PROBE_HINTS = {
+    "claude_code": "运行即 connected，无外部依赖",
+    "codearts_agent": (
+        "VSCODE_PID / CODEARTS_SESSION 环境变量，即「本进程是否在 VSCode 终端里」；"
+        "在普通终端里恒为 unavailable，这不等于 CodeArts 通道故障"
+    ),
+    "codex_cli": "which codex",
+    "gemini_cli": "which gemini",
+}
+
+
+def _availability_cell(probing_available: bool, state: str) -> str:
+    """把可用性渲染成定宽单元格，避免不同状态把列挤得参差不齐。"""
+    if not probing_available:
+        return "  —"  # 未绑定 provider，无从探测
+    if state == "connected":
+        return "  ✔ connected"
+    if state == "detected":
+        return "  ✓ detected"
+    return "  ⚠ unavailable"
+
+
 def cmd_orchestration(args):
     """角色编排配置命令。
 
@@ -3035,13 +3057,44 @@ def cmd_orchestration(args):
         print(f"\n工作区: {workspace}")
         print(f"绑定状态: {config.get_binding_status().value}")
         print(f"启动模式: {config.config.get('startup_mode', 'unknown')}")
+
+        # 可用性必须现算。落盘的 provider_registry.connection_status 是上一次
+        # 探测的快照（本仓库里停在 2026-10-22），拿它当「当前可用性」等于把
+        # 陈旧结论说得像实时结论。此处直接跑 detect 探针（台账 N44）。
+        probes = config.detect_providers()
         print("\n角色绑定:")
+        mismatched: list[tuple[str, str]] = []
         for role_id, role in config.roles.items():
             provider = role.binding.get("provider")
             marker = "●" if role.is_active() else "○"
             model = role.binding.get("model_variant")
             suffix = f" ({model})" if model else ""
-            print(f"  {marker} {role_id} → {provider or '未绑定'}{suffix}  [{role.display_name}]")
+            probe = probes.get(provider) if provider else None
+            if not provider:
+                cell = "  —"
+            elif probe is None:
+                cell = "  ⚠ 不在 detect 名单内"
+                if role.is_active():
+                    mismatched.append((role_id, provider))
+            else:
+                raw = probe.connection_status.value
+                cell = _availability_cell(True, raw)
+                if raw not in ("connected", "detected") and role.is_active():
+                    mismatched.append((role_id, provider))
+            print(f"  {marker} {role_id} → {provider or '未绑定'}{suffix}  [{role.display_name}]{cell}")
+
+        print("\n图例: ●/○ 只表示 binding.status 是否 active，**与可用性无关**。")
+        print("      可用性列是 detect 探针的实时结果，每个进程各自计算。")
+        if mismatched:
+            print("\n⚠  以下角色的绑定已激活，但探针报不可用：")
+            for role_id, provider in mismatched:
+                print(f"    - {role_id} → {provider}")
+            print("    判据（unavailable 不等于通道故障）：")
+            for provider in sorted({p for _, p in mismatched}):
+                print(f"      {provider}: {_PROVIDER_PROBE_HINTS.get(provider, '未知 provider，无已知判据')}")
+            print("    注意：目前没有任何派单路径依据可用性拦截或路由任务，")
+            print("          因此这不会让任务卡住；它影响的是「诊断输出能不能信」。")
+
         prefixes = config.config.get("command_prefixes", {})
         if isinstance(prefixes, dict):
             print("\n命令前缀:")
@@ -3056,7 +3109,11 @@ def cmd_orchestration(args):
         print("AI 协作系统 - Agent 服务商检测")
         print("=" * 60)
         for provider_id, provider in providers.items():
-            print(f"  {provider_id}: {provider.connection_status.value}")
+            state = provider.connection_status.value
+            print(f"  {provider_id}: {state}")
+            hint = _PROVIDER_PROBE_HINTS.get(provider_id)
+            if hint:
+                print(f"      判据: {hint}")
         return 0
 
     if subcommand == "roles":
@@ -5511,9 +5568,7 @@ def main():
     receipt_parser.add_argument("--force-workspace", action="store_true", help="忽略工作区门禁并强制执行（高风险）")
 
     # daily-report 命令（N28/N31：playbook 推荐但此前未注册）
-    daily_report_parser = subparsers.add_parser(
-        "daily-report", help="生成日报与监控摘要（operator closeout 收尾用）"
-    )
+    daily_report_parser = subparsers.add_parser("daily-report", help="生成日报与监控摘要（operator closeout 收尾用）")
     daily_report_parser.add_argument("--receipt-report", help="回执报告路径（相对 workspace）")
 
     # run 命令
