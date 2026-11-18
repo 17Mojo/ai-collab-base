@@ -20,7 +20,7 @@ import {
   emitVariantPacks,
   variantPackPath,
 } from "./real-machine/session-wall-ab.mjs";
-import { FROZEN_AB_PLATFORMS } from "./real-machine/platform-freeze.mjs";
+import { AB_PLATFORMS, ACTIVE_PLATFORM_IDS, FROZEN_AB_PLATFORMS } from "./real-machine/platform-freeze.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -53,13 +53,72 @@ after(() => rmSync(EVIDENCE_DIR, { recursive: true, force: true }));
 test("方案默认标注「未执行」，不冒充真机回执", () => {
   const plan = buildAbPlan();
   assert.match(plan.status, /NOT-EXECUTED/);
-  assert.equal(plan.frozenPlatforms.length, 2);
+  assert.equal(
+    plan.frozenPlatforms.length,
+    FROZEN_AB_PLATFORMS.length,
+    "冻结样本集长度跟随常量；写死 2 的话解冻 deepseek 就会红，而那不是 A/B 设计的问题",
+  );
 });
 
-test("冻结的两个站恰好是当初真正撞墙的 deepseek / longcat", () => {
+// ── B1/B2（2026-11-19）：实验对象与冻结样本集解耦 ──────────────────────
+// 之前 session-wall-ab 直接读 FROZEN_AB_PLATFORMS，于是「解冻 deepseek」会
+// **静默**把 A/B 的实验对象从 2 站改成 1 站——计划少了两轮命令，而没有任何东西
+// 说清这是治理状态变了还是实验设计变了。现在两者分开，红线用断言守着。
+
+test("A/B 实验对象必须是冻结样本的子集（不许拿活跃站做实验）", () => {
+  const notFrozen = AB_PLATFORMS.filter((id) => !FROZEN_AB_PLATFORMS.includes(id));
+  assert.deepEqual(
+    notFrozen,
+    [],
+    "AB_PLATFORMS 里出现了冻结样本集之外的站。解冻某站时要先把它从 AB_PLATFORMS 移出，" +
+      "再改 FROZEN_AB_PLATFORMS 与 ACTIVE_PLATFORM_IDS——顺序反了就该在这里红，不许静默通过。",
+  );
+
+  const activeSubjects = AB_PLATFORMS.filter((id) => ACTIVE_PLATFORM_IDS.includes(id));
+  assert.deepEqual(
+    activeSubjects,
+    [],
+    "红线直说：活跃站是交付源，不许当 A/B 实验对象（实验会扰动它）。",
+  );
+});
+
+test("计划只跑 AB 实验对象，不跑冻结名单里的其他站", () => {
   const plan = buildAbPlan();
-  assert.deepEqual(plan.frozenPlatforms, ["deepseek", "longcat"]);
-  assert.deepEqual(FROZEN_AB_PLATFORMS, ["deepseek", "longcat"]);
+  assert.deepEqual(plan.abPlatforms, [...AB_PLATFORMS], "计划对象必须等于 AB_PLATFORMS");
+  assert.deepEqual(
+    plan.frozenPlatforms,
+    [...FROZEN_AB_PLATFORMS],
+    "frozenPlatforms 是治理事实（冻结样本集），不该被实验设计改写",
+  );
+  assert.deepEqual(
+    [...new Set(plan.runMatrix.map((r) => r.platform))],
+    [...AB_PLATFORMS],
+    "runMatrix 的平台集合必须恰好是实验对象——不许偷偷带上冻结名单里的其它站",
+  );
+});
+
+/**
+ * 当初真正撞墙、被立为 A/B 样本的站——**历史事实**，不随解冻变化。
+ * 冻结样本集与实验对象都只能是它的子集：不许把没撞过墙的站当成 A/B 样本。
+ */
+const WALL_HIT_PLATFORMS = ["deepseek", "longcat"];
+
+test("冻结样本集与实验对象都取自「当初撞墙的两站」，且当前都被闸门拒绝", () => {
+  const plan = buildAbPlan();
+
+  // 这里判**子集**而不是相等：解冻 deepseek 后 frozenPlatforms 只剩 longcat。
+  // 写成相等就等于把「治理状态」抄成常量，解冻时必红，而红的原因与 A/B 设计无关。
+  for (const id of [...FROZEN_AB_PLATFORMS, ...AB_PLATFORMS]) {
+    assert.ok(
+      WALL_HIT_PLATFORMS.includes(id),
+      `${id} 不在「当初撞墙的两站」里，不许被当成 A/B 样本`,
+    );
+  }
+  assert.deepEqual(
+    plan.frozenPlatforms,
+    [...FROZEN_AB_PLATFORMS],
+    "plan 里的冻结集必须就是常量本身，不许二次加工",
+  );
   for (const p of plan.platformPolicy) {
     assert.equal(p.allowed, false, `${p.id} 在本方案里必须是被闸门拒绝的状态`);
   }
@@ -70,7 +129,11 @@ test("变体是 A/B 两组，且只差 fresh_session 一个变量", () => {
   assert.equal(plan.variants.length, 2);
   assert.equal(plan.variants[0].packVariant, "no-boundary");
   assert.equal(plan.variants[1].packVariant, "with-boundary");
-  assert.equal(plan.runMatrix.length, 4, "2 站 × 2 变体");
+  assert.equal(
+    plan.runMatrix.length,
+    AB_PLATFORMS.length * plan.variants.length,
+    "站数 × 变体数（从 AB_PLATFORMS 推导，别再写死 4）",
+  );
 });
 
 test("A 组真的删掉了出厂 Pack 的 fresh_session，B 组原样保留", () => {
@@ -146,23 +209,27 @@ test("解冻前置条件写全：用户授权 / 登录态 / dist 一致 / 额度
   assert.match(c, /明确的解冻指令/);
   assert.match(c, /登录态/);
   assert.match(c, /dist/);
-  assert.match(c, /32 步/);
+  assert.match(c, new RegExp(`${AB_PLATFORMS.length * 2 * 8} 步`), "额度按实验对象算，不写死 32");
 });
 
 // ── 「命令可原样执行」：修的是第一版 PACK_PATH=<variant-pack.json> 占位符 ──
 
 test("计划命令里不许再出现 <...> 占位符", () => {
   const cmds = buildAbPlan().commands;
-  assert.equal(cmds.length, 6, "1 条注释 + 1 条预检 + 4 轮 L2");
+  assert.equal(
+    cmds.length,
+    2 + AB_PLATFORMS.length * 2,
+    "1 条注释 + 1 条预检 + 每站 2 轮 L2（从 AB_PLATFORMS 推导）",
+  );
   for (const c of cmds) {
     assert.ok(!c.includes("<variant-pack.json>"), "占位符会让命令无法原样执行");
     assert.ok(!/<[a-z-]+\.json>/i.test(c), "任何 <...> 形式的路径占位符都不许出现");
   }
 });
 
-test("4 条 L2 命令的 PACK_PATH 指向真实绝对路径，且 A/B 各用各的文件", () => {
+test("每条 L2 命令的 PACK_PATH 指向真实绝对路径，且 A/B 各用各的文件", () => {
   const cmds = buildAbPlan().commands.filter((c) => c.startsWith("PLATFORM="));
-  assert.equal(cmds.length, 4);
+  assert.equal(cmds.length, AB_PLATFORMS.length * 2, "每站 2 轮（2 变体）");
   const byVariant = {};
   for (const c of cmds) {
     const m = c.match(/PACK_PATH=(\S+)/);
@@ -182,10 +249,14 @@ test("预检命令也要显式解冻（打开冻结站页面本身受守卫拦�
   const c = buildAbPlan().commands.find((x) => x.includes("PRECHECK=1"));
   assert.ok(c);
   assert.match(c, /ALLOW_FROZEN=1/);
-  assert.match(c, /CANDIDATES=deepseek,longcat/);
+  assert.match(
+    c,
+    new RegExp(`CANDIDATES=${AB_PLATFORMS.join(",")}`),
+    "预检名单必须与实验对象一致，不写死 deepseek,longcat",
+  );
 });
 
-test("执行顺序写明 4 轮必须串行，且 B 组降级要作废", () => {
+test("执行顺序写明每轮必须串行（共享同一个 pack_id），且 B 组降级要作废", () => {
   const o = buildAbPlan().executionOrder.join("\n");
   assert.match(o, /串行/);
   assert.match(o, /并行会互相覆盖/);

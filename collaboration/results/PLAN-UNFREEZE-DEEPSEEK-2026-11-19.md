@@ -236,6 +236,44 @@ Totals: 2 passed, 4 failed (6 items)
 
 N25 的历史证据一分不丢（回执与计划都还在 `evidence/`），只是脚本不再把「冻结」当成「实验对象」的同义词。
 
+**B1/B2 实测（2026-11-19，已完成；第 3 步按「改写成推导」处理，第 4 步已做）**
+
+- `AB_PLATFORMS = ["longcat"]`，`session-wall-ab.mjs` 改读它；`plan` 里新增 `abPlatforms`，
+  `frozenPlatforms` 保持「治理事实」语义（= `FROZEN_AB_PLATFORMS`）。两个字段分开之后，
+  「实验设计变了」与「治理状态变了」不再共用一个值。
+- **取值不是我拍的**：写注释前逐条查了证据。deepseek 的 A/B 两轮齐全、已被 N25 裁定收口；
+  longcat 的 2026-11-12 两轮是**无效**数据——`ab2-no-boundary` 第 3 步就失败（3 步成 2），
+  `ab2-with-boundary` 虽跑完 8 步但 `sessionResets[0] = {available:false, strategy:"none"}`
+  （adapter 没声明 newChat，重置根本没发生）⇒ 两组不可比。所以 longcat 仍待跑。
+- **第 3 步换了做法**：原文写「删掉对计划内容的断言（`:53 / :68 / :154 / :163`）」。
+  实际是**把写死的数字换成推导**：`runMatrix.length === AB_PLATFORMS.length × variants.length`、
+  `commands.length === 2 + AB_PLATFORMS.length × 2`、额度 `${n} 站 × 2 × 8`、
+  `CANDIDATES=${AB_PLATFORMS.join(",")}`。理由：删掉断言是把门拆了，改成推导是让门跟着设计走——
+  下次加站不会因为我漏改一个「4」而红。只有一条真的该改判：`frozenPlatforms` 从「相等 deepseek+longcat」
+  改成「⊆ 当初撞墙的两站」，因为解冻后它必然只剩 longcat，写相等就是把治理状态抄成常量。
+- **实测（同一台机器、同一方法，未解冻基线 410 全绿）**：在 HEAD（531d777）上模拟解冻
+  （deepseek 进 ACTIVE、`FROZEN_AB` 去掉 deepseek）⇒ `session-wall-ab` **5 红** + `platform-freeze` **4 红** = 9；
+  在 B1/B2 之后同样模拟 ⇒ `session-wall-ab` **0 红**（17/17）+ `platform-freeze` **4 红** = 4。
+  **§2.1 里那 5 条红确实被消掉了，改动半径回到「只碰该碰的地方」。**
+- **剩下的 4 条红是 P2 的活**（不是 B 没做完）：`platform-freeze.test.mjs` 的 ①白名单恰好 5 站
+  ②`ALLOW_FROZEN` 留痕用例拿 deepseek 当「冻结站样例」③④N35 预检/解冻两条同样绑定 deepseek。
+  解冻时把它们换成别的冻结站（qianwen / chatgpt / claude）作为样例即可。
+- 变异锚 2 条（实验对象越出冻结集 / 脚本改回读冻结名单），2/2 被杀。
+- **顺带修了 2 条既有锚**：我改文案时把它们要匹配的 `find` 串改了（`"4 条命令…"` 与
+  `CANDIDATES=deepseek,longcat`），两条锚立刻报「变异描述与代码脱节」。这正是 §2.3 预警过的情况，
+  已同步更新 find/replace 与 expectTest。
+- **改文案时揪出一条写反的事实**：`unfreezeConditions` 里「两站登录态…deepseek 此前从未被预检过，
+  longcat 只有 2026-11-10 的旧快照，都不是当前态」是**过期断言**。磁盘上 `L2-precheck-2026-11-11/12/14/
+  11-18*.deepseek-longcat.json` 四次预检全在，且每一份都是两站 `composerVisible=true`、
+  `looksLikeLogin=false`——连 `session-wall-ab-plan-2026-11-18.json` 自己生成时（02:49:02）都已经站不住了
+  （它 30 秒后跑的预检就是这两站）。改成引用 11-18 那份的真实结论：「当时满足，但快照已 1 天，正式跑前必须重跑」。
+  结论没变（登录态**仍然**不构成放行理由），但理由从「没验过」变成「验过、但是旧快照」——
+  两者对下一步的指令完全不同：前者要「去验」，后者要「再验一次」。
+- **顺手校准 `docs/EXAMPLE-ACCEPTANCE-MATRIX.md:64-65`**：`platform-freeze.mjs:52` 漂到 `:55`；
+  更重要的是「deepseek / longcat 都是冻结 A/B 样本」在拆分后语义变了——deepseek 仍是冻结样本、
+  **但已不是实验对象**（`AB_PLATFORMS` 里没有它）。表格已按两件事分别写，并加了一条注说明
+  「冻结样本 ≠ 实验对象」，以及「行号只作定位提示，引用以符号名 grep 为准」。
+
 ### C · P8 反自动化：接受为已知空白，但升级成跨站缺口
 
 **不做采集器**。理由很硬：目前所有回执里**一个阳性样本都没有**（没有验证码、没有 WAF、没有 429）。
@@ -250,7 +288,7 @@ N25 的历史证据一分不丢（回执与计划都还在 `evidence/`），只�
 ### 执行顺序（依赖关系）
 
 ```
-A1 证据对账 ✅ →  B1/B2 解耦  →  A2 fixture ✅ / A3 adapter 收口 ✅  →  B3 计划退役
+A1 证据对账 ✅ →  B1/B2 解耦 ✅  →  A2 fixture ✅ / A3 adapter 收口 ✅  →  B3 计划退役
             →  P0 立项  →  P2 常量改动  →  P3 离线门禁  →  P4 真机验收
 ```
 

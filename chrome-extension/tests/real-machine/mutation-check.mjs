@@ -1305,22 +1305,25 @@ const MUTATIONS = [
     expectTest: "emitVariantPacks 遇到出厂 Pack 契约变化必须拒绝",
   },
   {
-    name: "删掉「4 轮必须串行」的执行约束",
+    name: "删掉「必须串行」的执行约束",
     why: "两轮都用 overwrite 导入同一 pack_id，并行会互相覆盖 storage 里的 Pack；约束一删，方案给出的命令就是错的",
     target: "real-machine/session-wall-ab.mjs",
-    find: '      "4 条命令必须**串行**，禁止并行：两轮都用 mergeStrategy=overwrite 导入同一个 pack_id，并行会互相覆盖 storage 里的 Pack。",',
-    replace: '      "4 条命令随便跑。",',
+    // 2026-11-19 B1：这段文案改成模板字面量（轮数由 runMatrix.length 推导），
+    // find 串同步更新——否则会报「变异描述与代码脱节」而不是「测试没红」。
+    find: '      `${runMatrix.length} 条命令必须**串行**，禁止并行：两轮都用 mergeStrategy=overwrite 导入同一个 pack_id，并行会互相覆盖 storage 里的 Pack。`,',
+    replace: '      `随便跑。`,',
     testFile: "session-wall-ab.test.mjs",
-    expectTest: "执行顺序写明 4 轮必须串行",
+    expectTest: "执行顺序写明每轮必须串行（共享同一个 pack_id），且 B 组降级要作废",
   },
   {
     name: "预检命令不再显式解冻冻结站",
     why: "预检会打开 deepseek/longcat 页面，漏掉 ALLOW_FROZEN 与显式 CANDIDATES 就会被守卫拦，或反过来变成无授权访问",
     target: "real-machine/session-wall-ab.mjs",
-    find: "      `CANDIDATES=deepseek,longcat PRECHECK=1 ALLOW_FROZEN=1 ` +",
-    replace: "      `CANDIDATES=deepseek,longcat PRECHECK=1 ` +",
+    // 同上：CANDIDATES 改成从 AB_PLATFORMS 推导，find 串跟随。
+    find: '      `CANDIDATES=${platforms.join(",")} PRECHECK=1 ALLOW_FROZEN=1 ` +',
+    replace: '      `CANDIDATES=${platforms.join(",")} PRECHECK=1 ` +',
     testFile: "session-wall-ab.test.mjs",
-    expectTest: "预检命令也要显式解冻",
+    expectTest: "预检命令也要显式解冻（打开冻结站页面本身受守卫拦截）",
   },
   // ── DeepSeek DOM 契约（2026-11-11 A/B 第 1 轮假超时的根修）────────
   {
@@ -1490,6 +1493,27 @@ const MUTATIONS = [
     replace: "    if (false) {",
     testFile: "deepseek-clicksend.test.mjs",
     expectTest: "若 getSendButton() 能返回按钮，clickSend() 优先点它而不是敲 Enter",
+  },
+
+  // ── A/B 实验对象与冻结样本解耦（B1/B2，2026-11-19） ─────────────────
+  // 解耦的价值全在「有人改错时会不会红」：不红，就只是把耦合换了个名字。
+  {
+    name: "A/B 实验对象越出冻结样本集（把活跃站 qianwen 塞进去）",
+    why: "红线是「不许拿活跃站当 A/B 实验对象」——活跃站是交付源，实验会扰动它；越界必须当场红，不许静默通过",
+    target: "real-machine/platform-freeze.mjs",
+    find: 'export const AB_PLATFORMS = Object.freeze(["longcat"]);',
+    replace: 'export const AB_PLATFORMS = Object.freeze(["longcat", "qianwen"]);',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "A/B 实验对象必须是冻结样本的子集（不许拿活跃站做实验）",
+  },
+  {
+    name: "session-wall-ab 改回读冻结名单当实验对象",
+    why: "这正是 B1 要拆掉的耦合：读冻结名单 ⇒ 解冻一个站就悄悄把实验设计改掉，计划少两轮命令而没人说得清为什么",
+    target: "real-machine/session-wall-ab.mjs",
+    find: "  const platforms = [...AB_PLATFORMS];",
+    replace: "  const platforms = [...FROZEN_AB_PLATFORMS];",
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "计划只跑 AB 实验对象，不跑冻结名单里的其他站",
   },
 
   // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────

@@ -34,6 +34,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  AB_PLATFORMS,
   ACTIVE_PLATFORM_IDS,
   FROZEN_AB_PLATFORMS,
   evaluatePlatformPolicy,
@@ -161,7 +162,9 @@ export function emitVariantPacks(opts = {}) {
  * @returns {object}
  */
 export function buildAbPlan(opts = {}) {
-  const platforms = [...FROZEN_AB_PLATFORMS];
+  // B1（2026-11-19）：实验对象读 AB_PLATFORMS，不再读冻结名单。
+  // 读冻结名单的后果是「解冻一个站 = 悄悄改掉实验设计」，见 platform-freeze.mjs 的注释。
+  const platforms = [...AB_PLATFORMS];
   const variants = [
     {
       id: "A-control",
@@ -198,12 +201,19 @@ export function buildAbPlan(opts = {}) {
     ],
     unfreezeConditions: [
       "用户给出明确的解冻指令（点名平台 + 允许范围）。**当前未满足**：用户只授权了本地准备与 push，没有解冻。",
-      "两站登录态可用：PRECHECK=1 且 ALLOW_FROZEN=1、显式 CANDIDATES=deepseek,longcat；deepseek 此前从未被预检过，longcat 只有 2026-11-10 的旧快照，都不是当前态。**当前未满足**。",
+      `本站登录态可用：PRECHECK=1 且 ALLOW_FROZEN=1、显式 CANDIDATES=${platforms.join(",")}。` +
+        `2026-11-18 那次只读预检里 ${platforms.join(" / ")} 是 composerVisible=true、looksLikeLogin=false、未发包` +
+        `（collaboration/results/real-machine-runs/evidence/L2-precheck-2026-11-18.deepseek-longcat.json），所以这条**当时是满足的**；` +
+        `但那是 1 天前的快照，正式跑前必须重跑一次预检确认当前态。**当前未重跑**。`,
       "dist 产物与源码一致（npm run build 后比对 hash 与关键字，G1–G10 口径）。本轮本地准备会核，结果写进 RESULT。",
-      "确认账号额度：2 站 × 2 变体 × 8 步 = 32 步真实发送 + 1 轮预检。**当前未满足/未核**：账号侧信息，我无法核，需用户确认。",
+      `确认账号额度：${platforms.length} 站 × ${variants.length} 变体 × 8 步 = ` +
+        `${platforms.length * variants.length * 8} 步真实发送 + 1 轮预检。**当前未满足/未核**：账号侧信息，我无法核，需用户确认。`,
     ],
     activePlatforms: [...ACTIVE_PLATFORM_IDS],
-    frozenPlatforms: platforms,
+    // 实验对象（读 AB_PLATFORMS）——**这份计划要跑哪些站**
+    abPlatforms: platforms,
+    // 冻结样本集（读 FROZEN_AB_PLATFORMS）——**治理事实**，仅供对账；它不再决定实验对象
+    frozenPlatforms: [...FROZEN_AB_PLATFORMS],
     platformPolicy: platforms.map((id) => ({
       id,
       ...evaluatePlatformPolicy(id, { allowFrozen: false }),
@@ -222,13 +232,13 @@ export function buildAbPlan(opts = {}) {
       executed: false,
     })),
     executionOrder: [
-      "4 条命令必须**串行**，禁止并行：两轮都用 mergeStrategy=overwrite 导入同一个 pack_id，并行会互相覆盖 storage 里的 Pack。",
+      `${runMatrix.length} 条命令必须**串行**，禁止并行：两轮都用 mergeStrategy=overwrite 导入同一个 pack_id，并行会互相覆盖 storage 里的 Pack。`,
       "每轮结束后先核回执（8/8 + sessionResets），再跑下一轮；B 组若 available:false 这轮作废，不要直接拿去判定。",
       "预检登录态也要显式解冻：PRECHECK=1 会打开冻结站页面，本身受 assertCandidatesAllowed 拦截，必须带 ALLOW_FROZEN=1 与显式 CANDIDATES。",
     ],
     commands: [
-      "# 解冻后由人逐条执行（本脚本不代跑）；先预检，再串行跑 4 轮：",
-      `CANDIDATES=deepseek,longcat PRECHECK=1 ALLOW_FROZEN=1 ` +
+      `# 解冻后由人逐条执行（本脚本不代跑）；先预检，再串行跑 ${runMatrix.length} 轮：`,
+      `CANDIDATES=${platforms.join(",")} PRECHECK=1 ALLOW_FROZEN=1 ` +
         `OUT=${EVIDENCE_DIR}/${precheckOutputPath({ evidenceDir: EVIDENCE_DIR, date: TODAY, candidates: platforms }).split("/").pop()} ` +
         `node tests/real-machine/l2-platform-auto.mjs`,
       ...runMatrix.map(

@@ -61,11 +61,18 @@
 | 平台 | 状态 | 性质 | 依据 |
 |---|---|---|---|
 | qianwen | 用户裁定移出白名单 | **政策** | `platform-freeze.mjs:7-9`（有防范非人类操作机制，2026-11-18 改判换成 stepfun） |
-| deepseek | 冻结 A/B 样本 | **政策** | `platform-freeze.mjs:52` `FROZEN_AB_PLATFORMS` |
-| longcat | 冻结 A/B 样本 | **政策** | 同上 |
+| deepseek | 冻结 A/B 样本，**已从实验对象移出** | **政策** | `platform-freeze.mjs:55` `FROZEN_AB_PLATFORMS`（仍在冻结表内）；`:96` `AB_PLATFORMS` 已不含它——11-18 两轮 A/B 都撞在 step_5 被裁定收口 |
+| longcat | 冻结 A/B 样本，**仍是实验对象** | **政策** | `platform-freeze.mjs:96` `AB_PLATFORMS`（当前唯一在跑的 A/B 对象）；`:55` `FROZEN_AB_PLATFORMS` |
 | ChatGPT | `bot_check` HTTP 403 | **平台侧不可控** | `RESULT-REAL-MACHINE-REACHABILITY-2026-10-26.md:68` |
 | Claude.ai | `bot_check` HTTP 403 + 「安全验证」 | **平台侧不可控** | 同上 `:69` |
 | gemini | 不在白名单，无近期真机记录 | **未排期** | `platform-freeze.mjs` 未提及；仅在历史 `fiveSites` 名单中出现 |
+
+> 上表行号 2026-11-19 校准过一次（B1 拆分 `AB_PLATFORMS` 时 `platform-freeze.mjs`
+> 头部增了注释，原 `:52` 漂到 `:55`）。**引用前请以符号名 grep 为准**，行号只作定位提示。
+>
+> 「冻结样本」≠「实验对象」：`FROZEN_AB_PLATFORMS` 记的是**治理事实**（哪些站在冻结
+> 名单、且确实做过 A/B），`AB_PLATFORMS` 记的是**这一轮的实验设计**。解冻某站会让前者
+> 缩表，但后者的增删由实验进度决定——两者混用一个常量，解冻时计划会静默缩水。
 
 **结论**：把「范例一全量跑通」理解成「11 站全绿」是**不可达**的——其中 2 站是平台侧 403，
 不是本项目能解的。可行的口径只有两种，**必须由用户选定一种**，否则这句话永远无法结案：

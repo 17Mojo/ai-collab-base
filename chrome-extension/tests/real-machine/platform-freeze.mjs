@@ -54,6 +54,47 @@ export const ACTIVE_PLATFORM_IDS = Object.freeze([
 /** 本轮 A/B 待验证、但当前**冻结**的样本（写进方案，不许跑）。 */
 export const FROZEN_AB_PLATFORMS = Object.freeze(["deepseek", "longcat"]);
 
+/**
+ * 本轮真机 A/B 的**实验对象**——与上面的「冻结样本集」是两件事，别再混用。
+ *
+ * ## 为什么要拆成两个常量（B1，2026-11-19）
+ *
+ * 此前 `session-wall-ab.mjs` 直接读 `FROZEN_AB_PLATFORMS` 生成计划。后果是：
+ * 一旦解冻 deepseek，`FROZEN_AB_PLATFORMS` 会缩成 `["longcat"]`，
+ * **A/B 的实验对象跟着被静默改掉**——计划从「2 站 × 2 变体 = 4 轮」变成 2 轮，
+ * 而没有任何东西会说「这是实验设计变了，还是治理状态变了」。
+ * 改一个常量同时改了两件事，这是耦合，不是简洁。
+ *
+ * ## 两个常量各自表达什么
+ *
+ *   FROZEN_AB_PLATFORMS  治理事实：哪些站被冻结、且曾经是 A/B 样本（会被解冻影响）
+ *   AB_PLATFORMS         实验设计：这一轮 A/B 要跑哪些站（由实验进度决定）
+ *
+ * 不变式（`session-wall-ab.test.mjs` 守着）：**AB_PLATFORMS ⊆ FROZEN_AB_PLATFORMS**。
+ * 这条红线是「不许拿活跃站当 A/B 实验对象」——活跃站是交付源，实验会扰动它。
+ * 拆开之后，解冻 deepseek 会让**这条断言**说话（要么把 deepseek 移出实验对象，
+ * 要么解释为什么它还能实验），而不是让计划悄悄少两轮命令。
+ *
+ * ## 当前为什么只有 longcat
+ *
+ *   - **deepseek 的 A/B 已结案**：2026-11-11/12 两轮真机回执齐全，step_8 撞墙
+ *     4×180s 的形态已定性；用户 2026-11-18 据现场反自动化判断裁定停止收口（N25），
+ *     deepseek 降级为目标源外平台。它的回执与计划留在 evidence/ 里当历史，不再「待跑」。
+ *   - **longcat 仍待跑**：2026-11-12 的两轮是**无效**数据——`ab2-no-boundary` 第 3 步
+ *     就失败（3 步里只成功 2 步），`ab2-with-boundary` 虽然跑完 8 步，但
+ *     `sessionResets[0] = {available:false, strategy:"none"}`（本站 adapter 没有声明
+ *     newChat，重置根本没发生）⇒ 两组不具备可比性，不能拿来判命题。
+ *     本站至今只有只读预检，没有有效 A/B 数据（N56 记的残留失败也在这里）。
+ *
+ * ## 改它的时候要一起改什么
+ *
+ *   - 加站：必须同时确认它在 `FROZEN_AB_PLATFORMS` 里（否则子集断言红），
+ *     并想清楚额度（每站 × 2 变体 × 8 步 = 16 步真实发送）。
+ *   - 解冻某站：先把它从**这里**移出，再改 `FROZEN_AB_PLATFORMS` 与 `ACTIVE_PLATFORM_IDS`。
+ *   - 顺序反了会红——这正是要的效果：让「实验对象变了」成为一次**显式决定**。
+ */
+export const AB_PLATFORMS = Object.freeze(["longcat"]);
+
 export function isPlatformActive(id) {
   return ACTIVE_PLATFORM_IDS.includes(id);
 }
