@@ -206,16 +206,41 @@ $ python3 -m ai_collab.cli orchestration status   # 绑定状态 + 角色 + 命�
   codearts_agent→A、codex→O；role_prefix.py 收敛两套命名空间，字母池不重叠）
   〔修订注〕「解析 A.ACK 前缀」的说法不准——is_explicit_ack_source 校验的是
   ACK **渠道身份**（cli-ack / chat-ack），不是消息里的字母前缀
+  〔实测注 2026-11-18〕**前缀来自两个命名空间，有 `assignee_role` 时以角色前缀为准**。
+  `claude_code` 注册的任务会自动派生 `assignee_role=AGENT_ARCH`，于是 ACK 前缀是
+  **`X`**（X.RUN 的角色前缀），**不是** provider 兜底表里的 `C`。实测输出：
+    `X.ACK|task=TASK-EXAMPLE3-ACK-E2E-001|status=ok|result=collaboration/results/...md`
+  `role_prefix.py:30` 亲口写明「`X.ACK` 既可能是 codex 的 ACK，也可能是 claude_code
+  当 AGENT_ARCH 的 ACK」。所以**按 provider 表去 grep `C.ACK` 会找不到 claude_code 的 ACK**。
   补票命令: python3 -m ai_collab.cli ack --task-id <ID> --ai <provider> --status ok
+
+┌─────────────────────────────────────────────────────────────┐
+│  步骤 3.5: 转 testing（文档此前漏写，2026-11-18 补）           │
+└─────────────────────────────────────────────────────────────┘
+  〔实测注〕**ACK 之后必须把任务转成 `testing`，否则 `receipt` 永远 0 候选。**
+  `scripts/agent_receipt_bridge.py:279` 的判据是 `if task.get("status") != "testing": continue`；
+  而 `dispatch` 只写派发状态（logs/agent_dispatch_state.json），**不改任务状态**。
+  漏了这一步的现象是 `receipt` 报 `candidate_count: 0 / state_updated: false`，
+  排查者容易误判成「回执功能坏了」。实测第一次跑就是 0 候选。
+
+    python3 -m ai_collab.cli tasks update --task-id <ID> --status testing --apply
 
 ┌─────────────────────────────────────────────────────────────┐
 │  步骤 4: 看门狗 + 结果一致性审计（实测成立）                  │
 └─────────────────────────────────────────────────────────────┘
   - ack_watchdog.run_ack_watchdog: 扫 dispatch/receipt/ack-bridge，
     揪出「超阈未 ACK」的静默任务（时间闸/终态/已 ACK 正确排除，实测成立）
+    〔实测注〕**没有独立 CLI 子命令**，只能 Python 调用，且 `workspace` 必须传 `Path`
+    （传 str 会 TypeError）。`python3 -m ai_collab.cli check` 走冲突检查分支时不触发它。
+      from pathlib import Path; from ai_collab.ack_watchdog import run_ack_watchdog
+      run_ack_watchdog(workspace=Path('.'), dry_run=False)
   - result_consistency_audit.run_terminal_result_consistency_audit:
     终态任务 vs result_file 对账——有产物 consistent、缺产物 missing_result_file
     （默认产物路径 collaboration/results/RESULT_{task_id}.md，实测成立）
+    〔实测注〕终态集合是 `{completed, failed, blocked, cancelled}`
+    （result_consistency_audit.py:21）——**cancelled 也要产物**，否则永久报 missing。
+    它还会解析结果文件里的状态行（`- **状态**: xxx`）与任务状态比对，
+    不一致报 `terminal_status_mismatch`。实测把状态行写错一次，当场被抓到。
   〔修订注〕状态文件真名是 logs/collaboration_state.json（写错层级会得到假阴性）
 ```
 
@@ -360,6 +385,12 @@ $ python3 -m ai_collab.cli pack upgrade <id>
 ---
 
 ## 总结：六大范例 × 实测判档
+
+> ⚠️ **本表的「实测判档」列描述的是「组件各自成立」，不是「整条链路跑通」。**
+> 两者差距可以很大——本仓已有「文件在、符号在、单测在、零生产入口」的先例（N36 / N31）。
+> 要回答「这个范例到底跑通了没有」，请查 **`docs/EXAMPLE-ACCEPTANCE-MATRIX.md`**：
+> 那里把「跑通」拆成 D0 条件不备 / D1 组件级 / D2 链路级 / D3 端到端留回执四档，
+> 逐范例给出判据、磁盘证据、卡点与责任方。**只有 D3 支持说「跑通了」。**
 
 | 范例 | 核心能力 | 实测判档 |
 |---|---|---|

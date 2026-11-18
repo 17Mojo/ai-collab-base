@@ -890,6 +890,73 @@
         "绊线验证：`pytest tests/unit/test_evidence_citations.py -q` → 2 passed；将 135 份 reset 出索引后 → 1 failed（列出违规清单）/ 1 passed；重新 add 后恢复 2 passed。",
         "同型第二例（2026-11-18 同批核查）：`.gitignore` 用 `!logs/claude-code/**` 显式放行开发日志落点（注释标明 PROTOCOL §7.4 要求），但 `git ls-files logs/claude-code` → **0**，13 份 10-21~10-27 的开发日志一直未入库。已一并提交。两次都是「规则写了、动作漏了」，故新增 `tests/unit/test_gitignore_negation_tracking.py`：从 .gitignore 的 `!` 目录型放行**反向推导**检查范围——凡声明要跟踪的目录，磁盘上的文件必须在索引里。变异验证：把一份开发日志 `git rm --cached` 后该测试立刻红并点名文件；还原后 1 passed。"
       ]
+    },
+    {
+      "id": "N41",
+      "priority": "P2",
+      "status": "open",
+      "title": "结果文件章节门禁互斥：按 PROTOCOL §7.4 写的文件被回执桥判 invalid，而缺强制段的文件两处都放行",
+      "reader": "任何按派单指令写结果文件的 agent，以及任何声称「结果文件四段契约已被强制」的审计者。前者会在链路最后一步被拦、拦截理由（缺 `## 测试结论`）与派单指令自相矛盾，陷入「改了还是不过」的循环；后者会以为「回滚」段受保护，实际它零执行。",
+      "where": [
+        "collaboration/PROTOCOL.md:413-420（§7.4 强制四段：执行命令 / 验证结果 / 风险 / 回滚；「验证结果」须含「测试结论」小节）",
+        "scripts/agent_receipt_bridge.py:122（REQUIRED_SECTIONS = (\"## 执行命令\", \"## 测试结论\", \"## 风险\")，字面 H2，无替代词）",
+        "scripts/agent_dispatch_bridge.py:266（派单指令只提四段，未提「测试结论」小节）",
+        "ai_collab/state_manager.py:348-352（TASK_RESULT_REQUIRED_SECTION_GROUPS，接受「验证结果」作「测试结论」的替代；「回滚」只是「风险」的替代词）"
+      ],
+      "detail": "2026-11-18 跑范例三端到端时，本仓自己产出的结果文件被 `receipt` 判 `result_file_invalid: missing sections ['## 执行命令','## 测试结论','## 风险']`。探针实测三种文件形态：A（PROTOCOL 四段齐全、无「测试结论」小节）→ 回执桥 FAIL / state_manager PASS；B（四段 + `### 测试结论` 小节）→ 两者都 PASS；C（只有三标题、缺 `## 回滚`）→ 两者都 PASS。即两处门禁判据不一致且方向相反：(1) 合规文件在最后一步被拦；(2) PROTOCOL §7.4 的第四段「回滚」没有任何门禁强制，state_manager 把「回滚」当成「风险」的替代词，写了「风险」就算满足。附带事实：`### 测试结论` 能通过是因为子串匹配（`\"## 测试结论\" in \"### 测试结论\"` 为真），属巧合而非设计。",
+      "impact": "派单指令与回执门禁对「什么样的结果文件算合格」给出互相矛盾的答案；执行者按指令做仍被打回。若下游按 PROTOCOL 声称已强制四段，则「回滚」段的缺失无从发现。",
+      "fix": "择一收敛：① 以 PROTOCOL §7.4 为唯一事实源，把 `agent_receipt_bridge.REQUIRED_SECTIONS` 改为复用 `state_manager.TASK_RESULT_REQUIRED_SECTION_GROUPS`（含替代词与「回滚」独立分组），并让 `agent_dispatch_bridge.py:266` 的指令原文补齐「验证结果内须含测试结论小节」；② 反之改 PROTOCOL，把「测试结论」提升为独立第五段。无论选哪条，都要加一条绊线：从 PROTOCOL §7.4 表格反推必需段，与两处实现双向对账，任一侧缺段即红。",
+      "found_at": "2026-11-18"
+    },
+    {
+      "id": "N42",
+      "priority": "P2",
+      "status": "open",
+      "title": "状态机双网盲区：cancelled/failed/blocked 被要求交产物（永久 missing），而「已 ACK 但缺产物且停在 testing」的任务看门狗与审计都不管",
+      "reader": "任何取消过任务、或见过一致性审计长期挂着一条 missing_result_file 的人；以及任何相信「ACK 了或有异常都会被某张网兜住」的人。前者会以为是产物丢了，实际是取消任务本就不该有产物；后者要接受一个任务可以同时躲开两张网、静默停在 testing 无人过问。",
+      "where": [
+        "ai_collab/result_consistency_audit.py:21（TERMINAL_STATUSES = {completed, failed, blocked, cancelled}）",
+        "ai_collab/result_consistency_audit.py:170-189（非终态跳过；终态缺产物记 missing_result_file）",
+        "ai_collab/ack_watchdog.py（已 ACK 的任务按设计排除，不再复核其产物）",
+        "scripts/agent_receipt_bridge.py:279（只处理 status == testing）"
+      ],
+      "detail": "2026-11-18 实测：把负向对照任务置为 `cancelled` 后，审计立刻报 `TASK-EXAMPLE3-ACK-E2E-002 type=missing_result_file state=cancelled`——取消的任务按定义没有交付物，却被要求提交交付物，于是只要有人取消过任务，审计就永久挂一条 missing。同一轮还发现另一侧：该任务在 `testing` 阶段已成功 ACK（声明 status=ok）但产物不存在时，看门狗把它当「已 ACK」排除、审计因「非终态」不扫，**它同时躲开两张网**，可以无限期停在 testing 无人发现。另有写入门禁 `tasks update --status completed` 会拦住缺产物任务，所以「终态 + 缺产物」只在事后删除产物时可达（已用删-恢复实验证明该分支确实活着）。",
+      "impact": "① 取消/失败任务污染审计，使 missing_result_file 这条告警失去信噪比，真缺产物时容易被当成老噪音忽略；② 「ACK 已发但交付物其实没有」这一最常见失败模式没有任何自动发现路径，只能靠人工比对。",
+      "fix": "① 终态集合按状态分流：`cancelled` 不要求产物（cancelled 语义即「不交付」），`failed`/`blocked` 允许产物缺失但要求写原因；② 给 `testing` 超时任务加一条独立扫描：`status==testing` 且存在 ok ACK 但 result_file 不存在 → 报 `ack_without_artifact`，不依赖终态；③ 为两条各加一条绊线用例（构造 cancelled 无产物不应报错；构造 testing+ok ACK+无产物必须报错）。",
+      "found_at": "2026-11-18"
+    },
+    {
+      "id": "N43",
+      "priority": "P3",
+      "status": "closed",
+      "title": "范例三四步骤缺「转 testing」且 ACK 前缀双命名空间未说明，照文档原文走不到回执",
+      "reader": "第一次照着 docs/APPLICATION-EXAMPLES.md 范例三执行的人。按原文 ACK 完直接 `receipt`，会得到 candidate_count: 0 / state_updated: false，然后去怀疑回执功能坏了；想核对 ACK 是否生效时，又会按文档 provider 表去 grep `C.ACK`，一条也找不到。",
+      "where": [
+        "docs/APPLICATION-EXAMPLES.md 范例三 步骤 3 / 步骤 4（原文 ACK 后直接 receipt，缺状态流转；前缀只给 provider 兜底表）",
+        "scripts/agent_receipt_bridge.py:279（真判据：status 必须为 testing）",
+        "ai_collab/role_prefix.py:30（X.ACK 的双重含义）"
+      ],
+      "detail": "2026-11-18 端到端实跑暴露：ACK 成功后 `receipt` 报 `candidate_count: 0`，根因是 `dispatch` 只写派发状态、不改 `collaboration_state.json` 的任务状态，任务仍是 `pending`，而回执桥只处理 `testing`。补 `tasks update --status testing` 后立刻 `completed_count: 1 / state_updated: true`。同轮发现 `claude_code` 发出的 ACK 前缀是 `X`（角色命名空间 AGENT_ARCH）而非文档 provider 表写的 `C`；`role_prefix.py:30` 已写明 `X.ACK` 既可能是 codex 也可能是 claude_code 当 AGENT_ARCH。",
+      "impact": "文档缺步导致首次执行者误判回执功能故障；前缀口径不清导致审计者按 `C.ACK` 检索时得到假阴性「没有 ACK」。",
+      "fix": "已在 docs/APPLICATION-EXAMPLES.md 范例三补齐：新增「步骤 3.5 转 testing」并写明 0 候选的成因与命令；在步骤 3 加实测注，说明有 assignee_role 时以角色前缀为准、`X.ACK` 的双重含义、按 provider 表 grep 会找不到。同时把步骤 4 的两处实测细节写进文档（看门狗无独立 CLI 且 workspace 须传 Path；审计的终态集合含 cancelled、会校验结果文件状态行）。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N44",
+      "priority": "P3",
+      "status": "open",
+      "title": "orchestration 把主执行者 AGENT_EXEC 绑定在 detect 结果为 unavailable 的 codearts_agent 上",
+      "reader": "任何准备真正启用三 agent 协作、或按角色表把任务派给「主执行者」的人。detect 说 codearts_agent 不可用，status 说它是主执行者——按角色派发就会派进一条检测不通的通道，而现象是任务卡住而不是报错。",
+      "where": [
+        "config/agent-orchestration.json（binding_status=active，AGENT_EXEC → codearts_agent）",
+        "python3 -m ai_collab.cli orchestration detect（实盘输出 codearts_agent: unavailable）",
+        "python3 -m ai_collab.cli orchestration status（实盘输出 AGENT_EXEC → codearts_agent [主执行者]）"
+      ],
+      "detail": "2026-11-18 实测一对自相矛盾的输出：`orchestration detect` 报 `claude_code: connected / codex_cli: unavailable / gemini_cli: unavailable / codearts_agent: unavailable`，而 `orchestration status` 同时报 `AGENT_EXEC → codearts_agent [主执行者]`。即唯一被声明为「主执行者」的角色指向唯一不可用的服务商。本轮只走 AGENT_ARCH（claude_code）路径，未被此矛盾阻塞，所以它是隐性配置债而非当下故障。",
+      "impact": "启用三 agent 协作时，派给 AGENT_EXEC 的任务会进入不可用通道；因为不是立即报错，排查成本高。",
+      "fix": "需用户裁定：① 把 AGENT_EXEC 改绑到 claude_code（当前唯一 connected）；② 保留 codearts_agent 绑定但把 binding_status 降级，并在 `orchestration status` 输出里对「已绑定但 detect 不可用」的角色加显式告警标记；③ 在 `orchestration status` 里直接对比 detect 结果，不一致即打出 ⚠️。推荐 ③ + ①，因为它是唯一能防止同类隐性矛盾的方案。",
+      "found_at": "2026-11-18"
     }
   ]
 }
