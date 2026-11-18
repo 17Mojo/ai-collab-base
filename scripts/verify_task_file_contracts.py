@@ -29,8 +29,6 @@ import argparse
 import sys
 from pathlib import Path
 
-import yaml
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
@@ -38,36 +36,7 @@ from ai_collab.result_consistency_audit import (  # noqa: E402
     run_terminal_result_consistency_audit,
 )
 from ai_collab.state_manager import StateManager, TaskStatus  # noqa: E402
-
-
-def parse_frontmatter(path: Path) -> dict:
-    """读 `---` 包裹的 YAML frontmatter。"""
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---"):
-        return {}
-    _, frontmatter, _body = text.split("---", 2)
-    return yaml.safe_load(frontmatter) or {}
-
-
-def collect_task_files(tasks_dir: Path, only: list[str] | None) -> list[Path]:
-    """挑出要校验的工单文件。
-
-    ## 为什么不用 `TASK_*.md`
-
-    本仓工单文件名的约定是 **`TASK-P1-<名字>-001.md`（连字符）**，
-    而 `TASK_*.md`（下划线）**一个都匹配不到**——
-    2026-10-27 实测：不带参数跑本脚本时它打印「没找到工单文件」就退出了，
-    看上去像「没有工单」，实际是**通配符写错了**。
-    那个错误很隐蔽：脚本此前只在显式传 `--task-id` 时被用过，
-    而显式路径走的是另一条分支，绕开了这个 bug。
-
-    所以这里按**实际约定**匹配，并且两种写法都收
-    （万一以后有人真的用下划线命名，也不至于漏检）。
-    """
-    if only:
-        return [tasks_dir / f"{task_id}.md" for task_id in only]
-    found = {p for pattern in ("TASK-*.md", "TASK_*.md") for p in tasks_dir.glob(pattern) if p.is_file()}
-    return sorted(found)
+from ai_collab.task_md_sync import collect_task_files, parse_frontmatter  # noqa: E402
 
 
 def main() -> int:
@@ -107,6 +76,8 @@ def main() -> int:
                 support_skills=fm.get("support_skills"),
                 acceptance_commands=fm.get("acceptance_commands"),
                 result_file=fm.get("result_file"),
+                session_id=fm.get("session_id"),
+                model_id=fm.get("model_id"),
                 actor="claude_code",
             )
         else:
@@ -124,6 +95,8 @@ def main() -> int:
                 support_skills=fm.get("support_skills"),
                 acceptance_commands=fm.get("acceptance_commands"),
                 result_file=fm.get("result_file"),
+                session_id=fm.get("session_id"),
+                model_id=fm.get("model_id"),
             )
         # 收口到 completed：**这一步会触发结果文件门禁**
         # （章节齐备、无负向信号、验收命令逐字出现在结果文件里）。

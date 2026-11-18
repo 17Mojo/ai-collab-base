@@ -325,6 +325,7 @@ class StateManager:
     )
     # 身份字段：切点之后必填（见 ai_collab/identity.py 的 IDENTITY_REQUIRED_SINCE）。
     TASK_CONTRACT_IDENTITY_FIELDS = ("session_id", "model_id")
+    MD_SYNC_META_KEY = "md_sync"
     TASK_CONTRACT_DEFAULT_CHANGE_ID = "legacy/task-contract-migration"
     TASK_CONTRACT_DEFAULT_REVIEWER = "codex"
     # 无法从 orchestration 反查角色时的兜底角色代号（PROTOCOL §7.3）
@@ -2036,6 +2037,152 @@ class StateManager:
             "issues": issues,
         }
 
+    def _identity_input_source(self) -> dict[str, Any]:
+        """身份审计的输入来源说明，让账本条数不再被误读为全量。"""
+        meta = self.state.get(self.MD_SYNC_META_KEY)
+        if not isinstance(meta, dict) or not meta:
+            return {
+                "synced": False,
+                "synced_count": 0,
+                "synced_at": "",
+                "text": "未同步过 md；审计仅覆盖当前账本，不能解释为全量",
+            }
+        synced_at = str(meta.get("synced_at") or "")
+        synced_count = int(meta.get("synced_count") or 0)
+        return {
+            "synced": True,
+            "synced_count": synced_count,
+            "synced_at": synced_at,
+            "text": f"账本源自 md 同步（{synced_at}，{synced_count} 条）",
+        }
+
+    def sync_tasks_from_md(
+        self,
+        tasks_dir: str | Path,
+        *,
+        dry_run: bool = False,
+        only: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """把 `collaboration/tasks/TASK-*.md` 已声明的事实同步进当前工作树账本。
+
+        为什么需要这一步：账本在 gitignored 的 `logs/` 下，每个工作树各一份。
+        全新检出的账本为空，直接跑身份审计会报 `total=0`，那不是「没有历史欠账」，
+        只是「这台机器没同步过」。同步让审计覆盖集合等于磁盘 md 集合。
+
+        严格单向：只从 md 写账本，绝不回写 md；只写 md **已声明**的身份字段，
+        缺失字段留空由 `resolve_identity` 判 legacy / partial。不推导、不补全、不编造。
+
+        边界：md 后来删掉身份字段时，账本里已有的身份不会被清空
+        （`update_task_contract` 对空值跳过）。这是有意保守——避免一次误删 md 字段
+        就把已核验的身份抹掉；如需清空，须显式走 `tasks update` 的人工流程。
+        """
+        from .task_md_sync import collect_task_files, declared_identity, parse_frontmatter
+
+        directory = Path(tasks_dir)
+        files = collect_task_files(directory, only)
+        if not files:
+            return {
+                "dry_run": dry_run,
+                "source_files": 0,
+                "created": 0,
+                "updated": 0,
+                "unchanged": 0,
+                "items": [],
+                "error": f"没有找到工单文件：{directory}",
+            }
+
+        plans: list[dict[str, Any]] = []
+        for path in files:
+            fm = parse_frontmatter(path)
+            task_id = str(fm.get("task_id") or path.stem)
+            identity = declared_identity(fm)
+            existing = self.state.get("tasks", {}).get(task_id)
+            if existing is None:
+                action = "create"
+            elif any(str(existing.get(field) or "") != value for field, value in identity.items()):
+                action = "update"
+            else:
+                action = "unchanged"
+            plans.append({"path": path, "frontmatter": fm, "task_id": task_id, "identity": identity, "action": action})
+
+        counts = {
+            "created": sum(p["action"] == "create" for p in plans),
+            "updated": sum(p["action"] == "update" for p in plans),
+            "unchanged": sum(p["action"] == "unchanged" for p in plans),
+        }
+        if dry_run:
+            return {
+                "dry_run": True,
+                "source_files": len(files),
+                **counts,
+                "items": [{"task_id": p["task_id"], "action": p["action"]} for p in plans],
+            }
+
+        applied = {"create": 0, "update": 0}
+        for plan in plans:
+            if plan["action"] == "unchanged":
+                continue
+            fm = plan["frontmatter"]
+            task_id = plan["task_id"]
+            identity = plan["identity"]
+            if plan["action"] == "create":
+                self.register_task(
+                    task_id=task_id,
+                    ai_type=str(fm.get("assignee") or "claude_code"),
+                    description=plan["path"].stem,
+                    files=[],
+                    vscode_context={"source": "sync-from-md"},
+                    change_id=fm.get("change_id"),
+                    assignee=fm.get("assignee"),
+                    assignee_role=fm.get("assignee_role"),
+                    reviewer=fm.get("reviewer"),
+                    primary_skill=fm.get("primary_skill"),
+                    support_skills=fm.get("support_skills"),
+                    acceptance_commands=fm.get("acceptance_commands"),
+                    result_file=fm.get("result_file"),
+                    session_id=identity.get("session_id"),
+                    model_id=identity.get("model_id"),
+                )
+            else:
+                self.update_task_contract(
+                    task_id,
+                    session_id=identity.get("session_id"),
+                    model_id=identity.get("model_id"),
+                    note="md 同步：只写已声明身份",
+                    actor="md_sync",
+                )
+            applied[plan["action"]] += 1
+
+        def _record_sync() -> None:
+            # register_task 不接受 created_at，创建时用它自己的当前时间。
+            # 那会让切点前的历史工单被误判成「切点后缺身份」（missing），
+            # 因此这里按 md 里已声明的事实覆盖——同步的事实源必须是 md。
+            for plan in plans:
+                created = str(plan["frontmatter"].get("created_at") or "").strip()
+                if not created:
+                    continue
+                task = self.state.get("tasks", {}).get(plan["task_id"])
+                if isinstance(task, dict):
+                    task["created_at"] = created
+            self.state[self.MD_SYNC_META_KEY] = {
+                "synced_at": datetime.now().isoformat(),
+                "synced_count": len(files),
+                "created": applied["create"],
+                "updated": applied["update"],
+                "source_files": len(files),
+                "actor": "sync-from-md",
+            }
+
+        self._commit_state_transaction(mutate=_record_sync, output_message="md 同步元数据已记录")
+        return {
+            "dry_run": False,
+            "source_files": len(files),
+            "created": applied["create"],
+            "updated": applied["update"],
+            "unchanged": counts["unchanged"],
+            "items": [{"task_id": p["task_id"], "action": p["action"]} for p in plans],
+        }
+
     def audit_task_identity(self, scope: str = "all", apply: bool = False) -> dict[str, Any]:
         """身份迁移审计：逐条给出身份状态，只按注册表事实补路由键，不编造身份。
 
@@ -2099,6 +2246,7 @@ class StateManager:
             "cutoff": IDENTITY_REQUIRED_SINCE,
             "total": len(details),
             "counts": counts,
+            "input_source": self._identity_input_source(),
             "route_fillable": route_fillable,
             "applied": applied,
             "details": details,
