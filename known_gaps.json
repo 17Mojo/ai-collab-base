@@ -887,7 +887,8 @@
         "引用核对：逐个 basename 在受跟踪 `*.md` / `*.json` 中 `git grep`，命中 100 份（其中 92 份在 git 里没有同名文件，另 8 份存在同名文件但 evidence 目录里这份未跟踪）。",
         "口径证据：`.gitignore:50` 反例放行 `evidence/*.log`，注释「真机回归证据日志属交付物（RESULT 报告以其为最终判定依据），例外放行」。",
         "体积：135 份合计 7.51 MB，最大单文件 0.74 MB（`L2-deepseek-auto-2026-11-12.ab3-with-boundary.png`），无超大 blob 风险。",
-        "绊线验证：`pytest tests/unit/test_evidence_citations.py -q` → 2 passed；将 135 份 reset 出索引后 → 1 failed（列出违规清单）/ 1 passed；重新 add 后恢复 2 passed。"
+        "绊线验证：`pytest tests/unit/test_evidence_citations.py -q` → 2 passed；将 135 份 reset 出索引后 → 1 failed（列出违规清单）/ 1 passed；重新 add 后恢复 2 passed。",
+        "同型第二例（2026-11-18 同批核查）：`.gitignore` 用 `!logs/claude-code/**` 显式放行开发日志落点（注释标明 PROTOCOL §7.4 要求），但 `git ls-files logs/claude-code` → **0**，13 份 10-21~10-27 的开发日志一直未入库。已一并提交。两次都是「规则写了、动作漏了」，故新增 `tests/unit/test_gitignore_negation_tracking.py`：从 .gitignore 的 `!` 目录型放行**反向推导**检查范围——凡声明要跟踪的目录，磁盘上的文件必须在索引里。变异验证：把一份开发日志 `git rm --cached` 后该测试立刻红并点名文件；还原后 1 passed。"
       ]
     }
   ]
