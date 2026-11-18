@@ -60,15 +60,21 @@
 
 ## 3. 本次实测顺带发现的三条缺陷
 
-### D1（P2）登录判据假阳性：`composerVisible` 不能代表已登录
+> **立项状态（2026-11-18 回填）**：三条均已登记进 `known_gaps.json`，**不是「待登记」**：
+> D1 → **N34**（P2 open）、D2 → **N35**（P3 open）、D3 → **N36**（P1 open）。
+> 本节保留发现时的原始写法以便追溯，编号映射以本行为准；后续状态只看 `known_gaps.json`。
+> 〔回填说明〕本节此前写「建议登记为独立 gap」，与磁盘不符——那三条在 `f8eeb0f` 就已入库，
+> 是本节漏了交叉引用，导致读者以为尚未立项。2026-11-18 修正。
 
-- 位置：`chrome-extension/tests/real-machine/l2-platform-auto.mjs:249-260`
+### D1（P2）登录判据假阳性：`composerVisible` 不能代表已登录 〔台账 N34〕
+
+- 位置：`chrome-extension/tests/real-machine/l2-platform-auto.mjs:246-260`（`runOne` 的登录等待循环与断言；`:249-260` 是循环体到断言那一段）
 - 事实：stepfun 未登录时 `composerVisible:true` 且 `hasLoginEntry:true`。脚本仅以输入框可见判定
   「已登录」，导致未登录时直接导入 Pack 发消息，浪费一轮真机并产出 `Response timeout`。
 - 建议：判据改为 `composerVisible && !hasLoginEntry && hasUserMenu`（本次独立探针已验证该组合在
   五站均能正确区分），或改用 adapter 侧真实鉴权信号。
 
-### D2（P3）冻结守卫日志误报：`!policy.active` 当成"已解冻"
+### D2（P3）冻结守卫日志误报：`!policy.active` 当成"已解冻" 〔台账 N35〕
 
 - 位置：`chrome-extension/tests/real-machine/l2-platform-auto.mjs:391-394`
 - 事实：PRECHECK 模式下 `PLATFORM` 默认仍是 `qianwen`（已移出白名单），`policy.active=false` ⇒
@@ -76,17 +82,24 @@
   实际未打开 qianwen（预检只开 CANDIDATES 五站），属**日志误报**，但会误导排障者以为有人解冻过。
 - 建议：条件改为 `policy.unfrozenBy !== null`；PRECHECK 模式下不对未使用的 `PLATFORM` 做该判定。
 
-### D3（P1）范例二的核心链路未接线（详见 §2）
+### D3（P1）范例二的核心链路未接线（详见 §2） 〔台账 N36〕
 
 - `MultiPlatformExecutor` 是死代码，无任何生产入口。若文档/对外材料称"多平台并发共创可用"，
-  与磁盘不符。建议登记为独立 gap 并裁定：接线上线 或 明确标注为未实现。
+  与磁盘不符。
+- **已登记（2026-11-18）**：`known_gaps.json` **N36**（P1 / open）。性质与 N31（Hook 脚本齐全
+  但从未接线）同类——「文件存在 + 符号存在」但调用链没接上，自检全绿而能力为零。
+  待裁定的仍是同一个岔路：接线上线，或明确标注未实现；倾向后者。
+- 文档侧已同步：`docs/APPLICATION-EXAMPLES.md` 范例二阶段 1 已加〔修订注〕指向 N36。
 
 ## 4. 口径声明
 
 - **这是机器判定，不是人工验收。** `success:true` 只证明「链路跑通且产出非空」，
   不代表内容质量合格、不代表产品验收通过。
 - 截图与 JSON 为可机检证据；本报告不替代用户目检。
-- 主仓基线（`36d9ec2`）不含 stepfun，若要把本次结论并回主仓，需先同步代码基线。
+- ~~主仓基线（`36d9ec2`）不含 stepfun，若要把本次结论并回主仓，需先同步代码基线。~~
+  **已办（2026-11-18）**：主仓已由 `36d9ec2` 同步至 `ada4ceb`（含 stepfun 与 N30），本报告与
+  证据已随 `f8eeb0f` 入库；此后合并 `feat/wip-content-baseline-merge` 至 `0ae0c18`，
+  `docs/APPLICATION-EXAMPLES.md` 的〔实测状态〕亦已回填。本条不再构成待办。
 
 ## 5. 证据清单
 
