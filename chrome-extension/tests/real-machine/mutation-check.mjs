@@ -1365,6 +1365,24 @@ const MUTATIONS = [
     testFile: "typing-indicator.test.mjs",
     expectTest: "DeepSeek：空闲页上的搜索来源图标（class 带 loading）不得被判成「正在生成」",
   },
+  {
+    name: "text-length-probe 去掉「在输入区上沿之上」那条闸门",
+    why: "少这一条就可能点到输入框或发送键——探针从「只读」变成「可能发消息」，而这正是 N57 取证时唯一被允许的例外点击",
+    target: "real-machine/text-length-probe.mjs",
+    find: "      if (r.bottom > composerTop) continue;",
+    replace: "      // gate removed",
+    testFile: "text-length-probe-contract.test.mjs",
+    expectTest: "探针里 5 条几何闸门一条都不能少",
+  },
+  {
+    name: "text-length-probe 的点击不再受 EXPAND_CLICK 控制",
+    why: "去掉开关 = 每次跑探针都会点一次页面，且「只在我明确要求时才点」这条约定没人守了",
+    target: "real-machine/text-length-probe.mjs",
+    find: "    if (EXPAND_CLICK && cands.length > 0) {",
+    replace: "    if (cands.length > 0) {",
+    testFile: "text-length-probe-contract.test.mjs",
+    expectTest: "非导航点击必须挂在 EXPAND_CLICK 开关后面，且坐标只来自 pickChevron",
+  },
 
   // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────
   // 四轮 A/B 全部 723.x s 失败、截图却显示 AI 已答完：长会话卸载旧回答，
