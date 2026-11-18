@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-11-18T01:29:48.172Z",
+  "mode": "login-helper",
+  "waitMinutes": 15,
+  "profile": "/tmp/rm-stepfun-l2-profile",
+  "results": [
+    {
+      "platform": "stepfun",
+      "state": {
+        "url": "https://studio.stepfun.com/",
+        "composerVisible": true,
+        "hints": [],
+        "title": "AI Studio | 阶跃星辰",
+        "account": {
+          "userIds": {},
+          "userId": null,
+          "asideText": ""
+        }
+      },
+      "loggedIn": true,
+      "why": "输入框可见 + 无登录提示 + 非认证路径（⚠️ 账号身份未取到，只能证明「有人登录了」）",
+      "accountUnverified": true,
+      "checkedAt": "2026-11-18T01:29:47.802Z"
+    }
+  ]
+}

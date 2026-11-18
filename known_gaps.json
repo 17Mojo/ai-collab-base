@@ -568,9 +568,9 @@
     {
       "id": "N29",
       "priority": "P1",
-      "status": "open",
+      "status": "closed",
       "title": "qianwen 的 step_8 新会话重置回落到 click-no-effect（6→6），不满足 A/B 的 B 组前置",
-      "reader": "解冻后要跑 deepseek/longcat A/B 的人；以及任何依赖 fresh_session 已在活跃站生效这一结论的人——qianwen 现在不能作为该结论的证据。",
+      "reader": "解冻后要跑 deepseek/longcat A/B 的人；以及任何依赖 fresh_session 已在活跃站生效这一结论的人——本条已关闭，修复后 qianwen 重新可作为该结论的证据，但冻结站仍未被验证。",
       "where": [
         "chrome-extension/src/content/new-session-control.js:277-297（waitForSessionReset 失败即 refuse 为 click-no-effect）",
         "collaboration/results/real-machine-runs/evidence/L2-qianwen-auto-2026-11-18.full8.json（exec.result.sessionResets）",
@@ -578,12 +578,40 @@
       ],
       "detail": "2026-11-18 活跃 5 站验证：5/5 Pack 均 8/8 completed，platformPolicy 全部 active/unfrozenBy=null。但 qianwen 的 step_8 会话重置为 available=false / strategy=click-no-effect / messageCountBefore=6 → messageCountAfter=6 / durationMs=8232，原因写的是「点了「新对话」但消息数没有下降（6 → 6），无法确认会话已重置。」其余 4 站（chatglm/kimi/yiyan/yuanbao）均为 adapter-selector，消息数 12→0 或 6→0，available=true。\n\n对照 2026-11-11 同一站：L2-qianwen-auto-2026-11-11.n23.json 为 available=true / strategy=hidden-semantic / 12→0；同日的 fresh-session.json 也有一次 available=false / none / 12→12。git log 显示 new-session-control.js 自 11-11 起未改（唯一提交 2297186 在 N23 期间），因此这是**页面 DOM 或会话状态变化**导致的回落，不是代码 commit 回归——但尚无磁盘证据判定是哪一种。",
       "impact": "① N25 的 A/B 判据写明「B 组回执 sessionResets[0].available === true 且 messageCountAfter < messageCountBefore —— 否则 B 不能算开了新会话，这轮对照作废」。若冻结站出现同样回落，32 步真实发送跑完也拿不到有效结论。② 不能用「qianwen Pack 8/8 通过」外推成「会话边界在活跃站生效」——这两件事在本轮是分离的。",
-      "fix": "待查。候选方向：qianwen adapter 的 newChat 选择器是否仍命中；「新对话」入口是否需要确认弹窗；消息列表选择器是否随页面改版失效。诊断须用 new-session-probe.mjs 在活跃站取证，不得改判据来让 B 组通过。在诊断完成前，解冻 A/B 不应启动。",
+      "fix": "已修（2026-11-18）：根因不是站点拒绝点击，也不是代码 commit 回归，而是千问把 hover-reveal 面板改成默认可见后，生产选择器顺序让宽泛文案层先命中外层 div.newChatReveal-*（类名含 newChat、textContent 也是「新对话」），点了这个没有 click handler 的容器，真入口 div[data-session-switch-target=\"new-chat\"] 永远轮不到。在 adapter 与文案层之间插入「可见语义属性层」（必须通过 isElementRendered，命中记 strategy=semantic），隐藏兜底仍留最后；抽 semanticControlMatches() 供两层共用。未改 adapter 表、文案表或 A/B 判据。证据：RESULT-N29-QIANWEN-SEMANTIC-CONTROL-2026-11-18.md；修复后 qianwen 6→0（semantic），活跃 5 站 5/5 Pack + 5/5 会话重置。",
       "found_at": "2026-11-18",
-      "closed_at": null,
+      "closed_at": "2026-11-18",
       "appended_evidence": [
         "5 站统一对账（2026-11-18）：chatglm/kimi/yiyan/yuanbao 的 sessionResets.available=true，strategy=adapter-selector，消息数分别 12→0 / 6→0 / 6→0 / 12→0；qianwen 为 available=false / click-no-effect / 6→6。",
-        "冻结闸门留痕：5 份回执的 platformPolicy 均为 {allowed:true, active:true, unfrozenBy:null, reason:\"active\"}，本轮未使用 ALLOW_FROZEN=1，未碰 deepseek/longcat。"
+        "冻结闸门留痕：5 份回执的 platformPolicy 均为 {allowed:true, active:true, unfrozenBy:null, reason:\"active\"}，本轮未使用 ALLOW_FROZEN=1，未碰 deepseek/longcat。",
+        "根因四层证据：① 只读探针 11-11 外层祖先 pointer-events-none opacity-0 / rendered=false → 11-18 无该类 / rendered=true；② 今天 DOM 形状在 jsdom 中用生产函数逐字复现 click-no-effect 6→6（found.how=text-match，命中的是外层 newChatReveal 容器）；③ 点击诊断直接点真语义入口 7→0，证明真入口没坏；④ 修复后真机 qianwen 6→0，strategy=semantic。",
+        "修复后活跃 5 站复验：qianwen/yuanbao/chatglm/yiyan/kimi 均 success=true / 8/8 steps / sessionResets.available=true，消息数分别 6→0 / 12→0 / 12→0 / 6→0 / 6→0，unfrozenBy 全为 null；首轮 qianwen .n29fix 在 step_6 撞 Response timeout 未跑到 step_8，如实留档不计通过，.n29fix2 才计入。",
+        "回归守护：可见态 jsdom 用例 + 变异检查新增条目「可见语义层被清空」，125/125 变异被杀死；扩展全套 326 条测试全绿。"
+      ]
+    },
+    {
+      "id": "N30",
+      "priority": "P1",
+      "status": "closed",
+      "title": "千问有防范非人类操作机制，活跃真机白名单改用 stepfun（真人登录后登记）",
+      "reader": "任何继续用 qianwen 做真机回归的人；以及依据「活跃 5 站」结论判断会话边界是否生效的人——2026-11-18 起活跃位已换站，旧报告的 5 站清单不再适用。",
+      "where": [
+        "chrome-extension/tests/real-machine/platform-freeze.mjs（ACTIVE_PLATFORM_IDS 白名单）",
+        "chrome-extension/src/platforms/stepfun-adapter.js（新增生产适配器）",
+        "chrome-extension/tests/platforms.mjs / manifest.json / src/content/content-script.js / src/background/service-worker.js（11 站登记）",
+        "collaboration/results/real-machine-runs/evidence/login-stepfun-2026-11-18.human.json（真人确认登录证据）"
+      ],
+      "detail": "用户 2026-11-18 裁定：qianwen 有防范非人类操作机制，不再作为活跃真机站，换成 stepfun（https://studio.stepfun.com/），由真人配合登录。N29 虽已修复千问的会话重置选择器问题，但该修复只说明「入口选对了」，不能推翻用户对站点反自动化机制的裁定。首次 login-helper 判定曾为假阳性：stepfun 游客态首页也有输入框，脚本 1 秒就报已登录；改用「真人确认标记 + localStorage 身份信号」后重采，确认登录态（站点显示账号名，localStorage 有 studio_user_login_recorded）。",
+      "impact": "① 继续拿 qianwen 当活跃站会把反自动化误判成产品缺陷，且证据不可复现；② 若只改白名单不登记生产适配器，后台 getAdapter 返回 null，整条 Pack 链路静默失灵；③ 平台注册一致性测试原本硬编码 10 站，必须同步到 11 站，否则「新增平台」会被当成漂移。",
+      "fix": "已修（2026-11-18）：新增 stepfun adapter/fixture/快照记录，manifest/content-script/service-worker/platforms 注册表同步到 11 站；白名单 qianwen → stepfun，qianwen adapter 保留在生产层但本轮真机不碰；platform-freeze 测试与变异锚同步。真机复验：stepfun 8/8、会话重置 12→0（text-match、unfrozenBy=null），其余 4 站 8/8 全通。证据：RESULT-STEPFUN-SWAP-2026-11-18.md。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18",
+      "appended_evidence": [
+        "真人登录证据：login-stepfun-2026-11-18.human.json，url=https://studio.stepfun.com/，loginCta=false，localStorage 含 studio_user_login_recorded 与用户标识键；首次两份 login-stepfun-*.json 是假阳性，如实留档不删。",
+        "只读 DOM 证据：输入框 textarea[data-slot=textarea]、发送 button[aria-label=发送]、消息容器 [data-split-pane=chat] div[class=\"flex flex-col gap-6\"] > div（2 条消息→2 个节点）；点侧栏「新对话」后 2→0。",
+        "stepfun 完整 L2：L2-stepfun-auto-2026-11-18.full8.json，success=true / 8/8、sessionResets available=true / text-match / 12→0 / 304ms、platformPolicy active=true / unfrozenBy=null。",
+        "全集守护：扩展 326/326、适配器矩阵 117/125 passed / 0 failed / 8 skipped、变异 125/125 被杀死；11 站注册一致性通过。",
+        "替换后活跃 5 站：stepfun / yuanbao / chatglm / yiyan / kimi 全部 success=true / 8/8 / sessionResets.available=true，消息数 12→0 / 12→0 / 12→0 / 6→0 / 6→0，unfrozenBy 全为 null；deepseek / longcat 仍冻结，本轮未碰。"
       ]
     }
   ]

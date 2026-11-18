@@ -113,6 +113,14 @@ export const PLATFORMS = [
     module: "chatglm-adapter.js",
     fixture: "chatglm",
   },
+  {
+    id: "stepfun",
+    name: "StepFun (阶跃星辰 AI Studio)",
+    hostnames: ["studio.stepfun.com"],
+    url: "https://studio.stepfun.com/",
+    module: "stepfun-adapter.js",
+    fixture: "stepfun",
+  },
 ];
 
 /**

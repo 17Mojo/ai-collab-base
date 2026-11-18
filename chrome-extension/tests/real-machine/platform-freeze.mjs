@@ -4,6 +4,11 @@
  * 红线原文：「仅保留 qianwen、yuanbao、chatglm、yiyan、kimi 平台，
  * 其他都暂时冻结不去碰。」
  *
+ * 2026-11-18 用户改判：千问有防范非人类操作机制，**活跃白名单中的 qianwen
+ * 换成 stepfun**（https://studio.stepfun.com/，真人已登录）。qianwen 的
+ * 生产 adapter 保留，但本轮真机不再碰它；deepseek / longcat 仍冻结。
+ * 下面的红线注释保留原文，便于对账「谁在什么时候改过白名单」。
+ *
  * ## 为什么必须是代码，不能只是报告里的一句话
  *
  * 真机驱动 `l2-platform-auto.mjs` 只要给一个 `PLATFORM=deepseek` 就会照跑：
@@ -32,7 +37,7 @@
 
 /** 当前允许真机动作的 5 个活跃平台（顺序无关，别处不许复制）。 */
 export const ACTIVE_PLATFORM_IDS = Object.freeze([
-  "qianwen",
+  "stepfun",
   "yuanbao",
   "chatglm",
   "yiyan",

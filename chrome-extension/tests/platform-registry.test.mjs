@@ -190,9 +190,11 @@ test("getPlatform() 能按 id 查到平台，查不到返回 undefined", () => {
   assert.equal(getPlatform("no-such-platform"), undefined);
 });
 
-test("登记表覆盖 10 个平台（2026-10-25 基线）", () => {
+test("登记表覆盖 11 个平台（2026-11-18 起新增 stepfun）", () => {
   // 平台数量变化时这条会提醒同步文档与矩阵基线，而不是静默漂移。
-  assert.equal(PLATFORMS.length, 10);
+  // 2026-11-18：用户裁定千问有反自动化机制，活跃真机白名单改用 stepfun；
+  // 千问 adapter 仍留在生产层，注册表因此从 10 → 11。
+  assert.equal(PLATFORMS.length, 11);
 });
 
 // ---------------------------------------------------------------------------

@@ -1073,6 +1073,17 @@ const MUTATIONS = [
     expectTest: "千问：入口藏在 opacity-0/pointer-events-none 的 hover-reveal 层里，靠语义属性兜底",
   },
   {
+    name: "可见语义层被清空（千问 2026-11-18 的 newChatReveal 容器抢答回归）",
+    why: "hover 面板改成默认可见后，宽泛 [class*=newChat] 会先命中外层容器；没有窄语义层就退回 click-no-effect 6→6",
+    target: "src/content/new-session-control.js",
+    find:
+      '  for (const sel of HIDDEN_SEMANTIC_SELECTORS) {\n    for (const el of document.querySelectorAll(sel)) {\n      if (!isElementRendered(el)) continue;\n      if (semanticControlMatches(el, wanted)) return { el, how: "semantic" };',
+    replace:
+      '  for (const sel of []) {\n    for (const el of document.querySelectorAll(sel)) {\n      if (!isElementRendered(el)) continue;\n      if (semanticControlMatches(el, wanted)) return { el, how: "semantic" };',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "千问 2026-11-18：hover-reveal 面板默认可见时，newChatReveal 容器不许抢在语义入口前面",
+  },
+  {
     name: "Kimi 的 <a> 不再拦默认跳转（整页导航把内容脚本带走）",
     why: "sendResponse 随文档销毁，后台只会看到一次莫名的「开新会话失败」，而真机上很难和「入口没找到」区分开",
     target: "src/content/new-session-control.js",
@@ -1194,8 +1205,8 @@ const MUTATIONS = [
     name: "把 deepseek 悄悄加进活跃白名单",
     why: "白名单被放宽就等于替用户解冻；冻结平台会被真机驱动照跑，红线形同虚设",
     target: "real-machine/platform-freeze.mjs",
-    find: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "qianwen",',
-    replace: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "deepseek",\n  "qianwen",',
+    find: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "stepfun",',
+    replace: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "deepseek",\n  "stepfun",',
     testFile: "platform-freeze.test.mjs",
     expectTest: "白名单恰好是 5 个活跃站",
   },

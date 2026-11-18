@@ -1,0 +1,234 @@
+{
+  "generatedAt": "2026-11-18T00:37:41.226Z",
+  "mode": "readonly-dom-probe",
+  "redlines": {
+    "clicks": false,
+    "typing": false,
+    "sending": false,
+    "hover": false,
+    "captchaBypass": false,
+    "packImported": false
+  },
+  "needles": [
+    "新对话",
+    "新建对话",
+    "新的对话",
+    "开始新对话",
+    "发起新对话",
+    "开启新对话",
+    "新建聊天",
+    "新建会话",
+    "新会话",
+    "新建",
+    "清空上下文",
+    "清空会话",
+    "New chat",
+    "New Chat",
+    "New conversation"
+  ],
+  "classRe": "new[-_]?chat|new[-_]?session|new[-_]?dialog|newChat|create[-_]?conv|sidebar-new",
+  "platforms": [
+    {
+      "platform": "qianwen",
+      "url": "https://www.qianwen.com/",
+      "finalUrl": "https://www.qianwen.com/",
+      "title": "千问-阿里 AI 助手",
+      "composerVisible": true,
+      "looksLikeLogin": false,
+      "adapterNewChat": null,
+      "adapterMessageList": [
+        "div.answer-text.md-text-card",
+        "div.answer-common-card:not(.answer-receiving-card)"
+      ],
+      "bodyTextLen": 608,
+      "messageListHits": [
+        {
+          "sel": "div.answer-text.md-text-card",
+          "count": 0,
+          "samples": []
+        },
+        {
+          "sel": "div.answer-common-card:not(.answer-receiving-card)",
+          "count": 0,
+          "samples": []
+        }
+      ],
+      "answerChain": null,
+      "textHits": [
+        {
+          "needle": "新对话",
+          "tag": "span",
+          "cls": "truncate font-400",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "新对话",
+          "innerText": "新对话",
+          "rendered": true,
+          "rect": {
+            "x": 46,
+            "y": 124,
+            "w": 42,
+            "h": 20
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "pointer"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "flex h-full gap-0.5",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "h-9 px-3",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "flex shrink-0 select-none flex-col overflow-hidden mb-0.5",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "newChatReveal-OikAdB newChatRevealFlat-hnO8At",
+              "textLen": 3
+            },
+            {
+              "tag": "div",
+              "cls": "col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col ",
+              "textLen": 219
+            }
+          ],
+          "outerHTML": "<span class=\"truncate font-400\">新对话</span>"
+        }
+      ],
+      "classHits": [
+        {
+          "tag": "symbol",
+          "cls": "[object SVGAnimatedString]",
+          "id": "qwpcicon-newDialogue",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "",
+          "rendered": true,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+          },
+          "css": {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "svg",
+              "cls": "[object SVGAnimatedString]",
+              "textLen": 0
+            },
+            {
+              "tag": "body",
+              "cls": "",
+              "textLen": 3504
+            },
+            {
+              "tag": "html",
+              "cls": "qwen-root",
+              "textLen": 256118
+            }
+          ],
+          "outerHTML": "<symbol id=\"qwpcicon-newDialogue\" viewBox=\"0 0 1024 1024\"><path d=\"M156.16 188.16C137.28 206.784 128 229.44 128 256v640l200.512-150.4c8.576-6.4 18.176-9.6 28.8-9.6H800c26.496 0 49.152-9.344 67.84-28.16 18.816-18.688 28.16-41.344 28.16-67.84V480h64V640c0 44.16-15.616 81.92-46.848 113.152a154.176 154.176 0 0 1-113.152 46.848H362.688L140.8 966.4a44.736 44.736 0 0 1-50.24 4.48A44.736 44.736 0 0 1 64 9"
+        },
+        {
+          "tag": "div",
+          "cls": "newChatReveal-OikAdB newChatRevealFlat-hnO8At",
+          "id": "",
+          "ariaLabel": "",
+          "title": "",
+          "testid": "",
+          "role": "",
+          "ownText": "",
+          "innerText": "新对话",
+          "rendered": true,
+          "rect": {
+            "x": 0,
+            "y": 104,
+            "w": 256,
+            "h": 50
+          },
+          "css": {
+            "display": "block",
+            "visibility": "visible",
+            "opacity": "1",
+            "pointerEvents": "auto",
+            "cursor": "auto"
+          },
+          "clickableAncestor": null,
+          "ancestors": [
+            {
+              "tag": "div",
+              "cls": "col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col ",
+              "textLen": 219
+            },
+            {
+              "tag": "div",
+              "cls": "relative grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden",
+              "textLen": 219
+            },
+            {
+              "tag": "div",
+              "cls": "flex min-h-0 flex-1 flex-col",
+              "textLen": 229
+            },
+            {
+              "tag": "div",
+              "cls": "relative flex min-h-0 flex-1 flex-col",
+              "textLen": 229
+            },
+            {
+              "tag": "div",
+              "cls": "flex h-full min-w-64 shrink-0 flex-col overflow-hidden whitespace-nowrap bg-pc-sidebar",
+              "textLen": 229
+            },
+            {
+              "tag": "div",
+              "cls": "w-[16rem] absolute inset-y-0 right-0",
+              "textLen": 229
+            }
+          ],
+          "outerHTML": "<div class=\"newChatReveal-OikAdB newChatRevealFlat-hnO8At\"><div class=\"flex shrink-0 select-none flex-col overflow-hidden mb-0.5\"><div class=\"h-9 px-3\"><div class=\"flex h-full gap-0.5\"><div data-session-switch-target=\"new-chat\" class=\"flex h-full min-w-0 flex-1 items-center gap-1.5 rounded-8 px-3 text-sm text-primary !transition-colors !duration-300 hover:bg-option cursor-pointer\"><span data-role="
+        }
+      ],
+      "labeledControls": [],
+      "novelPhrases": [
+        "新对话",
+        "对话分组",
+        "新分组",
+        "新定时任务",
+        "最近对话"
+      ]
+    }
+  ]
+}
