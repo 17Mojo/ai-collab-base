@@ -31,7 +31,7 @@
 ## Phase 4 · 收口
 
 - [x] 4.1 `known_gaps.json` N29 → closed，附四层证据（E7）
-- [ ] 4.2 提交带 pathspec、PR、合入登记、归档、`validate --archived --strict`
+- [x] 4.2 提交带 pathspec、PR、合入登记、归档、`validate --archived --strict`（E8）
 
 ## 实测证据
 
@@ -116,4 +116,13 @@ $ python3 -c "import json; from collections import Counter; d=json.load(open('kn
 
 N29: status=closed, closed_at=2026-11-18
 唯一仍 open 的条目: N25（冻结站 A/B，需用户明确授权，本 change 不触碰）
+```
+
+### E8 · 合入留痕
+
+```
+PR #78: https://github.com/17Mojo/ai-collab-base/pull/78
+合入提交（40 位完整 sha）: 718dde192f5df3cafc063ccaef3816903c3074d6
+CI: chrome-extension-tests pass；Bandit / python-tests ×3 为 PR #72–#77 既有红灯，
+    本 change 未新增 CI 错误。
 ```

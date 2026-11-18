@@ -25,7 +25,7 @@
 - [x] 3.1 扩展全套 326/326、矩阵 117/125 passed / 0 failed、变异 125/125（E7）
 - [x] 3.2 stepfun 完整 L2 8/8、会话重置 12→0、unfrozenBy=null（E8）
 - [x] 3.3 其余 4 站复验无回归，冻结站零触碰（E8）
-- [ ] 3.4 提交带 pathspec、PR、合入登记、归档、`validate --archived --strict`
+- [x] 3.4 提交带 pathspec、PR、合入登记、归档、`validate --archived --strict`（E9）
 
 ## 实测证据
 
@@ -108,3 +108,12 @@ ALL PASS: True
 ```
 
 结论报告：`collaboration/results/RESULT-STEPFUN-SWAP-2026-11-18.md`。
+
+### E9 · 合入留痕
+
+```
+PR #78: https://github.com/17Mojo/ai-collab-base/pull/78
+合入提交（40 位完整 sha）: 718dde192f5df3cafc063ccaef3816903c3074d6
+同一合入提交登记了两个 change_id：
+  fix-qianwen-visible-semantic-control / replace-qianwen-with-stepfun
+```
