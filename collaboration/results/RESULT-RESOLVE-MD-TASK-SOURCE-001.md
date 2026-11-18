@@ -131,3 +131,17 @@ md 集合 sha256：16040211017f448c → 16040211017f448c
 **4 · 切点边界的 CLI 提示仍偏泛。** `tasks migrate-identity` 对 `missing` 打印
 「需用 tasks update 补齐」。对本次这类历史边界工单，该建议会误导人编造身份。
 PROTOCOL §7.6 第 4 条已明确禁止；改 CLI 文案属输出契约变更，未并入本 change。
+
+**5 · CI 不是全绿，但不带新增错误合入。** PR #76 的 Bandit / python-tests ×3 / mypy
+是既有红灯，PR #72–#75 失败集合一致。过程中本 change **新引入**过一条 mypy error
+（`task_md_sync.py:16` 的 `import yaml` 缺 stub，CI 从 3 errors/1 file 变成 4 errors/2 files）。
+补 `# type: ignore[import-untyped]` 后本地与 CI 均恢复为既有 3 errors/1 file，
+确认无新增后才合并。其余检查项通过。
+
+## 交付编号
+
+- PR：https://github.com/17Mojo/ai-collab-base/pull/76
+- 合入提交（40 位完整 sha）：`face8ddaba0e95ad6b125a788e6fbcf5a439f98f`
+- 登记：`chore(governance): 登记本 change 的合入提交 face8dd`
+- 归档：`2026-11-18-resolve-md-task-source`，`openspec validate --archived --strict` 8 passed
+- 台账：N26 closed；28 条中 closed 26 / wontfix 1 / **open 1（仅 N25）**

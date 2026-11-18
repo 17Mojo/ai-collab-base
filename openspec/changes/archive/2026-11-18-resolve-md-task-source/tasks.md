@@ -167,4 +167,17 @@ All checks passed!
 
 ### E8 · PR 与归档
 
-（PR 号、合入 sha、登记 sha、归档结果在执行后回填。）
+```
+PR #76: https://github.com/17Mojo/ai-collab-base/pull/76
+合入提交（40 位完整 sha）: face8ddaba0e95ad6b125a788e6fbcf5a439f98f
+登记表: chore(governance): 登记本 change 的合入提交 face8dd
+preflight 复跑: 边界后合并提交 7 个，未登记 0 个；六项全 PASS
+归档: 2026-11-18-resolve-md-task-source（specs/task-contract/spec.md +4 requirements）
+openspec validate --archived --strict: 8 passed, 0 failed
+```
+
+CI：Bandit / python-tests ×3 / mypy 均为既有红灯（PR #72–#75 同集合）。
+本 change 曾**新引入**一条 mypy error（`task_md_sync.py:16` import yaml 缺 stub），
+CI 从 3 errors/1 file 变为 4 errors/2 files；补 `# type: ignore[import-untyped]`
+后恢复为既有 3 errors/1 file，未带着新增错误合入。
+PR body 曾因 shell 反引号解析吞掉 `logs/`，已用 `--body-file` 重写并复核。
