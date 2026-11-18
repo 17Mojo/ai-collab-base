@@ -38,9 +38,7 @@ EVIDENCE_SUFFIXES = (".json", ".jsonl", ".png", ".log", ".py", ".sh", ".md")
 
 
 def _git(*args: str) -> str:
-    return subprocess.run(
-        ["git", *args], cwd=REPO_ROOT, capture_output=True, text=True, check=True
-    ).stdout
+    return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout
 
 
 def _tracked_files() -> set[str]:

@@ -46,6 +46,7 @@ def bridge():
 
 # ---------------- 两份实现不许漂移 ----------------
 
+
 def test_section_groups_are_identical_across_implementations(bridge):
     assert bridge.SECTION_GROUPS == SECTION_GROUPS, (
         "结果文件章节契约的两份实现已经不一致：\n"
@@ -69,21 +70,20 @@ FIXTURES = {
 @pytest.mark.parametrize("name", sorted(FIXTURES))
 def test_implementations_agree_on_every_fixture(bridge, name):
     text = FIXTURES[name]
-    assert missing_sections(text) == bridge.missing_result_sections(text), (
-        f"两份实现在 {name!r} 上结论不同"
-    )
+    assert missing_sections(text) == bridge.missing_result_sections(text), f"两份实现在 {name!r} 上结论不同"
 
 
 def test_state_manager_compat_view_shares_the_same_groups():
     """`TASK_RESULT_REQUIRED_SECTION_GROUPS` 只是兼容视图，不得成为第二套判据。"""
     view = StateManager.TASK_RESULT_REQUIRED_SECTION_GROUPS
     assert len(view) == len(SECTION_GROUPS)
-    for (label, *keywords), (expected_label, expected_keywords) in zip(view, SECTION_GROUPS):
+    for (label, *keywords), (expected_label, expected_keywords) in zip(view, SECTION_GROUPS, strict=True):
         assert label == expected_label
         assert tuple(keywords) == expected_keywords
 
 
 # ---------------- 判据形状 ----------------
+
 
 def test_numbered_headings_count():
     """`## 4. 执行命令` 这种编号标题必须算数。
@@ -153,6 +153,7 @@ def test_describe_missing_lists_accepted_synonyms():
 
 
 # ---------------- 真实语料回归 ----------------
+
 
 def test_real_artifact_with_numbered_headings_passes():
     """真实历史交付物：四段齐全、但用编号标题与合并标题。

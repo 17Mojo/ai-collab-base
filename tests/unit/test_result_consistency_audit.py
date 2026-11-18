@@ -216,6 +216,7 @@ def test_terminal_result_consistency_summary_orders_issues(tmp_path: Path, monke
 
 # ── 台账 N42：产物要求按状态分流 + 已 ACK 无产物的非终态扫描 ──────────────────
 
+
 def _seed(workspace: Path, tasks: dict, acked: dict | None = None) -> None:
     """直接落状态与 ACK 桥，绕开契约校验链，专注审计判据本身。"""
     (workspace / "logs").mkdir(parents=True, exist_ok=True)

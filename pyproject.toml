@@ -27,7 +27,10 @@ dev = [
     "mypy>=1.0.0",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
-    "ruff>=0.1.0",
+    # 锁死（2026-11-18）：未锁时 CI 永远装最新，本地却是另一个版本，
+    # 门禁口径随上游发布漂移（实测本地 0.16.8 / CI 0.17.5，报出的条数不同）。
+    # 版本升格必须与「全库 ruff format + ruff check 通过」同一个 commit 完成。
+    "ruff==0.17.5",
     "sqlalchemy>=2.0.0",
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
@@ -106,7 +109,15 @@ line-length = 120
 # 文档代码块是对外示例，由人维护，不由格式化器改写。显式排除后，
 # 本地 `ruff format .` 与 CI 的 `ruff format --check .` 口径一致，
 # 全库格式化范围收敛到 229 个 .py（零 .md）。
-extend-exclude = ["*.md"]
+extend-exclude = [
+    "*.md",
+    # 真机回归的证据脚本是**交付物**，不是被维护的代码（.gitignore:50 早已按
+    # 「证据日志属交付物，RESULT 报告以其为最终判定依据」例外放行）。
+    # 格式化它们会改写「当时实际执行的字节」，而证据链的价值恰在于字节未变。
+    # 2026-11-18 处置：这 24 个 .py 从 lint/format 范围移出，而不是全部重排一遍。
+    # 维护代码（ai_collab/ scripts/ tests/）仍在范围内，未放宽任何判定。
+    "collaboration/results/real-machine-runs/evidence",
+]
 
 [tool.ruff.lint]
 # 选集说明:

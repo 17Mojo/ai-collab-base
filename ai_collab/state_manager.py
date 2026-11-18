@@ -350,9 +350,7 @@ class StateManager:
     # 兼容视图：由 ai_collab.result_file_contract.SECTION_GROUPS 派生。
     # 历史形状是 (组名, *同义词)，组名同时充当第一个关键词；新模块用 (组名, (同义词...))。
     # 判据本体已收敛到 result_file_contract（台账 N41），此处只保留形状以兼容外部引用。
-    TASK_RESULT_REQUIRED_SECTION_GROUPS = tuple(
-        (label, *keywords) for label, keywords in SECTION_GROUPS
-    )
+    TASK_RESULT_REQUIRED_SECTION_GROUPS = tuple((label, *keywords) for label, keywords in SECTION_GROUPS)
     TASK_RESULT_NEGATIVE_SIGNAL_MARKERS = (
         "⚠️ blocked",
         "❌ blocked",

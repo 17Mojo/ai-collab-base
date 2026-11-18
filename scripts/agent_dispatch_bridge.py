@@ -265,9 +265,7 @@ def _task_contract_lines(order: dict, task: dict, workspace: Path) -> list[str]:
         lines.append(
             "  按 PROTOCOL §7.4 结果文件四段契约写入四段：`## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`。"
         )
-        lines.append(
-            "  「验证结果」内须含「测试结论」小节（`### 测试结论` 或 `## 测试结论` 均可）。"
-        )
+        lines.append("  「验证结果」内须含「测试结论」小节（`### 测试结论` 或 `## 测试结论` 均可）。")
         lines.append(
             "  标题允许带编号（`## 4. 执行命令` 算数），也允许合并（`## 风险与回滚` 同时满足两组）；"
             "但必须是**标题**，正文里提到不算。判据实现见 `ai_collab/result_file_contract.py`。"

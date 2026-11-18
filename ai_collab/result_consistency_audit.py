@@ -241,9 +241,7 @@ def run_terminal_result_consistency_audit(
         artifact_optional_count += 1
         if state_status in FAILURE_REASON_REQUIRED_STATUSES and not _has_recorded_reason(task):
             entry.issue_type = "missing_failure_reason"
-            entry.reason = (
-                f"{state_status} task has no result artifact and no recorded reason; {detail}"
-            )
+            entry.reason = f"{state_status} task has no result artifact and no recorded reason; {detail}"
             missing_failure_reason_count += 1
             issues.append(asdict(entry))
         audited_tasks.append(asdict(entry))
@@ -279,8 +277,7 @@ def run_terminal_result_consistency_audit(
             if load_error:
                 entry.issue_type = "ack_without_artifact"
                 entry.reason = (
-                    f"explicit ACK status=ok, but artifact unusable ({load_error}); state is "
-                    f"still '{state_status}'"
+                    f"explicit ACK status=ok, but artifact unusable ({load_error}); state is still '{state_status}'"
                 )
                 ack_without_artifact_count += 1
                 issues.append(asdict(entry))

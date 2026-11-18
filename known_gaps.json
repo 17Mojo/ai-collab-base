@@ -1012,6 +1012,25 @@
       "fix": "已修（2026-11-18）。`python3 -m pip install \"pytest-asyncio>=0.21.0\"`（实装 1.5.0）后，原先 50 条失败所属的 7 个文件 `82 passed`，`tests/unit` 全量 `3037 passed, 1 skipped, 0 failed`（唯一 skip 是 test_database_indexes 依赖的本地 backend 库不存在，属真实前置条件）。同时在 collaboration/results/RESULT-GOV-RESTORE-001.md 末尾追加「勘误」章节、在 .github/workflows/lint.yml:42 加回溯更正——两处都保留原文数字，只更正归因，因为原表记录的观测没错。",
       "found_at": "2026-11-18",
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N47",
+      "priority": "P1",
+      "status": "closed",
+      "title": "阻塞级 lint 门禁在 main 上连续红了 16 次，没人当成信号；根因是 ruff 未锁版本 + 新增文件没过 lint",
+      "reader": "任何以为「CI 红是常态」而直接看下一个提交的人；任何要合并 PR 却被 Code Quality 卡住、又找不到原因的人；任何在本地用 0.16.8 跑 `ruff format --check` 得出「全绿」结论的人。",
+      "where": [
+        ".github/workflows/lint.yml:31（原为裸 `pip install ruff`，永远装最新）",
+        ".github/workflows/lint.yml:39（`ruff check .` 阻塞步骤）",
+        ".github/workflows/lint.yml:48（`ruff format --check .` 阻塞步骤）",
+        "pyproject.toml [tool.ruff] extend-exclude（新增证据目录排除）",
+        "pyproject.toml / requirements.txt（ruff 由 >=0.1.0 改为 ==0.17.5）"
+      ],
+      "detail": "2026-11-18 修完 N44/N45 后跑仓库自己的门禁，发现 `ruff check .` 报 26 条、`ruff format --check .` 报 35 个文件需重排。再查 CI：`gh run list --workflow=lint.yml` 显示从「chore(governance): 登记 N38」那次 push 起，连续 16 次全部 failure —— 包括本轮全部提交，而我一直以为那只是格式噪音。\n两个叠加原因：① CI 用裸 `pip install ruff`，装到 0.17.5，而本地是 0.16.8（0.17.0 早在 2026-10-09 发布），两个版本对同一份代码报出的条数不同，门禁口径随上游发布漂移；② 2026-11-15 那次「全库 229 个 .py 一次性格式化」（把 format --check 升为阻塞门禁）之后新增的文件——24 份真机证据脚本、N41/N42 的测试、以及 state_manager.py 等后续改动——没有再跑过 ruff，于是 `format --check` 永远非零。\n26 条 lint 里 25 条在 collaboration/results/real-machine-runs/evidence/，1 条在 tests/unit/test_result_file_contract.py（N41 时引入的 B905 zip 缺 strict=）。",
+      "impact": "阻塞门禁长期红 = 没有门禁。真回归会淹没在「反正一直红」里；PR 被卡时无人能说明原因；本地与 CI 口径不一致，本地「全绿」是假绿。CI 可信度（P1）直接受损。",
+      "fix": "已修（2026-11-18）。\n① 锁版本：lint.yml / pyproject [dev] / requirements.txt 三处统一 `ruff==0.17.5`，并在注释里写明「升版本必须与全库 format + check 通过同一个 commit」。选当前最新而非退回本地旧版 0.16.8——用降级来迁就现有字节属于变相放宽。\n② 证据目录排除：`extend-exclude` 加 collaboration/results/real-machine-runs/evidence。依据是本仓既定口径（.gitignore:50「真机回归证据日志属交付物，RESULT 报告以其为最终判定依据」）——格式化会改写「当时实际执行的字节」，而证据的价值正在于字节未变。维护代码（ai_collab/ scripts/ tests/）仍在门禁范围内，未放宽任何判定。\n③ 修掉唯一一条维护代码的 lint：test_result_file_contract.py 的 zip 补 `strict=True`（两个序列等长已在上方 assert，strict 让它从隐含变显式）。\n④ 用锁定版本 `ruff format` 了 11 个维护文件，并用 ast.dump 逐个比对证明其中 10 个是纯格式（零语义变更），第 11 个只多出 strict=True 这一处有意改动。\n验证：`ruff check .` = All checks passed；`ruff format --check .` = 339 files already formatted；格式化后全量单测 3037 passed / 1 skipped / 0 failed。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     }
   ]
 }

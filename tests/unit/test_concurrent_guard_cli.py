@@ -367,13 +367,9 @@ def _write_config(ws: Path, tracked: dict | None = None, local: dict | None = No
     cfg_dir = ws / ".vscode"
     cfg_dir.mkdir(parents=True, exist_ok=True)
     if tracked is not None:
-        (cfg_dir / "ai-collab.json").write_text(
-            json.dumps(tracked, ensure_ascii=False), encoding="utf-8"
-        )
+        (cfg_dir / "ai-collab.json").write_text(json.dumps(tracked, ensure_ascii=False), encoding="utf-8")
     if local is not None:
-        (cfg_dir / "ai-collab.local.json").write_text(
-            json.dumps(local, ensure_ascii=False), encoding="utf-8"
-        )
+        (cfg_dir / "ai-collab.local.json").write_text(json.dumps(local, ensure_ascii=False), encoding="utf-8")
 
 
 class TestN37ConfigLayer:
@@ -395,10 +391,15 @@ class TestN37ConfigLayer:
         head = _commit(ws)
         _write_config(
             ws,
-            tracked={"concurrentGuard": {"expectedBranch": None, "baselineCommit": None,
-                                         "watchPaths": [], "requireBaselineCommit": True}},
-            local={"concurrentGuard": {"expectedBranch": "main", "baselineCommit": head,
-                                       "watchPaths": ["README.md"]}},
+            tracked={
+                "concurrentGuard": {
+                    "expectedBranch": None,
+                    "baselineCommit": None,
+                    "watchPaths": [],
+                    "requireBaselineCommit": True,
+                }
+            },
+            local={"concurrentGuard": {"expectedBranch": "main", "baselineCommit": head, "watchPaths": ["README.md"]}},
         )
         # 注意：这里不 monkeypatch，故意让实现自己去读两层
 
@@ -406,9 +407,7 @@ class TestN37ConfigLayer:
 
         out = capsys.readouterr().out
         assert rc == 0
-        assert "baseline: none (skipped)" not in out, (
-            "N37 复现：基线写在 local 层却被跳过 —— 守卫没读覆盖层。\n" + out
-        )
+        assert "baseline: none (skipped)" not in out, "N37 复现：基线写在 local 层却被跳过 —— 守卫没读覆盖层。\n" + out
         assert head in out, "基线没被真正采用：\n" + out
         assert "watched path(s) changed" in out
 
@@ -456,8 +455,7 @@ class TestN37ConfigLayer:
         _write_config(
             ws,
             tracked={"concurrentGuard": {"expectedBranch": None, "baselineCommit": None}},
-            local={"concurrentGuard": {"expectedBranch": "main", "baselineCommit": head,
-                                       "watchPaths": ["README.md"]}},
+            local={"concurrentGuard": {"expectedBranch": "main", "baselineCommit": head, "watchPaths": ["README.md"]}},
         )
 
         preflight_view = gov.guard_input_report(ws)

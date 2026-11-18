@@ -393,21 +393,36 @@ def test_verify_rejects_app_l2_pass_borrowing_browser_l1(tmp_path):
     """App 通道的 L2 pass 不能借 browser 通道的 L1 pass 过关（跨通道串味）。"""
     _make_run(tmp_path)
     evidence = _write_probe_verdict(tmp_path / "ev.json", "gemini", "pass")
-    assert _record(
-        tmp_path, "RMR-TEST-001", layer="L1", platform="gemini", status="pass",
-        locale="zh-CN", evidence=["探针通过"], evidence_file=[str(evidence)],
-    ) == 0
-    assert _record(
-        tmp_path, "RMR-TEST-001", layer="L2", platform="gemini", status="pass",
-        evidence=["App 通道发送成功"], evidence_file=[str(evidence)], driver="app",
-    ) == 0
+    assert (
+        _record(
+            tmp_path,
+            "RMR-TEST-001",
+            layer="L1",
+            platform="gemini",
+            status="pass",
+            locale="zh-CN",
+            evidence=["探针通过"],
+            evidence_file=[str(evidence)],
+        )
+        == 0
+    )
+    assert (
+        _record(
+            tmp_path,
+            "RMR-TEST-001",
+            layer="L2",
+            platform="gemini",
+            status="pass",
+            evidence=["App 通道发送成功"],
+            evidence_file=[str(evidence)],
+            driver="app",
+        )
+        == 0
+    )
     path = tmp_path / "collaboration/results/real-machine-runs/RMR-TEST-001.json"
     run = json.loads(path.read_text(encoding="utf-8"))
     errors, _, _ = mod.verify_run(run, tmp_path)
-    assert any(
-        "L2 记为 pass，但 L1 没有 pass 的记录" in e and "（app）" in e
-        for e in errors
-    )
+    assert any("L2 记为 pass，但 L1 没有 pass 的记录" in e and "（app）" in e for e in errors)
 
 
 def test_verify_accepts_app_l2_pass_with_same_channel_l1(tmp_path):
@@ -415,11 +430,20 @@ def test_verify_accepts_app_l2_pass_with_same_channel_l1(tmp_path):
     _make_run(tmp_path)
     evidence = _write_probe_verdict(tmp_path / "ev.json", "gemini", "pass")
     for layer in ("L1", "L2"):
-        assert _record(
-            tmp_path, "RMR-TEST-001", layer=layer, platform="gemini", status="pass",
-            locale="zh-CN" if layer == "L1" else None,
-            evidence=["探针通过"], evidence_file=[str(evidence)], driver="app",
-        ) == 0
+        assert (
+            _record(
+                tmp_path,
+                "RMR-TEST-001",
+                layer=layer,
+                platform="gemini",
+                status="pass",
+                locale="zh-CN" if layer == "L1" else None,
+                evidence=["探针通过"],
+                evidence_file=[str(evidence)],
+                driver="app",
+            )
+            == 0
+        )
     path = tmp_path / "collaboration/results/real-machine-runs/RMR-TEST-001.json"
     run = json.loads(path.read_text(encoding="utf-8"))
     errors, _, _ = mod.verify_run(run, tmp_path)

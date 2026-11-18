@@ -300,20 +300,12 @@ def verify_run(run: dict, workspace: Path) -> tuple[list[str], str, bool]:
         # 只按 platform 聚合会让 app 通道借 browser 通道的 L1 过关，与两条通道各自计数冲突。
         # 仅对出现 L2 pass 的通道检查，避免为未使用的通道凭空造出错误。
         for drv in DRIVERS:
-            l2_pass = [
-                r for r in l2
-                if r.get("status") == STATUS_PASS and effective_driver(run, r) == drv
-            ]
+            l2_pass = [r for r in l2 if r.get("status") == STATUS_PASS and effective_driver(run, r) == drv]
             if not l2_pass:
                 continue
-            l1_pass = [
-                r for r in l1
-                if r.get("status") == STATUS_PASS and effective_driver(run, r) == drv
-            ]
+            l1_pass = [r for r in l1 if r.get("status") == STATUS_PASS and effective_driver(run, r) == drv]
             if not l1_pass:
-                errors.append(
-                    f"平台 {platform}（{drv}）: L2 记为 pass，但 L1 没有 pass 的记录"
-                )
+                errors.append(f"平台 {platform}（{drv}）: L2 记为 pass，但 L1 没有 pass 的记录")
 
     # 结论
     has_fail = any(r.get("status") == STATUS_FAIL for r in records)
@@ -354,9 +346,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
         d: sum(
             1
             for rec in run.get("records") or []
-            if rec.get("layer") == "L2"
-            and rec.get("status") == STATUS_PASS
-            and effective_driver(run, rec) == d
+            if rec.get("layer") == "L2" and rec.get("status") == STATUS_PASS and effective_driver(run, rec) == d
         )
         for d in DRIVERS
     }
@@ -448,7 +438,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_record.add_argument("--status", required=True, choices=list(STATUSES))
     p_record.add_argument("--locale", default="", help="界面语言（L1 必填）")
     p_record.add_argument(
-        "--driver", default="", choices=("",) + DRIVERS,
+        "--driver",
+        default="",
+        choices=("",) + DRIVERS,
         help="本条记录的通道；留空继承 run 级 driver（存量 run 缺省为 browser-extension）",
     )
     p_record.add_argument("--evidence", action="append", default=[], help="结论出处（可重复）")

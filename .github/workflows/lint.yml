@@ -28,7 +28,13 @@ jobs:
           cache: pip
 
       - name: Install ruff
-        run: pip install ruff
+        # 锁版本（2026-11-18）。此前是裸 `pip install ruff`，CI 永远装最新：
+        # 本地跑的是 0.16.8、CI 装到 0.17.5，两个版本对同一份代码报的条数不同，
+        # 门禁口径随上游发布漂移。而门禁是阻塞级的 —— 从 2026-11-18 那批提交起
+        # 每次 push main 都是 failure，却没人当成信号（连续 16 次红）。
+        # 版本权威在 pyproject 的 [dev] extra 与 requirements.txt，此处与它们对齐；
+        # 升版本必须与「全库 format + check 通过」同一个 commit。
+        run: pip install "ruff==0.17.5"
 
       - name: Ruff check
         run: ruff check .
