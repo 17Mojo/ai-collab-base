@@ -31,6 +31,7 @@ import {
   getRoleElements,
   getProbeRoleElements,
   judgeSendButtonCrossCheck,
+  judgeSendButtonDeclaration,
   readRealSnapshotMeta,
   isWithin,
   runTest,
@@ -168,17 +169,36 @@ function buildCases(spec, mod) {
       },
     },
     {
-      name: "getSendButton() 命中 fixture 标注的发送按钮",
+      // 名字刻意不带「命中」：声明 data-expect-send-button="none" 的站，这条断言的是
+      // 「必须取不到」。名字说「命中」而实际在断言 null，就是另一种假绿——名字会说谎。
+      name: "getSendButton() 与 fixture 的 send-button 契约一致",
       fn: () => {
         const { doc, adapter } = setup();
         const el = adapter.getSendButton();
         const expected = getRoleElements(doc, "send-button");
+        const realMeta = readRealSnapshotMeta(spec.id);
+        const expectDecl =
+          (doc.body && doc.body.dataset && doc.body.dataset.expectSendButton) || null;
 
-        // 🔧 2026-11-19 对账（N59）：这条此前只用 mock，而 mock 是照着 adapter 的选择器写的，
+        // ── 情况 1：fixture 显式声明「本站真机上没有 button 形态的发送控件」（N59 ② / A2）──
+        // 声明的价值不在「让测试变绿」，而在：站点将来真加了 button，或 adapter 的选择器
+        // 开始靠猜命中别的东西，都会在这里变红，逼人重新评估。
+        const decl = judgeSendButtonDeclaration({
+          expectDecl,
+          annotated: expected.length,
+          hit: el !== null,
+          realMeta,
+          id: spec.id,
+        });
+        if (decl.status === "pass") return; // 三方一致，PASS
+        if (decl.status === "no-witness") return { skip: decl.reason };
+        if (decl.status !== "no-declaration") throw new Error(decl.reason);
+
+        // ── 情况 2：没声明 ⇒ 必须标注恰好 1 个，且要与真机快照对账（N59 ①）──
+        // 🔧 2026-11-19：这条此前只用 mock，而 mock 是照着 adapter 的选择器写的，
         // 于是「选择器命中」在自己身上闭环了——真机快照同时写着 sendButtonFound=false 也没人看。
-        // 现在先问真机快照，再谈 mock：
         const verdict = judgeSendButtonCrossCheck({
-          realMeta: readRealSnapshotMeta(spec.id),
+          realMeta,
           mockHit: el !== null,
           id: spec.id,
         });
@@ -193,18 +213,12 @@ function buildCases(spec, mod) {
           return { skip: verdict.reason };
         }
 
-        // 到这里说明真机与 mock 一致。fixture 契约照旧守：
-        // 有标注就必须命中同一个；没有标注就必须承认「本站没有 button 形态的发送控件」。
+        // 真机与 mock 一致。fixture 契约：必须标注恰好 1 个，且必须命中同一个。
         if (expected.length === 0) {
-          if (el !== null) {
-            throw new Error(
-              "fixture 没标注 send-button，但 getSendButton() 却返回了元素——" +
-                "要么 fixture 漏标，要么选择器靠猜命中了个不相干的元素",
-            );
-          }
-          // 两边都没有按钮 ⇒ 断言「必须返回 null」已经执行且成立，这是**验过的 PASS**，
-          // 不是 SKIP。报成 SKIP 会把「验过」说成「没验」，方向上也是一种撒谎。
-          return;
+          throw new Error(
+            'fixture 既没标注 [data-role=send-button] 也没声明 data-expect-send-button="none"——' +
+              "站点的立场必须写清，空着等于把「没想过」伪装成「没有」",
+          );
         }
         if (expected.length !== 1) {
           throw new Error(`fixture 应当标注 1 个 send-button，实际 ${expected.length} 个`);
@@ -503,7 +517,14 @@ async function runRealFixtureChecks(filterPlatform) {
         name: "getSendButton() 命中真实快照标注的发送按钮",
         fn: () => {
           const expected = getProbeRoleElements(doc, "send-button");
-          if (expected.length === 0) return "SKIP";
+          if (expected.length === 0) {
+            // 不写裸 "SKIP"：无声跳过等于把「没验」记成「验过了」（N59 的教训）。
+            return {
+              skip:
+                `真实快照 fixtures/real/${spec.id}.html 里没有标注 send-button（本站没有 1 条可核对的记录）` +
+                "——真机侧的结论请看同站 mock 的 data-expect-send-button 声明与 fixtures/real/*.json 的 sendButtonFound",
+            };
+          }
           const el = adapter.getSendButton();
           if (!el) throw new Error("getSendButton() 返回 null");
           if (!expected.some((e) => e === el)) {

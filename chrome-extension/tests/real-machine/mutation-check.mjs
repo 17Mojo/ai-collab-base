@@ -1420,7 +1420,35 @@ const MUTATIONS = [
     find: "          if (STRICT_SENDBUTTON) {",
     replace: "          if (false) {",
     testFile: "sendbutton-crosscheck.test.mjs",
-    expectTest: "STRICT_SENDBUTTON=1：同一个平台判 FAIL，退出码 1（解冻验收必须用它）",
+    expectTest: "STRICT_SENDBUTTON=1：同一个站判 FAIL，退出码 1（解冻验收必须用它）",
+  },
+
+  {
+    name: "声明判据不再检查「真机说 sendButtonFound=true」（声明与真机相反也放行）",
+    why: "声明是待证主张不是证据；不拿真机快照对一次，fixture 作者说「没有」就等于「没有」——又一次自证",
+    target: "adapter-matrix/adapter-test-utils.js",
+    find: "  if (realMeta.sendButtonFound === true) {",
+    replace: "  if (false) {",
+    testFile: "sendbutton-crosscheck.test.mjs",
+    expectTest: "声明判据：真机说 sendButtonFound=true ⇒ contradicts-real（声明与真机相反）",
+  },
+  {
+    name: "声明判据不再检查「adapter 仍然命中」（声明了 none 却取到元素也放行）",
+    why: "这一条是这个机制唯一的牙齿：站点真加了按钮、或选择器开始靠猜命中别的东西，都靠它变红",
+    target: "adapter-matrix/adapter-test-utils.js",
+    find: "  if (hit) {",
+    replace: "  if (false) {",
+    testFile: "sendbutton-crosscheck.test.mjs",
+    expectTest: "声明判据：声明 none 但 adapter 仍然命中 ⇒ still-matches（硬红）",
+  },
+  {
+    name: "runner 不读 fixture 的 data-expect-send-button 声明",
+    why: "声明读了却不生效 = 等于没有；deepseek 会掉回「既没标注也没声明」的硬错，说明这条路真的在走",
+    target: "adapter-matrix/adapter-test-runner.js",
+    find: "(doc.body && doc.body.dataset && doc.body.dataset.expectSendButton) || null;",
+    replace: "null;",
+    testFile: "sendbutton-crosscheck.test.mjs",
+    expectTest: "声明站（deepseek）：两种模式都 PASS，且打印的用例名不含「命中」二字",
   },
 
   // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────

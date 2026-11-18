@@ -237,6 +237,87 @@ export function isWithin(el, containers) {
  * @param {Function} fn - 抛异常即视为失败
  * @returns {{ name: string, pass: boolean, error: string|null }}
  */
+/**
+ * fixture 声明的判据（纯函数）：`data-expect-send-button="none"` 该不该放行（N59 ② / A2）。
+ *
+ * ## 为什么要有「声明」这层
+ *
+ * 删掉 deepseek mock 里那个假按钮之后，矩阵会遇到一个新问题：
+ * `[data-role="send-button"]` 一个都没有，这条断言该算什么？
+ * 「什么都不算」是最坏的选择——它把「没想过」伪装成「没有」。
+ * 所以要求 fixture 显式表态：
+ *
+ *   - 有按钮：标注恰好 1 个 `[data-role="send-button"]`（原有契约，走对账判据）；
+ *   - 没按钮：在 `<body>` 上写 `data-expect-send-button="none"`，
+ *     断言改为「`getSendButton()` 必须返回 null」。
+ *
+ * 声明本身不是证据——它是**待证主张**。所以这里要求一个独立见证人：
+ * 同站的真机快照必须采成功（`outcome=captured` 且 `composerFound=true`），
+ * 且其 `sendButtonFound` 必须与声明同向。否则只能算「没有见证人」，降级 SKIP。
+ *
+ * 状态：
+ *   no-declaration     没声明 ⇒ 调用方走原对账路径
+ *   pass               声明「无按钮」，且 fixture / adapter / 真机三方一致
+ *   unknown            声明了不认识的取值（目前只认 none）
+ *   self-contradictory 声明「无按钮」却又标注了 send-button
+ *   no-witness         没有可用的真机快照 ⇒ 声明无人作证
+ *   contradicts-real   声明「无按钮」但真机快照说 sendButtonFound=true
+ *   still-matches      声明「无按钮」但 getSendButton() 仍然返回了元素
+ *
+ * @param {{expectDecl: string|null, annotated: number, hit: boolean, realMeta: object|null, id?: string}} arg
+ * @returns {{status: string, reason: string}}
+ */
+export function judgeSendButtonDeclaration({ expectDecl, annotated, hit, realMeta, id = "?" }) {
+  if (expectDecl === null || expectDecl === undefined) {
+    return { status: "no-declaration", reason: "" };
+  }
+  if (expectDecl !== "none") {
+    return {
+      status: "unknown",
+      reason: `未知的 data-expect-send-button="${expectDecl}"——目前只认 "none"；新增取值请同时改矩阵与 N59 的记录`,
+    };
+  }
+  if (annotated !== 0) {
+    return {
+      status: "self-contradictory",
+      reason:
+        `fixture 声明 data-expect-send-button="none"，却仍标注了 ${annotated} 个 ` +
+        `[data-role="send-button"]——声明与 DOM 自相矛盾`,
+    };
+  }
+  if (!realMeta) {
+    return {
+      status: "no-witness",
+      reason: `fixture 声明无发送按钮，但没有真机快照可印证（fixtures/real/${id}.json）`,
+    };
+  }
+  if (realMeta.outcome !== "captured" || realMeta.composerFound !== true) {
+    return {
+      status: "no-witness",
+      reason:
+        `fixture 声明无发送按钮，但真机快照不可用（outcome=${realMeta.outcome}, ` +
+        `composerFound=${realMeta.composerFound}）——声明没有独立见证人`,
+    };
+  }
+  if (realMeta.sendButtonFound === true) {
+    return {
+      status: "contradicts-real",
+      reason:
+        "fixture 声明无发送按钮，但真机快照 sendButtonFound=true——" +
+        "声明与真机相反，先确认哪个错了（不许两边都留着）",
+    };
+  }
+  if (hit) {
+    return {
+      status: "still-matches",
+      reason:
+        "fixture 声明无发送按钮，但 getSendButton() 仍然命中了元素——" +
+        "要么选择器靠猜命中了不相干的东西，要么 fixture 里混进了控件",
+    };
+  }
+  return { status: "pass", reason: "声明无按钮，且 fixture / adapter / 真机三方一致" };
+}
+
 export function runTest(name, fn) {
   try {
     const result = fn();

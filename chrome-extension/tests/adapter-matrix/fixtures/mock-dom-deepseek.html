@@ -9,6 +9,11 @@
     data-role="message"       AI 回答卡（可多个）—— getMessageList() 的判定对象
     data-role="user-message"  human 气泡（可多个）—— **永远不该被 getMessageList() 计入**
 
+  **例外：本文件 body 上写着 `data-expect-send-button="none"`。**
+  它的含义是「这个站的真机上没有 button 形态的发送控件」，矩阵据此把断言改成
+  「getSendButton() 必须返回 null」，**而不是**「必须命中一个 [data-role=send-button]」。
+  详见下方 Send 区的注释与 N54 / N59 / N60。
+
   形状来源：真机只读探针
   collaboration/results/real-machine-runs/evidence/deepseek-message-contract-probe-2026-11-11.json
   （历史会话页；redlines 全 false —— 不发送、不输入、不注入 Pack）：
@@ -34,17 +39,33 @@
   <meta charset="UTF-8">
   <title>DeepSeek</title>
 </head>
-<body>
+<body data-expect-send-button="none">
   <!-- Chat Input: textarea (primary) -->
   <textarea id="chat-input" placeholder="输入消息..." data-role="chat-input">What are transformers in AI?</textarea>
 
   <!-- Fallback contenteditable -->
   <div contenteditable="true" style="display:none;"></div>
 
-  <!-- Send Button -->
-  <button data-testid="send-button" aria-label="发送" class="send-button" data-role="send-button">
-    <svg><!-- send icon --></svg>
-  </button>
+  <!--
+    Send 区：**故意留空，不要在这里补任何元素**。
+
+    这里原本有一个
+      <button data-testid="send-button" aria-label="发送" class="send-button" data-role="send-button">
+    它在真机上**不存在**：它同时命中 adapter 的四条选择器
+    （`button[data-testid="send-button"]` / `button[aria-label*="Send"]` /
+    `button[aria-label*="发送"]` / `button[class*="send"]`），
+    等于「照着选择器写 fixture，再用 fixture 验选择器」——N59 那条假绿就是这么来的。
+    2026-11-19 A2 已删除。
+
+    为什么**不**按真机形态重建：我方**没有留下发送区的工件**。
+    N54 里写的形状（`div.ds-icon > svg`，祖先六层构建期哈希类名）只有文字记录，
+    evidence/ 下**找不到对应的 DOM dump 或 outerHTML**。凭一句话重建 fixture，
+    只是把「猜测」从 adapter 挪到 fixture 里，PASS 会再次失去意义——那是把假绿换成假绿。
+    所以这里保持「没有发送控件」这个**可被真机快照独立印证**的事实：
+    fixtures/real/deepseek.json 的 `sendButtonFound=false`（采集器用的是同一个
+    adapter.getSendButton()，在真实 DOM 上跑出来的）。
+    缺失工件已登记为 N60，补采后若要还原形状，请带着工件一起改。
+  -->
 
   <!-- Stop Button -->
   <button aria-label="Stop generating" style="display:none;">

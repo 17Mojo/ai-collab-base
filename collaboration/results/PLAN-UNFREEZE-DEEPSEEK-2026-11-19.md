@@ -156,8 +156,31 @@ Totals: 2 passed, 4 failed (6 items)
 3. **adapter 收口**：清空 4 条 `button[...]` 死选择器（`sendButton: []` + 注释写清理由），
    并给 Enter 兜底补测试 + 变异锚（删掉 `dispatchEvent` ⇒ 测试必须红）。
 
-**不选「位置锚定 / 哈希类名」**：那只是把今天的猜测写死，站点改版即漂；而且它会让 PASS 变成
+**不选「位置锚定 / 哈希类名」**：那只是把今天的猜测写死，站点改版即漂；而且  它会让 PASS 变成
 「命中了一个我们瞎猜的元素」，比没有更危险。
+
+**A2 实测（2026-11-19，已完成；与上文第 2 步有一处实质偏离）**
+
+- 落地：删掉 `mock-dom-deepseek.html` 里那个 `button[data-testid=send-button][aria-label=发送][class=send-button]`；
+  `<body>` 加 `data-expect-send-button="none"`；矩阵新增纯函数 `judgeSendButtonDeclaration()`（7 态：
+  `pass` / `no-declaration` / `unknown` / `self-contradictory` / `no-witness` / `contradicts-real` / `still-matches`），
+  断言改为「`getSendButton()` 必须返回 null」，并要求同站真机快照当**独立见证人**（快照不可用 ⇒ 降级 SKIP，不算 PASS）。
+- **实质偏离**：上面第 2 步写「换成真机形态（`div.ds-icon > svg`，不标 `data-role`）」。**没做**。原因是查证后发现
+  那个形状**没有任何落盘工件**：`grep -rln ds-icon evidence/ tests/` 零命中（只有台账自己在说）；
+  `fixtures/real/deepseek.html` 只有 270 字节、仅含 textarea 子树；`new-session-probe-2026-11-11.deepseek-ab-diagnostic.json`
+  里的 `labeledControls: []` 只收「新建对话」类文案，**不能**当「没有发送按钮」的证据。
+  凭一句话重建 fixture，只是把猜测从 adapter 挪进 fixture，PASS 会再次失去意义——那是把假绿换成假绿。
+  所以 Send 区**故意留空**，缺的工件登记为 **N60**。
+- 结果：矩阵 `107/125 (17 skipped)` → **`108/125 passed, 0 failed, 17 skipped`**；deepseek 由 SKIP 变 **PASS**，
+  且这个 PASS 有三方见证：真机 `sendButtonFound=false` + fixture 里没有控件 + adapter 返回 null。
+  严格模式仍是红，但**红的是剩下 6 站**（原 7 站减掉 deepseek），deepseek 不受影响——它的争议已经用另一种方式关掉了。
+- 用例改名：`getSendButton() 命中 fixture 标注的发送按钮` → `…与 fixture 的 send-button 契约一致`。
+  声明站断言的是 null，名字还写「命中」就是名字在说谎——这个项目已经因为「名字会说谎」吃过一次亏。
+- 守门：`judgeSendButtonDeclaration` 8 条用例；新增 3 条变异锚（去掉 `contradicts-real` / 去掉 `still-matches` /
+  runner 不读声明），6 条 send-button 锚 **6/6 被杀**。
+- **又挖出一条自己的错**：事实地图测试原来用正则数 `data-role="send-button"`。fixture 的注释里引用了被删掉的那段
+  标记原文（为了说清删了什么），正则把注释当成了 DOM，于是「deepseek 已经没有发送按钮」被自己的注释弄红。
+  已改成 jsdom 解析，并且用**生产 adapter 自己的四条选择器**去问 DOM——问「会不会命中」，而不是「文件里有没有这几个字」。
 
 验收：变异锚「删掉 Enter 兜底」被杀；deepseek 的 send-button 断言从**自证 PASS** 变成
 **「显式断言 null」的绿**（有真机依据）。
@@ -207,7 +230,7 @@ N25 的历史证据一分不丢（回执与计划都还在 `evidence/`），只�
 ### 执行顺序（依赖关系）
 
 ```
-A1 证据对账 ✅ →  B1/B2 解耦  →  A2/A3 fixture 与 adapter 收口  →  B3 计划退役
+A1 证据对账 ✅ →  B1/B2 解耦  →  A2 fixture ✅ / A3 adapter 收口  →  B3 计划退役
             →  P0 立项  →  P2 常量改动  →  P3 离线门禁  →  P4 真机验收
 ```
 
