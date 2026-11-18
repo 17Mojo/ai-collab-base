@@ -43,12 +43,14 @@ import { fileURLToPath } from "node:url";
 
 import { clearSwCaches } from "./clear-sw-cache.mjs";
 import { overwriteNotice, precheckOutputPath } from "./evidence-paths.mjs";
+import { probeLogin, verdictOf } from "./login-verdict.mjs";
 import { PLATFORMS, getPlatform } from "../platforms.mjs";
 import {
   ACTIVE_PLATFORM_IDS,
   assertCandidatesAllowed,
   assertPlatformAllowed,
   evaluatePlatformPolicy,
+  shouldAnnounceUnfreeze,
 } from "./platform-freeze.mjs";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -244,20 +246,37 @@ async function runOne(context, extId, spec, platformPolicy) {
   await page.goto(spec.url, { waitUntil: "domcontentloaded", timeout: 90000 });
   log(`${spec.name} 已打开；未登录请在窗口里扫码，最多等 ${LOGIN_WAIT} 分钟`);
 
-  const composer = page.locator(COMPOSER).first();
-  let loggedIn = false;
+  // ── 登录闸门（N34，2026-11-18 修）─────────────────────────────────
+  //
+  // 旧判据只有一句「输入框可见 ⇒ 已登录」。stepfun 游客态首页**同样渲染
+  // textarea[data-slot=textarea]**，于是未登录被判成已登录，脚本照常导入 Pack
+  // 发消息，在真实无响应的情况下超时，产出 `step_2_hook failed: Response timeout`
+  // ——把「没登录」误诊成「产品链路超时」，并诱导人去改重试/超时策略。
+  //
+  // 现改为与 login-helper.mjs 共用 login-verdict.mjs 的三层判据：
+  //   composer 可见 + 页面无登录提示语 + URL 不在认证路径。
+  //
+  // 取舍是**故意不对称**的：宁可误判「未登录」（本轮无结论，但原因写在错误里、
+  // 一眼可查），也不要误判「已登录」（会产出归因错误的证据）。所以判据偏保守，
+  // 且失败时把 why 与是否 composer 可见一并抛出，便于当场分辨是「没登录」
+  // 还是「文案误命中」。
+  let verdict = { loggedIn: false, why: "未开始探测" };
+  let lastState = null;
   const deadline = Date.now() + LOGIN_WAIT * 60 * 1000;
   while (Date.now() < deadline) {
-    try {
-      if (await composer.isVisible({ timeout: 1500 })) {
-        loggedIn = true;
-        break;
-      }
-    } catch {}
+    lastState = await probeLogin(page);
+    verdict = verdictOf(lastState);
+    if (verdict.loggedIn) break;
+    log(`${spec.name} 尚未就绪：${verdict.why}`);
     await new Promise((r) => setTimeout(r, 5000));
   }
-  if (!loggedIn) throw new Error(`${LOGIN_WAIT} 分钟未出现输入框 —— ${spec.name} 登录未完成`);
-  log("✅ 检测到输入框，视为已登录");
+  if (!verdict.loggedIn) {
+    const guest = lastState?.composerVisible
+      ? "（输入框在，但仍检测到登录提示或认证路径 ⇒ 游客态，不能当已登录；见台账 N34）"
+      : "";
+    throw new Error(`${LOGIN_WAIT} 分钟未完成登录 —— ${spec.name}：${verdict.why}${guest}`);
+  }
+  log("✅ 已登录:", verdict.why);
 
   const extPage = await context.newPage();
   await extPage.goto(`chrome-extension://${extId}/pack-editor.html`, {
@@ -389,7 +408,18 @@ async function main() {
   const spec = getPlatform(PLATFORM);
   if (!spec) throw new Error(`未知平台 ${PLATFORM}；可选: ${PLATFORMS.map((p) => p.id).join(",")}`);
   const policy = evaluatePlatformPolicy(PLATFORM, { allowFrozen: ALLOW_FROZEN });
-  if (!policy.active) {
+  // ── 解冻留痕（N35，2026-11-18 修）──────────────────────────────────
+  //
+  // 旧写法 `if (!policy.active)` 拿「是否活跃」当「是否已解冻」的代理。
+  // 在 PRECHECK 模式下会误报：PLATFORM 默认仍是已被移出白名单的 qianwen，
+  // 于是 active=false、unfrozenBy=null、ALLOW_FROZEN 也没设，却打出
+  // 「⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: qianwen」——一句与事实相反的日志，
+  // 而预检实际只打开 CANDIDATES（五个活跃站），压根没碰 qianwen。
+  //
+  // 这条日志是「谁在什么时候解冻过」的唯一运行时线索，假报会污染解冻审计。
+  // 判据抽到 platform-freeze.shouldAnnounceUnfreeze 以便单测（含「预检下不打」
+  // 与「字段缺失不等于已解冻」两条），本处只负责调用。
+  if (shouldAnnounceUnfreeze(policy, { precheck: PRECHECK })) {
     log("⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行:", PLATFORM, "—— 请确认用户已明确解冻");
   }
   const { context, extId, probe } = await launch();

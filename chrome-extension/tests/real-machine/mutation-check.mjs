@@ -1627,6 +1627,51 @@ const MUTATIONS = [
     testFile: "deepseek-new-session.test.mjs",
     expectTest: "deepseek：找到了入口但点了没清空，仍判 available:false（不假装重置）",
   },
+
+  // ── 登录判据（N34：游客态也有输入框，只看 composer 会误判已登录）──────
+  {
+    name: "登录判据退回「只看输入框可见」",
+    why:
+      "这是 N34 本身：stepfun 等游客态首页同样渲染输入框，退回单一判据后未登录会被当成已登录，" +
+      "脚本照常发消息并超时，把「没登录」误诊成「产品链路超时」——错误结论比无结论更坏",
+    target: "real-machine/login-verdict.mjs",
+    find: "  if (Array.isArray(s.hints) && s.hints.length) {",
+    replace: "  if (false) {",
+    testFile: "login-verdict.test.mjs",
+    expectTest: "N34 回归：composer 可见但页面有登录提示 ⇒ 判未登录，不是已登录",
+  },
+  {
+    name: "登录判据不再检查认证路径",
+    why:
+      "被重定向到 /sign_in 时页面通常仍有可渲染的输入框骨架，去掉路径判据会把登录墙当成已登录",
+    target: "real-machine/login-verdict.mjs",
+    find: '  if (AUTH_PATH.test(String(s.url || ""))) return { loggedIn: false, why: `仍在认证页 ${s.url}` };',
+    replace: '  if (false) return { loggedIn: false, why: `仍在认证页 ${s.url}` };',
+    testFile: "login-verdict.test.mjs",
+    expectTest: "N34 回归：composer 可见但仍在认证页 ⇒ 判未登录",
+  },
+  {
+    name: "解冻留痕省掉「预检不判」这条（N35 误报源之一）",
+    why:
+      "PRECHECK 只打开 CANDIDATES，从不碰 PLATFORM；去掉这条后会对已移出白名单的默认 " +
+      "qianwen 断言解冻与否，打出「已按 ALLOW_FROZEN=1 放行」——而没人解冻过",
+    target: "real-machine/platform-freeze.mjs",
+    find: "  if (opts.precheck === true) return false;\n",
+    replace: "",
+    testFile: "platform-freeze.test.mjs",
+    expectTest: "N35 回归：预检 + 真的解冻过，仍不许打（这条才守住 precheck 分支）",
+  },
+  {
+    name: "解冻留痕判据退回 !policy.active 代理（N35 误报源之二）",
+    why:
+      "冻结未解冻时 active=false，用 !active 当「已解冻」会把「没解冻」报成「解冻了」；" +
+      "这正是 2026-11-18 实测踩到的那条假日志",
+    target: "real-machine/platform-freeze.mjs",
+    find: '  return typeof policy?.unfrozenBy === "string" && policy.unfrozenBy.length > 0;',
+    replace: "  return !policy?.active;",
+    testFile: "platform-freeze.test.mjs",
+    expectTest: "N35 回归：冻结但未解冻 ⇒ 不打（旧实现会在这里误报）",
+  },
 ];
 
 /**

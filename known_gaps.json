@@ -696,7 +696,7 @@
     {
       "id": "N34",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "真机 L2 的登录闸门只看「输入框可见」，游客态首页也有输入框 ⇒ 未登录被判成已登录，白烧一轮并产出 Response timeout",
       "reader": "跑 `l2-platform-auto.mjs` 做真机回归的人——尤其换新站、或换了干净 profile 之后；以及读它的 PASS/FAIL 结论做交付判断的人。假阳性的代价不是报错，而是把「没登录」误诊成「产品链路超时」，让人去改重试策略、超时阈值这些完全无关的地方。",
       "where": [
@@ -705,19 +705,24 @@
       ],
       "detail": "2026-11-18 13:07 首次 stepfun 实测 FAIL：`step_2_hook failed: Response timeout`。根因是 stepfun 未登录，而脚本判据只用 `composer.isVisible()`——stepfun 游客态首页同样渲染 `textarea[data-slot=textarea]`，因此脚本立即判定「✅ 检测到输入框，视为已登录」，随后导入 Pack 直接发消息，在真实页面无响应的情况下超时。当场证据：profile 中 stepfun cookie 仅 4 条游客态；扫码登录后 cookie 4→7 条并新增 `Oasis-Token`，同脚本同参数重跑 PASS。也就是说失败与登录态强相关，与产品链路无关。",
       "impact": "① 单次真机回归的整轮（8 步 × 一站点）被浪费，且耗时以分钟计；② 结论被写成 `Response timeout`，指向重试/超时策略，属**归因错误**，会诱导人去改 `retry-policy` / `wait-policy` 这些正确的地方；③ 换站（N30 之后引入 stepfun）和新 profile 是高频场景，假阳性会反复出现；④ 若有人据此判「stepfun 链路不稳」，会错误否定一个实际可用的站点。",
-      "fix": "未修。建议判据改为复合信号：`composerVisible && !hasLoginEntry && hasUserMenu`，或直接采用 adapter 侧的真实鉴权信号。\n可行性已验证（2026-11-18 独立探针）：该三条件组合在 stepfun / yuanbao / chatglm / yiyan / kimi 五站均能正确区分登录与未登录（stepfun 登录后 `hasLoginEntry` 由 true→false、`hasUserMenu` 由 false→true，`RESULT=LOGGED_IN`）。\n注意不要退化成「只要 composerVisible 就继续」——那正是当前缺陷。落地时须同时保留 precheck 的两列输出，便于事后归因。",
+      "fix": "已修（2026-11-18）：\n① 判据抽成唯一事实源 `chrome-extension/tests/real-machine/login-verdict.mjs`：composer 可见 + 页面无登录提示语（LOGIN_HINTS）+ URL 不在认证路径（AUTH_PATH），导出 probeLogin(page) 与 verdictOf(state)（后者纯函数，可单测）。\n② 三个调用点共用同一把尺子：`login-helper.mjs` 删掉本地副本改为 import；`l2-platform-auto.mjs` 的 runOne 登录循环改用它；`l2-qianwen-auto.mjs:151` 同一处假阳性的**第二份复制**也一并改掉（原判定同样只有 composer.isVisible）。\n③ 失败信息带上 verdict.why 与「输入框在但仍检测到登录提示」的提示，让「没登录」和「文案误命中」能当场分清。\n④ 守护：`tests/login-verdict.test.mjs` 9 条用例，第一条即 N34 回归钉子（composer 可见 + 有提示 ⇒ 未登录）；变异锚 2 条（退回只看 composer / 不查认证路径），156 条变异全被杀死。\n残留风险（故意的不对称取舍，已写进模块文档）：提示语是对 body.innerText 前 20000 字做子串匹配，若已登录页面正文恰好含「登录后」会被误判未登录。接受理由：假阴性不产生结论且原因可见，假阳性会产生归因错误的证据。若要收紧，须先有真机证据表明子串确实误伤过。",
       "found_at": "2026-11-18",
       "appended_evidence": [
         "失败现场：2026-11-18 13:07 stepfun `step_2_hook failed: Response timeout`；当时 stepfun cookie 4 条（游客态）。",
         "登录后对照：13:13 真机扫码，cookie 4→7 条，新增 `Oasis-Token`（account.stepfun.com / studio.stepfun.com）；13:15 同脚本同参数重跑 `success=true` / 8/8 步 / 截图 589,546 B。",
         "判据可行性实测：独立探针（判据 composerVisible && !hasLoginEntry && hasUserMenu）在五站均返回 LOGGED_IN，未再出现假阳性。",
-        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §1、`collaboration/results/real-machine-runs/evidence/L2-nov18-stepfun.json`。"
-      ]
+        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §1、`collaboration/results/real-machine-runs/evidence/L2-nov18-stepfun.json`。",
+        "修复落地：新增 tests/real-machine/login-verdict.mjs；login-helper.mjs / l2-platform-auto.mjs / l2-qianwen-auto.mjs 三处改为共用。",
+        "测试实测：`node --test tests/login-verdict.test.mjs` → 9/9 pass；扩展全套 `npm test` → 365/365 pass、0 fail。",
+        "变异实测：`CODEBUDDY_SAFE_DELETE_ENABLED=0 node tests/real-machine/mutation-check.mjs` → 全部 156 条被杀死、EXIT=0；其中「登录判据退回只看输入框可见」被 N34 回归用例杀死，「不查认证路径」被另一条杀死。",
+        "范围更正：本条不止一处。同一假阳性在 l2-qianwen-auto.mjs:151 有一份复制，本次一并修复——否则修了一处、另一处照旧误判。"
+      ],
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N35",
       "priority": "P3",
-      "status": "open",
+      "status": "closed",
       "title": "冻结守卫用 `!policy.active` 代替「已解冻」，预检模式会对一个根本没打开的平台打出「已按 ALLOW_FROZEN=1 放行」",
       "reader": "看真机日志排障的人、以及做解冻审计的人。这条日志是「谁在什么时候解冻过」的唯一运行时线索，而它现在会在 `ALLOW_FROZEN` **未设置**的情况下自己冒出来——把一次普通预检读成「有人绕过红线碰了冻结站」，属于会污染审计结论的假证据。",
       "where": [
@@ -727,14 +732,19 @@
       ],
       "detail": "PRECHECK 模式下真正打开的是 `CANDIDATES`（= `ACTIVE_PLATFORM_IDS`），但 391 行仍对 `PLATFORM` 求值，而 `PLATFORM` 的默认值是 `qianwen`——N30 之后它已被移出白名单，属冻结站。用 node 直调实测：`evaluatePlatformPolicy(\"qianwen\", {allowFrozen:false})` 返回 `{allowed:false, active:false, unfrozenBy:null, reason:\"frozen-by-user-redline\"}`，于是 `!policy.active === true`，日志照打，而 `unfrozenBy` 明确是 `null`、`ALLOW_FROZEN` 也没设。断言那边不会抛错，因为 PRECHECK 走的是 `assertCandidatesAllowed(CANDIDATES)` 而不是 `assertPlatformAllowed(PLATFORM)`，所以这条假日志不会被任何异常打断。",
       "impact": "① 解冻审计被污染：日志声称「已按 ALLOW_FROZEN=1 放行」，与事实相反；② 排障者会去查「谁解冻了」，而答案是没有人；③ 真正需要看到的「确实有人解冻」这条信号，被同类噪声稀释后更容易被忽略。当前不改变任何行为，只污染日志，故定 P3。",
-      "fix": "未修。两处都要改：\n① 判定条件改为 `policy.unfrozenBy !== null`——它才是「是否解冻」的直接字段，`!policy.active` 只是当前实现下的间接代理，站点清单或 reason 一扩充就会失准。\n② PRECHECK 模式下不对未被使用的 `PLATFORM` 做该判定（或改为遍历实际会打开的 `CANDIDATES` 逐个判定），避免对一个压根不打开的站打日志。",
+      "fix": "已修（2026-11-18）：\n① 判据抽成可测纯函数 `platform-freeze.shouldAnnounceUnfreeze(policy, {precheck})`，两个条件：`precheck` 为真一律不打（预检不打开 PLATFORM，对该平台断言无依据）；`unfrozenBy` 必须是非空字符串。\n② 顺带修掉一个写错的写法：原打算用 `policy.unfrozenBy !== null`，但字段缺失时 `undefined !== null` 为真，会把「没有该字段」误当成「已解冻」——故改用 `typeof === \"string\" && length > 0`。\n③ `l2-platform-auto.mjs` 改为调用该函数，删掉原地的 `!policy.active` 判断。\n④ 守护：`tests/platform-freeze.test.mjs` 追加 5 条用例 + 变异锚 2 条（删掉 precheck 守卫 / 退回 !active 代理），156 条变异全被杀死。\n⑤ 过程中暴露一次测试自身不够狠：初版「预检下不打」用例用的是「冻结未解冻」的 policy，第二条件本来就不满足，删掉 precheck 守卫测试照样绿（变异存活）。改为「预检 + 真的解冻过（unfrozenBy 有值）」后该变异才被杀死——即这条用例才真正守住 precheck 分支。",
       "found_at": "2026-11-18",
       "appended_evidence": [
         "直调复现（node，2026-11-18，ada4ceb 基线）：`evaluatePlatformPolicy(\"qianwen\", {allowFrozen:false})` → `{\"allowed\":false,\"active\":false,\"unfrozenBy\":null,\"reason\":\"frozen-by-user-redline\"}`；`!policy.active` → `true` ⇒ 必然打出「已按 ALLOW_FROZEN=1 放行」。",
         "对照：`evaluatePlatformPolicy(\"stepfun\", {allowFrozen:false})` → `{\"allowed\":true,\"active\":true,\"unfrozenBy\":null,\"reason\":\"active\"}`，`!policy.active` → `false`，活跃站不会误报。即误报只发生在冻结站且 `ALLOW_FROZEN` 未设时。",
         "历史日志里该字符串确实出现过且当时并未解冻：`collaboration/results/real-machine-runs/evidence/ab3-rerun-2026-11-12.log` 等对 deepseek / longcat 多次打出该行。",
-        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §3 D2 段。"
-      ]
+        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §3 D2 段。",
+        "修复落地：platform-freeze.mjs 新增 shouldAnnounceUnfreeze；l2-platform-auto.mjs:420 改为调用。",
+        "测试实测：`node --test tests/platform-freeze.test.mjs` → 15/15 pass；全套 365/365 pass。",
+        "变异实测：156/156 被杀死、EXIT=0；其中「解冻留痕省掉预检不判」被「预检 + 真的解冻过」用例杀死，「退回 !policy.active 代理」被「冻结但未解冻」用例杀死。",
+        "首次变异存活记录（保留，说明测试迭代过程）：初版锚点期望「预检模式下不得打出解冻留痕」变红，实际失败——因为该用例的 policy.unfrozenBy 为 null，第二条件已拦住，precheck 分支未被覆盖。补用例后转绿。"
+      ],
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N36",

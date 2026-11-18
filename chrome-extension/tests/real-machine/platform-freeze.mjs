@@ -121,3 +121,32 @@ export function assertCandidatesAllowed(ids, opts = {}) {
   }
   return ids.map((id) => ({ id, ...evaluatePlatformPolicy(id, opts) }));
 }
+
+/**
+ * 是否应当打出「冻结平台已按 ALLOW_FROZEN=1 放行」这条留痕日志（N35）。
+ *
+ * ## 为什么单独成一个函数
+ *
+ * 原实现是 `if (!policy.active)`——拿「是否活跃」当「是否已解冻」的代理。
+ * PRECHECK 模式下 PLATFORM 默认仍是已被移出白名单的 qianwen，于是
+ * active=false、unfrozenBy=null、ALLOW_FROZEN 也没设，却打出
+ * 「⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行: qianwen」——一句与事实相反的日志，
+ * 而预检其实只打开 CANDIDATES，压根没碰 qianwen。
+ *
+ * 这条日志是「谁在什么时候解冻过」的唯一运行时线索，假报会污染解冻审计，
+ * 所以判据要能单测，不能埋在脚本里。
+ *
+ * ## 两个条件都要
+ *
+ * 1. `precheck` 为真时一律不打：预检不打开 PLATFORM，对该平台做任何断言都无依据；
+ * 2. `unfrozenBy` 必须是**非空字符串**。注意不能用 `!== null`：字段缺失时
+ *    `undefined !== null` 为真，会把「没有该字段」误当成「已解冻」。
+ *
+ * @param {{unfrozenBy?: string|null}|null|undefined} policy
+ * @param {{precheck?: boolean}} [opts]
+ * @returns {boolean}
+ */
+export function shouldAnnounceUnfreeze(policy, opts = {}) {
+  if (opts.precheck === true) return false;
+  return typeof policy?.unfrozenBy === "string" && policy.unfrozenBy.length > 0;
+}

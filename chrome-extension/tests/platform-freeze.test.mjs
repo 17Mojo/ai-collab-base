@@ -20,6 +20,7 @@ import {
   assertPlatformAllowed,
   evaluatePlatformPolicy,
   isPlatformActive,
+  shouldAnnounceUnfreeze,
 } from "./real-machine/platform-freeze.mjs";
 
 const L2_DRIVER = fileURLToPath(
@@ -108,4 +109,62 @@ test("L2 驱动把放行策略与 Pack 变体写进回执", () => {
   assert.match(src, /packVariant:/, "A/B 轮次标签要能区分");
   assert.match(src, /packPath:/, "变体 Pack 路径要可复核");
   assert.match(src, /platformPolicy: CANDIDATES\.map/, "预检回执也要留逐站策略");
+});
+
+
+// ─────────────────────────────────────────────────────────────────────
+// N35 解冻留痕判据
+//
+// 这条日志是「谁在什么时候解冻过」的唯一运行时线索。旧实现用
+// `!policy.active` 当代理，在 PRECHECK 下对已移出白名单的默认 PLATFORM
+// 打出「已按 ALLOW_FROZEN=1 放行」——事实相反，且没人解冻过。
+// ─────────────────────────────────────────────────────────────────────
+
+test("N35 回归：预检模式下不得打出解冻留痕（预检不碰 PLATFORM）", () => {
+  const frozen = evaluatePlatformPolicy("qianwen", { allowFrozen: false });
+  assert.equal(frozen.active, false, "前提：qianwen 已冻结");
+  assert.equal(frozen.unfrozenBy, null);
+  assert.equal(
+    shouldAnnounceUnfreeze(frozen, { precheck: true }),
+    false,
+    "预检只开 CANDIDATES，对 PLATFORM 断言无依据 ⇒ 不许打",
+  );
+});
+
+test("N35 回归：预检 + 真的解冻过，仍不许打（这条才守住 precheck 分支）", () => {
+  // 关键用例：设了 ALLOW_FROZEN=1 时 unfrozenBy 有值，第二个条件（非空字符串）会满足，
+  // 此时**只有 precheck 守卫能拦住**。预检只打开 CANDIDATES，从不打开 PLATFORM，
+  // 所以对 PLATFORM 打「已放行」依旧是无依据的假日志。
+  // 若有人删掉 `if (opts.precheck === true) return false;`，这条必须变红。
+  const unfrozen = evaluatePlatformPolicy("deepseek", { allowFrozen: true });
+  assert.equal(unfrozen.unfrozenBy, "ALLOW_FROZEN=1", "前提：确实处于解冻态");
+  assert.equal(shouldAnnounceUnfreeze(unfrozen, { precheck: false }), true, "非预检时该打");
+  assert.equal(
+    shouldAnnounceUnfreeze(unfrozen, { precheck: true }),
+    false,
+    "预检下即便解冻过也不打——预检压根没碰这个平台",
+  );
+});
+
+test("N35 回归：冻结但未解冻 ⇒ 不打（旧实现会在这里误报）", () => {
+  const frozen = evaluatePlatformPolicy("qianwen", { allowFrozen: false });
+  assert.equal(shouldAnnounceUnfreeze(frozen, { precheck: false }), false);
+});
+
+test("真正解冻过 ⇒ 打，且靠 unfrozenBy 而非 active 判定", () => {
+  const unfrozen = evaluatePlatformPolicy("deepseek", { allowFrozen: true });
+  assert.equal(unfrozen.active, false, "解冻不等于变成活跃站");
+  assert.equal(shouldAnnounceUnfreeze(unfrozen, { precheck: false }), true);
+});
+
+test("活跃站不需要解冻留痕（它压根没被冻过）", () => {
+  const active = evaluatePlatformPolicy("stepfun", { allowFrozen: false });
+  assert.equal(shouldAnnounceUnfreeze(active, { precheck: false }), false);
+});
+
+test("字段缺失不得被当成「已解冻」（undefined !== null 的坑）", () => {
+  assert.equal(shouldAnnounceUnfreeze({}, { precheck: false }), false);
+  assert.equal(shouldAnnounceUnfreeze(null, { precheck: false }), false);
+  assert.equal(shouldAnnounceUnfreeze(undefined, { precheck: false }), false);
+  assert.equal(shouldAnnounceUnfreeze({ unfrozenBy: "" }, { precheck: false }), false);
 });

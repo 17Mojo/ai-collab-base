@@ -61,6 +61,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { clearSwCaches } from "./clear-sw-cache.mjs";
+import { probeLogin, verdictOf } from "./login-verdict.mjs";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const EXT = fileURLToPath(new URL("../../dist", import.meta.url));
@@ -141,22 +142,27 @@ async function main() {
   });
   log("千问已打开。未登录请在弹出的窗口里扫码/登录 —— 脚本等你，最多 15 分钟");
 
-  const composer = page
-    .locator('div[data-slate-editor="true"], textarea, div[contenteditable="true"]')
-    .first();
-  let loggedIn = false;
+  // 登录闸门（N34，2026-11-18 修）：旧判据只有「输入框可见 ⇒ 已登录」，
+  // 而游客态首页同样渲染输入框，会被判成已登录后照常发消息、产出假的 Response
+  // timeout。改为与 login-helper / l2-platform-auto 共用 login-verdict.mjs
+  // （composer 可见 + 无登录提示 + 非认证路径），三处判据只有一份定义。
+  let verdict = { loggedIn: false, why: "未开始探测" };
+  let lastState = null;
   const deadline = Date.now() + 15 * 60 * 1000;
   while (Date.now() < deadline) {
-    try {
-      if (await composer.isVisible({ timeout: 1500 })) {
-        loggedIn = true;
-        break;
-      }
-    } catch {}
+    lastState = await probeLogin(page);
+    verdict = verdictOf(lastState);
+    if (verdict.loggedIn) break;
+    log(`尚未就绪：${verdict.why}`);
     await new Promise((r) => setTimeout(r, 5000));
   }
-  if (!loggedIn) throw new Error("15 分钟未出现输入框 —— 登录未完成");
-  log("✅ 检测到输入框，视为已登录");
+  if (!verdict.loggedIn) {
+    const guest = lastState?.composerVisible
+      ? "（输入框在，但仍检测到登录提示或认证路径 ⇒ 游客态；见台账 N34）"
+      : "";
+    throw new Error(`15 分钟未完成登录：${verdict.why}${guest}`);
+  }
+  log("✅ 已登录:", verdict.why);
 
   const extPage = await context.newPage();
   await extPage.goto(`chrome-extension://${extId}/pack-editor.html`, {

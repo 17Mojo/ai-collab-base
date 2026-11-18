@@ -67,6 +67,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getPlatform } from "../platforms.mjs";
+import { probeLogin as probe, verdictOf } from "./login-verdict.mjs";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const EVIDENCE_DIR = `${REPO_ROOT}collaboration/results/real-machine-runs/evidence`;
@@ -84,79 +85,8 @@ const STAMP = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2,
 ).padStart(2, "0")}`;
 const OUT = process.env.OUT || `${EVIDENCE_DIR}/login-helper-${STAMP}.json`;
 
-const LOGIN_HINTS = [
-  "请先登录",
-  "登录后",
-  "扫码登录",
-  "立即登录",
-  "登录 / 注册", // 2026-11-18 stepfun：游客态首页也有输入框，但侧栏带这个 CTA
-  "手机号登录",
-  "邮箱登录",
-  "Sign in",
-  "Log in",
-];
-const AUTH_PATH = /sign[_-]?in|log[_-]?in|passport|\/auth|oauth/i;
-
-const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
-
-async function probe(page) {
-  return page
-    .evaluate(
-      ({ hints }) => {
-        const comp = [...document.querySelectorAll(
-          'textarea, div[contenteditable="true"], div[data-slate-editor="true"], [role="textbox"]',
-        )].filter((el) => {
-          const r = el.getBoundingClientRect();
-          const st = window.getComputedStyle(el);
-          return r.width > 50 && r.height > 10 && st.display !== "none" && st.visibility !== "hidden";
-        });
-        const body = (document.body?.innerText || "").slice(0, 20000);
-
-        // —— 第二层：身份信号（只用于「是谁」，不参与 pass/fail）——
-        const userIds = {};
-        try {
-          for (let i = 0; i < localStorage.length; i += 1) {
-            const k = localStorage.key(i);
-            if (/^(auth_user_id|user_?id|uid)$/i.test(k || "")) userIds[k] = localStorage.getItem(k);
-          }
-        } catch {
-          /* 某些上下文禁用 localStorage，忽略 */
-        }
-        const aside = document.querySelector("aside, nav");
-        const asideText = (aside?.innerText || "").replace(/\s+/g, " ").trim().slice(0, 200);
-
-        return {
-          url: location.href,
-          composerVisible: comp.length > 0,
-          hints: hints.filter((t) => body.includes(t)),
-          title: document.title,
-          account: {
-            userIds,
-            userId: Object.values(userIds).find(Boolean) || null,
-            asideText,
-          },
-        };
-      },
-      { hints: LOGIN_HINTS },
-    )
-    .catch((e) => ({ error: String(e.message).slice(0, 120) }));
-}
-
-function verdictOf(s) {
-  if (!s || s.error) return { loggedIn: false, why: s?.error || "探测失败" };
-  if (AUTH_PATH.test(s.url)) return { loggedIn: false, why: `仍在认证页 ${s.url}` };
-  if (!s.composerVisible) return { loggedIn: false, why: "输入框不可见" };
-  if (s.hints.length) return { loggedIn: false, why: `页面仍提示「${s.hints[0]}」` };
-  // 第一层通过。第二层只是**标注**，绝不回头否定第一层。
-  const accountUnverified = !s.account?.userId;
-  return {
-    loggedIn: true,
-    why: accountUnverified
-      ? "输入框可见 + 无登录提示 + 非认证路径（⚠️ 账号身份未取到，只能证明「有人登录了」）"
-      : "输入框可见 + 无登录提示 + 非认证路径",
-    accountUnverified,
-  };
-}
+// 判据唯一定义在 login-verdict.mjs —— 三个调用点（本文件 / l2-platform-auto /
+// l2-qianwen-auto）共用同一把尺子，不在此处另写一份。见台账 N34。
 
 /**
  * 把 SITES 里的 token 解析成 { id, name, url }。
