@@ -39,7 +39,8 @@
 
 **只有 D3 才能对用户说「这个范例跑通了」。** D1/D2 只能说「零件成立」「链路曾转起来」。
 
-这条纪律的代价是诚实：按此口径，截至 2026-11-18，**范例一（白名单 5 站内）与范例三达到 D3**，
+这条纪律的代价是诚实：按此口径，**范例一（白名单 5 站内）与范例三达到 D3**
+（范例三的 D3 早于 2026-10-23 就已成立，只是此前没有一份把四步骤串起来的取证文档），
 范例二停留在 D1+D2，范例四为 D0。
 
 ---
@@ -50,7 +51,7 @@
 |---|---|---|---|---|---|
 | **一** 小红书测评（单平台 Pack） | ① 白名单内**每一站** ② 8/8 步全有产出 ③ `exec.success===true` ④ `precise` 模式 ⑤ 首句为真实模型回复 ⑥ 截图落 PNG 且 >1KB ⑦ JSON 回执可机检 | **D3**（范围=白名单 5 站） | `collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §1：stepfun 589,546 B / yuanbao 674,286 B / chatglm 607,022 B / yiyan 715,883 B / kimi 573,579 B，均 8/8 `precise`，无 fail/timeout/not-run | **「全量」定义域未定**：仓内 11 个平台 adapter，白名单只放 5 个 | 用户裁定范围；登录态部分需用户扫码 |
 | **二** 多平台共创（三阶段） | 阶段 1 点按触发并发注入 → 阶段 2 `POST /api/consensus/generate` 返回共识 → 阶段 3 风格注入落产物 | **阶段 1 = D1**（代码在、未接线）<br>**阶段 2/3 = D2**（后端 API 可独立调通） | 阶段 1：`multi-platform-executor.js:45` 定义 / `:461` 导出 / `executeAll` 类内自调 `:370`；`src/` 全仓无 import；`dist/service-worker.js`、`dist/content-script.js` 各 0 命中；`public/popup.*` 无多平台 UI；`service-worker.js` 消息 switch 无分支<br>阶段 2/3：`docs/APPLICATION-EXAMPLES.md:126-160` 实测成立的字段面 | **阶段 1 无入口，无法点按**。N36 已裁定「标注未实现」并 closed——**closed 只表示「已诚实标注且有人守」，不表示能力可用** | 用户裁定：接线（2–3 人日 + 真机实证）或从实测范围移除 |
-| **三** 多 Agent ACK 协议 | `tasks register` → `dispatch` → `ack --task-id ... --ai ... --status ok` → `tasks update --status testing` → `receipt` 产出回执 → 看门狗判候选 → 一致性审计判 consistent | **D3**（2026-11-18 达成） | `collaboration/results/RESULT-EXAMPLE3-ACK-E2E-001.md`：`dispatch dispatched_count=1` → `ack` 输出 `X.ACK\|task=...\|status=ok\|...` → `receipt completed_count=1 / state_updated=true` → 审计 `consistent=19`，并经「状态行写错→mismatch=1」「移走产物→missing_result=1」「恢复→consistent=19、cmp IDENTICAL」三次反证 | 已无阻塞；**剩余为发现的 4 条缺陷**（N41 门禁互斥 / N42 双网盲区 / N44 绑定矛盾，N43 已修） | 我（本轮完成）；缺陷修复待用户裁定 |
+| **三** 多 Agent ACK 协议 | `tasks register` → `dispatch` → `ack --task-id ... --ai ... --status ok` → `tasks update --status testing` → `receipt` 产出回执 → 看门狗判候选 → 一致性审计判 consistent | **D3**（实质早于 2026-10-23 就已成立；2026-11-18 补取证文档 + 纠正一次误判） | `collaboration/results/RESULT-EXAMPLE3-ACK-E2E-001.md`：`dispatch dispatched_count=1` → `ack` 输出 `X.ACK\|task=...\|status=ok\|...` → `receipt completed_count=1 / state_updated=true` → 审计 `consistent=19`，并经「状态行写错→mismatch=1」「移走产物→missing_result=1」「恢复→consistent=19、cmp IDENTICAL」三次反证。历史侧：`agent_ack_bridge_state.json` 20/20 带 `source=cli-ack` + `bridged_at` + `receipt_completed_at`，最早 2026-10-23 | 已无阻塞；**剩余为发现的 4 条缺陷**（N41 门禁互斥 / N42 双网盲区 / N44 绑定矛盾，N43 已修） | 我；缺陷修复待用户裁定 |
 | **四** NotebookLM 深度研究 | REAL 模式下 `health_check()` 返回 True，且 `deep_research` 返回真实源 URL | **D0** | `ai_collab/integrations/notebooklm.py:51-52`：`TOOL_NAME_GET_HEALTH = "mcp__plugin_notebooklm__get_health"` + `hasattr(builtins, ...)` 探测——普通 Python 进程无此属性，REAL 直接抛 `ConnectionError`<br>`ai_collab/config/integration_flags.py:22`：`"notebooklm": IntegrationMode.FALLBACK` | **REAL 通路设计上就依赖宿主注入 `builtins`**，不是「代码 bug 待修」；且 NotebookLM 不在活跃五站白名单 | 需在具备 NotebookLM MCP 的宿主进程中验收；或从可验收项中移除 |
 
 ### 2.1 关于范例一的「全量」
@@ -80,7 +81,8 @@
 |---|---|---|---|
 | 一 | 「引擎能力成立」 | D3（5 站内） | 原表口径**偏低**：五站 5/5 PASS 已是端到端证据，不该只说「引擎能力成立」 |
 | 二 | 「幂等/策略链成立」 | 阶段 1 = D1，阶段 2/3 = D2 | 原表用「策略链成立」掩盖了阶段 1 无入口；已由 N36 修订注单独标注 |
-| 三 | 「看门狗/审计/补票成立」 | **D3**（2026-11-18） | 原表三个词都是**组件名**，不是链路结论。现已端到端跑通并留回执，但跑的过程反过来证明原表措辞掩盖了 4 处偏差（N41–N44） |
+| 三 | 「看门狗/审计/补票成立」 | **D3**（早于 2026-10-23 成立） | 原表三个词都是**组件名**，不是链路结论——但这次不是原表口径偏低，而是**我最初误判为 D1**。误判根因见下 |
+| 三〔自纠〕 | — | — | 我最初判 D1 的理由是「18 条任务 `ai` 字段全 null ⇒ 无身份留痕」。**该字段根本不存在**（真名 `ai_type`，20/20 非空）；`dict.get()` 对不存在的键静默返回 `None`，我把「键名写错」读成了「数据为空」，**凭空造出一个缺陷**。复核后：历史闭环 20/20 完整，`agent_ack_bridge_state.json` 带 `source=cli-ack` / `bridged_at` / `receipt_completed_at`，最早 2026-10-23。已回溯修正 result 与 N43/N42 的叙述基础 |
 | 四 | 「fallback 与跨源验证成立；REAL 仍待 MCP 接入」 | D0 | 原表已如实说 REAL 待接入，本表补上**根因行号**并判定为 D0 而非「待办」 |
 
 > 原表**不必删除**——它描述的是组件能力，仍有价值。但它不能回答「跑通没跑通」，
@@ -107,7 +109,7 @@
 
 | 序 | 动作 | 依赖 | 预期档位变化 |
 |---|---|---|---|
-| ~~1~~ | ~~**范例三端到端 ACK 流 + 回执**~~ | ~~无~~ | ✅ **已完成 2026-11-18：D1 → D3**（见 `RESULT-EXAMPLE3-ACK-E2E-001.md`） |
+| ~~1~~ | ~~**范例三端到端 ACK 流 + 回执**~~ | ~~无~~ | ✅ **已完成 2026-11-18**：补取证文档 `RESULT-EXAMPLE3-ACK-E2E-001.md`，跑出 4 条偏差（N41–N44）。**档位未变（D3 早已成立）**——本轮纠正的是我先前的 D1 误判 |
 | 2 | 修 N41（结果文件章节门禁互斥） | 需先裁定以 PROTOCOL 还是以代码为准 | 不改档位，但不修则合规交付会在最后一步被拦 |
 | 3 | 修 N42（cancelled 要产物 / ACK 后停 testing 双网漏） | 无 | 不改档位，但消除审计长期噪音与静默任务 |
 | 4 | 范例一口径裁定（口径 A / B） | 用户一句话 | 口径 A：结案；口径 B：追加登录站实测 |
@@ -137,4 +139,5 @@
 | 日期 | 变更 |
 |---|---|
 | 2026-11-18 | 建立本表；四范例定档（一=D3[5站] / 二=D1+D2 / 三=D1 / 四=D0）；补范例四引用路径歧义（仓内 3 个同名 `notebooklm.py`，实际为 `ai_collab/integrations/notebooklm.py`） |
-| 2026-11-18 | **范例三 D1 → D3**：端到端 ACK 流实跑并留受版本控制的回执（`RESULT-EXAMPLE3-ACK-E2E-001.md`），含三次反证（状态行写错→mismatch、移走产物→missing、恢复→IDENTICAL）。跑的过程发现 4 条偏差，登记 N41（门禁互斥）/ N42（双网盲区）/ N44（绑定矛盾）、N43（文档缺步，已修）。§5 行动顺序重排 |
+| 2026-11-18 | **范例三取证完成**：端到端 ACK 流实跑并留受版本控制的回执（`RESULT-EXAMPLE3-ACK-E2E-001.md`），含三次反证（状态行写错→mismatch、移走产物→missing、恢复→IDENTICAL）。跑的过程发现 4 条偏差，登记 N41（门禁互斥）/ N42（双网盲区）/ N44（绑定矛盾）、N43（文档缺步，已修）。§5 行动顺序重排 |
+| 2026-11-18 | **自纠**：我最初把范例三判为 D1，理由是「18 条任务 `ai` 字段全 null」。该字段不存在（真名 `ai_type`，20/20 非空），`dict.get()` 静默返回 `None` 被我读成「无身份」。复核确认历史闭环 20/20 完整、最早 2026-10-23 ⇒ **范例三早就是 D3**，本轮不提档，只补取证文档与纠错 |
