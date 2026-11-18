@@ -1,9 +1,18 @@
-# AI Collab Base — 项目应用范例与交互过程详解（2026-11-05 修订版）
+# AI Collab Base — 项目应用范例与交互过程详解（2026-11-18 修订版）
 
-> **修订说明**：本文是《项目应用范例与交互过程详解》的修订版。原稿经两轮真机实测对账
-> （`collaboration/results/RESULT-PACK-REALTEST-2026-11-05.md` 文件/命令面对账、
-> `RESULT-RUNTIME-REALTEST-2026-11-05.md` 范例二~五运行时实测），凡与实盘不符处已改写；
+> **修订说明**：本文是《项目应用范例与交互过程详解》的修订版。原稿经四轮对账，凡与实盘不符处已改写；
 > 关键更正以 **〔修订注〕** 标出。命令、URL、字段名均可照抄运行。
+>
+> - **第一轮（2026-11-05）**：文件/命令面对账，`collaboration/results/RESULT-PACK-REALTEST-2026-11-05.md`。
+> - **第二轮（2026-11-05）**：范例二~五运行时实测，`RESULT-RUNTIME-REALTEST-2026-11-05.md`。
+> - **第三轮（2026-11-18）**：用户贴来的原稿文本与磁盘修订版比对（原稿是过期版本，勿再照抄），
+>   并实测收口三处现存缺陷 — N31（四 hook 脚本齐全但从未接线，此前全 OFF，已装至四项 ON）、
+>   N32（`daily-report` 子命令未注册，已补，命令现可用）、N33（`settings.json` 里的 `src.cli` 死白名单，已清）。
+>   详见 `known_gaps.json` 对应条目的 closure。
+> - **第四轮（2026-11-18，基线 `ada4ceb`）**：活跃五站（stepfun / yuanbao / chatglm / yiyan / kimi）
+>   真机点按实测，**范例一 5/5 PASS**（每站 8/8 步、`precise` 投递）；
+>   **范例二~四本次未获得点按实证**，原因逐条列在 `RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §2。
+>   本轮另登记三条未修缺陷：N34（登录判据假阳性）、N35（冻结守卫日志误报）、N36（多平台执行器未接线）。
 >
 > 口径：**实测成立**（真机验证过）/ **代码层成立**（源码实证，未跑端到端）/ **规划态**（尚不存在，勿照抄）。
 
@@ -12,6 +21,8 @@
 ## 范例一：小红书美妆测评内容创作（单平台 Pack 工作流）
 
 场景描述：美妆品牌运营人员需要为新品口红撰写小红书测评笔记。可加载的示例 Pack 是 **`xiaohongshu-beauty-review`**（小红书美妆测评文案生成包 v2.0.0）。
+
+〔实测状态 — 2026-11-18〕本范例的**链路形态**已在活跃五站（stepfun / yuanbao / chatglm / yiyan / kimi）真机点按验证：5/5 PASS，每站 8/8 步、`precise` 投递、真实送出并取回模型回复。**但要注意被测 Pack 不是本节举例的这一只** —— 真机用的 `xiaohongshu-knowledge-creator`（8 步），本节举例的 `xiaohongshu-beauty-review` 是 6 步。结论只覆盖「单平台 Pack 工作流能跑通」，不覆盖这一只 Pack 的每一步。证据：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md`。
 
 〔修订注〕原稿三处硬伤已改：① Pack 文件在 **`packs/templates/`**（2026-11-03 目录拆分自 examples/ 迁入），不在 `packs/examples/`；② pack_id 是**连字符** `xiaohongshu-beauty-review`；③ 该 Pack 是 **6 步工作流且全步无 `prompt_template`**，不是 3 步 prompt_injection 剧本——引擎支持分支/模板注入（见下），但这只 Pack 不用。
 
@@ -92,6 +103,13 @@
   - multi-platform-executor.js: findPlatformTabs → Promise.allSettled 并发注入
   - 每 2 秒轮询 typing 状态直至全部完成（60s+ 超时策略以 wait-policy 为准，
     默认稳定窗 8 秒防思考停顿误判），收集各平台响应文本
+      〔修订注 — 2026-11-18 实测，查 N36〕上面这三行描述的是「算法」，不是「可用功能」。
+      `MultiPlatformExecutor` 在 `multi-platform-executor.js:16` 定义、`:432` 导出，
+      但 `src/` 全仓无任何 import，`dist/service-worker.js` 与 `dist/content-script.js`
+      各 0 命中，`public/popup.html` / `popup.js` 也没有多平台勾选 UI。
+      也就是说：阶段 1 目前无法点按触发，属于「代码在、未接线」。
+      阶段 2 / 阶段 3 的后端 API 可独立调用（下面两段实测成立），
+      但「多平台并发注入」这一步走不通。读本文时请勿据此认为多平台共创已可用。
 
 ┌─────────────────────────────────────────────────────────────┐
 │  阶段 2: 后端共识提取                                        │
@@ -236,7 +254,16 @@ $ python3 -m ai_collab.cli orchestration status   # 绑定状态 + 角色 + 命�
 
 ## 范例五：Hook 系统的会话保护与自动注入
 
-场景描述：Claude Code 会话的注入、预检、快照、退出检查。（四 hook 全部 stdin JSON 协议，实测成立）
+场景描述：Claude Code 会话的注入、预检、快照、退出检查。
+
+〔接线前提 — 2026-11-18 实测补正〕四个脚本都走 stdin JSON 协议，**脚本层实测成立**，但**默认不生效**：脚本写好后还必须在全局 `~/.claude/settings.json` 注册 hooks 段，真实会话才会触发。原稿这里写「实测成立」容易被读成「装好即生效」，实际上 scripts 与安装器是两回事，查 N31。装法：
+
+```bash
+python3 -m ai_collab.cli codex hooks --action install   # --action，不是位置参数
+python3 -m ai_collab.cli codex hooks --action status    # 复核四项 ON
+```
+
+未安装时 status 返回 `not fully installed`、四项 OFF，此时下面四个事件**一个都不会发生**。本仓 2026-11-18 已执行安装并复核四项 ON。
 
 ### 交互过程（实测输出形态）
 

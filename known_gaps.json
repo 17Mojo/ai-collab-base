@@ -613,6 +613,179 @@
         "全集守护：扩展 326/326、适配器矩阵 117/125 passed / 0 failed / 8 skipped、变异 125/125 被杀死；11 站注册一致性通过。",
         "替换后活跃 5 站：stepfun / yuanbao / chatglm / yiyan / kimi 全部 success=true / 8/8 / sessionResets.available=true，消息数 12→0 / 12→0 / 12→0 / 6→0 / 6→0，unfrozenBy 全为 null；deepseek / longcat 仍冻结，本轮未碰。"
       ]
+    },
+    {
+      "id": "N31",
+      "priority": "P1",
+      "status": "closed",
+      "title": "四个协作 Hook 脚本与安装器齐全，但从未接线——真实会话不触发；文档却称「实测成立」",
+      "reader": "照文档配 Hook 的人——`docs/APPLICATION-EXAMPLES.md` 范例五原来只写「四 hook 全部 stdin JSON 协议，实测成立」，读者会以为脚本存在即生效，于是从不执行安装，SessionStart 注入、PreToolUse 门禁、PreCompact 快照、Stop 收尾四个事件一个都不发生，而所有自检又都是绿的；以及依赖「Stop hook 会拦住缺 ACK 的任务」这条前提做交付判断的人——未接线时该拦截根本不存在。",
+      "where": [
+        "ai_collab/hooks/session_inject.py（脚本存在）",
+        "ai_collab/hooks/spawn_agent_preflight.py（脚本存在）",
+        "ai_collab/hooks/pre_compact.py（脚本存在）",
+        "ai_collab/hooks/stop_check.py（脚本存在）",
+        "ai_collab/codex_integration.py:352（install_hooks 安装器）",
+        "ai_collab/cli/_cli_main.py:2845（codex hooks 动作分发，默认 status）",
+        "ai_collab/cli/_cli_main.py:5357（--hook-action 参数定义）",
+        ".claude/settings.json（项目级：顶层只有 permissions，无 hooks 段）",
+        "~/.claude/settings.json（全局：安装后才有 hooks 段）",
+        "docs/APPLICATION-EXAMPLES.md:246（〔接线前提〕段，2026-11-18 补）"
+      ],
+      "detail": "2026-11-18 实测：脚本、安装器、CLI 分发三者都在，但 `python3 -m ai_collab.cli codex hooks --action status` 返回「安装状态: not fully installed」，Stop / PreCompact / SessionStart / PreToolUse 四项全 OFF，全局与项目级 settings.json 均无 hooks 段。也就是说这是**「文件存在 + 符号存在」但未接线**的典型：脚本能单独跑，真实会话调不到它。注意安装命令是第一等参数 `--action install`，写成位置参数 `codex hooks install` 会被 argparse 拒绝，这一步在旧文档里没有写。",
+      "impact": "① 四个事件静默不发生：SessionStart 不注入会话身份、PreToolUse 不做 spawn_agent 前置门禁、PreCompact 不落快照、Stop 不做收尾校验；② 因为不报错，所有自检仍为绿，缺陷可无限期潜伏；③ 「Stop hook 会拦住缺 ACK」这类依赖前提失效，交付判断建立在不存在的能力上。",
+      "fix": "已修（2026-11-18，用户明确授权写全局配置）：\n① 执行 `python3 -m ai_collab.cli codex hooks --action install`，写入全局 `~/.claude/settings.json`；复核 `--action status` 返回「安装状态: installed」且四项 ON。\n② 安装前后比对 env 与 permissions 指纹，确认未被覆盖。\n③ 文档补〔接线前提〕段（`docs/APPLICATION-EXAMPLES.md:246`）：明写「脚本层成立 ≠ 装好即生效」，给出两条命令与 `--action` 的正确写法。\n④ 顺带把当时 6 条缺 ACK 的历史任务一次性补票，使 Stop hook 的 ACK 缺口清零（实测 exit=0）。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18",
+      "appended_evidence": [
+        "修复前实测：`codex hooks --action status` → 「安装状态: not fully installed」，四项全 OFF。",
+        "修复后实测：`codex hooks --action status` → 「设置文件: /Users/raymondna/.claude/settings.json / 安装状态: installed / Stop: ON / PreCompact: ON / SessionStart: ON / PreToolUse: ON」。",
+        "2026-11-18 在 `ada4ceb` 基线上复验：全局 settings.json 的 hooks 事件键为 ['Stop','PreCompact','SessionStart','PreToolUse']，条目数 4；项目级 `.claude/settings.json` 顶层键仍只有 ['permissions']，无 hooks 段——这是设计取舍（hook 装全局，项目级不重复声明），不是漏装。",
+        "编号说明：本条在旧基线（36d9ec2）上曾编为 N27，同步到 ada4ceb 后发现 N27 已被「监控快照被跟踪进库」占用，故改为 N31 重新登记，结论与证据不变。"
+      ]
+    },
+    {
+      "id": "N32",
+      "priority": "P2",
+      "status": "closed",
+      "title": "playbook 推荐的 daily-report 子命令未注册：函数与内部调用都在，CLI 打不出来",
+      "reader": "照 `TASK_CONTRACT_OPS_PLAYBOOK.md` 收尾的人——playbook 第 74 行明确让你最后跑 `python3 -m ai_collab.cli daily-report` 确认全链路产物，但该子命令在顶层 subparsers 里不存在，argparse 以 exit 2 + `invalid choice` 拒绝；此时人容易误以为「日报功能坏了」，而实际上日报逻辑一直在，只是没有 CLI 入口，只有 `run` 那条路径会顺带生成。",
+      "where": [
+        "collaboration/guides/TASK_CONTRACT_OPS_PLAYBOOK.md:74（推荐 `python3 -m ai_collab.cli daily-report`）",
+        "ai_collab/daily_report.py:37（generate_daily_report 函数存在）",
+        "ai_collab/cli/_cli_main.py:40-43（函数被 CLI 模块 import）",
+        "ai_collab/cli/_cli_main.py:117-221（_generate_reports_and_summaries 内部生成逻辑）",
+        "ai_collab/cli/_cli_main.py（顶层 subparsers 注册表：重构后仍无 daily-report）",
+        "tests/unit/test_cli_entrypoint_exit_code.py::test_daily_report_subcommand_is_registered（2026-11-18 新增回归）"
+      ],
+      "detail": "三层事实分离：函数在（`daily_report.py:37`）、被 CLI 模块 import（`_cli_main.py:40-43`）、内部也真的会生成日报（`_generate_reports_and_summaries`，被 `run` 等路径调用），但顶层 argparse **没有** `daily-report` 子命令。`ada4ceb` 对 `_cli_main.py` 做过一次 +376/-407 的大重构，重构后逐一核对 `add_parser()` 清单与 `args.command ==` 分发链，两边都没有 `daily-report`——即缺陷在重构后依然存在，不是重构引入的回归。",
+      "impact": "① playbook 的收尾步骤照抄即失败，且失败信息是 argparse 的 `invalid choice`，看起来像参数写错而不是命令缺失；② 排障者容易去改日报生成逻辑（那里没问题），浪费在错误的位置；③ 交付检查单里「日报已生成」这一项没有可独立调用的验证入口。",
+      "fix": "已修（2026-11-18，在 ada4ceb 基线上重放补丁）：三处齐补 ——\n① 新增 `cmd_daily_report(args)`：`_set_workspace_env` → 取绝对 workspace → 调 `_generate_reports_and_summaries(workspace=..., receipt_report_path=...)` → 打印两个产物路径 → 返回 0。刻意复用既有封装，不新写生成逻辑。\n② subparsers 注册 `daily-report`，参数 `--receipt-report`。\n③ 分发链补 `elif args.command == \"daily-report\": return cmd_daily_report(args)`。\n重放前先核对上游重构后的依赖签名：`_generate_reports_and_summaries(*, workspace, manager=None, receipt_report_path=None)` 与 `_set_workspace_env(workspace)` 均未变，故补丁可原样重放。\n回归守护：新增 `test_daily_report_subcommand_is_registered()`，用 subprocess 走真入口断言 `--help` 退出码 0、输出含 `daily-report` 与 `--receipt-report`、stderr 不含 `invalid choice`。只测 --help，不真跑生成逻辑（后者会写工作区产物）。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18",
+      "appended_evidence": [
+        "修复前实测：`python3 -m ai_collab.cli daily-report` 在 ada4ceb 上与旧基线上同样被拒（顶层 subparsers 无此项）。",
+        "真跑实证（不止 --help）：`python3 -m ai_collab.cli -w /tmp/dr-probe daily-report` → 退出码 0，stdout 打印「日报已生成: logs/daily_report.json / collaboration/monitoring/DAILY_REPORT_latest.md」，两个文件均实际落地且内容非空——`daily_report.json` 顶层键为 generated_at / workspace / ack_stats / missing_ack_stats / result_consistency_stats / noop_pending_stats / pending_tasks，`DAILY_REPORT_latest.md` 首行为「# Daily Report（自动生成）」并带生成时间。注意 `-w` 是全局参数，必须写在子命令之前，写成 `daily-report -w ...` 会被 argparse 拒绝。",
+        "修复后实测：`python3 -m ai_collab.cli daily-report --help` 退出码 0，usage 行 `usage: __main__.py daily-report [-h] [--receipt-report RECEIPT_REPORT]`，参数说明为「回执报告路径（相对 workspace）」。",
+        "语法与结构校验：`ast.parse` 通过；新增函数位于 `cmd_dispatch` 之前，注册位于 `run` 之前，分发位于 `dispatch` 之后，与既有命令顺序一致。",
+        "编号说明：本条在旧基线（36d9ec2）上曾编为 N28，同步到 ada4ceb 后发现 N28 已被「worktree 大写 -B/-C 连带改主工作区」占用，故改为 N32 重新登记，结论与证据不变。"
+      ]
+    },
+    {
+      "id": "N33",
+      "priority": "P3",
+      "status": "closed",
+      "title": "settings.json 权限白名单留了三条 src.cli 命令，但 src/ 下根本没有 cli 模块",
+      "reader": "维护 `.claude/settings.json` 权限的人——那三条 `Bash(python3 -m src.cli ...)` 永远不会命中，真实入口在 `ai_collab.cli`；更要紧的是这类死规则会让人误以为「CLI 就在 src.cli」，照它去 `python3 -m src.cli` 只会拿到 `No module named src.cli`，然后开始怀疑环境而不是白名单。",
+      "where": [
+        ".claude/settings.json（历史上 :148-150 三条 `Bash(python3 -m src.cli ...)` allow 规则；2026-11-18 复核命中数为 0）",
+        "src/ 目录（`git ls-files | grep '^src/'` 为 0 条；`src/cli.py` 在 36d9ec2 与 ada4ceb 上均不存在）",
+        "ai_collab/cli/__main__.py（真实 CLI 入口在 ai_collab.cli 下）"
+      ],
+      "detail": "白名单里有三条指向 `src.cli` 的允许规则，而 `src/` 下从来没有 cli 模块：`git ls-files | grep '^src/'` 返回 0 条，`git cat-file -e 36d9ec2:src/cli.py` 与 `ada4ceb` 上均报 `does not exist`，`git log --diff-filter=D -- src/cli.py` 也查不到删除记录——即它**从未存在过**，不是被删。这三条是纯粹的无效规则，只增加阅读噪声，并在排障时提供错误的路标。",
+      "impact": "① 无效规则不产生任何权限收益，只让权限清单看起来比实际能力大；② 它把读者引向一个不存在的模块路径，制造假线索；③ 若有人「照着白名单补全」，会真的去建 `src/cli.py`，与 `ai_collab.cli` 形成双入口。",
+      "fix": "已修（2026-11-18）：删除 `.claude/settings.json` 中三条 `src.cli` 规则，保留 `ai_collab.cli` 相关条目。修复前已备份为 `.claude/settings.json.bak-N29-20261118`（该备份文件为未跟踪件）。复核：`grep -c 'src\\.cli' .claude/settings.json` 返回 0。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18",
+      "appended_evidence": [
+        "修复后复核：在 ada4ceb 上 `grep -c 'src\\.cli' .claude/settings.json` → 0；`git ls-files | grep '^src/'` → 0 条。",
+        "存废考证：`git cat-file -e 36d9ec2:src/cli.py` → `fatal: path 'src/cli.py' does not exist in '36d9ec2'`；`git log --oneline --diff-filter=D -- src/cli.py` → 空。结论为「从未存在」，非「曾被删除」。",
+        "编号说明：本条在旧基线（36d9ec2）上曾编为 N29，同步到 ada4ceb 后发现 N29 已被「qianwen step_8 会话重置回落」占用，故改为 N33 重新登记，结论与证据不变。"
+      ]
+    },
+    {
+      "id": "N34",
+      "priority": "P2",
+      "status": "open",
+      "title": "真机 L2 的登录闸门只看「输入框可见」，游客态首页也有输入框 ⇒ 未登录被判成已登录，白烧一轮并产出 Response timeout",
+      "reader": "跑 `l2-platform-auto.mjs` 做真机回归的人——尤其换新站、或换了干净 profile 之后；以及读它的 PASS/FAIL 结论做交付判断的人。假阳性的代价不是报错，而是把「没登录」误诊成「产品链路超时」，让人去改重试策略、超时阈值这些完全无关的地方。",
+      "where": [
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:246-260（runOne 的登录等待循环与断言；`if (await composer.isVisible(...)) { loggedIn = true }`）",
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:158-170（precheck 里 composerVisible 与 looksLikeLogin 两列分开报，刻意不合并——诊断段本身没问题，问题在 runOne 的闸门没复用这个信号）"
+      ],
+      "detail": "2026-11-18 13:07 首次 stepfun 实测 FAIL：`step_2_hook failed: Response timeout`。根因是 stepfun 未登录，而脚本判据只用 `composer.isVisible()`——stepfun 游客态首页同样渲染 `textarea[data-slot=textarea]`，因此脚本立即判定「✅ 检测到输入框，视为已登录」，随后导入 Pack 直接发消息，在真实页面无响应的情况下超时。当场证据：profile 中 stepfun cookie 仅 4 条游客态；扫码登录后 cookie 4→7 条并新增 `Oasis-Token`，同脚本同参数重跑 PASS。也就是说失败与登录态强相关，与产品链路无关。",
+      "impact": "① 单次真机回归的整轮（8 步 × 一站点）被浪费，且耗时以分钟计；② 结论被写成 `Response timeout`，指向重试/超时策略，属**归因错误**，会诱导人去改 `retry-policy` / `wait-policy` 这些正确的地方；③ 换站（N30 之后引入 stepfun）和新 profile 是高频场景，假阳性会反复出现；④ 若有人据此判「stepfun 链路不稳」，会错误否定一个实际可用的站点。",
+      "fix": "未修。建议判据改为复合信号：`composerVisible && !hasLoginEntry && hasUserMenu`，或直接采用 adapter 侧的真实鉴权信号。\n可行性已验证（2026-11-18 独立探针）：该三条件组合在 stepfun / yuanbao / chatglm / yiyan / kimi 五站均能正确区分登录与未登录（stepfun 登录后 `hasLoginEntry` 由 true→false、`hasUserMenu` 由 false→true，`RESULT=LOGGED_IN`）。\n注意不要退化成「只要 composerVisible 就继续」——那正是当前缺陷。落地时须同时保留 precheck 的两列输出，便于事后归因。",
+      "found_at": "2026-11-18",
+      "appended_evidence": [
+        "失败现场：2026-11-18 13:07 stepfun `step_2_hook failed: Response timeout`；当时 stepfun cookie 4 条（游客态）。",
+        "登录后对照：13:13 真机扫码，cookie 4→7 条，新增 `Oasis-Token`（account.stepfun.com / studio.stepfun.com）；13:15 同脚本同参数重跑 `success=true` / 8/8 步 / 截图 589,546 B。",
+        "判据可行性实测：独立探针（判据 composerVisible && !hasLoginEntry && hasUserMenu）在五站均返回 LOGGED_IN，未再出现假阳性。",
+        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §1、`collaboration/results/real-machine-runs/evidence/L2-nov18-stepfun.json`。"
+      ]
+    },
+    {
+      "id": "N35",
+      "priority": "P3",
+      "status": "open",
+      "title": "冻结守卫用 `!policy.active` 代替「已解冻」，预检模式会对一个根本没打开的平台打出「已按 ALLOW_FROZEN=1 放行」",
+      "reader": "看真机日志排障的人、以及做解冻审计的人。这条日志是「谁在什么时候解冻过」的唯一运行时线索，而它现在会在 `ALLOW_FROZEN` **未设置**的情况下自己冒出来——把一次普通预检读成「有人绕过红线碰了冻结站」，属于会污染审计结论的假证据。",
+      "where": [
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:68（`const PLATFORM = process.env.PLATFORM || \"qianwen\"` —— 默认值落在已冻结站）",
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs:391-394（`const policy = evaluatePlatformPolicy(PLATFORM, ...)`；`if (!policy.active) log(\"⚠️ 冻结平台已按 ALLOW_FROZEN=1 放行:\", PLATFORM, ...)`）",
+        "chrome-extension/tests/real-machine/platform-freeze.mjs:65-86（evaluatePlatformPolicy 的四条返回分支，`unfrozenBy` 才是「是否解冻」的直接字段）"
+      ],
+      "detail": "PRECHECK 模式下真正打开的是 `CANDIDATES`（= `ACTIVE_PLATFORM_IDS`），但 391 行仍对 `PLATFORM` 求值，而 `PLATFORM` 的默认值是 `qianwen`——N30 之后它已被移出白名单，属冻结站。用 node 直调实测：`evaluatePlatformPolicy(\"qianwen\", {allowFrozen:false})` 返回 `{allowed:false, active:false, unfrozenBy:null, reason:\"frozen-by-user-redline\"}`，于是 `!policy.active === true`，日志照打，而 `unfrozenBy` 明确是 `null`、`ALLOW_FROZEN` 也没设。断言那边不会抛错，因为 PRECHECK 走的是 `assertCandidatesAllowed(CANDIDATES)` 而不是 `assertPlatformAllowed(PLATFORM)`，所以这条假日志不会被任何异常打断。",
+      "impact": "① 解冻审计被污染：日志声称「已按 ALLOW_FROZEN=1 放行」，与事实相反；② 排障者会去查「谁解冻了」，而答案是没有人；③ 真正需要看到的「确实有人解冻」这条信号，被同类噪声稀释后更容易被忽略。当前不改变任何行为，只污染日志，故定 P3。",
+      "fix": "未修。两处都要改：\n① 判定条件改为 `policy.unfrozenBy !== null`——它才是「是否解冻」的直接字段，`!policy.active` 只是当前实现下的间接代理，站点清单或 reason 一扩充就会失准。\n② PRECHECK 模式下不对未被使用的 `PLATFORM` 做该判定（或改为遍历实际会打开的 `CANDIDATES` 逐个判定），避免对一个压根不打开的站打日志。",
+      "found_at": "2026-11-18",
+      "appended_evidence": [
+        "直调复现（node，2026-11-18，ada4ceb 基线）：`evaluatePlatformPolicy(\"qianwen\", {allowFrozen:false})` → `{\"allowed\":false,\"active\":false,\"unfrozenBy\":null,\"reason\":\"frozen-by-user-redline\"}`；`!policy.active` → `true` ⇒ 必然打出「已按 ALLOW_FROZEN=1 放行」。",
+        "对照：`evaluatePlatformPolicy(\"stepfun\", {allowFrozen:false})` → `{\"allowed\":true,\"active\":true,\"unfrozenBy\":null,\"reason\":\"active\"}`，`!policy.active` → `false`，活跃站不会误报。即误报只发生在冻结站且 `ALLOW_FROZEN` 未设时。",
+        "历史日志里该字符串确实出现过且当时并未解冻：`collaboration/results/real-machine-runs/evidence/ab3-rerun-2026-11-12.log` 等对 deepseek / longcat 多次打出该行。",
+        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §3 D2 段。"
+      ]
+    },
+    {
+      "id": "N36",
+      "priority": "P1",
+      "status": "open",
+      "title": "范例二「多平台并发注入」的执行器是死代码：无任何生产入口，popup 也没有多平台 UI",
+      "reader": "读 `docs/APPLICATION-EXAMPLES.md` 范例二并打算照做的人——文档阶段 1 写的是 `findPlatformTabs → Promise.allSettled 并发注入`，读者会去找「多平台执行模式」的勾选界面，找不到；以及任何对外说「AI Collab Base 支持多平台 AI 共创」的人——阶段 1 这一步在磁盘上完全没有入口，只有阶段 2/3 的后端 API 可独立调用。",
+      "where": [
+        "chrome-extension/src/background/multi-platform-executor.js:16（class MultiPlatformExecutor 定义）",
+        "chrome-extension/src/background/multi-platform-executor.js:432（export default）",
+        "chrome-extension/src/background/multi-platform-executor.js:341（executeAll 仅类内自调用）",
+        "chrome-extension/src/（全仓对 multi-platform-executor 的 import 数：0）",
+        "chrome-extension/dist/service-worker.js / dist/content-script.js（MultiPlatformExecutor 命中数：各 0）",
+        "chrome-extension/public/popup.html / popup.js（多平台勾选 UI 命中数：各 0）",
+        "docs/APPLICATION-EXAMPLES.md 范例二 阶段 1（2026-11-18 已加〔修订注〕指向本条）"
+      ],
+      "detail": "四路证据一致指向「代码在、未接线」：① 类只在自身文件内定义（:16）与导出（:432）；② `executeAll` 唯一调用点在同一类的 :341，属类内自调用；③ `chrome-extension/src/` 下没有任何文件 import 它；④ 构建产物 `dist/service-worker.js`、`dist/content-script.js` 各 0 命中——打包器不会把未引用的模块打进产物，0 命中即证明它没进运行时。另查 popup：`popup.html` / `popup.js` 对 multi / 多平台 / checkbox / executeAll 的命中数均为 0，说明连触发界面都不存在。因此范例二的阶段 1 不是「跑不通」，是「没有入口」。",
+      "impact": "① 文档描述与磁盘能力不符，读者按文档去找多平台执行模式必然落空；② 对外若宣称「多平台 AI 共创」，属于无法点按验证的能力，与本项目 disk-truth 口径冲突；③ 这段代码会持续被误认为「现成能力」，后续维护者可能去修一个从未被调用的实现；④ 范例二整条链路的实证只能覆盖阶段 2/3，阶段 1 恒为空白。",
+      "fix": "未修，需先裁定方向（二选一，不宜悬置）：\n① **接线上线**：在 service-worker 增加消息分支、popup 增加平台勾选与触发 UI，并把 `executeAll` 接进真实调用链；同时补真机点按实证。\n② **明确标注未实现**：文档把阶段 1 降级为「规划态」，代码侧或删除死代码、或加显式 TODO 注释说明未接线，并登记到本台账。\n倾向 ②：当前无证据表明该能力在近期路线内，且把它当「现成可用」传播的代价高于删除一个从未被调用的实现。无论选哪条，`docs/APPLICATION-EXAMPLES.md` 范例二都必须在改完后复核〔修订注〕是否仍然成立。",
+      "found_at": "2026-11-18",
+      "appended_evidence": [
+        "import 计数：`grep -rn 'multi-platform-executor\\|MultiPlatformExecutor' chrome-extension/src/` 排除自身文件后为 0 条。",
+        "构建产物计数：`grep -c 'MultiPlatformExecutor' chrome-extension/dist/service-worker.js` → 0；`.../dist/content-script.js` → 0。",
+        "UI 计数：`grep -c 'multi\\|多平台\\|executeAll' chrome-extension/public/popup.html` → 0；`popup.js` → 0。",
+        "范例三/四同批核查（非本条范围，仅说明范例二~四为何都拿不到点按实证）：`agent_orchestrator.py` / `ack_protocol.py` 对 playwright/chromium/page. 引用数为 0（范例三是 CLI + 状态机，无点按对象）；范例四 `notebooklm.py:49-62` 的健康检查依赖 `builtins.mcp__plugin_notebooklm__get_health`，普通进程无此属性，且 `integration_flags.py:22` 为 `IntegrationMode.FALLBACK`，五站白名单不含 NotebookLM。",
+        "证据文件：`collaboration/results/RESULT-L2-ACTIVE5-NOV18-2026-11-18.md` §2 与 §3 D3 段。"
+      ]
+    },
+    {
+      "id": "N37",
+      "priority": "P2",
+      "status": "open",
+      "title": "concurrent guard 只读受跟踪配置，不读本地覆盖层：会话基线写进 gitignore 后 G2 静默降级为 skipped，而 preflight 却报「门禁输入完整」",
+      "reader": "照源码注释把会话基线写进 `.vscode/ai-collab.local.json` 的人——注释明确要求「会话级状态一律放不受跟踪的落点」，你照做了；然后 `governance preflight` 六项全 PASS、门禁输入完整性显示三个值都来自 local.json，你以为 G2 在守着你；再跑 `concurrent guard` 却得到 `baseline: none (skipped)`，G1/G2 根本没执行，而退出码是 0——两个门禁对「是否武装」给出相反答案，且没有任何一处报冲突。",
+      "where": [
+        "ai_collab/cli/_cli_main.py:469（cmd_concurrent_guard：`config = dict(VSCodeIntegration.get_project_config())`，只有受跟踪层）",
+        "ai_collab/state_manager.py:273-284（get_project_config 只读 `.vscode/ai-collab.json`，无 local 合并）",
+        "ai_collab/activation_handler.py:73-84（同签名同实现，同一处缺口）",
+        "ai_collab/governance.py:580-605（_merge_guard_config：preflight 走的是 tracked + local 两层合并 + 来源标注）",
+        "ai_collab/cli/_cli_main.py:367-398（_run_concurrent_guard_gate：CLI 参数优先，其次 config —— 但 config 已是缺层的那份）"
+      ],
+      "detail": "同一批硬门禁输入有两条读取路径，口径不同：\n① `governance preflight` → `_merge_guard_config()` → 读 `.vscode/ai-collab.json` 打底 + `.vscode/ai-collab.local.json` 覆盖，并输出每个值的来源；\n② `concurrent guard` → `VSCodeIntegration.get_project_config()` → 只读受跟踪的 `.vscode/ai-collab.json`，没有 local 层。\n2026-11-18 实测：把 expectedBranch/baselineCommit/watchPaths 按源码注释的建议写进 gitignore 的 `.vscode/ai-collab.local.json` 后，preflight 输出「门禁输入完整性: 三个输入齐全（expectedBranch←.vscode/ai-collab.local.json, baselineCommit←…, watchPaths←…）」并 PASS；同一时刻 `concurrent guard` 输出 `branch: main (expected: none)` / `baseline: none (skipped)`，两项判定直接跳过，`allowed: True`、退出码 0。显式补 `--expected-branch` / `--baseline-commit` / `--watch-path` 后同一个命令才真跑：`branch: main (expected: main)` / `baseline: ada4ceb… -> ada4ceb… (0 watched path(s) changed)`。",
+      "impact": "① G2 在最该拦它的那条命令里静默失效，而退出码 0 让人以为跑过了；② preflight 的绿是「输入齐了」，concurrent guard 的绿是「压根没判」，两种绿看起来一样，审计时无法区分；③ 源码注释引导用户把基线放 local 层，但唯一能消费它的命令不读 local 层——注释与实现互相拆台；④ 谁想靠 concurrent guard 守并发，会得到持续为真的假保障。",
+      "fix": "未修。建议让两条路径共用同一个配置解析函数：把 `governance._merge_guard_config()` 提为公共入口，`cmd_concurrent_guard` 改为调用它而不是 `get_project_config()`；或在 `get_project_config()` 内做 local 覆盖合并（两处 get_project_config 实现都要改，它们目前是复制粘贴的两份）。\n注意 `requireBaselineCommit` 的语义要一起定：现在 concurrent guard 里 `baseline: none (skipped)` 不阻断，若改成合并后仍缺基线，是否应按 requireBaselineCommit 阻断，需明确。\n临时绕法（不改代码）：显式传 `--expected-branch` / `--baseline-commit` / `--watch-path`，CLI 参数优先于配置，能真正跑起 G1/G2。",
+      "found_at": "2026-11-18",
+      "appended_evidence": [
+        "装配实测（2026-11-18，ada4ceb）：写 `.vscode/ai-collab.local.json` 的 concurrentGuard 三个输入后，`governance preflight` → 六项全 PASS，其中「门禁输入完整性: 三个输入齐全（expectedBranch←.vscode/ai-collab.local.json, baselineCommit←.vscode/ai-collab.local.json, watchPaths←.vscode/ai-collab.local.json）」。",
+        "同一时刻 `concurrent guard` → `branch: main (expected: none)` / `baseline: none (skipped)` / `allowed: True` / 退出码 0 —— G1 期望分支未取到、G2 整条跳过。",
+        "显式传参后同一命令 → `branch: main (expected: main)` / `baseline: ada4ceb2fbe2a5211c38fddbb8c2d18f322f2e7f -> ada4ceb2fbe2a5211c38fddbb8c2d18f322f2e7f (0 watched path(s) changed)` / `foreign: 0 files` / `worktrees: 8 (collisions: none)` —— 证明判定逻辑本身可用，缺的只是配置来源。",
+        "静默性核验：把基线与期望分支写进 local 层后，`concurrent guard` 的退出码仍为 0、risk_level 仍为 low，没有任何一条输出提示「配置未生效」。"
+      ]
     }
   ]
 }

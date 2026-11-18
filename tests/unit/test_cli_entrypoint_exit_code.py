@@ -73,3 +73,17 @@ def test_ack_missing_task_id_exits_nonzero():
     """用例 7：缺 --task-id 时 argparse 报错，退出码非 0。"""
     proc = _run("ack")
     assert proc.returncode != 0, proc.stdout + proc.stderr
+
+
+def test_daily_report_subcommand_is_registered():
+    """N28 回归：playbook 推荐的 daily-report 必须是可解析的顶层子命令。
+
+    只测 --help，不真跑生成逻辑——后者会写工作区的日报/监控产物。
+    这条守住「函数存在但 CLI 没注册」的回归：未注册时 argparse 会以
+    exit 2 拒绝，并打印 invalid choice。
+    """
+    proc = _run("daily-report", "--help")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "daily-report" in proc.stdout, proc.stdout
+    assert "--receipt-report" in proc.stdout, proc.stdout
+    assert "invalid choice" not in proc.stderr, proc.stderr

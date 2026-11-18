@@ -3097,6 +3097,20 @@ def cmd_orchestration(args):
     return 1
 
 
+def cmd_daily_report(args):
+    """生成日报与监控摘要（playbook closeout 用；复用 run/dispatch 的同一封装）。"""
+    _set_workspace_env(args.workspace)
+    workspace = os.path.abspath(args.workspace or os.getcwd())
+    _generate_reports_and_summaries(
+        workspace=workspace,
+        receipt_report_path=getattr(args, "receipt_report", None),
+    )
+    print("\n日报已生成:")
+    print("  logs/daily_report.json")
+    print("  collaboration/monitoring/DAILY_REPORT_latest.md")
+    return 0
+
+
 def cmd_dispatch(args):
     """自动派单桥接命令（生成 Agent 指令包）。"""
     _set_workspace_env(args.workspace)
@@ -5455,6 +5469,12 @@ def main():
     receipt_parser.add_argument("--summary", help="回执摘要路径（相对 workspace）")
     receipt_parser.add_argument("--force-workspace", action="store_true", help="忽略工作区门禁并强制执行（高风险）")
 
+    # daily-report 命令（N28/N31：playbook 推荐但此前未注册）
+    daily_report_parser = subparsers.add_parser(
+        "daily-report", help="生成日报与监控摘要（operator closeout 收尾用）"
+    )
+    daily_report_parser.add_argument("--receipt-report", help="回执报告路径（相对 workspace）")
+
     # run 命令
     run_parser = subparsers.add_parser("run", help="标准 RUN 流程：dispatch -> receipt -> benefit")
     run_parser.add_argument("--dry-run", action="store_true", help="透传 dry-run 到 dispatch/receipt/benefit")
@@ -5774,6 +5794,8 @@ def main():
         return cmd_orchestration(args)
     elif args.command == "dispatch":
         return cmd_dispatch(args)
+    elif args.command == "daily-report":
+        return cmd_daily_report(args)
     elif args.command == "trigger":
         return cmd_trigger(args)
     elif args.command == "2x":
