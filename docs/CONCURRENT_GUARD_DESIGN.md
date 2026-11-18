@@ -295,6 +295,13 @@ python3 -m ai_collab.cli concurrent guard \
 
 ### 4.4 配置项（`agent-orchestration.json` 新增段）
 
+> **〔订正 2026-11-18，查台账 N37〕** 实际落点**不是** `agent-orchestration.json`，而是两层：
+> `.vscode/ai-collab.json`（受跟踪，团队共享）+ `.vscode/ai-collab.local.json`（gitignore，
+> 会话级覆盖）。`governance.resolve_guard_config()` 负责合并，`preflight` 与 `concurrent guard`
+> **共用这一份实现**，并在输出里逐字段标注来源。
+> 修复前 `concurrent guard` 只读受跟踪层，导致基线写进 local 层的人看到 preflight 全 PASS
+> 而守卫 `baseline: none (skipped)` —— 详见 N37 条目。下面的 JSON 仅示意字段集合。
+
 ```json
 {
   "concurrentGuard": {

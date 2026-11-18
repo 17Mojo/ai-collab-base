@@ -457,6 +457,22 @@ def _run_concurrent_guard_gate(
     return True
 
 
+def _resolve_guard_config(workspace: str) -> tuple[dict, dict]:
+    """并发门禁配置的唯一解析入口（台账 N37）。
+
+    必须与 `governance preflight` 用**同一个**实现：受跟踪 `.vscode/ai-collab.json`
+    打底 + 会话级 `.vscode/ai-collab.local.json` 覆盖。此前这里走
+    `VSCodeIntegration.get_project_config()`（只读受跟踪层），导致照注释把基线写进
+    local 层的人看到的是 `baseline: none (skipped)` + 退出码 0 —— G2 静默失效而绿得像跑过了。
+
+    单独抽成函数是为了留一个可替换的接缝：测试可以直接替换它，
+    不必再去 stub 一个「只读一层」的假集成对象（那正是缺陷本身）。
+    """
+    from ai_collab import governance as gov
+
+    return gov.resolve_guard_config(Path(workspace))
+
+
 def cmd_concurrent_guard(args):
     """并发工作区守护门禁诊断命令。"""
     action = getattr(args, "concurrent_action", None)
@@ -466,12 +482,26 @@ def cmd_concurrent_guard(args):
 
     _set_workspace_env(args.workspace)
     workspace = os.path.abspath(args.workspace or os.getcwd())
-    config = dict(VSCodeIntegration.get_project_config())
+    guard_config, guard_sources = _resolve_guard_config(workspace)
+    config = {"concurrentGuard": guard_config}
 
     print("=" * 60)
     print("AI 协作系统 - 并发工作区门禁")
     print("=" * 60)
     print(f"\n工作区: {workspace}")
+    # 来源必须打出来：preflight 的绿是「输入齐了」，本命令的绿是「真判过了」，
+    # 两者外观一样，只有写明每个值来自哪一层，才能看出是不是压根没武装。
+    # CLI 参数优先于配置，所以这里要按同一优先级标注来源，否则打印会撒谎。
+    cli_overrides = {
+        "expectedBranch": getattr(args, "expected_branch", None),
+        "baselineCommit": getattr(args, "baseline_commit", None),
+        "watchPaths": getattr(args, "watch_path", None),
+    }
+    source_view = {
+        name: ("CLI 参数" if cli_overrides.get(name) else (guard_sources.get(name) or "未提供"))
+        for name in ("expectedBranch", "baselineCommit", "watchPaths")
+    }
+    print("配置来源: " + ", ".join(f"{k}←{v}" for k, v in source_view.items()))
 
     allowed = _run_concurrent_guard_gate(
         workspace=workspace,

@@ -577,11 +577,18 @@ def input_contract_complete(expected_branch: Any, baseline_commit: Any, watch_pa
     return bool(expected_branch) and bool(baseline_commit) and bool(watch_paths)
 
 
-def _merge_guard_config(workspace: Path) -> tuple[dict[str, Any], dict[str, str]]:
+def resolve_guard_config(workspace: Path) -> tuple[dict[str, Any], dict[str, str]]:
     """读取并发守护配置：受跟踪配置打底，会话级覆盖层同名字段优先。
 
+    **这是并发门禁输入的唯二读取路径之一（另一条是 CLI 显式参数），必须公开复用。**
+    历史教训（台账 N37）：`concurrent guard` 曾走 `VSCodeIntegration.get_project_config()`
+    只读受跟踪层，而 preflight 走本函数读两层合并。结果是照源码注释把基线写进
+    `.vscode/ai-collab.local.json` 的人，会看到 preflight 六项全 PASS、`concurrent guard`
+    却是 `baseline: none (skipped)` + 退出码 0 —— 两个门禁对「是否武装」给出相反答案，
+    且没有任何一处报冲突。所以这里不加下划线：它是要被别处 import 的。
+
     返回 (合并后的 concurrentGuard, 每个字段的来源)。来源只标三个硬门禁输入，
-    目的是让「这个值是谁给的」在 preflight 输出里可复核，而不是黑箱合并。
+    目的是让「这个值是谁给的」在输出里可复核，而不是黑箱合并。
     """
     tracked = read_json(workspace / TRACKED_CONFIG_REL, {})
     local = read_json(workspace / LOCAL_CONFIG_REL, {})
@@ -604,6 +611,10 @@ def _merge_guard_config(workspace: Path) -> tuple[dict[str, Any], dict[str, str]
         else:
             sources[name] = ""
     return merged, sources
+
+
+# 兼容别名：preflight 内部历史调用点仍用旧名
+_merge_guard_config = resolve_guard_config
 
 
 def guard_input_report(workspace: Path) -> dict[str, Any]:

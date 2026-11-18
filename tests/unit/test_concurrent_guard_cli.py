@@ -50,7 +50,13 @@ def _set_old_mtime(path: Path, hours_ago: float = 1.0) -> None:
 
 
 class _StubVSCode:
-    """替代 `VSCodeIntegration`，避免测试读到仓库真实的 `.vscode/ai-collab.json`。"""
+    """替代 `VSCodeIntegration`，避免测试读到仓库真实的 `.vscode/ai-collab.json`。
+
+    .. deprecated::
+       N37 修复后 `concurrent guard` 不再经 `VSCodeIntegration` 取配置
+       （它只读受跟踪层，正是缺陷本身）。保留这个 stub 只为历史用例可读，
+       新用例请用 `_use_config` 换接缝，或直接写真实配置文件。
+    """
 
     def __init__(self, config: dict) -> None:
         self._config = config
@@ -74,7 +80,15 @@ def _args(workspace: Path, **overrides) -> argparse.Namespace:
 
 
 def _use_config(monkeypatch, config: dict) -> None:
-    monkeypatch.setattr(cli, "VSCodeIntegration", _StubVSCode(config))
+    """替换门禁配置解析接缝，避免测试读到仓库真实配置。
+
+    N37 之后 `concurrent guard` 走 `cli._resolve_guard_config`（与 preflight 同一实现），
+    所以这里替换那个函数。**不要再改回 stub `VSCodeIntegration`**——一个只读受跟踪层的
+    假对象正是 N37 那个缺陷的形态，stub 它等于把缺陷写进测试里。
+    真实两层合并的行为由 `TestN37ConfigLayer` 用真配置文件覆盖。
+    """
+    guard = dict(config.get("concurrentGuard") or {}) if isinstance(config, dict) else {}
+    monkeypatch.setattr(cli, "_resolve_guard_config", lambda workspace: (guard, {}))
 
 
 class TestArgumentParsing:
@@ -346,3 +360,128 @@ class TestWorktreeCollision:
 
         assert rc == 0
         assert "collisions: none" in capsys.readouterr().out
+
+
+def _write_config(ws: Path, tracked: dict | None = None, local: dict | None = None) -> None:
+    """把配置真的写到磁盘上（`.vscode/ai-collab.json` / `.local.json`）。"""
+    cfg_dir = ws / ".vscode"
+    cfg_dir.mkdir(parents=True, exist_ok=True)
+    if tracked is not None:
+        (cfg_dir / "ai-collab.json").write_text(
+            json.dumps(tracked, ensure_ascii=False), encoding="utf-8"
+        )
+    if local is not None:
+        (cfg_dir / "ai-collab.local.json").write_text(
+            json.dumps(local, ensure_ascii=False), encoding="utf-8"
+        )
+
+
+class TestN37ConfigLayer:
+    """N37 回归：`concurrent guard` 必须读会话级覆盖层，与 preflight 同口径。
+
+    缺陷原形：守卫只读受跟踪 `.vscode/ai-collab.json`，而 preflight 读两层合并。
+    照源码注释把基线写进 gitignore 的 `.local.json` 后，preflight 六项全 PASS，
+    `concurrent guard` 却输出 `baseline: none (skipped)` + 退出码 0 ——
+    G2 在最该拦它的命令里静默失效，而绿得和「判过了」一模一样。
+
+    这一组**不 stub 任何东西**：写真实配置文件，走真实的 `_resolve_guard_config`。
+    """
+
+    def test_local_layer_baseline_arms_g2(self, tmp_path, monkeypatch, capsys):
+        """基线只写在 local 层时，G2 必须真的跑起来，而不是 skipped。"""
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        head = _commit(ws)
+        _write_config(
+            ws,
+            tracked={"concurrentGuard": {"expectedBranch": None, "baselineCommit": None,
+                                         "watchPaths": [], "requireBaselineCommit": True}},
+            local={"concurrentGuard": {"expectedBranch": "main", "baselineCommit": head,
+                                       "watchPaths": ["README.md"]}},
+        )
+        # 注意：这里不 monkeypatch，故意让实现自己去读两层
+
+        rc = cli.cmd_concurrent_guard(_args(ws))
+
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "baseline: none (skipped)" not in out, (
+            "N37 复现：基线写在 local 层却被跳过 —— 守卫没读覆盖层。\n" + out
+        )
+        assert head in out, "基线没被真正采用：\n" + out
+        assert "watched path(s) changed" in out
+
+    def test_provenance_names_the_local_layer(self, tmp_path, monkeypatch, capsys):
+        """输出必须写明每个输入来自哪一层，否则「绿」和「没判」外观一样。"""
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        head = _commit(ws)
+        _write_config(
+            ws,
+            tracked={"concurrentGuard": {"expectedBranch": "main"}},
+            local={"concurrentGuard": {"baselineCommit": head, "watchPaths": ["README.md"]}},
+        )
+
+        cli.cmd_concurrent_guard(_args(ws))
+
+        out = capsys.readouterr().out
+        assert "配置来源:" in out
+        assert "expectedBranch←.vscode/ai-collab.json" in out
+        assert "baselineCommit←.vscode/ai-collab.local.json" in out
+
+    def test_cli_argument_wins_and_provenance_says_so(self, tmp_path, monkeypatch, capsys):
+        """CLI 参数优先于两层配置；来源行不得把人误导成「来自配置文件」。"""
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        _commit(ws)
+        _write_config(ws, tracked={"concurrentGuard": {"expectedBranch": "other-branch"}})
+
+        rc = cli.cmd_concurrent_guard(_args(ws, expected_branch="main"))
+
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "expectedBranch←CLI 参数" in out
+
+    def test_guard_and_preflight_see_the_same_inputs(self, tmp_path, monkeypatch):
+        """两条路径对「是否武装」必须给出同一个答案（N37 的核心断言）。"""
+        from ai_collab import governance as gov
+
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        head = _commit(ws)
+        _write_config(
+            ws,
+            tracked={"concurrentGuard": {"expectedBranch": None, "baselineCommit": None}},
+            local={"concurrentGuard": {"expectedBranch": "main", "baselineCommit": head,
+                                       "watchPaths": ["README.md"]}},
+        )
+
+        preflight_view = gov.guard_input_report(ws)
+        cli_guard, _sources = cli._resolve_guard_config(str(ws))
+
+        assert preflight_view["complete"] is True
+        assert cli_guard.get("baselineCommit") == head, (
+            "preflight 说输入齐全，守卫却拿不到基线 —— 两条读取路径口径仍不一致（N37）"
+        )
+        assert cli_guard.get("expectedBranch") == "main"
+        assert cli_guard.get("watchPaths") == ["README.md"]
+
+    def test_unarmed_guard_says_so_instead_of_looking_green(self, tmp_path, monkeypatch, capsys):
+        """完全没装备时必须明说「未提供」，不能让读者以为判定跑过了。"""
+        ws = tmp_path / "ws"
+        _init_repo(ws)
+        (ws / "README.md").write_text("hi")
+        _commit(ws)
+        # 不写任何配置文件
+
+        rc = cli.cmd_concurrent_guard(_args(ws))
+
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "配置来源:" in out
+        assert "expectedBranch←未提供" in out
+        assert "baseline: none (skipped)" in out

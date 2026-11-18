@@ -785,26 +785,31 @@
     {
       "id": "N37",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "concurrent guard 只读受跟踪配置，不读本地覆盖层：会话基线写进 gitignore 后 G2 静默降级为 skipped，而 preflight 却报「门禁输入完整」",
       "reader": "照源码注释把会话基线写进 `.vscode/ai-collab.local.json` 的人——注释明确要求「会话级状态一律放不受跟踪的落点」，你照做了；然后 `governance preflight` 六项全 PASS、门禁输入完整性显示三个值都来自 local.json，你以为 G2 在守着你；再跑 `concurrent guard` 却得到 `baseline: none (skipped)`，G1/G2 根本没执行，而退出码是 0——两个门禁对「是否武装」给出相反答案，且没有任何一处报冲突。",
       "where": [
-        "ai_collab/cli/_cli_main.py:469（cmd_concurrent_guard：`config = dict(VSCodeIntegration.get_project_config())`，只有受跟踪层）",
-        "ai_collab/state_manager.py:273-284（get_project_config 只读 `.vscode/ai-collab.json`，无 local 合并）",
-        "ai_collab/activation_handler.py:73-84（同签名同实现，同一处缺口）",
-        "ai_collab/governance.py:580-605（_merge_guard_config：preflight 走的是 tracked + local 两层合并 + 来源标注）",
-        "ai_collab/cli/_cli_main.py:367-398（_run_concurrent_guard_gate：CLI 参数优先，其次 config —— 但 config 已是缺层的那份）"
+        "ai_collab/governance.py:580（resolve_guard_config：唯一的两层合并实现，原 `_merge_guard_config` 去下划线并保留同名别名）",
+        "ai_collab/cli/_cli_main.py:460（_resolve_guard_config：concurrent guard 的解析接缝，内部调用 governance.resolve_guard_config）",
+        "ai_collab/cli/_cli_main.py:479（cmd_concurrent_guard：已不再调用 VSCodeIntegration.get_project_config）",
+        "ai_collab/state_manager.py:273-284（get_project_config 仍只读受跟踪层——保留原样，但不再是门禁的配置来源）",
+        "ai_collab/activation_handler.py:73-84（同上一份复制实现，同样不再被门禁使用）",
+        "ai_collab/governance.py:613-630（guard_input_report：preflight 侧视图，与本条现在共用同一实现）"
       ],
-      "detail": "同一批硬门禁输入有两条读取路径，口径不同：\n① `governance preflight` → `_merge_guard_config()` → 读 `.vscode/ai-collab.json` 打底 + `.vscode/ai-collab.local.json` 覆盖，并输出每个值的来源；\n② `concurrent guard` → `VSCodeIntegration.get_project_config()` → 只读受跟踪的 `.vscode/ai-collab.json`，没有 local 层。\n2026-11-18 实测：把 expectedBranch/baselineCommit/watchPaths 按源码注释的建议写进 gitignore 的 `.vscode/ai-collab.local.json` 后，preflight 输出「门禁输入完整性: 三个输入齐全（expectedBranch←.vscode/ai-collab.local.json, baselineCommit←…, watchPaths←…）」并 PASS；同一时刻 `concurrent guard` 输出 `branch: main (expected: none)` / `baseline: none (skipped)`，两项判定直接跳过，`allowed: True`、退出码 0。显式补 `--expected-branch` / `--baseline-commit` / `--watch-path` 后同一个命令才真跑：`branch: main (expected: main)` / `baseline: ada4ceb… -> ada4ceb… (0 watched path(s) changed)`。",
+      "detail": "同一批硬门禁输入曾有两条读取路径，口径不同：\n① `governance preflight` → `_merge_guard_config()` → 受跟踪 `.vscode/ai-collab.json` 打底 + `.vscode/ai-collab.local.json` 覆盖，并输出每个值的来源；\n② `concurrent guard` → `VSCodeIntegration.get_project_config()` → 只读受跟踪层，没有 local 层。\n2026-11-18 实测：把 expectedBranch/baselineCommit/watchPaths 按源码注释的建议写进 gitignore 的 local 层后，preflight 输出「门禁输入完整性: 三个输入齐全」并 PASS；同一时刻 `concurrent guard` 输出 `branch: main (expected: none)` / `baseline: none (skipped)`，两项判定直接跳过，`allowed: True`、退出码 0。\n修复后同一场景（不传任何 CLI 参数）实测：`配置来源: expectedBranch←.vscode/ai-collab.local.json, baselineCommit←.vscode/ai-collab.local.json, watchPaths←.vscode/ai-collab.local.json`，并立即报出 `baseline: c648c15… -> a77ff1d… (5 watched path(s) changed)  <- stale`、`allowed: False` —— 门禁第一次真的有了牙齿。",
       "impact": "① G2 在最该拦它的那条命令里静默失效，而退出码 0 让人以为跑过了；② preflight 的绿是「输入齐了」，concurrent guard 的绿是「压根没判」，两种绿看起来一样，审计时无法区分；③ 源码注释引导用户把基线放 local 层，但唯一能消费它的命令不读 local 层——注释与实现互相拆台；④ 谁想靠 concurrent guard 守并发，会得到持续为真的假保障。",
-      "fix": "未修。建议让两条路径共用同一个配置解析函数：把 `governance._merge_guard_config()` 提为公共入口，`cmd_concurrent_guard` 改为调用它而不是 `get_project_config()`；或在 `get_project_config()` 内做 local 覆盖合并（两处 get_project_config 实现都要改，它们目前是复制粘贴的两份）。\n注意 `requireBaselineCommit` 的语义要一起定：现在 concurrent guard 里 `baseline: none (skipped)` 不阻断，若改成合并后仍缺基线，是否应按 requireBaselineCommit 阻断，需明确。\n临时绕法（不改代码）：显式传 `--expected-branch` / `--baseline-commit` / `--watch-path`，CLI 参数优先于配置，能真正跑起 G1/G2。",
+      "fix": "已修（2026-11-18）：\n① **收敛为唯一实现**：`governance._merge_guard_config` 改名为公开的 `resolve_guard_config`（保留下划线别名以免动 preflight 的旧调用点），并在 docstring 里写明「这是门禁输入的唯一读取路径之一，必须公开复用」以及 N37 的历史。\n② **守卫改走同一实现**：`cmd_concurrent_guard` 不再调 `VSCodeIntegration.get_project_config()`，改为经 `_resolve_guard_config(workspace)` → `governance.resolve_guard_config()`。这个包装函数是**故意留的接缝**：测试可以替换它，而不必再去 stub 一个「只读一层」的假集成对象（那正是缺陷本身）。\n③ **让「没判」和「判过了」可区分**：输出新增「配置来源」行，逐字段标注来自哪一层；CLI 参数覆盖时标「CLI 参数」，避免来源行撒谎。这一条是修 N37 的真正目的——两种绿外观一样才是最难查的部分。\n④ **`requireBaselineCommit` 语义保持不变（软警告、不阻断）**：该语义有正式契约（`collaboration/results/RESULT-P1-CONCURRENT-GUARD-2026-10-24.md` §「偏离 2」）与用例 `test_require_baseline_without_baseline_is_warning_only` 钉住，改它等于推翻既有契约，不在本条范围。\n⑤ **守护**：新增 `TestN37ConfigLayer` 5 条用例，全部写**真实**配置文件、不 stub 任何东西——local 层基线真的武装 G2、来源行点名 local 层、CLI 参数优先且来源行如实标注、`guard_input_report` 与 `_resolve_guard_config` 对同一工作区给出相同输入（这条直接钉「两种绿」问题）、完全未装备时明说「未提供」而不是看起来绿。\n残余（已知边界，不另立条目）：若配置写了 `requireBaselineCommit: true` 而两层都没有基线，仍只打一条 warning、不阻断。按契约这是有意的（基线属会话态，硬阻断会让新工作树无法开工）。",
       "found_at": "2026-11-18",
       "appended_evidence": [
         "装配实测（2026-11-18，ada4ceb）：写 `.vscode/ai-collab.local.json` 的 concurrentGuard 三个输入后，`governance preflight` → 六项全 PASS，其中「门禁输入完整性: 三个输入齐全（expectedBranch←.vscode/ai-collab.local.json, baselineCommit←.vscode/ai-collab.local.json, watchPaths←.vscode/ai-collab.local.json）」。",
         "同一时刻 `concurrent guard` → `branch: main (expected: none)` / `baseline: none (skipped)` / `allowed: True` / 退出码 0 —— G1 期望分支未取到、G2 整条跳过。",
         "显式传参后同一命令 → `branch: main (expected: main)` / `baseline: ada4ceb2fbe2a5211c38fddbb8c2d18f322f2e7f -> ada4ceb2fbe2a5211c38fddbb8c2d18f322f2e7f (0 watched path(s) changed)` / `foreign: 0 files` / `worktrees: 8 (collisions: none)` —— 证明判定逻辑本身可用，缺的只是配置来源。",
-        "静默性核验：把基线与期望分支写进 local 层后，`concurrent guard` 的退出码仍为 0、risk_level 仍为 low，没有任何一条输出提示「配置未生效」。"
-      ]
+        "静默性核验：把基线与期望分支写进 local 层后，`concurrent guard` 的退出码仍为 0、risk_level 仍为 low，没有任何一条输出提示「配置未生效」。",
+        "端到端复现与修复（2026-11-18 本仓）：修复前不传参数 → `branch: main (expected: none)` / `baseline: none (skipped)` / allowed: True；修复后同一命令 → 配置来源三字段均指向 `.vscode/ai-collab.local.json`，且 `baseline: <sha> -> <sha> (N watched path(s) changed)` 真跑。",
+        "修复后第一次运行即报 stale（基线 c648c15 落后 HEAD a77ff1d、5 个受监视文件已变、allowed: False）——证明判定逻辑真的接上了，而不是又换了一个恒真的绿。",
+        "测试：`pytest tests/unit/test_concurrent_guard_cli.py …` → 71 passed（含新增 5 条）。变异：把 `resolve_guard_config` 的 local 读入改成 `{}`（退回只读受跟踪层）→ 3 条 N37 用例当场红（local 层基线未武装 / 来源行未点名 local / 与 preflight 口径不一致），其余 18 条仍绿。"
+      ],
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N38",
@@ -836,24 +841,29 @@
     {
       "id": "N39",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "npm test 用 readdirSync 收集用例，未跟踪的 *.test.mjs 也算进去 —— 同一 commit 在不同工作区跑出不同用例数与不同结论",
       "reader": "拿到「测试全绿」或「有 N 条失败」这类结论的人——尤其在新 clone、其他 worktree、或 CI 上复跑的人。他们会发现用例数对不上（实测同一 commit：干净工作区 318 条全绿，本工作区 334 条里 4 条失败），而失败的四条测的是一个**只在别人工作区里存在、从未提交**的特性。此时「测试挂了」既不能归因到代码，也不能用「重新跑一遍」解决，因为重跑读的还是同一片磁盘。",
       "where": [
-        "chrome-extension/tests/run-tests.mjs:37-43（readdirSync 遍历目录，`entry.endsWith(\".test.mjs\")` 即收，不校验跟踪状态）",
-        "chrome-extension/tests/deepseek-new-session.test.mjs（本次之前为未跟踪文件，测 newChatText 特性；实现未合入前它必然红）"
+        "chrome-extension/tests/run-tests.mjs:1-35（文件头新增「为什么要打印受跟踪/本次运行两个数」）",
+        "chrome-extension/tests/run-tests.mjs:65-90（trackedTestFiles()：`git ls-files -- *.test.mjs`，git 不可用返回 null）",
+        "chrome-extension/tests/run-tests.mjs:92-130（首行清单 + [未跟踪] 标记 + 单独警告 + 结尾 [test-inventory] 行）"
       ],
       "detail": "2026-11-18 实测：在本工作区对 main@26b2627 跑 `npm test` 得 `1..334 / pass 330 / fail 4`，4 条全部是 deepseek 新会话用例；但 HEAD 的 `new-session-control.js` 与 `new-session-control.test.mjs` 都**不含**「开启新对话」字样（`grep -c` 均为 0）。追查发现用例来自未跟踪文件 `tests/deepseek-new-session.test.mjs`（`git status` 为 `??`），它测的是 stash 里那批未合入 WIP 的 `newChatText` 特性。四项测试文件合计 16 条用例，减去后干净工作区应为 318 条且全绿。\n\n也就是说：**「测试结论」在这里是工作区属性，不是 commit 属性。** 同一 sha、同一台机器，只因为磁盘上多了一个未跟踪文件，结论就从「全绿」变成「4 条失败」。",
       "impact": "① 交付结论不可复现：评审看到「有 4 条失败」无法判断是代码问题还是环境问题；② 反向误判同样危险：若 WIP 实现已合入而测试文件仍未跟踪，干净工作区会全绿，**该特性的回归守护实际为零**却看不出来；③ 变异检查同样受影响（它复用 tests/ 树），守护关系可能建立在未提交的测试上；④ 「重跑一遍」在这类问题上无效，容易诱导人去改代码。",
-      "fix": "未修。三个方向，建议 ②+③：\n① 让 run-tests.mjs 只收受跟踪文件（`git ls-files '*.test.mjs'` 过滤）——最严，但会让「新写测试还没 add」时静默不跑，反而更危险。\n② 启动时把「未跟踪的 *.test.mjs」显式打印出来并在结论里标注（例如 `注意：本次含 1 个未跟踪测试文件，干净检出下不会运行`），让差异可见而不是静默计入。\n③ 在结论行同时打印「受跟踪用例数」与「实际运行用例数」，两者不等即提示。这样既不阻断本地开发，又让「结论依赖磁盘状态」这件事在输出里自曝。\n本次已顺带消除具体实例：`deepseek-new-session.test.mjs` 随 8162248 一并提交，该特性现已有受跟踪的回归守护。但机制的脆弱性未改。",
+      "fix": "已修（2026-11-18，走建议 ②+③，不采用 ①）：\n① **首行给清单**：`发现 N 个测试文件（受跟踪 X 个 / 本次运行 N 个 / 未跟踪 K 个）`；未跟踪文件在逐条清单里带 `[未跟踪]` 标记，并单独打一段 ⚠️ 警告说明「干净检出下不会运行，结论不可复现」。\n② **结论行自曝**：运行结束再打一行 `[test-inventory] 受跟踪 X / 本次运行 N / 未跟踪 K`；有未跟踪文件时追加「结论含未提交用例，不可作为 commit 级结论引用」。把「跑的是什么范围」和 pass/fail 数字钉在一起——否则读者只记得数字，不知道自己跑的不是同一个集合。\n③ **不阻断**：本地「先写测试再 add」是正常节奏，阻断会逼人去绕（并在绕的过程中失去可见性）。\n④ **git 不可用时不假装知道**：`trackedTestFiles()` 在非仓库/无 git 环境返回 `null`，清单改成「跟踪状态无法判定」——「不知道」和「都跟踪了」必须能区分，否则这个护栏本身会变成新的假绿来源。\n⑤ **刻意报文件数而非用例数**：用例数只能靠解析 TAP 或正则数 `test(` 得到；前者要么改掉即时输出、要么依赖 Node 20.10+ 的多 reporter（CI 钉 20，风险不值），后者会数错——而数错的不变量比没有更糟（天天假警报然后被忽略）。N39 的实际故障形态本来就是文件级差异（318 vs 334 用例、多出 4 个文件里的用例），文件数足以让它现形。这个取舍写进了 run-tests.mjs 文件头。",
       "found_at": "2026-11-18",
       "appended_evidence": [
         "实测同一 commit 两种结论：本工作区 `npm test` → `1..334 / pass 330 / fail 4`；4 条失败均为 deepseek 用例。",
         "反证：`grep -c '开启新对话' chrome-extension/src/content/new-session-control.js` → 0；同文件测试 → 0。HEAD 上无该特性实现，也无该用例的受跟踪来源。",
         "来源定位：`grep -rn '开启新对话' chrome-extension/tests/` → 命中 `tests/deepseek-new-session.test.mjs`（`git status` 显示 `??`，未跟踪）。",
         "收集机制：`tests/run-tests.mjs:37-43` 用 `readdirSync(dir)` + `entry.endsWith('.test.mjs')`，不查 `git ls-files`，故未跟踪文件照收。",
-        "消除后复测：该测试文件随 8162248 提交后，`npm test` → `1..350 / pass 350 / fail 0`，变异检查 152/152 被杀死——即那 4 条原本是「测试在、实现不在」，不是实现有缺陷。"
-      ]
+        "消除后复测：该测试文件随 8162248 提交后，`npm test` → `1..350 / pass 350 / fail 0`，变异检查 152/152 被杀死——即那 4 条原本是「测试在、实现不在」，不是实现有缺陷。",
+        "正向验证（2026-11-18）：正常状态 `npm test` → `发现 29 个测试文件（受跟踪 29 个 / 本次运行 29 个 / 未跟踪 0 个）`，结尾 `[test-inventory] 受跟踪 29 个 / 本次运行 29 个 / 未跟踪 0 个`。",
+        "故障复现验证：临时放一个未跟踪的 `tests/zz-untracked-probe.test.mjs` → `发现 30 个测试文件（受跟踪 29 个 / 本次运行 30 个 / 未跟踪 1 个）`，该行带 `[未跟踪]` 标记，并打出「干净检出下不会运行，结论不可复现」警告；结尾 `[test-inventory] … 未跟踪 1 个` + 「结论含未提交用例，不可作为 commit 级结论引用」。删除探针后恢复 29/29/0，`git status` 无残留。",
+        "回归：`node --check tests/run-tests.mjs` 通过；`npm test` 369 条全绿，退出码沿用 node --test 语义未被改动。"
+      ],
+      "closed_at": "2026-11-18"
     }
   ]
 }
