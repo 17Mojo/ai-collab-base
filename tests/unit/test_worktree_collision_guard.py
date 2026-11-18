@@ -4,8 +4,13 @@
 - 正向：造出冲突 → 必须判违规（默认 high，可降级为 warning）；
 - 反向：单工作树 / 不同分支 / detached 工作树 → 不得误报。
 
-冲突的构造方式刻意复刻真实事故：先 `worktree add -b` 让某工作树签出 feat1，
-再在主仓用 `checkout -B feat1` 重置同一分支。这正是现场那次 `-B` 的形态。
+冲突的构造：先 `worktree add -b` 让某工作树签出 feat1，再让主仓也指向 feat1。
+
+〔2026-11-18，台账 N49〕这里原本用 `checkout -B feat1` 复刻现场那次 `-B` 事故，
+但 git 2.56.1 起 `-B` 不再能覆盖「已被其他工作树签出的分支」（exit 128），
+在 CI 上 10 条用例全红、本地 git 2.39.5 却是绿的。改为 `symbolic-ref HEAD`
+直接指向同一分支：**终态**（同一分支被两个工作树签出）一模一样，
+只是不再依赖某个 git 版本对 `-B` 的宽纵。守的仍是「终端状态必须被拦住」。
 """
 
 import subprocess
@@ -93,7 +98,7 @@ class TestDetectCollisions:
         _init_repo(repo)
         wt = tmp_path / "wt-feat"
         _add_worktree(repo, wt, "feat1")
-        _git(repo, "checkout", "-q", "-B", "feat1")
+        _git(repo, "symbolic-ref", "HEAD", "refs/heads/feat1")
 
         signal = detect_worktree_branch_collisions(repo)
 
@@ -111,7 +116,7 @@ class TestSeverityWiring:
         repo = tmp_path / "repo"
         _init_repo(repo)
         _add_worktree(repo, tmp_path / "wt-feat", "feat1")
-        _git(repo, "checkout", "-q", "-B", "feat1")
+        _git(repo, "symbolic-ref", "HEAD", "refs/heads/feat1")
 
         assessment = assess_concurrent_risk(repo)
 
@@ -125,7 +130,7 @@ class TestSeverityWiring:
         repo = tmp_path / "repo"
         _init_repo(repo)
         _add_worktree(repo, tmp_path / "wt-feat", "feat1")
-        _git(repo, "checkout", "-q", "-B", "feat1")
+        _git(repo, "symbolic-ref", "HEAD", "refs/heads/feat1")
 
         assessment = assess_concurrent_risk(repo, worktree_collision_severity="warning")
 
@@ -146,7 +151,7 @@ class TestSeverityWiring:
         repo = tmp_path / "repo"
         _init_repo(repo)
         _add_worktree(repo, tmp_path / "wt-feat", "feat1")
-        _git(repo, "checkout", "-q", "-B", "feat1")
+        _git(repo, "symbolic-ref", "HEAD", "refs/heads/feat1")
 
         report = run_concurrent_guard(
             workspace=repo,
@@ -162,7 +167,7 @@ class TestSeverityWiring:
         repo = tmp_path / "repo"
         _init_repo(repo)
         _add_worktree(repo, tmp_path / "wt-feat", "feat1")
-        _git(repo, "checkout", "-q", "-B", "feat1")
+        _git(repo, "symbolic-ref", "HEAD", "refs/heads/feat1")
 
         report = run_concurrent_guard(
             workspace=repo,

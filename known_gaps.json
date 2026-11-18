@@ -1051,6 +1051,25 @@
       "fix": "已修（2026-11-18）。\n① mypy：把 `locked_json_update` 的返回类型从 `tuple[Any, T]` 收窄为 `tuple[dict[str, Any], T]`，并在函数内 `payload: dict[str, Any] = _read_json_strict(...)` 把 Any 在**源头**收敛——两个调用点传的 default 都是 `{}`，返回值必是 JSON 对象；不在调用点 cast，因为那只是把问题挪到下一个调用者。`_base_symbols` 第二个循环改名为 `call`，消掉 stmt/AST 的类型冲突。\n② bandit：按本仓既有写法在 import 处补 `# nosec B404`、在 `_git()` 的 subprocess.run 处补 `# nosec B603, B607`，两处都写明理由（固定命令 git + 内部构造参数 / shell=False；可执行名由 PATH 解析）。未改动 baseline 文件——补 nosec 是「声明这里是安全的」，重生成 baseline 是「把新发现算作已知」，后者会掩盖真问题。\n验证（本地装 CI 同版本 mypy 2.4.1）：`python -m mypy ai_collab/` → Success: no issues found in 105 source files；`bandit -r ai_collab/` → 0 findings（改前 3）；全量单测 3037 passed / 1 skipped。",
       "found_at": "2026-11-18",
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N49",
+      "priority": "P1",
+      "status": "closed",
+      "title": "11 条 worktree 冲突用例在 CI 全红、本地全绿：fixture 依赖 `checkout -B` 覆盖别处签出的分支，git 2.56 起被拒",
+      "reader": "任何「本地跑绿了就推」的人，以及任何看到 Test Suite / Coverage Gate / Nightly 三个工作流红却以为是自己代码写错的人。",
+      "where": [
+        "tests/unit/test_worktree_collision_guard.py:5-10（模块 docstring 声明「刻意复刻 -B 事故」）、:96/:114/:128/:149/:165（5 处 _git checkout -B）",
+        "tests/unit/test_preflight_worktree_gate.py:94-103（_make_collision 里 1 处）",
+        "tests/unit/test_concurrent_guard_cli.py:320/:343（2 处）",
+        ".github/workflows/mypy-gate.yml:92（Coverage Gate 跑 tests/unit，被同一批用例拖红）",
+        ".github/workflows/nightly.yml:27-31（每日 02:00 UTC 全量，同一批用例）"
+      ],
+      "detail": "CI 的 ubuntu-latest 用 git 2.56.1，本地是 Apple Git 2.39.5。fixture 的构造方式是「先 `git worktree add -b feat1 <path>` 让另一个工作树签出 feat1，再在主仓 `git checkout -q -B feat1`」——这依赖旧的 `-B` 会跳过「分支已被其他工作树签出」的占用检查（N28 曾把这一点记成可复现行为）。git 2.56.1 起该命令直接 exit 128，于是 `_git(..., check=True)` 抛 CalledProcessError，10 条用例在 CI 失败、Nightly 记 11 条（含另一条同类），本地却全绿。\n连带影响：Mypy Type Check Gate 这个工作流里，`Type Check (mypy)` job 已绿，但同工作流的 `Coverage Gate (>=85%)` job 因跑 tests/unit 被同一批用例拖红——所以「mypy 门禁红」这个外在现象其实和类型无关。",
+      "impact": "本地与 CI 的测试结论不一致，且不一致的方向最坏：本地绿、CI 红。三个工作流长期红（Test Suite / Coverage Gate / Nightly），真实回归会与这批噪音混在一起；而修复者按报错去找业务代码只会白找。",
+      "fix": "已修（2026-11-18）。只换构造原语、不换被守的东西：把 8 处 `checkout -q -B <branch>` 改为 `symbolic-ref HEAD refs/heads/<branch>`。终态完全一样（同一分支被两个工作树签出），但不再依赖某个 git 版本对 `-B` 的宽纵。\n明确没有做的事：没有删用例、没有 skip、没有放松断言、没有把冲突判定降级——守的仍是「同一分支被多工作树签出必须被判违规」，正反两侧用例都保留。\n模块 docstring 同步改写，写明这次为什么改构造方式，避免下一个人又按「复刻 -B」的思路改回去。\n验证：本地 `pytest tests/unit/test_worktree_collision_guard.py tests/unit/test_preflight_worktree_gate.py tests/unit/test_concurrent_guard_cli.py` → 39 passed；全量 `tests/unit` → 3037 passed / 1 skipped。CI 侧由 Test Suite 工作流在 git 2.56.1 上复核。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     }
   ]
 }

@@ -317,7 +317,7 @@ class TestWorktreeCollision:
             text=True,
             check=True,
         )
-        _git(ws, "checkout", "-q", "-B", "feat1")
+        _git(ws, "symbolic-ref", "HEAD", "refs/heads/feat1")
         _use_config(monkeypatch, {})
 
         rc = cli.cmd_concurrent_guard(_args(ws, expected_branch="feat1"))
@@ -340,7 +340,7 @@ class TestWorktreeCollision:
             text=True,
             check=True,
         )
-        _git(ws, "checkout", "-q", "-B", "feat1")
+        _git(ws, "symbolic-ref", "HEAD", "refs/heads/feat1")
         _use_config(monkeypatch, {})
 
         cli.cmd_concurrent_guard(_args(ws, expected_branch="feat1"))

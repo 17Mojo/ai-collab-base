@@ -100,7 +100,7 @@ def _make_collision(repo: Path, branch: str = "feat1") -> Path:
         text=True,
         check=True,
     )
-    _git(repo, "checkout", "-q", "-B", branch)
+    _git(repo, "symbolic-ref", "HEAD", f"refs/heads/{branch}")
     return wt
 
 
