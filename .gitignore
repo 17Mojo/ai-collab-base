@@ -165,3 +165,11 @@ packs/exports/*.json
 
 # 本地 AI 编码工具生成的编辑器片段 / tasks / settings（.arts/），非项目资产
 .arts/
+
+# 各子项目的本地运行日志落点（2026-11-18 核查时补）
+# 根目录 logs/* 已忽略，但这几处嵌套目录当时漏配，长期以 `??` 挂在 git status 里当噪音。
+# 目录内容均为 2026-05-11 的 session registry 快照与测试产物，保留在盘上、不入库。
+chrome-extension/logs/
+local-backend/logs/
+tests/logs/
+tests/playwright/logs/
