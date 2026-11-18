@@ -1,0 +1,333 @@
+{
+  "metadata": {
+    "pack_id": "xiaohongshu-knowledge-creator",
+    "pack_name": "小红书知识型博主 - 图文内容创作指南",
+    "version": "2.1.0",
+    "type": "business",
+    "description": "将复杂AI/新技术/新产品讲成普通人听得懂、愿意看完、愿意收藏的内容",
+    "designer": "Claude Code",
+    "created_at": "2026-04-23T10:00:00",
+    "updated_at": "2026-11-03T10:00:00",
+    "category": "知识分享",
+    "tags": [
+      "小红书",
+      "知识博主",
+      "图文",
+      "AI科普",
+      "内容创作"
+    ],
+    "language": "zh",
+    "estimated_efficiency_gain": "90%"
+  },
+  "domain": {
+    "primary_domain": "小红书知识内容创作",
+    "secondary_domains": [
+      "AI科普",
+      "科技测评",
+      "新产品解读"
+    ],
+    "target_platforms": [
+      "xiaohongshu"
+    ],
+    "target_audience": "知识型博主、科技博主、AI博主",
+    "brand_tone": "靠谱、不割韭菜、讲人话",
+    "compliance_rules": [
+      "3秒内让读者知道值不值得看",
+      "看完后觉得原来如此/我也能用",
+      "建立长期信任"
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "id": "step_1_topic",
+        "name": "选题确认",
+        "type": "local",
+        "description": "确认要讲解的AI/技术/产品主题",
+        "input_fields": [
+          "topic",
+          "target_audience_level"
+        ],
+        "output_field": "topic_info",
+        "config": {
+          "required_fields": [
+            "topic"
+          ],
+          "optional_fields": [
+            "target_audience_level",
+            "key_points"
+          ]
+        }
+      },
+      {
+        "id": "step_2_hook",
+        "name": "结论提炼",
+        "type": "analysis",
+        "description": "提炼明确观点/反常识判断作为开头",
+        "input_fields": [
+          "topic_info"
+        ],
+        "output_field": "hook_statement",
+        "ai_models": [
+          "qianwen"
+        ],
+        "prompt_template": "你要写一条小红书知识图文的开头。主题：{{topic}}。要求：一句话给出明确观点或反常识判断，不铺垫背景，不情绪化，3秒内让人想看下去；句中代词指代自足——去掉主题词后这句话照样看得懂。只输出这一句开头。",
+        "config": {
+          "output_rules": [
+            "开头必须是明确观点",
+            "避免铺垫背景介绍",
+            "允许有态度但不情绪化"
+          ],
+          "example_hooks": [
+            "很多人把XX理解错了",
+            "这类AI，现在根本不适合用在XX"
+          ],
+          "min_output_length": 15
+        }
+      },
+      {
+        "id": "step_3_explain",
+        "name": "人话翻译",
+        "type": "generation",
+        "description": "用生活类比、工作场景解释复杂概念",
+        "input_fields": [
+          "topic_info",
+          "hook_statement"
+        ],
+        "output_field": "explanation_text",
+        "ai_models": [
+          "qianwen",
+          "zhipu"
+        ],
+        "parallel": true,
+        "prompt_template": "把“{{topic}}”讲给不懂技术的人听。开头用这句：{{hook_statement}}。要求：能不用专业名词就不用，必须用时一句话翻译，多用生活类比和工作场景，像在给朋友解释。写2到4段，每段只讲1个点。只输出正文。",
+        "config": {
+          "style_rules": [
+            "能不用专业名词就不用",
+            "必须用时一句话翻译",
+            "多用生活类比、工作场景",
+            "像在给朋友解释"
+          ],
+          "paragraph_count": "2-4",
+          "each_paragraph_rule": "每段只讲1点"
+        }
+      },
+      {
+        "id": "step_4_scene",
+        "name": "场景化表达",
+        "type": "generation",
+        "description": "创建具体使用场景",
+        "input_fields": [
+          "topic_info"
+        ],
+        "output_field": "use_cases",
+        "ai_models": [
+          "qianwen"
+        ],
+        "prompt_template": "为“{{topic}}”写两个具体使用场景，格式都是“谁+在做什么+为什么用到它”。要写得让人一看就知道自己是不是这个场景。只输出这两个场景。",
+        "config": {
+          "scene_format": "谁+在做什么+为什么用到它",
+          "example_scenes": [
+            "如果你是接广告的视频工作室",
+            "当你第一次想把XX用进工作里时"
+          ]
+        }
+      },
+      {
+        "id": "step_5_boundary",
+        "name": "边界标注",
+        "type": "generation",
+        "description": "标注适用人群和局限性",
+        "input_fields": [
+          "topic_info"
+        ],
+        "output_field": "boundary_notes",
+        "ai_models": [
+          "qianwen"
+        ],
+        "prompt_template": "为“{{topic}}”写一段边界标注：明确什么人适合、什么人不适合，可以说明目前还不成熟，但不要写成万能工具。只输出这一段标注。",
+        "config": {
+          "required_elements": [
+            "明确什么人适合",
+            "明确什么人不适合",
+            "可说目前还不成熟",
+            "不做万能工具叙事"
+          ]
+        }
+      },
+      {
+        "id": "step_6_takeaway",
+        "name": "可带走内容",
+        "type": "generation",
+        "description": "生成判断标准/简单框架/可尝试动作",
+        "input_fields": [
+          "explanation_text",
+          "use_cases"
+        ],
+        "output_field": "takeaway_content",
+        "ai_models": [
+          "qianwen"
+        ],
+        "prompt_template": "基于以下内容给读者一个能带走的东西：\n解释：{{explanation_text}}\n场景：{{use_cases}}\n要求：从“一个判断标准 / 一个简单框架 / 一个可立即尝试的小动作”里选一个写清楚，让人看完就能用。只输出这一条。",
+        "config": {
+          "output_options": [
+            "一个判断标准",
+            "一个简单框架",
+            "一个可立即尝试的小动作"
+          ],
+          "must_include_one": true
+        }
+      },
+      {
+        "id": "step_7_visual",
+        "name": "图片内容生成",
+        "type": "generation",
+        "description": "生成小红书图片文案（封面+内容图+收尾图）",
+        "input_fields": [
+          "hook_statement",
+          "explanation_text",
+          "takeaway_content"
+        ],
+        "output_field": "visual_content",
+        "ai_models": [
+          "qianwen"
+        ],
+        "prompt_template": "为下面这条小红书图文设计3到6张3:4竖版图片的文案：\n开头：{{hook_statement}}\n正文：{{explanation_text}}\n可带走：{{takeaway_content}}\n要求：封面标题占画面1/3以上、大号字、高对比；每张内容图只讲1个点、文字占比不超过40%；最后一张写“记住这3点就够了”并引导评论。只输出每张图的文案。",
+        "config": {
+          "format": "3:4竖版 1080x1440px",
+          "image_count": "3-6张",
+          "cover_requirements": {
+            "title_size": "占画面1/3以上",
+            "font_size": "80-120px",
+            "high_contrast": true,
+            "visual_impact": [
+              "大号数字",
+              "emoji",
+              "几何色块"
+            ]
+          },
+          "content_image_requirements": {
+            "each_image_rule": "每张图只讲1个点",
+            "text_ratio": "≤40%",
+            "font_size_title": "60-80px",
+            "font_size_body": "40-50px"
+          },
+          "ending_image_requirements": {
+            "summary": "记住这3点就够了",
+            "interaction": "你踩过哪些坑？评论区聊聊",
+            "ip_signature": "@绿皮火车 Roadtrip | 专注AI平权"
+          }
+        }
+      },
+      {
+        "id": "step_8_output",
+        "name": "整合输出",
+        "type": "fusion",
+        "description": "整合所有内容生成最终图文",
+        "input_fields": [
+          "hook_statement",
+          "explanation_text",
+          "use_cases",
+          "boundary_notes",
+          "takeaway_content",
+          "visual_content"
+        ],
+        "output_field": "final_content",
+        "prompt_template": "把以下内容整合成一条完整的小红书笔记正文：\n开头：{{hook_statement}}\n解释：{{explanation_text}}\n场景：{{use_cases}}\n边界：{{boundary_notes}}\n可带走：{{takeaway_content}}\n图片文案：{{visual_content}}\n要求：顺序自然、语气统一，不重复，最后加一句互动引导。只输出整合后的笔记。",
+        "config": {
+          "format": "小红书笔记格式",
+          "checklist": [
+            "3:4竖版",
+            "封面标题够大",
+            "每张图只讲1个点",
+            "字号≥40px",
+            "配色不超过3种",
+            "最后一张有互动引导"
+          ]
+        }
+      }
+    ]
+  },
+  "quality_metrics": {
+    "metrics": {
+      "clarity": {
+        "name": "clarity",
+        "description": "人话程度 - 是否用通俗语言解释",
+        "check_method": "contains",
+        "weight": 0.3,
+        "min_threshold": 0.8
+      },
+      "hook_power": {
+        "name": "hook_power",
+        "description": "开头吸引力 - 3秒内能否抓住读者",
+        "check_method": "contains",
+        "weight": 0.25,
+        "min_threshold": 0.7
+      },
+      "practicality": {
+        "name": "practicality",
+        "description": "实用价值 - 是否有可带走的东西",
+        "check_method": "contains",
+        "weight": 0.25,
+        "min_threshold": 0.8
+      },
+      "trustworthiness": {
+        "name": "trustworthiness",
+        "description": "可信度 - 是否标注边界和局限",
+        "check_method": "contains",
+        "weight": 0.2,
+        "min_threshold": 0.9
+      }
+    },
+    "normalization_method": "linear",
+    "validation_tolerance": 0.01
+  },
+  "example_library": {
+    "good_examples": [],
+    "bad_examples": [],
+    "few_shot_template": "主题: {topic}\n开头: {hook}\n正文: {explanation}"
+  },
+  "generation_params": {
+    "diversity_enhancement": true,
+    "output_versions": 3,
+    "diversity_dimensions": [
+      "语气",
+      "类比",
+      "场景"
+    ],
+    "confidence_display": true,
+    "critical_facts_only": true,
+    "temperature": 0.7,
+    "output_format": "markdown",
+    "require_code_blocks": false
+  },
+  "optimization": {
+    "enabled": true,
+    "strategy": "feedback_driven",
+    "auto_refine_threshold": 60,
+    "periodic_review_days": 30,
+    "allowed_actions": [
+      "rewrite_hook",
+      "adjust_tone",
+      "add_scene"
+    ]
+  },
+  "performance_tracking": {
+    "enabled": true,
+    "metrics": [
+      "execution_time",
+      "hook_ctr",
+      "save_rate"
+    ],
+    "retention_days": 90,
+    "post_publish_tracking": null
+  },
+  "collaboration": {
+    "shared_with": [],
+    "edit_permission": [],
+    "use_permission": [],
+    "is_public": true
+  },
+  "system_prompt": "你是小红书知识型博主，擅长把复杂的AI、新技术、新产品讲成普通人听得懂、愿意看完、愿意收藏的内容。\n\n核心目标：\n- 让读者3秒内知道值不值得看\n- 看完后觉得\"原来如此 / 我也能用\"\n- 建立\"靠谱、不割韭菜\"的长期信任\n\n语气风格：\n- 冷静但不冷漠\n- 专业但不居高临下\n- 有经验感，不贩卖焦虑\n- 不喊口号，不夸大收益\n\n禁止事项：\n- 标题党但内容空\n- 过度乐观或恐吓式表达\n- 把复杂问题一句话\"神化解决\"\n- 明显的割韭菜话术",
+  "quality_validation_rules": "1. 开头必须是明确观点\n2. 解释必须用生活类比\n3. 必须标注适用边界\n4. 必须有可带走的一条"
+}

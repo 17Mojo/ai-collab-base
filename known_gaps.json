@@ -455,9 +455,9 @@
     {
       "id": "N25",
       "priority": "P2",
-      "status": "open",
-      "title": "「会话边界解掉了 longcat / deepseek 的 step_8 长会话撞墙」没有 A/B 对照，冻结中不可验",
-      "reader": "想据 N23 的 5 站成功就宣布「撞墙问题已解决」的人——5 站验证的是「重置真的做到了」，不是「重置解掉了撞墙」；以及解冻后要跑对照的人——没有判据就会把「B 组单轮跑通」误当成因果证据，而同期还有 N21 续等、N24 假基准两个混杂变量。",
+      "status": "closed",
+      "title": "会话边界解长会话撞墙的 A/B 命题未获有效检验：deepseek 两轮撞在 step_5（早于边界生效的 step_8），两站按用户裁定退出目标源",
+      "reader": "想据 N23 的 5 站成功就宣布「撞墙问题已解决」的人——5 站验的是「重置真的做到了」不是「重置解掉了墙」；以及解冻后要跑对照的人——本轮 deepseek A/B 证明：撞墙位可在 step_8 之外（本次 step_5），边界机制可能连触发机会都没有，照抄旧判据会误判。",
       "where": [
         "chrome-extension/tests/real-machine/session-wall-ab.mjs（A/B 方案与判据，默认只出计划、不跑真机）",
         "chrome-extension/tests/real-machine/platform-freeze.mjs（白名单唯一事实源 + 硬闸门）",
@@ -465,18 +465,18 @@
         "chrome-extension/tests/platform-freeze.test.mjs（9 条守护）、tests/session-wall-ab.test.mjs（9 条守护）",
         "evidence/session-wall-ab-plan-2026-11-11.json（status=plan-only / NOT-EXECUTED）"
       ],
-      "detail": "RESULT §9.4 把 deepseek / longcat 的 step_8 失败从「平台慢」改判成「Pack 尾部撞墙」，这两站才是命题的原始观察对象。用户 2026-11-11 红线把它们冻结（仅保留 qianwen / yuanbao / chatglm / yiyan / kimi），因此本轮只能在活跃 5 站验「重置真的做到了」（N23 closed），**不能**外推成「撞墙已被解掉」。冻结此前只是报告里的一句话，环境变量给 PLATFORM=deepseek 仍会照跑；现已落成代码级闸门：不在白名单即抛错，连浏览器都不启动，预检候选集同样过闸。",
+      "detail": "RESULT §9.4 把 deepseek / longcat 的 step_8 失败从「平台慢」改判成「Pack 尾部撞墙」，这两站才是命题的原始观察对象。用户 2026-11-11 红线把它们冻结（仅保留 qianwen / yuanbao / chatglm / yiyan / kimi），因此本轮只能在活跃 5 站验「重置真的做到了」（N23 closed），**不能**外推成「撞墙已被解掉」。冻结此前只是报告里的一句话，环境变量给 PLATFORM=deepseek 仍会照跑；现已落成代码级闸门：不在白名单即抛错，连浏览器都不启动，预检候选集同样过闸。 **2026-11-18 收口更新**：用户先授权完整 A/B 后裁定停止。实际只跑 deepseek 两轮：A/B 都撞在 step_5_boundary（723.6s / 723.5s Response timeout），sessionResets 均为 []，都没跑到声明 fresh_session=prefer 的 step_8——边界连出场机会都没有，命题未获有效检验。用户据现场反自动化判断裁定 deepseek/longcat 降级为目标源外平台，N25 随之失去观察对象，按「命题未获检验 + 目标源退出」关闭。longcat 两轮从未启动，只有只读预检，不从 deepseek 外推到 longcat。",
       "impact": "① 若把 N23 当因果证据，会在交付口径里凭空多一条未经验证的结论；② 冻结若无代码守卫，一次手滑的环境变量就会在冻结站真实发消息、消耗账号额度；③ 解冻后若无 A/B 判据，B 组单轮成功无法与 N21/N24 的同期修复分离，归因会失真。",
-      "fix": "已做（本轮，不触碰冻结站）：① `platform-freeze.mjs` 白名单 + 硬闸门，唯一解冻开关 ALLOW_FROZEN=1，放行结果写进回执 platformPolicy 留痕；② l2-platform-auto.mjs 在 launch() 前拦截、CANDIDATES 改为由白名单派生、加 PACK_PATH / PACK_VARIANT 便于 A/B 且原行为不变；③ `session-wall-ab.mjs` 产出 2 站 × 2 变体（A 去掉 fresh_session / B 保留 prefer）的机器可读计划，含 5 条验收判据与 4 条归因边界，**默认 NOT-EXECUTED、不启动浏览器**；④ 18 条新测试 + 9 条新变异锚守护守卫接线与判据不被稀释。**待做（需用户明确解冻）**：按计划的 4 条命令跑 A/B，B 组须验到 sessionResets[0].available===true 且 messageCountAfter<Before；只有「A 撞墙且 B 通过」才支持命题，「A/B 都通过」说明本轮墙不存在、不能归功边界，「A/B 都撞墙」说明边界无效需另找根因。",
+      "fix": "已做（本轮，不触碰冻结站）：① `platform-freeze.mjs` 白名单 + 硬闸门，唯一解冻开关 ALLOW_FROZEN=1，放行结果写进回执 platformPolicy 留痕；② l2-platform-auto.mjs 在 launch() 前拦截、CANDIDATES 改为由白名单派生、加 PACK_PATH / PACK_VARIANT 便于 A/B 且原行为不变；③ `session-wall-ab.mjs` 产出 2 站 × 2 变体（A 去掉 fresh_session / B 保留 prefer）的机器可读计划，含 5 条验收判据与 4 条归因边界，**默认 NOT-EXECUTED、不启动浏览器**；④ 18 条新测试 + 9 条新变异锚守护守卫接线与判据不被稀释。**待做（需用户明确解冻）**：按计划的 4 条命令跑 A/B，B 组须验到 sessionResets[0].available===true 且 messageCountAfter<Before；只有「A 撞墙且 B 通过」才支持命题，「A/B 都通过」说明本轮墙不存在、不能归功边界，「A/B 都撞墙」说明边界无效需另找根因。 **收口（2026-11-18）**：① deepseek A/B 两轮回执 + 变体 Pack + 只读预检留档，见 RESULT-N25-AB-2026-11-18.md；② 判据逐条结算：packCompleted FAIL / resetActuallyHappened FAIL（无机会）/ likeForLike PASS / verdictRule 命题未获支持；③ 根因分层：磁盘只证 Response timeout（撞墙位从 step_8 前移到 step_5），反自动化是用户现场判断、回执无验证码/WAF 信号，两者分开写；④ 活跃 5 站足以承担目标网络全量验证（L2 全链路已充分），但永远不能证「边界解掉撞墙」（5 站从未撞墙）；⑤ platform-freeze.mjs 头部注释记裁定，不改白名单常量与变异锚点；⑥ N25 按用户裁定关闭，不宣称命题成立。",
       "found_at": "2026-11-11",
-      "closed_at": null,
+      "closed_at": "2026-11-18",
       "appended_evidence": [
-        "本轮未运行 deepseek / longcat：无浏览器启动、无 Pack 导入、无消息发送；evidence 下只有计划文件（status=plan-only / NOT-EXECUTED），不是真机回执。",
-        "chatglm 补测轮（evidence/L2-chatglm-auto-2026-11-11.n23.json）仍是活跃站，8/8、durationMs=311ms；这轮验的是新代码无回归 + 计时字段可用，不是 A/B。",
-        "2026-11-11 19:5x 用户裁定：只授权「本地准备（不跑真机）」+「推送 8 个提交」，**没有解冻**。push 已完成：d7ea0bc..e3ea159，origin/main == HEAD（0/0）。",
-        "自纠：上一轮回复称『4 条命令已备好』不成立——plan.commands 里 PACK_PATH 是 <variant-pack.json> 占位符、两个变体 Pack 从未落盘。已修：emitVariantPacks() 纯本地生成带硬性自检的 A/B 变体（ab-pack-2026-11-11.no-boundary.json / .with-boundary.json），命令改用真实绝对路径并带 sha256，计划明写 imported/executed=false；补「4 轮必须串行」「预检也要 ALLOW_FROZEN=1」两条约束。守护：session-wall-ab.test.mjs 15/15、局部变异 8/8，RESULT §18.2。",
-        "dist 一致性已核：npm run build 退出码 0，content-script.js / service-worker.js build 前后 sha256 均 IDENTICAL；证据 evidence/dist-consistency-2026-11-11.json。",
-        "解冻前置 4 条仍只满足 1 条（dist）：无明确解冻指令、两站登录态未核（deepseek 从未预检、longcat 只有 11-10 旧快照）、32 步额度未确认。⇒ 命题仍未验，N25 保持 open。"
+        "2026-11-18 完整 A/B 前置：dist build 前后 sha256 IDENTICAL（content-script.js 420c0fad… / service-worker.js d7ee83c0…）；变体 Pack 两包 diff 唯一差异是 B 组多一行 fresh_session=prefer；冻结两站只读预检 composerVisible=true、looksLikeLogin=false、未发包。",
+        "deepseek A（no-boundary）：L2-deepseek-auto-2026-11-18.ab-no-boundary.json，success=false，4/5 步，step_5_boundary Response timeout 723.6s，sessionResets=[]，unfrozenBy=ALLOW_FROZEN=1。",
+        "deepseek B（with-boundary）：L2-deepseek-auto-2026-11-18.ab-with-boundary.json，success=false，4/5 步，step_5_boundary Response timeout 723.5s，sessionResets=[]，unfrozenBy=ALLOW_FROZEN=1。两轮都未到 step_8，fresh_session 未获触发——不是「边界试过无效」而是「无机会」。",
+        "longcat 两轮按裁定未执行：evidence 下无 L2-longcat-*.ab-*.json，只有 L2-precheck-2026-11-18.deepseek-longcat.json（只读、未发包）。plan 文件 status=plan-only、4 条命令只执行 2 条。",
+        "用户裁定原话：「deepseek和longcat 防范自动化机制严格……deepseek和longcat 不适合作为本项目目标网络源」；收口方式选「停止并收口 N25」，保留只读预检与两轮回执作证据。",
+        "反自动化定性是产品裁定非实测：回执无验证码/WAF/风控信号，磁盘只支持 Response timeout；历史 RMR-2026-11-11-01 记载 deepseek step_8 是答案生成超取回窗口、longcat 是平台回「服务出错啦」。撞墙位本轮从 step_8 前移到 step_5，位置漂移未受控归因。"
       ]
     },
     {
