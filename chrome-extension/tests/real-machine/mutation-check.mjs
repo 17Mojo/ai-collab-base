@@ -1451,6 +1451,47 @@ const MUTATIONS = [
     expectTest: "声明站（deepseek）：两种模式都 PASS，且打印的用例名不含「命中」二字",
   },
 
+  // ── deepseek 的 Enter 兜底（N54 / A3，2026-11-19） ─────────────────
+  // 这是 deepseek 发送消息的**唯一活路径**。此前它一行测试都没有：
+  // 把 dispatchEvent 删掉，整套测试照样全绿，而站点会静默发不出消息、卡到超时。
+  {
+    name: "deepseek 的 Enter 兜底被掐掉（dispatchEvent 不再执行）",
+    why: "选择器为空之后 Enter 是唯一活路径；它不执行 = deepseek 一条消息都发不出去，而且失败形态是「等回复超时」，看起来像站点慢",
+    target: "src/platforms/deepseek-adapter.js",
+    find: "      input.dispatchEvent(",
+    replace: "      if (false) input.dispatchEvent(",
+    testFile: "deepseek-clicksend.test.mjs",
+    expectTest:
+      "clickSend() 把 Enter keydown 派发到输入框（形状：type/key/code/bubbles 一个都不能少）",
+  },
+  {
+    name: "deepseek 的 Enter 事件不再冒泡",
+    why: "真机把 keydown 监听挂在祖先上；bubbles:false 时事件到不了，键按了等于没按",
+    target: "src/platforms/deepseek-adapter.js",
+    find: "          bubbles: true,",
+    replace: "          bubbles: false,",
+    testFile: "deepseek-clicksend.test.mjs",
+    expectTest: "Enter 事件会冒泡到 document（不是只落在输入框自己身上）",
+  },
+  {
+    name: "deepseek 把猜出来的发送选择器塞回去",
+    why: "那四条 button[...] 从未在真机上命中过（N54/N60 无工件）；塞回去等于让一个已验证的结论退回成猜测，而矩阵不会红——fixture 里也没有按钮",
+    target: "src/platforms/deepseek-adapter.js",
+    find: "  sendButton: [],",
+    replace: "  sendButton: ['button[data-testid=\"send-button\"]'],",
+    testFile: "deepseek-clicksend.test.mjs",
+    expectTest: "deepseek 的 sendButton 选择器必须是空数组（N54 的结论，不是遗漏）",
+  },
+  {
+    name: "deepseek 的按钮分支被当死代码删掉",
+    why: "它在当前配置下不可达，但一旦 N60 补采到工件、选择器被填回去就会活；删了它，将来填回选择器也不会点按钮，只会敲 Enter",
+    target: "src/platforms/deepseek-adapter.js",
+    find: "    if (button && !button.disabled) {",
+    replace: "    if (false) {",
+    testFile: "deepseek-clicksend.test.mjs",
+    expectTest: "若 getSendButton() 能返回按钮，clickSend() 优先点它而不是敲 Enter",
+  },
+
   // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────
   // 四轮 A/B 全部 723.x s 失败、截图却显示 AI 已答完：长会话卸载旧回答，
   // 计数不涨 ⇒ countGrew 恒 false。下面把「内容型增长信号」的每一环

@@ -159,6 +159,26 @@ Totals: 2 passed, 4 failed (6 items)
 **不选「位置锚定 / 哈希类名」**：那只是把今天的猜测写死，站点改版即漂；而且  它会让 PASS 变成
 「命中了一个我们瞎猜的元素」，比没有更危险。
 
+**A3 实测（2026-11-19，已完成）**
+
+- `SELECTORS.sendButton: []`，原位置写了长注释。判据是**采过的**而不是推的：
+  `fixtures/real/deepseek.json` 的 `sendButtonFound=false` 正是这四条选择器在登录态真机页面上
+  跑出来的结果——不是猜测，是采集器留的痕。`findElement([])` 不循环，直接返回 null。
+- `clickSend()` 保留「有按钮就点、没有就按 Enter」的形状，但注释写明**当前第一条是死分支**，
+  以及为什么保留（N60 补采后不用再改一次）。**不许**读成「按钮路径也被测过了」。
+- 新增 `tests/deepseek-clicksend.test.mjs`（7 用例）：事件形状（`type`/`key`/`code`/`bubbles`
+  一个都不能少）、真的派发到输入框、真的冒泡到 document、没有输入框时不乱发键、
+  按钮分支仍活着（有按钮就点 / disabled 就回落 Enter）。
+- **改前状态必须记下**：这条 Enter 兜底此前**一行测试都没有**。把那三行 `dispatchEvent` 删掉，
+  整套测试照样全绿，而 deepseek 会静默发不出消息、卡到 Response timeout。
+  「一直能用」是运气，不是验证。
+- 4 条变异锚：Enter 被掐掉 / 事件不冒泡 / 把猜的选择器塞回去 / 按钮分支被删，4/4 被杀。
+- **又抓到自己一条错**：`spyKeydown` 原来写 `addEventListener(..., true)`（捕获阶段），
+  捕获不看 `bubbles`，于是「测冒泡」的用例根本测不出冒泡——变异锚「不冒泡」在这条用例下**存活**，
+  才发现用例写反了。改成冒泡阶段后才杀死。这是同一天里第三次「断言的对象不是被测物」。
+- 矩阵无变化（108/125、`--real` 20/29），N54 关闭。**N54 关闭的含义是「现有配置与证据自洽、
+  唯一的活路径有守护」，不是「发送区已按真机还原」**——那件事仍然卡在 N60。
+
 **A2 实测（2026-11-19，已完成；与上文第 2 步有一处实质偏离）**
 
 - 落地：删掉 `mock-dom-deepseek.html` 里那个 `button[data-testid=send-button][aria-label=发送][class=send-button]`；
@@ -230,7 +250,7 @@ N25 的历史证据一分不丢（回执与计划都还在 `evidence/`），只�
 ### 执行顺序（依赖关系）
 
 ```
-A1 证据对账 ✅ →  B1/B2 解耦  →  A2 fixture ✅ / A3 adapter 收口  →  B3 计划退役
+A1 证据对账 ✅ →  B1/B2 解耦  →  A2 fixture ✅ / A3 adapter 收口 ✅  →  B3 计划退役
             →  P0 立项  →  P2 常量改动  →  P3 离线门禁  →  P4 真机验收
 ```
 

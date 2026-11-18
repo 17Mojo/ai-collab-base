@@ -238,8 +238,14 @@ test("deepseek 的发送区：DOM 里没有 button 形态的发送控件，也�
     "必须显式声明「本站没有 button 形态的发送控件」",
   );
 
-  // 关键一击：拿**生产 adapter 自己的四条选择器**去问这个 DOM。
-  // 这比正则强——它问的是「选择器会不会命中」，而不是「文件里有没有这几个字」。
+  // 拿**生产 adapter 自己的选择器**去问这个 DOM：问的是「会不会命中」，
+  // 而不是「文件里有没有这几个字」——正则会被注释骗，选择器不会。
+  //
+  // ⚠️ A3（2026-11-19）之后 `SELECTORS.sendButton` 已是空数组，所以下面这一问
+  // **目前是空转**（对空集合求 any 恒为 false）。保留它的理由不是自欺：
+  // 一旦有人把选择器加回来，这行立刻变成真检查；而「不许加回来」这道门
+  // 由 `deepseek-clicksend.test.mjs` 的「选择器必须是空数组」把着。
+  // 两条一起才是完整的：一条管「现在为空」，一条管「将来填了也不能乱命中」。
   return import("../src/platforms/deepseek-adapter.js").then(({ SELECTORS }) => {
     const hits = SELECTORS.sendButton
       .map((sel) => ({ sel, n: doc.querySelectorAll(sel).length }))

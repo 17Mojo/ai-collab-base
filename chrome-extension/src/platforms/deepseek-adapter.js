@@ -14,12 +14,41 @@ const SELECTORS = {
     '#chat-input',
     'textarea[placeholder*="message"]',
   ],
-  sendButton: [
-    'button[data-testid="send-button"]',
-    'button[aria-label*="Send"]',
-    'button[aria-label*="发送"]',
-    'button[class*="send"]',
-  ],
+  /**
+   * 发送按钮：**空数组，这是结论不是遗漏**（N54 / A3，2026-11-19）。
+   *
+   * 此前是四条：
+   *   'button[data-testid="send-button"]'
+   *   'button[aria-label*="Send"]'
+   *   'button[aria-label*="发送"]'
+   *   'button[class*="send"]'
+   *
+   * 为什么删：这四条在真机上一次都没命中过，有工件为证——
+   * `tests/real-machine/fixtures/real/deepseek.json` 的 `sendButtonFound=false`
+   * 是采集器**用本数组里这四条选择器**在登录态真机页面上跑出来的结论。
+   * 也就是说「它们命中不了」不是猜测，是采过的。
+   *
+   * 那它们为什么曾经看起来能用：`tests/adapter-matrix/fixtures/mock-dom-deepseek.html`
+   * 里摆了一个 `<button data-testid="send-button" aria-label="发送" class="send-button">`，
+   * 它同时命中这四条——而那个 button 在真机上不存在。等于照着选择器写 fixture、
+   * 再用 fixture 验选择器（N59）。fixture 已在 A2 清掉，选择器在 A3 清掉，
+   * 两头都不再自己骗自己。
+   *
+   * 为什么不换成「猜一个更像真机的选择器」：发送区的真实 DOM 从来没有落过盘
+   * （N60：`fixtures/real/deepseek.html` 只有 270 字节的输入框子树）。没有工件就填，
+   * 填进去的只是记忆或猜测；而这个文件的读者会以为它是验证过的。
+   *
+   * 后果与意图：`getSendButton()` 恒返回 null（`findElement([])` 不循环，直接 null），
+   * 于是 `clickSend()` 的唯一活路径是 **Enter 键**——这是**设计**，不是退化：
+   * 历史 L2 回执里 deepseek 的消息确实发出去过，走的就是 Enter。
+   * 该路径现在有单测与变异锚守着（`tests/deepseek-clicksend.test.mjs`）。
+   *
+   * 什么时候该往里填：等 N60 补采到输入区容器的 `outerHTML` 工件之后，
+   * 按工件写，并且**同时**改 `data-expect-send-button` 那一侧的声明与矩阵断言。
+   * 在拿到工件之前，任何人想把四条中的任何一条加回来，都会被
+   * `tests/deepseek-clicksend.test.mjs` 的「选择器必须为空」判红——那道门就是拦这个的。
+   */
+  sendButton: [],
   // 🔧 2026-11-11 A/B 第 1 轮真机实测（evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.json）：
   // A 组在 step_5_boundary 判 Response timeout（723.7s = 4×180s + 3.7s），
   // 但同轮截图里 step_5 的提问气泡**和 AI 完整回答都在页面上** ⇒ 假超时。
@@ -143,6 +172,26 @@ class DeepSeekAdapter extends PlatformAdapter {
     await delay(100);
   }
 
+  /**
+   * 发送。
+   *
+   * 顺序仍是「有按钮就点、没有就按 Enter」，但**在当前选择器配置下第一条是死分支**：
+   * `sendButton: []`（见上面的注释），`getSendButton()` 恒 null ⇒ 一定走 Enter。
+   *
+   * 为什么还留着第一条而不是删掉：它是 `PlatformAdapter` 的通用形状，
+   * 一旦 N60 补采到按钮工件、选择器被填回去，这里不需要再改一次。
+   *
+   * 但它**现在不会被真的执行到**（选择器空 ⇒ 永远取不到按钮），所以它的正确性
+   * 只由「替身」验过：`deepseek-clicksend.test.mjs` 里有两条用例把 `getSendButton()`
+   * 换成假按钮，分别钉住「有按钮就点」与「disabled 就回落 Enter」。
+   * 换句话说，分支的**逻辑**有守护，分支的**前提**（真机上有这么个按钮）没有——
+   * 后者是 N60 的事。别把这两件事读成一件事。
+   *
+   * Enter 事件带 `key` + `code` + `bubbles`：真机站点把 keydown 挂在祖先上监听，
+   * 不冒泡就收不到；只给 `code` 不给 `key` 时，部分实现读 `event.key` 会拿到空串。
+   * 这两个属性是被历史 L2 回执（消息确实发出去了）间接验证过的最小集合，
+   * 单测把事件形状钉住了——删任何一个都会红。
+   */
   async clickSend() {
     const button = this.getSendButton();
     if (button && !button.disabled) {
@@ -151,7 +200,7 @@ class DeepSeekAdapter extends PlatformAdapter {
       return;
     }
 
-    // fallback: Enter 键发送
+    // fallback: Enter 键发送 —— 当前配置下这是唯一活路径
     const input = this.getChatInput();
     if (input) {
       input.dispatchEvent(
