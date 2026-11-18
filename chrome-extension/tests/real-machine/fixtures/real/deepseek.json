@@ -1,37 +1,19 @@
 {
-  "capturedAt": "2026-10-25T01:11:28.104Z",
+  "capturedAt": "2026-11-18T13:48:38.903Z",
   "platform": "deepseek",
   "name": "DeepSeek",
   "url": "https://chat.deepseek.com/",
   "locale": "zh-CN",
   "httpStatus": 200,
-  "composerAppeared": false,
-  "outcome": "unverified",
-  "reason": "落在登录墙（信号：a[href*=\"auth\"]）——需要已登录的 profile 才能采到",
-  "composerFound": false,
+  "composerAppeared": true,
+  "outcome": "captured",
+  "reason": "",
+  "composerFound": true,
   "sendButtonFound": false,
   "messageCount": 0,
   "messageListSelectors": [
     {
-      "selector": "[data-testid=\"conversation-turn\"]",
-      "matched": false,
-      "count": 0,
-      "samples": []
-    },
-    {
-      "selector": ".chat-message",
-      "matched": false,
-      "count": 0,
-      "samples": []
-    },
-    {
-      "selector": "[class*=\"message\"]",
-      "matched": false,
-      "count": 0,
-      "samples": []
-    },
-    {
-      "selector": ".ds-chat-message",
+      "selector": ".ds-assistant-message-main-content",
       "matched": false,
       "count": 0,
       "samples": []
@@ -65,45 +47,45 @@
     {
       "selector": "[class*=\"content\"]",
       "matched": true,
-      "count": 7,
+      "count": 3,
       "samples": [
         {
           "tag": "div",
-          "className": "ds-form-item__content",
-          "text": "+86",
-          "textLength": 3,
-          "childCount": 1,
+          "className": "ds-button ds-button--iconLabelTertiary ds-button--icon ds-button--capsule ds-button--m ds-button--icon-relative-m ds-button--sizing-content d05a0287",
+          "text": "",
+          "textLength": 0,
+          "childCount": 2,
           "rect": {
-            "width": 336,
-            "height": 48,
-            "top": 306,
-            "left": 416
+            "width": 16,
+            "height": 16,
+            "top": 25,
+            "left": 198
           }
         },
         {
           "tag": "div",
-          "className": "ds-form-item__content",
-          "text": "发送验证码",
-          "textLength": 5,
-          "childCount": 1,
+          "className": "ds-button ds-button--iconLabelTertiary ds-button--icon ds-button--capsule ds-button--m ds-button--icon-relative-m ds-button--sizing-content _7d1f5e2",
+          "text": "",
+          "textLength": 0,
+          "childCount": 2,
           "rect": {
-            "width": 336,
-            "height": 48,
-            "top": 376,
-            "left": 416
+            "width": 16,
+            "height": 16,
+            "top": 25,
+            "left": 232
           }
         },
         {
-          "tag": "span",
-          "className": "ds-button__content",
-          "text": "发送验证码",
-          "textLength": 5,
-          "childCount": 0,
+          "tag": "div",
+          "className": "ds-button ds-button--iconLabelTertiary ds-button--icon ds-button--capsule ds-button--m ds-button--icon-relative-m ds-button--sizing-content _8023265",
+          "text": "",
+          "textLength": 0,
+          "childCount": 2,
           "rect": {
-            "width": 70,
-            "height": 22,
-            "top": 389,
-            "left": 661
+            "width": 12,
+            "height": 12,
+            "top": 139,
+            "left": 226
           }
         }
       ]
@@ -130,6 +112,11 @@
     }
   ],
   "isTyping": false,
-  "messageCountModel": null,
+  "messageCountModel": {
+    "ok": true,
+    "count": 0,
+    "reason": "落地页消息数为 0、isTyping() 为 false，符合「无会话即无消息 / 空闲即不忙」的不变量",
+    "falsePositiveSelectors": []
+  },
   "sanitized": true
 }

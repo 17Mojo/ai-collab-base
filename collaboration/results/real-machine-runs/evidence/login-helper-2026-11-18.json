@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-11-18T13:46:06.815Z",
+  "mode": "login-helper",
+  "waitMinutes": 12,
+  "profile": "/Users/raymondna/Library/Application Support/rm-qianwen-l2-profile",
+  "results": [
+    {
+      "platform": "deepseek",
+      "state": {
+        "url": "https://chat.deepseek.com/",
+        "composerVisible": true,
+        "hints": [],
+        "title": "DeepSeek - 探索未至之境",
+        "account": {
+          "userIds": {},
+          "userId": null,
+          "asideText": ""
+        }
+      },
+      "loggedIn": true,
+      "why": "输入框可见 + 无登录提示 + 非认证路径（⚠️ 账号身份未取到，只能证明「有人登录了」）",
+      "accountUnverified": true,
+      "checkedAt": "2026-11-18T13:46:06.663Z"
+    }
+  ]
+}

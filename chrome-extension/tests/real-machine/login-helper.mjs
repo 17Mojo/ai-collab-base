@@ -85,6 +85,14 @@ const STAMP = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2,
 ).padStart(2, "0")}`;
 const OUT = process.env.OUT || `${EVIDENCE_DIR}/login-helper-${STAMP}.json`;
 
+// ⚠️ 这一行在 8a09c1f（N34/N35 那次修）里被连带删掉了：那笔提交把本文件里
+// 「登录判据的本地副本」整段（79 行）删掉改为 import login-verdict.mjs，
+// 而 `const log` 正好落在那段范围内——13 处 `log(...)` 调用一个没动。
+// 于是本脚本从 8a09c1f 起**一跑就死**（`ReferenceError: log is not defined`，
+// 被顶层 catch 打成一行 `FAIL: log is not defined`），而它没有任何测试覆盖，
+// 365 条单测全绿，直到 2026-11-18 真要给 deepseek 补登录态时才被发现。见台账 N51。
+const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
+
 // 判据唯一定义在 login-verdict.mjs —— 三个调用点（本文件 / l2-platform-auto /
 // l2-qianwen-auto）共用同一把尺子，不在此处另写一份。见台账 N34。
 

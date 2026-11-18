@@ -1085,9 +1085,74 @@
       ],
       "detail": "真机只读探针（2026-11-11，历史会话页，redlines 全 false）的计数里，`[data-testid=\"conversation-turn\"]`=0、`.ds-chat-message`=0、`.chat-message`=0——这三个类名在该站点上根本不存在。而 fixture 是 2026-10-25（71c9eac）手写的 mock，用的正是前两个不存在的类；三块「消息」里第三块没有 data-role 标注，正文写的是输入框里那句提问（本意是 human 气泡），外层却仍套着 AI 正文容器。\n71c9eac 当时矩阵 110/114 全绿，因为 messageList 首条是 `[data-testid=\"conversation-turn\"]`，只命中前两块被标注的卡。8162248 把 messageList 改成「只数 AI 正文容器」之后，`getMessageList()` 返回 3 个 `.ds-assistant-message-main-content`，第三个落在那块未标注的卡里 ⇒ 两条断言同时红（不返回标注范围之外 / getLatestMessage 落在最后一条标注消息内）。\n归因可钉死：26b2627（2026-11-18T06:08Z，早于 8162248）的失败 job 只有 python-tests，chrome-extension-tests 是绿的；2100e5e（06:35Z，即 8162248 之后）起 chrome-extension-tests 每次必红。\n与 docs/REAL_MACHINE_REGRESSION.md §6.1 里「千问的 mock fixture 是照着旧选择器写的假 DOM，矩阵因此『因为错的原因而绿』」是同一类缺陷：fixture 与生产选择器互为镜像地一起漂移，两边都失去发现漂移的能力。",
       "impact": "chrome-extension-tests 自 2026-11-18 起长期红，而报错文案（「返回了标注范围之外的元素——这正是『回退到页面全部 div』的旧缺陷」）会把人指向生产 adapter，可生产选择器是对的——按报错去改只会把真实修复改回去。反向同样有害：这块 fixture 连真机的类名都没有，deepseek 真发生选择器漂移它也照样绿。",
-      "fix": "已修（2026-11-18）。只重写 fixture：断言一条未改、没有 skip、没有放宽阈值、没有把 human 气泡标成 message 来「凑绿」。\n按探针计数与 mixedGroup 的 outer HTML 逐层还原：AI 回答 = `div.ds-message` > `div.ds-markdown.ds-assistant-message-main-content` > `p.ds-markdown-paragraph` > span（3 条，标 data-role=\"message\"）；human 气泡 = `div.d29f3d7d.ds-message` > `.fbb737a4` > `.ds-collapsible-text`（2 条，标 data-role=\"user-message\"，**不带** AI 正文容器）；外层补 `.ds-virtual-list-visible-items`；删掉真机不存在的 `ds-chat-message` 与 `data-testid=\"conversation-turn\"`。文末 `.chat-message` / `.message-content` 两处合成诱饵保留并显式标注「非快照内容」，继续守「回退到宽选择器」这一类。\nhuman 气泡刻意不标 data-role=\"message\"：它一旦被 getMessageList() 计入就落在标注范围之外，矩阵立刻红——这正是 8162248 要守的那条线（human 气泡进基准 ⇒ 计数跳变、把提示词当回复取走）。\n重建后计数与探针逐项吻合：div.ds-message=5、.ds-assistant-message-main-content=3、data-role=message 3 个、data-role=user-message 2 个、两个旧类均 0；[class*=\"message\"]=10（8 个快照元素 + 2 个合成诱饵）。\n验证：矩阵全量 116/125 passed / 0 failed / 9 skipped（11 个平台全绿）；`node tests/run-tests.mjs` → 369 passed / 0 fail；三条定向变异全被杀——messageList 改 `div.ds-message`（被 human 气泡抓住）→ 9/11、改 `[class*=\"message\"]` → 8/11、改回已死的 `[data-testid=\"conversation-turn\"]` → 8/11。\n仍未解决：DeepSeek 没有可用的真实快照（tests/real-machine/fixtures/real/deepseek.json 记 outcome=unverified，撞登录墙）——本 fixture 是「按探针计数重建的 mock」而不是逐节点快照，要升级只能补一次已登录 profile 的 L1 采数。",
+      "fix": "已修（2026-11-18）。只重写 fixture：断言一条未改、没有 skip、没有放宽阈值、没有把 human 气泡标成 message 来「凑绿」。\n按探针计数与 mixedGroup 的 outer HTML 逐层还原：AI 回答 = `div.ds-message` > `div.ds-markdown.ds-assistant-message-main-content` > `p.ds-markdown-paragraph` > span（3 条，标 data-role=\"message\"）；human 气泡 = `div.d29f3d7d.ds-message` > `.fbb737a4` > `.ds-collapsible-text`（2 条，标 data-role=\"user-message\"，**不带** AI 正文容器）；外层补 `.ds-virtual-list-visible-items`；删掉真机不存在的 `ds-chat-message` 与 `data-testid=\"conversation-turn\"`。文末 `.chat-message` / `.message-content` 两处合成诱饵保留并显式标注「非快照内容」，继续守「回退到宽选择器」这一类。\nhuman 气泡刻意不标 data-role=\"message\"：它一旦被 getMessageList() 计入就落在标注范围之外，矩阵立刻红——这正是 8162248 要守的那条线（human 气泡进基准 ⇒ 计数跳变、把提示词当回复取走）。\n重建后计数与探针逐项吻合：div.ds-message=5、.ds-assistant-message-main-content=3、data-role=message 3 个、data-role=user-message 2 个、两个旧类均 0；[class*=\"message\"]=10（8 个快照元素 + 2 个合成诱饵）。\n验证：矩阵全量 116/125 passed / 0 failed / 9 skipped（11 个平台全绿）；`node tests/run-tests.mjs` → 369 passed / 0 fail；三条定向变异全被杀——messageList 改 `div.ds-message`（被 human 气泡抓住）→ 9/11、改 `[class*=\"message\"]` → 8/11、改回已死的 `[data-testid=\"conversation-turn\"]` → 8/11。\n仍未解决：DeepSeek 没有可用的真实快照（tests/real-machine/fixtures/real/deepseek.json 记 outcome=unverified，撞登录墙）——本 fixture 是「按探针计数重建的 mock」而不是逐节点快照，要升级只能补一次已登录 profile 的 L1 采数。\n【2026-11-18 补】：当日补到了 DeepSeek 的可用真实快照。根因不是「DOM 采不到」，而是两件事叠在一起——① `snapshot-capture.mjs` 只会开无态浏览器（`browser.newContext()`），任何要登录的站必然判 unverified；② `login-helper.mjs` 自 8a09c1f 起一跑就死（见 N51），所以那套持久 profile 一直没被真正建起来用过。给采集器加 `--profile-dir` 后实采结果：`fixtures/real/deepseek.json` → outcome=captured、composerFound=true、isTyping=false；`adapter-test-runner.js --real` 里 DeepSeek 从「一行 SKIP」变成 2/3 passed, 1 skipped。同日在真实会话页用 `dom-shape-probe.mjs` 复核了本条的立论（证据 `evidence/deepseek-dom-shape-2026-11-18.json`）：`.ds-assistant-message-main-content`=3、`div.ds-message`=5、`[class*=\"message\"]`=8，与 2026-11-11 探针逐项一致 —— 重写后的 fixture 形状与今天的真机吻合。仍存的能力缺口另记 N53（只采落地页）与 N54（sendButton 恒 0 命中）。",
       "found_at": "2026-11-18",
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N51",
+      "priority": "P1",
+      "status": "closed",
+      "title": "login-helper.mjs 自 8a09c1f 起一跑就死（`log is not defined`）：删本地判据副本时把 `const log` 连带删了，13 处调用一个没动",
+      "reader": "任何要「补一次已登录 profile 的真机采数」的人——这套 profile 的唯一生产者就是它，它死了等于这条路整个不存在。",
+      "where": [
+        "chrome-extension/tests/real-machine/login-helper.mjs:92（修复处，补回 `const log = ...`）",
+        "chrome-extension/tests/real-machine/login-helper.mjs:125/128/143/150/173/176/178/179/183/187（10 处 `log(...)` 调用）",
+        "8a09c1f（N34/N35 那次修：把登录判据的本地副本整段 79 行删掉改 import，`const log` 落在那段范围内）"
+      ],
+      "detail": "8a09c1f 删掉了本文件里「登录判据的本地副本」（79 行）改为 import login-verdict.mjs，`const log = (...a) => console.log(...)` 正好在那段里被一起删掉，而 10 处 `log(...)` 调用一处未改。顶层 catch 把它打成一行 `FAIL: log is not defined` 就退出了，既没有窗口、也没有证据文件——看起来像「登录失败」，实际是脚本自己坏了。\n它从 2026-11-18 15:13（8a09c1f）起就是死的，当天 21:43 真要给 deepseek 补登录态时才被发现；期间 365→369 条单测、159 条变异检查全绿，因为没有一条测试会 import 这个脚本（它 import 即 `main()`，会真的拉浏览器）。",
+      "impact": "「已登录 profile 的真机采数」这条路径事实上不存在：profile 里的登录态只能靠手工开 Chrome 维护，而 snapshot-capture 又不支持带 profile（见 N50 补充）。于是 7 家平台的 real fixture 全是无态采集物，deepseek 更是长期停在 unverified。",
+      "fix": "已修（2026-11-18）。补回 `const log` 定义，并在原处写明「它是被 8a09c1f 连带删掉的、为什么 369 条单测没抓到」。修后实跑：SITES=deepseek WAIT_MIN=12 → 打印「已打开 DeepSeek / ✅ 全部站点已登录 / 结果已写」，产出 `evidence/login-helper-2026-11-18.json` 与截图 `evidence/login-deepseek-2026-11-18.png`（截图可见左侧完整历史、左下角账号 17Mojo ⇒ 确为已登录态）。\n未做的事：没有给这个脚本加自动化测试——它 import 即执行、会拉真浏览器，不适合进 CI。它暴露的「没有静态检查所以删定义漏调用查不出来」另记 N52。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N52",
+      "priority": "P2",
+      "status": "open",
+      "title": "chrome-extension 侧没有任何 JS 静态检查（unused/未定义变量），「删了定义留着调用」这类改动在 369 条单测 + 159 条变异下全绿",
+      "reader": "任何重构 chrome-extension/tests 或 src 里「函数/常量被删除或改名」的人；以及任何以为「测试全绿就说明改干净了」的人。",
+      "where": [
+        "chrome-extension/package.json:2-8（scripts 只有 build / test / test:adapters，没有 lint）",
+        "chrome-extension/node_modules（无 eslint / typescript / acorn，引入即上百个文件）",
+        ".github/workflows/test.yml:207-241（chrome-extension-tests 跑矩阵 / 单测 / 变异 / build，没有静态检查）"
+      ],
+      "detail": "N51 是这样漏过去的：`const log` 被删、10 处 `log(...)` 留着，Node 只在**执行到那一行**才报 ReferenceError。它恰好在一个没人 import 的脚本里，于是 369 条单测（只 import 有导出的模块）、159 条变异检查（只对指定文件做定点改坏）、`npm run build`（只打包 src）三道门禁全绿。\n同类风险面不止这一个文件：`tests/real-machine/*.mjs` 有 24 个脚本，多数「import 即执行」，天然进不了单测；`src/` 侧虽有矩阵与单测覆盖，但覆盖的是**行为**，不是**引用完整性**。",
+      "impact": "静态类缺陷（未定义标识符、未使用变量、拼错的 import 名）只能靠人跑一次才发现，而「跑一次」往往正好是最需要它工作的那一刻（N51 就是卡在真机采数的前置步骤上）。它不制造错误结论，但制造「工具静默失效」。",
+      "fix": "未修（本轮未动）。三个候选，取舍不同，需要裁定：\n① eslint（`no-undef` + `no-unused-vars`）：最对症，但 chrome-extension/node_modules 有 219 个文件在 git 跟踪中，加依赖要么把上百个文件一起入库、要么改成只认 `npm ci`；还要定 flat config 与既有 369 条测试的兼容面。\n② `tsc --checkJs`：能同时给 JSDoc 类型，但现有代码几乎无 JSDoc，首轮会淹没在噪音里。\n③ 只对 `tests/real-machine/*.mjs` 加一个极窄的守护：用 Node 自身 `--check` 管语法、再跑一次「import 即执行」的脚本做冒烟——覆盖面小，但零依赖、当天可落地。\n建议先做 ③ 止血，再评估 ①。",
+      "found_at": "2026-11-18"
+    },
+    {
+      "id": "N53",
+      "priority": "P2",
+      "status": "open",
+      "title": "真实快照只采落地页 ⇒ 真实快照对账段对 messageList / messageContent 零覆盖，历史上两轮 L2 定位失败正是这个坑",
+      "reader": "任何相信「有真实快照就等于真机验过了」的人；以及任何想用真实快照证明「消息选择器没漂移」的人。",
+      "where": [
+        "chrome-extension/tests/real-machine/snapshot-capture.mjs:64（`platform.url` 全是落地页，如 https://chat.deepseek.com/）",
+        "chrome-extension/tests/real-machine/message-model.mjs:9-24（不变量 1 的前提写死「落地页（没有会话）」）",
+        "chrome-extension/tests/adapter-matrix/adapter-test-runner.js:437-475（真实快照段只有 3 条断言：chat-input / send-button / isTyping，没有 messageList）"
+      ],
+      "detail": "落地页是「新对话」，一条消息都没有，所以真实快照里 messageList 必然 0 命中，`data-probe-role` 也就标不出任何消息元素；真实快照对账段因此只能验「输入框在不在」「空闲时不忙」，验不了「消息选择器还认不认得真气泡」。11 家平台共 7 家有 real fixture，这 7 家在 messageList 上的真机覆盖是 0。\n想把会话页采下来，需要同时改两处：① 采集器支持指定页面（会话 URL 只能从侧栏历史里取，`platform.url` 表达不了）；② `message-model.mjs` 的不变量 1 只在落地页成立——会话页上「messageList 命中 3 个有内容的元素」恰恰是**正确**的，现在会被判成硬伤（本轮实采会话页就撞上了：3 个 `.ds-assistant-message-main-content` 被判「计数被界面外壳撑起来」，采集器退出码 1）。这不是加一个 flag 的事，得让判定知道「这一页是什么页」。",
+      "impact": "真实快照给了「真机验过」的错觉，但验的只是落地页那三件事。选择器漂移最可能先坏在消息容器上（虚拟列表改版、DOM 结构重排），而这一层恰恰没有真机守护——2026-11-10 / 11-11 两轮 L2 失败全是 messageList 0 命中，定位时反复踩「打开会话页数不出气泡」。",
+      "fix": "未修（本轮只把 DeepSeek 的落地页快照补上，并把会话页证据改用现成的 `dom-shape-probe.mjs` 留档，证据 `evidence/deepseek-dom-shape-2026-11-18.json`）。\n建议方案（未实施）：采集器加 `--url`（收窄到单平台）+ sidecar 里记 `pageKind: landing|session`；`assessMessageCountModel(dom, {pageKind})` 按页种切换不变量——落地页＝命中的元素必须全空；会话页＝命中的元素必须全非空、且「每条形如消息卡的元素至多命中一次」；真实快照对账段再加一条只在 pageKind=session 时生效的 messageList 断言。",
+      "found_at": "2026-11-18"
+    },
+    {
+      "id": "N54",
+      "priority": "P3",
+      "status": "open",
+      "title": "DeepSeek 落地页上一个 `<button>` 都没有：发送按钮是 div 图标，4 条 sendButton 选择器恒 0 命中，clickSend() 永远走 Enter 兜底",
+      "reader": "任何以为「矩阵里 sendButton 那三条是全绿的」的人；以及任何要给 deepseek 补发送按钮选择器的人。",
+      "where": [
+        "chrome-extension/src/platforms/deepseek-adapter.js:17-22（sendButton: button[data-testid=send-button] / button[aria-label*=Send] / button[aria-label*=发送] / button[class*=send]）",
+        "chrome-extension/src/platforms/deepseek-adapter.js:138-160（clickSend：取不到按钮就派发 Enter keydown）",
+        "chrome-extension/tests/real-machine/fixtures/real/deepseek.json（sendButtonFound=false）"
+      ],
+      "detail": "2026-11-18 用登录态实采落地页后 `sendButtonFound=false`。复查真实 DOM：`document.querySelectorAll(\"button\")` 在落地页上命中 0 个；输入区右侧那个紫色的发送箭头是 `div.ds-icon > svg`，祖先六层全是构建期哈希类名（`_020ab5b` / `_77cefa5 _9996a53` / `aaff8b8f` / `_9a2f8e4` / `_660ca72`），没有 aria-label / data-testid / role / 稳定 class。所以 `button[...]` 这四条选择器**不可能命中**，与漂移无关，是形状不匹配。\n矩阵里 deepseek 的「getSendButton() 命中 fixture 标注的发送按钮」长期是 SKIP（fixture 没标 send-button），真实快照段也是 SKIP（没有标注可对），于是这条一直没被任何门禁问过。",
+      "impact": "功能上不致命：`clickSend()` 取不到按钮会派发 Enter keydown，历史 L2 也确实发出去了。但它意味着「发送按钮」这条链路在 deepseek 上从未被验证，且**看起来是被验证过的**（矩阵全绿，只是那条是 SKIP）。若将来 Enter 兜底被移除或站点改成「Enter 换行」，这条会静默变成发不出去。",
+      "fix": "未修（deepseek 已按 N25 退出目标源、属冻结平台，本轮不动生产选择器）。\n若将来要修：不要写哈希类名。可考虑 `textarea` 的兄弟位置锚定（如 composer 容器内最后一个 `div[tabindex=\"0\"]`）+ 可见性闸，或干脆承认「走 Enter」，把 `sendButton` 留空并在注释里写明「本站无 button 形态的发送控件」，同时让矩阵对 deepseek 的 send-button 断言显式记 SKIP 原因（现在是无声跳过）。",
+      "found_at": "2026-11-18"
     }
   ]
 }

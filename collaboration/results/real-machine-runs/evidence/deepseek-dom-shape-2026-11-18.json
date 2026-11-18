@@ -1,0 +1,495 @@
+{
+  "url": "https://chat.deepseek.com/a/chat/s/df7b803d-3129-4cf7-8e36-84282e26c5ab",
+  "title": "AI智能体定义辨析 - DeepSeek",
+  "totalElements": 1295,
+  "anchors": [
+    {
+      "needle": "你手机里那个只会聊天的 AI 不叫智能体",
+      "found": true,
+      "hits": 22,
+      "leafHits": 2,
+      "candidates": [
+        {
+          "textPreview": "你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。打个比方：你让朋友“帮我订个周末去杭州的高铁”，他不会只回你一句“杭州挺好的”，而是先查你哪天有空、再打开买票软件、比一下时间、下单、最后把车次发给你。会自己把一",
+          "chain": [
+            {
+              "tag": "span",
+              "cls": "",
+              "textLen": 135,
+              "childCount": 0
+            },
+            {
+              "tag": "p",
+              "cls": "ds-markdown-paragraph",
+              "textLen": 135,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ds-markdown ds-assistant-message-main-content",
+              "textLen": 508,
+              "childCount": 4
+            },
+            {
+              "tag": "div",
+              "cls": "ds-message _63c77b1",
+              "textLen": 508,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "_4f9bf79 _43c05b5",
+              "textLen": 508,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-visible-items",
+              "textLen": 1174,
+              "childCount": 5
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-items _6f2c522",
+              "textLen": 1174,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list ds-virtual-list--printable ds-scroll-area ds-scroll-area--show-on-focus-within ds-scroll-area--enabled _2bd7b35",
+              "textLen": 1198,
+              "childCount": 4
+            },
+            {
+              "tag": "div",
+              "cls": "_765a5cd",
+              "textLen": 1623,
+              "childCount": 3
+            }
+          ]
+        },
+        {
+          "textPreview": "把“AI 智能体（Agent）到底是什么”讲给不懂技术的人听。开头用这句：你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。。要求：能不用专业名词就不用，必须用时一句话翻译，多用生活类比和工作场景，像在给朋友解释",
+          "chain": [
+            {
+              "tag": "div",
+              "cls": "_72b6158",
+              "textLen": 141,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "_81e7b5e",
+              "textLen": 141,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-visible-items",
+              "textLen": 407,
+              "childCount": 4
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-items",
+              "textLen": 407,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list",
+              "textLen": 407,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "_4ce999d _42b9b3d ds-scroll-area ds-scroll-area--enabled",
+              "textLen": 407,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "_189b4a0",
+              "textLen": 407,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "_765a5cd",
+              "textLen": 1623,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_7780f2e",
+              "textLen": 1623,
+              "childCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "needle": "为“AI 智能体（Agent）到底是什么”写两个具体使用场景",
+      "found": true,
+      "hits": 23,
+      "leafHits": 2,
+      "candidates": [
+        {
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写两个具体使用场景，格式都是“谁+在做什么+为什么用到它”。要写得让人一看就知道自己是不是这个场景。只输出这两个场景。",
+          "chain": [
+            {
+              "tag": "span",
+              "cls": "",
+              "textLen": 80,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "",
+              "textLen": 80,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ds-collapsible-text",
+              "textLen": 80,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "fbb737a4",
+              "textLen": 80,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "d29f3d7d ds-message _63c77b1",
+              "textLen": 80,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "_9663006",
+              "textLen": 80,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-visible-items",
+              "textLen": 1174,
+              "childCount": 5
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-items _6f2c522",
+              "textLen": 1174,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list ds-virtual-list--printable ds-scroll-area ds-scroll-area--show-on-focus-within ds-scroll-area--enabled _2bd7b35",
+              "textLen": 1198,
+              "childCount": 4
+            }
+          ]
+        },
+        {
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写两个具体使用场景，格式都是“谁+在做什么+为什么用到它”。要写得让人一看就知道自己是不是这个场景。只输出这两个场景。",
+          "chain": [
+            {
+              "tag": "div",
+              "cls": "_72b6158",
+              "textLen": 80,
+              "childCount": 0
+            },
+            {
+              "tag": "div",
+              "cls": "_81e7b5e",
+              "textLen": 80,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-visible-items",
+              "textLen": 407,
+              "childCount": 4
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list-items",
+              "textLen": 407,
+              "childCount": 1
+            },
+            {
+              "tag": "div",
+              "cls": "ds-virtual-list",
+              "textLen": 407,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "_4ce999d _42b9b3d ds-scroll-area ds-scroll-area--enabled",
+              "textLen": 407,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "_189b4a0",
+              "textLen": 407,
+              "childCount": 2
+            },
+            {
+              "tag": "div",
+              "cls": "_765a5cd",
+              "textLen": 1623,
+              "childCount": 3
+            },
+            {
+              "tag": "div",
+              "cls": "_7780f2e",
+              "textLen": 1623,
+              "childCount": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "cls": "ds-message _63c77b1",
+      "count": 3,
+      "avgTextLen": 340,
+      "maxTextLen": 508,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "ds-markdown ds-assistant-message-main-content",
+      "count": 3,
+      "avgTextLen": 340,
+      "maxTextLen": 508,
+      "maxChildren": 4,
+      "sampleTag": "div"
+    },
+    {
+      "cls": "ds-markdown-paragraph",
+      "count": 7,
+      "avgTextLen": 146,
+      "maxTextLen": 289,
+      "maxChildren": 2,
+      "sampleTag": "p"
+    },
+    {
+      "cls": "d29f3d7d ds-message _63c77b1",
+      "count": 2,
+      "avgTextLen": 77,
+      "maxTextLen": 80,
+      "maxChildren": 1,
+      "sampleTag": "div"
+    }
+  ],
+  "customTags": [],
+  "selectorCounts": {
+    ".ds-assistant-message-main-content": {
+      "count": 3,
+      "visible": 3,
+      "samples": [
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 508,
+          "textPreview": "你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。打个比方：你让朋友“帮我订个周末去杭州的高",
+          "kids": 4,
+          "visible": true
+        },
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 223,
+          "textPreview": "场景一：做运营的小李，每周一要交上周数据周报，从三个后台导表格、对口径、算环比、写成汇报邮件。 因为这几步每次都得手动重",
+          "kids": 2,
+          "visible": true
+        },
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 289,
+          "textPreview": "这玩意儿不是人人都需要。适合的人：手上有一摊流程固定、步骤重复、还得跨几个软件来回倒腾的活，比如每周导数据写周报、批量比",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    },
+    ".ds-message": {
+      "count": 5,
+      "visible": 5,
+      "samples": [
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 508,
+          "textPreview": "你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。打个比方：你让朋友“帮我订个周末去杭州的高",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "d29f3d7d ds-message _63c77b1",
+          "textLen": 80,
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写两个具体使用场景，格式都是“谁+在做什么+为什么用到它”。要写得让人一看就知",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 223,
+          "textPreview": "场景一：做运营的小李，每周一要交上周数据周报，从三个后台导表格、对口径、算环比、写成汇报邮件。 因为这几步每次都得手动重",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "d29f3d7d ds-message _63c77b1",
+          "textLen": 74,
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写一段边界标注：明确什么人适合、什么人不适合，可以说明目前还不成熟，但不要写成",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 289,
+          "textPreview": "这玩意儿不是人人都需要。适合的人：手上有一摊流程固定、步骤重复、还得跨几个软件来回倒腾的活，比如每周导数据写周报、批量比",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    },
+    "div.ds-message": {
+      "count": 5,
+      "visible": 5,
+      "samples": [
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 508,
+          "textPreview": "你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。打个比方：你让朋友“帮我订个周末去杭州的高",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "d29f3d7d ds-message _63c77b1",
+          "textLen": 80,
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写两个具体使用场景，格式都是“谁+在做什么+为什么用到它”。要写得让人一看就知",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 223,
+          "textPreview": "场景一：做运营的小李，每周一要交上周数据周报，从三个后台导表格、对口径、算环比、写成汇报邮件。 因为这几步每次都得手动重",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "d29f3d7d ds-message _63c77b1",
+          "textLen": 74,
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写一段边界标注：明确什么人适合、什么人不适合，可以说明目前还不成熟，但不要写成",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 289,
+          "textPreview": "这玩意儿不是人人都需要。适合的人：手上有一摊流程固定、步骤重复、还得跨几个软件来回倒腾的活，比如每周导数据写周报、批量比",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    },
+    ".ds-markdown.ds-assistant-message-main-content": {
+      "count": 3,
+      "visible": 3,
+      "samples": [
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 508,
+          "textPreview": "你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。打个比方：你让朋友“帮我订个周末去杭州的高",
+          "kids": 4,
+          "visible": true
+        },
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 223,
+          "textPreview": "场景一：做运营的小李，每周一要交上周数据周报，从三个后台导表格、对口径、算环比、写成汇报邮件。 因为这几步每次都得手动重",
+          "kids": 2,
+          "visible": true
+        },
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 289,
+          "textPreview": "这玩意儿不是人人都需要。适合的人：手上有一摊流程固定、步骤重复、还得跨几个软件来回倒腾的活，比如每周导数据写周报、批量比",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    },
+    "[class*=\"message\"]": {
+      "count": 8,
+      "visible": 8,
+      "samples": [
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 508,
+          "textPreview": "你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。打个比方：你让朋友“帮我订个周末去杭州的高",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 508,
+          "textPreview": "你手机里那个只会聊天的 AI 不叫智能体，能自己拆任务、调工具、盯结果的才算。打个比方：你让朋友“帮我订个周末去杭州的高",
+          "kids": 4,
+          "visible": true
+        },
+        {
+          "cls": "d29f3d7d ds-message _63c77b1",
+          "textLen": 80,
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写两个具体使用场景，格式都是“谁+在做什么+为什么用到它”。要写得让人一看就知",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 223,
+          "textPreview": "场景一：做运营的小李，每周一要交上周数据周报，从三个后台导表格、对口径、算环比、写成汇报邮件。 因为这几步每次都得手动重",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 223,
+          "textPreview": "场景一：做运营的小李，每周一要交上周数据周报，从三个后台导表格、对口径、算环比、写成汇报邮件。 因为这几步每次都得手动重",
+          "kids": 2,
+          "visible": true
+        },
+        {
+          "cls": "d29f3d7d ds-message _63c77b1",
+          "textLen": 74,
+          "textPreview": "为“AI 智能体（Agent）到底是什么”写一段边界标注：明确什么人适合、什么人不适合，可以说明目前还不成熟，但不要写成",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-message _63c77b1",
+          "textLen": 289,
+          "textPreview": "这玩意儿不是人人都需要。适合的人：手上有一摊流程固定、步骤重复、还得跨几个软件来回倒腾的活，比如每周导数据写周报、批量比",
+          "kids": 1,
+          "visible": true
+        },
+        {
+          "cls": "ds-markdown ds-assistant-message-main-content",
+          "textLen": 289,
+          "textPreview": "这玩意儿不是人人都需要。适合的人：手上有一摊流程固定、步骤重复、还得跨几个软件来回倒腾的活，比如每周导数据写周报、批量比",
+          "kids": 1,
+          "visible": true
+        }
+      ]
+    }
+  },
+  "sentinel": "\u0000no-child-match\u0000"
+}

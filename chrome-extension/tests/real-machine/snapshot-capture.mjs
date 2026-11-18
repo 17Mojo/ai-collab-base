@@ -25,6 +25,18 @@
  *   node tests/real-machine/snapshot-capture.mjs --out-dir=tests/real-machine/fixtures/real
  *   node tests/real-machine/snapshot-capture.mjs --locale=zh-CN
  *   node tests/real-machine/snapshot-capture.mjs --headed
+ *   node tests/real-machine/snapshot-capture.mjs --profile-dir="<持久 profile 目录>"
+
+ * **为什么要 --profile-dir**：不给它时采集器开的是「无态浏览器」
+ * （`browser.newContext()`），任何需要登录的站点只能判成 unverified。
+ * deepseek 自 2026-10-25 起就一直是这个状态——`fixtures/real/deepseek.json`
+ * 记 `outcome: "unverified"`、reason 是「落在登录墙（信号：a[href*="auth"]）」。
+ * 它采不到**不是选择器的问题**，而是那次根本没带登录态；于是「DeepSeek 没有真实
+ * 快照」被误读成「DeepSeek 的 DOM 无法采」，实际上只是没复用 login-helper.mjs
+ * 建好的持久 profile。给了 --profile-dir 才会走 `launchPersistentContext`。
+ *
+ * 注意：持久 profile 自带 locale（cookie/语言偏好都在 profile 里），
+ * 该模式下 `--locale` 不生效——要另一种语言请另建一个 profile。
  *
  * 退出码：0 = 至少采到一家；1 = 一家都没采到；2 = 采集器自身异常。
  */
@@ -94,6 +106,7 @@ function parseArgs(argv) {
     settleDelay: 2000,
     locale: null,
     channel: "chrome",
+    profileDir: null,
   };
   for (const raw of argv) {
     if (raw.startsWith("--platform=")) {
@@ -118,6 +131,8 @@ function parseArgs(argv) {
       args.locale = raw.slice("--locale=".length);
     } else if (raw.startsWith("--channel=")) {
       args.channel = raw.slice("--channel=".length);
+    } else if (raw.startsWith("--profile-dir=")) {
+      args.profileDir = resolve(raw.slice("--profile-dir=".length));
     }
   }
   return args;
@@ -402,11 +417,8 @@ function renderAnnotatedHtml(dom) {
 }
 
 /** 采集一家平台。 */
-async function capturePlatform(browser, platform, args) {
-  const context = await browser.newContext({
-    locale: args.locale || "zh-CN",
-    viewport: { width: 1440, height: 900 },
-  });
+async function capturePlatform(makeContext, platform, args) {
+  const context = await makeContext();
   try {
     await injectAdapter(context, `src/platforms/${platform.module}`, platform.id);
 
@@ -487,10 +499,23 @@ async function main() {
   console.log(`输出目录：${args.outDir}`);
   console.log("注意：只读，不注入文本、不点发送。\n");
 
-  const browser = await chromium.launch({
+  // 两种上下文来源二选一：
+  //   - 默认：一个无态 browser，每家平台各开一个 newContext（互不串味）；
+  //   - --profile-dir：持久 profile，**每家平台单开一次** launchPersistentContext
+  //     （持久 profile 同时只能有一个实例，关掉再开是唯一正确顺序）。
+  //     代价是慢一点，换来「登录态可用」——这是 unverified 变 captured 的唯一途径。
+  const launchOptions = {
     channel: args.channel,
     headless: !args.headed,
-  });
+  };
+  const contextOptions = {
+    locale: args.locale || "zh-CN",
+    viewport: { width: 1440, height: 900 },
+  };
+  const browser = args.profileDir ? null : await chromium.launch(launchOptions);
+  const makeContext = args.profileDir
+    ? () => chromium.launchPersistentContext(args.profileDir, { ...launchOptions, ...contextOptions })
+    : () => browser.newContext(contextOptions);
 
   const summary = [];
   let captured = 0;
@@ -499,7 +524,7 @@ async function main() {
   for (const platform of targets) {
     let record;
     try {
-      record = await capturePlatform(browser, platform, args);
+      record = await capturePlatform(makeContext, platform, args);
     } catch (e) {
       record = {
         platform: platform.id,
@@ -594,7 +619,8 @@ async function main() {
     summary.push(meta);
   }
 
-  await browser.close();
+  // profile 模式下没有共享 browser（每次 capturePlatform 自己开/关持久上下文）
+  if (browser) await browser.close();
 
   const unverified = summary.filter((s) => s.outcome === "unverified").length;
   const failed = summary.filter((s) => s.outcome === "capture_failed").length;

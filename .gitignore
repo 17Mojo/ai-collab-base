@@ -7,6 +7,11 @@ __pycache__/
 env/
 venv/
 ENV/
+# `.venv/` 与 `venv/` 是两种不同命名的同一类东西，此前只写了后者：
+# 根目录那个 .venv 全靠它自带的 `.venv/.gitignore`（内容就一个 `*`）隐身，
+# 一旦有人用 `python -m venv .venv` 重建（不生成那个内部 ignore），
+# 几千个文件会直接以 `??` 挂在 git status 里。2026-11-18 补齐。
+.venv/
 build/
 develop-eggs/
 dist/
