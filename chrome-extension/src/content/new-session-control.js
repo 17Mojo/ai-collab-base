@@ -25,6 +25,11 @@ export const NEW_SESSION_TEXTS = [
   "新会话",
   "New chat",
   "New Chat",
+  // 2026-11-11 / 11-12 两份只读探针（deepseek-ab-diagnostic / longcat）都实证：
+  // 两站真入口用的是「开启新对话」。只加**文案**，不碰下面的标签选择器表——
+  // 两站真入口都是裸 span，一旦把 span / div 放宽进公共兜底，longcat 历史会话
+  // 列表里的 div.conv-title「新对话」就会被当成入口误点（静默切回旧会话）。
+  "开启新对话",
 ];
 
 /**
@@ -96,7 +101,7 @@ function semanticControlMatches(el, wanted) {
  * @param {object} deps.config 当前平台 adapter 的 SELECTORS
  * @param {(selectors: string[]) => Element|null} deps.findVisibleElement
  * @param {(el: Element) => boolean} deps.isElementRendered
- * @returns {{el: Element, how: "adapter-selector"|"semantic"|"text-match"|"hidden-semantic"}|null}
+ * @returns {{el: Element, how: "adapter-selector"|"adapter-text-match"|"semantic"|"text-match"|"hidden-semantic"}|null}
  */
 export function findNewSessionControl({
   document,
@@ -108,6 +113,36 @@ export function findNewSessionControl({
   if (config?.newChat) {
     const el = findVisibleElement(config.newChat);
     if (el) return { el, how: "adapter-selector" };
+  }
+
+  // 1.5) adapter 声明的「按精确文案找」逃生口（只对声明方生效）
+  //
+  // ## 为什么需要，以及为什么必须限定在 adapter 上
+  //
+  // deepseek 的真入口（evidence/new-session-probe-2026-11-11.deepseek-ab-diagnostic.json）
+  // 是 `<span>开启新对话</span>`：**没有 class / id / aria / title / role / testid**，
+  // `clickableAncestor` 为 null，六层祖先全是构建期哈希类名
+  // （_5a8ac7a / dc1f7bee _4bcc731 / _7b40dad / …）。没有任何可写进 CSS 的
+  // 稳定钩子，所以 `newChat` 选择器组写不出来——硬写哈希类名等于下一次发版就失效。
+  //
+  // 但绝不能为它把 `span` / `div` 放宽进下面的公共标签兜底：longcat 的历史会话
+  // 列表里有 `div.conv-title`「新对话」，那是个诱饵，点它只会切回旧会话（已有守护）。
+  // ⇒ 改成**只有显式声明了 `newChatText` 的 adapter 才启用**的一层，且：
+  //   - 只在声明的窄选择器内扫描（deepseek 是 `span`）；
+  //   - 文案必须 `trim()` 后**全等**，不是 `includes`，不许拿「开启新对话（Pro）」充数；
+  //   - 仍过 `isElementRendered` 与 `COMPOSER_ZONE_SELECTOR` 两道闸。
+  // 未声明的 5 个活跃站这一层整体跳过，行为一个字节都不变。
+  //
+  // @type {{selector: string, texts: string[]}|undefined} config.newChatText
+  const textRule = config?.newChatText;
+  if (textRule?.selector && Array.isArray(textRule.texts) && textRule.texts.length) {
+    const wanted = new Set(textRule.texts);
+    for (const el of document.querySelectorAll(textRule.selector)) {
+      if (!isElementRendered(el)) continue;
+      if (el.closest(COMPOSER_ZONE_SELECTOR)) continue;
+      const text = (el.textContent || "").trim();
+      if (wanted.has(text)) return { el, how: "adapter-text-match" };
+    }
   }
 
   const wanted = new Set(NEW_SESSION_TEXTS);

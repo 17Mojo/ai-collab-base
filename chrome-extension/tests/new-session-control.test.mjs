@@ -32,6 +32,7 @@ import { SELECTORS as CHATGLM_SELECTORS } from "../src/platforms/chatglm-adapter
 import { SELECTORS as YUANBAO_SELECTORS } from "../src/platforms/yuanbao-adapter.js";
 import { SELECTORS as KIMI_SELECTORS } from "../src/platforms/kimi-adapter.js";
 import { SELECTORS as YIYAN_SELECTORS } from "../src/platforms/yiyan-adapter.js";
+import { SELECTORS as LONGCAT_SELECTORS } from "../src/platforms/longcat-adapter.js";
 
 const MESSAGE_LIST = [".msg"];
 
@@ -128,6 +129,49 @@ test("Kimi：a.new-chat-btn 是 <a>，点击时默认跳转必须被拦掉（否
   assert.equal(r.available, true);
   assert.equal(r.strategy, "adapter-selector");
   assert.equal(prevented, true, "捕获阶段必须 preventDefault，否则整页导航会把 sendResponse 一起带走");
+});
+
+/** longcat 侧栏真结构，来自 evidence/new-session-probe-2026-11-12.longcat.json */
+const LONGCAT_SIDEBAR =
+  '<div class="slider-menus-content"><div class="v-slider-header"><div class="slider-header">' +
+  '<div class="new-content"><span data-v-3dbf79c6="">开启新对话</span></div>' +
+  '</div></div></div>' +
+  // 诱饵：历史会话列表里的「新对话」标题，点它只会切回旧会话
+  '<div class="conversation-list"><div class="conv-item"><div class="conv-title">新对话</div></div></div>';
+
+test("longcat：真入口是 div.new-content 里的「开启新对话」，不是历史项 div.conv-title", async () => {
+  const { deps, wireReset, doc } = makeSite(LONGCAT_SIDEBAR, {
+    newChat: LONGCAT_SELECTORS.newChat,
+  });
+  const control = doc.querySelector(".v-slider-header .new-content");
+  assert.ok(control, "夹具必须摆出探针里的真入口结构");
+  wireReset(control);
+
+  const r = await handleNewSession(deps);
+  assert.equal(r.available, true, "B 组要成立，边界必须真的执行成功（available === true）");
+  assert.equal(r.strategy, "adapter-selector", "只能靠 adapter 精确声明命中");
+  assert.equal(r.messageCountBefore, 12);
+  assert.equal(r.messageCountAfter, 0, "消息数必须真的下降，否则不算重置成功");
+  assert.ok(Number.isInteger(r.durationMs) && r.durationMs >= 0);
+});
+
+test("longcat：没声明 newChat 时宁可降级，也不许误点历史会话项", async () => {
+  // 这正是 A/B 第 4 轮 longcat B 的现场：available:false / strategy:"none" /
+  // 6→6。守护要钉的是「不许为了让它成功而放宽公共兜底去点 conv-title」。
+  const { deps } = makeSite(LONGCAT_SIDEBAR, {});
+  const found = findNewSessionControl({
+    document: deps.document,
+    config: deps.config,
+    findVisibleElement,
+    isElementRendered,
+  });
+  assert.equal(found, null, "div.conv-title「新对话」是历史会话诱饵，不是新对话入口");
+
+  const r = await handleNewSession(deps);
+  assert.equal(r.available, false);
+  assert.equal(r.strategy, "none");
+  assert.match(r.reason, /找不到「新对话」入口/);
+  assert.equal(r.messageCountAfter, r.messageCountBefore);
 });
 
 // ─────────────────────────────────────────────────────────────────────

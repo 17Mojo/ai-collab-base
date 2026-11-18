@@ -13,11 +13,15 @@
 // 从适配器文件导入选择器配置（构建时自动同步）
 // ============================================================================
 
-// 等待策略：内容稳定性判据（防「太早成功」）
-import { sampleWaitState } from "../utils/wait-policy.js";
+// 等待策略：内容稳定性判据（防「太早成功」）+ 虚拟列表站点白名单
+import {
+  sampleWaitState,
+  shouldTrackBaselineContent,
+} from "../utils/wait-policy.js";
 // 失败语义：超时必须「续等」而不是重发（台账 N21）
 import {
   RESPONSE_TIMEOUT_CODE,
+  resolveBaselineContent,
   resolveInitialCount,
 } from "../utils/retry-policy.js";
 
@@ -150,13 +154,17 @@ async function initialize() {
  *
  * 所以把语义随信封一起带出去：
  *   - `code`：`RESPONSE_TIMEOUT` 时后台改「续等」，不再重发；
- *   - `baselineCount`：发送前的消息条数，续等时按它算 `countGrew`。
+ *   - `baselineCount`：发送前的消息条数，续等时按它算 `countGrew`；
+ *   - `baselineContent`：发送前的最新正文，虚拟列表站点续等时按它算内容型增长。
  *
- * 两者都可能在错误对象上不存在（例如早就失败的注入环节），
+ * 三者都可能在错误对象上不存在（例如早就失败的注入环节），
  * 此时如实回 null，让后台按「可重试」处理——不知道就别乱猜成超时。
+ * 内容基准为 null 时 `hasNewReply` 会关掉内容通道、退回计数判据，
+ * 所以「没带基准」是安全的降级，不是把旧回答误当新回复的理由。
  *
- * @param {Error & {code?: string, baselineCount?: number}} error
- * @returns {{success: false, error: string, code: string|null, baselineCount: number|null}}
+ * @param {Error & {code?: string, baselineCount?: number, baselineContent?: string|null}} error
+ * @returns {{success: false, error: string, code: string|null,
+ *   baselineCount: number|null, baselineContent: string|null}}
  */
 function failureEnvelope(error) {
   return {
@@ -166,6 +174,7 @@ function failureEnvelope(error) {
     baselineCount: Number.isInteger(error?.baselineCount)
       ? error.baselineCount
       : null,
+    baselineContent: resolveBaselineContent(error?.baselineContent),
   };
 }
 
@@ -216,9 +225,12 @@ function setupEventListeners() {
         // 而是让页面继续盯同一个会话——所以这里必须能把「发送前的基准条数」
         // 传回去。不传就等于重新快照，countGrew 会恒为 false
         // （见 retry-policy.resolveInitialCount 的注释）。
+        // 🔧 2026-11-12：内容基准同理，但更严格——没有就回 null 关掉内容通道，
+        // 绝不就地快照（那会把已落地的新回答当成基准）。
         handleWaitForResponse(
           message.timeout ?? PLATFORM_RESPONSE_TIMEOUT[currentPlatformId],
           message.baselineCount,
+          message.baselineContent,
         )
           .then((result) => sendResponse({ success: true, result }))
           .catch((error) => sendResponse(failureEnvelope(error)));
@@ -366,21 +378,46 @@ async function handleSendToAI(prompt, timeout = 60000) {
   // 超时后后台改「续等」时要用它算 countGrew，不能重新数——否则
   // 「回复在超时之后、续等开始之前刚落地」这种情况会让 countGrew 恒 false，
   // 续等白等满一整个超时窗口。见 retry-policy.resolveInitialCount。
-  const baselineCount = findElements(currentConfig.messageList).length;
+  const baselineMessages = findElements(currentConfig.messageList);
+  const baselineCount = baselineMessages.length;
+
+  // 2026-11-12：虚拟列表站点（deepseek / longcat）额外记一份「发送前最新正文」。
+  // 这些站长会话会卸载旧回答：新回答落地时滚掉一条老的，条数**不涨**，
+  // countGrew 恒 false ⇒ AI 明明答完仍判 Response timeout（A/B 四轮
+  // 全失败在 723.x s = 4×180s）。正文文本变了才是这类页面里稳定的信号。
+  // 白名单外的平台一律 null ⇒ 只走原来的计数判据，行为不变。
+  const baselineContent = shouldTrackBaselineContent(currentPlatformId)
+    ? latestContentOf(baselineMessages)
+    : null;
 
   await handleInjectText(prompt);
   await handleClickSend();
 
   try {
-    return await handleWaitForResponse(timeout, baselineCount);
+    return await handleWaitForResponse(timeout, baselineCount, baselineContent);
   } catch (error) {
-    // 超时不是「没发出去」，是「发出去了没等到」。把基准条数挂上去，
-    // 好让后台选择「续等」而不是「重发」（N21）。
+    // 超时不是「没发出去」，是「发出去了没等到」。把两个基准挂上去，
+    // 好让后台选择「续等」而不是「重发」（N21），且续等不丢内容基准。
     if (error?.code === RESPONSE_TIMEOUT_CODE) {
       error.baselineCount = baselineCount;
+      error.baselineContent = baselineContent;
     }
     throw error;
   }
+}
+
+/**
+ * 从一组消息元素里取「最新一条」的正文。
+ *
+ * 发送前基准与等待采样必须共用这一个函数：两边若各自写一遍提取逻辑，
+ * 一旦某天改了 messageContent 的取法，基准和采样就会变成两把不同的尺子，
+ * 内容型增长信号会静默失效（或更糟：把旧回答当成新回复）。
+ *
+ * @param {Element[]} messages - findElements(currentConfig.messageList) 的结果
+ * @returns {string} 最新正文；没有消息时为空串
+ */
+function latestContentOf(messages) {
+  return extractMessageContent(messages[messages.length - 1], currentConfig.messageContent);
 }
 
 /**
@@ -417,11 +454,17 @@ function isTyping() {
  * `isTyping()` 仍保留为**继续等**的信号：指示器认得准的平台
  * 在思考暂停期不会被稳定性判据误放行。
  *
+ * 「有新回复」现在有两条通道（`wait-policy.hasNewReply`）：
+ *   计数增长（老判据，所有平台照旧）**或**内容相对发送前基准变了。
+ * 后者只对白名单内的虚拟列表站点启用，且仍要过「正文非空 + 连续 8 秒稳定」。
+ *
  * @param {number} [timeout=60000] - 等多久算超时（毫秒）
  * @param {number} [baselineCount] - 发送前的消息条数。给了就必须用它，
  *   **不许重新快照**（那是续等路径，见 retry-policy.resolveInitialCount）
+ * @param {string|null} [baselineContent] - 发送前的最新正文。非字符串一律关掉
+ *   内容通道（见 retry-policy.resolveBaselineContent），绝不就地快照
  */
-async function handleWaitForResponse(timeout = 60000, baselineCount) {
+async function handleWaitForResponse(timeout = 60000, baselineCount, baselineContent) {
   if (!currentConfig) throw new Error("No adapter available");
 
   const startTime = Date.now();
@@ -429,6 +472,7 @@ async function handleWaitForResponse(timeout = 60000, baselineCount) {
     findElements(currentConfig.messageList).length,
     baselineCount,
   );
+  const initialContent = resolveBaselineContent(baselineContent);
   let lastContent = null;
   let lastChangeAt = null;
 
@@ -439,20 +483,23 @@ async function handleWaitForResponse(timeout = 60000, baselineCount) {
         // 带错误码：后台据此判「续等」而不是「重发」（N21）
         const error = new Error("Response timeout");
         error.code = RESPONSE_TIMEOUT_CODE;
+        // 续等**再超时**时也要把基准带下去。此前这里没挂，第二次续等
+        // 就会拿不到 baselineCount → 后台直接抛 RESUME_WAIT_NO_BASELINE，
+        // 明明还能等却不许等了。内容基准同理。
+        error.baselineCount = initialCount;
+        error.baselineContent = initialContent;
         reject(error);
         return;
       }
 
       const messages = findElements(currentConfig.messageList);
       const currentCount = messages.length;
-      const latestMessage = messages[messages.length - 1];
-      const content = latestMessage
-        ? extractMessageContent(latestMessage, currentConfig.messageContent)
-        : "";
+      const content = latestContentOf(messages);
 
       const state = sampleWaitState({
         countGrew: currentCount > initialCount,
         content,
+        baselineContent: initialContent,
         now: Date.now(),
         lastContent,
         lastChangeAt,

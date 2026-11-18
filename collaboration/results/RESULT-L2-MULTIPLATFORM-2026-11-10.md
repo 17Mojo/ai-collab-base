@@ -1084,3 +1084,794 @@ A/B 各用各的文件、预检解冻、串行约束、落盘自检、坏契约�
 理由：用户本轮授权的是「推送 8 个提交」+「只做本地准备」，没有授权提交或推送新变更。
 先推后改，新东西不混进已授权范围；留在工作区便于逐项审阅，
 下一次授权时再决定提交与推送。
+
+---
+
+## 19. 冻结站 A/B 真机验证：4 轮跑完，命题仍不成立（2026-11-11 ~ 11-12）
+
+### 19.1 授权边界与解冻方式
+
+用户明确解冻 `deepseek / longcat` 并确认额度。冻结**是逐次显式放行**：`ACTIVE_PLATFORM_IDS` 白名单未改，每条命令都带 `ALLOW_FROZEN=1`，回执 `platformPolicy.unfrozenBy = "ALLOW_FROZEN=1"` 留痕。预检 `evidence/L2-precheck-2026-11-11.deepseek-longcat.json`：两站 `composerVisible:true`、`looksLikeLogin:false`、无登录重定向。
+
+### 19.2 第 1 轮不是「撞墙」，是假超时
+
+`evidence/L2-deepseek-auto-2026-11-11.ab-no-boundary.json`：5 步、`step_5_boundary` 失败、723.7s ≈ 4×180s、`sessionResets: []`。同轮截图里提问气泡与 AI 完整回答都在页面上，无登录墙。三份只读诊断把 DOM 钉死：
+
+| 选择器 | 命中 | 含义 |
+|---|---|---|
+| `div.ds-message` | 5 | 3 条 AI 回答 + 2 条 human 气泡 |
+| `.ds-assistant-message-main-content` | 3 | 每条 AI 回答一个 |
+| `[class*="message"]` | 8 | 上面两组**混在一起**（旧 `messageList` 取的就是这组） |
+| typing / stop 相关 | 全 0 | 排除 `isTyping()` 恒真 |
+
+裁决 `evidence/ab-round1-verdict-2026-11-11.json` = `AB_UNVERIFIABLE_PRECONDITION_FAILED`：边界只声明在 `step_8_output`，A 组没走到。
+
+### 19.3 修契约 → 修复无效 → 回溯更正根因
+
+把 deepseek `messageList` 改为只认 `.ds-assistant-message-main-content`，补 4 条契约测试（8/8）与 3 条变异锚；两次 `npm run build` hash 幂等、新契约确进产物；全量 `npm test` **329/329**、全量变异 **127/127 全杀死 EXIT=0**。
+
+但重跑 1/4（`evidence/L2-deepseek-auto-2026-11-11.ab2-no-boundary.json`）**仍 5 步、仍 `step_5_boundary`、723.6s**。截图再次显示 AI 已作答且页面只保留最后两轮 ⇒ **上一节「换掉混合选择器即可」的判断作废**：真卡点是长会话下虚拟列表卸载旧回答，令公共判据 `countGrew`（消息数必须增长）恒不成立，与选择器组混不混无关。此后不再改代码，保持同一份 dist 跑完 4 轮以保 likeForLike。
+
+### 19.4 补跑 3 轮的落盘方式（针对上次承诺未兑现）
+
+上一轮后台串行任务被会话切换回收，且 stdout 只在缓冲里，导致 3 轮回执全丢。本次 runner 改为：外层 `tee -a` 全程写 `evidence/ab2-rerun-2026-11-12.log`；每轮 start / node-exit / verify 即时追加 `evidence/ab2-rerun-progress-2026-11-12.jsonl`；每轮回执由驱动自身即时落盘。日志开头核到 `dist CS=cd5c7997… SW=3e489d43…` 与 `SW size=117948`，与 A 组同一构建。
+
+### 19.5 四轮结果（全部 `exec.success=false`）
+
+| 平台 | 变体 | 通过步数 | 失败点 | 失败耗时 | `sessionResets` |
+|---|---|---|---|---|---|
+| deepseek | A `no-boundary` | 4/5 | `step_5_boundary` | 723.6s | `[]` |
+| deepseek | B `with-boundary` | 4/5 | `step_5_boundary` | 723.8s | `[]` |
+| longcat | A `no-boundary` | 2/3 | `step_3_explain` | 723.9s | `[]` |
+| longcat | B `with-boundary` | 7/8 | `step_8_output` | 723.2s | 1 条，**`available:false`** |
+
+4 轮失败全部是 `Response timeout`，失败步骤耗时全部落在 4×180s 窗口 ⇒ 同一类假超时，跨两站同型，与 `fresh_session` 无关。汇总 `evidence/ab2-four-round-summary-2026-11-12.json`。
+
+### 19.6 机器裁定（`evidence/ab2-verdict-2026-11-12.json`）
+
+`PROPOSITION_NOT_SUPPORTED_ROUNDS_UNUSABLE`，`propositionSupported = false`，**N25 保持 open**。
+
+- **deepseek**：A/B 都停在 `step_5`，边界声明在 `step_8` 从未触发，`sessionResets` 均为空 ⇒ **不可评估**，不是「边界无效」。
+- **longcat**：B 组虽走到 `step_8`，但 `sessionResets[0] = { available:false, strategy:"none", messageCountBefore:6, messageCountAfter:6, durationMs:0 }`，原因是「adapter 没有声明 `newChat` 选择器」，`prefer` 降级照发 ⇒ 按用户判据「B 组须 `available===true && messageCountAfter<Before`」**该轮作废**。
+- 因此既没有「A 撞墙且 B 通过」，也不能把「都失败」包装成「边界无效」。
+
+**归因边界（不得越线）**：不能说会话边界解掉了 `step_8` 撞墙；不能说边界无效（两站边界都没真正生效）；不能把 longcat B 从 2/3 推进到 7/8 归功边界（边界在 `step_8` 且 `available:false`，前 7 步差异属站点抖动）；不能说重置免费或把耗时差异归因给重置（§14.4 继续有效）。
+
+### 19.7 限制与新发现
+
+- **likeForLike 缺口**：deepseek A（11-11 23:00）与 B（11-12 07:53）跨约 8.5 小时，违反计划「相邻时间窗」；longcat A/B 相邻串行（08:05 / 08:20），该对不受此限。
+- **待修 ①**：公共等待判据在长会话 + 虚拟列表下失效，需改为不依赖「消息计数必须增长」。
+- **待修 ②**：longcat adapter 缺 `newChat` 入口（N23 只覆盖 5 个活跃站，冻结站未纳入），`prefer` 才会降级。
+- 修完这两项之后才可能重跑有效 A/B；在那之前不宣布任何因果结论。
+
+### 19.8 本轮产物与未提交状态
+
+新增证据：`ab2-rerun-2026-11-12.log`、`ab2-rerun-progress-2026-11-12.jsonl`、3 份 `L2-*-2026-11-12.ab2-*.json` 及截图、`ab2-four-round-summary-2026-11-12.json`、`ab2-verdict-2026-11-12.json`；代码改动 3 个文件（deepseek adapter / 契约测试 / 变异锚）。全量门禁为 329/329 与 127/127，均在最终代码状态下跑完。**本轮未执行 `git commit` / `git push`**，`HEAD == origin/main == 36d9ec2`，所有改动留在工作区待授权。
+
+---
+
+## 20. 按依赖顺序执行：两项待修落地、门禁全绿，真机 A/B 仍未重跑（2026-11-12）
+
+### 20.1 本轮授权边界
+
+用户指令「按依赖顺序执行」对应 §19.7 的两项待修及其依赖门禁：**先修公共等待判据与 longcat 入口 → 再重建 dist + 全量门禁**。本轮只做本地修复与门禁：冻结站未打开、未发送、未导入 Pack；没有 `git commit` / `git push`；`HEAD == origin/main == 36d9ec2`。`ACTIVE_PLATFORM_IDS` 白名单未改，跑真机仍需逐次显式 `ALLOW_FROZEN=1` 并在回执写 `platformPolicy`。
+
+### 20.2 F1：公共等待判据不再只依赖「消息数必须增长」
+
+| 项 | 内容 |
+|---|---|
+| 根因 | 长会话虚拟列表卸载旧回答：发送前 3 条，新回答落地时滚掉 1 条老的，仍是 3 条 ⇒ `countGrew` 恒 false ⇒ AI 答完仍判 `Response timeout`（4 轮 A/B 全失败在 723.x s = 4×180s，跨两站同型） |
+| 修法 | `wait-policy.hasNewReply = 计数通道 OR 内容通道`；内容通道比较「最新正文 vs 发送前基准」，两把尺子共用 `latestContentOf()` |
+| 启用范围 | `CONTENT_GROWTH_PLATFORM_IDS = [chat.deepseek.com, longcat.chat, longcat.ai]`——**按实测证据开的白名单**，其余平台一律沿用原判据，已绿 5 站行为不变 |
+| 护栏 | 内容通道只在**显式给了字符串基准**时启用；仍保留「正文非空」+「连续 8 秒稳定」两道闸；正文与基准相同（旧回答没动）不判完成，不会退回「太早成功」 |
+| 续等链 | `baselineContent` 随失败信封 → `assertAIStepSucceeded` → `_resumeWaitForResponse` → `WAIT_FOR_RESPONSE` 一路透传；`resolveBaselineContent()` 只认字符串，缺失回 `null` 关掉内容通道，**绝不就地快照**（那会把已落地的新回答当成基准） |
+| 顺带修掉的隐性缺陷 | `handleWaitForResponse` 的超时分支原先不挂任何基准，第一次续等再超时后后台会抛 `RESUME_WAIT_NO_BASELINE`，明明还能等却不许等；现在两个基准都沿续等链传下去 |
+
+行为证据不是抄一份逻辑：`tests/adapter-wait.test.mjs` 在 jsdom 里跑**生产内容脚本本体**，重放「3 条旧回答 → 卸 1 条 + 落 1 条新回答」的虚拟列表时间线，断言 `SEND_TO_AI` 仍取回新回答。该测试放在等待专题文件而非被 33 条变异锚指着的 `extension-wiring.test.mjs`，避免全量变异凭空多出数分钟。
+
+### 20.3 F2：longcat `newChat` 入口
+
+依据只读 DOM 探针 `evidence/new-session-probe-2026-11-12.longcat.json`：真入口是 `div.new-content` 里的 `span`「开启新对话」，祖先 `div.slider-header > div.v-slider-header`，`clickableAncestor: null` ⇒ 公共文案/标签兜底永远扫不到。页面上另有 `div.conv-title`「新对话」，那是**历史会话列表项**，点它只会切回旧会话。
+
+`longcat-adapter.js` 新增 `newChat: [".v-slider-header .new-content", ".slider-header .new-content", "div.new-content span"]`。`prefer` 语义没改：找得到才 `available:true`，找不到仍如实降级。守护钉的是行为——「真入口能清空 12→0」「没声明时宁可 `available:false` 也不许误点诱饵」。
+
+### 20.4 全量门禁（最终代码状态下跑完）
+
+| 门禁 | 结果 | 证据 |
+|---|---|---|
+| `npm test` | **341/341**，fail 0，`EXIT=0` | `evidence/npm-test-2026-11-12.local-fix.log` |
+| 全量变异 | **143/143 全杀死**，存活 0，`EXIT=0`（16m04s） | `evidence/mutation-check-2026-11-12.full.log` |
+| `npm run build` | 两次均 `EXIT=0`，产物 hash 幂等 | `build-2026-11-12.local-fix{,-second}.log` |
+| dist 严格一致性 | `allPass=true`；CS `cffb6eb540abdf11…` / SW `b243c74de2afcecf…`；7 项关键字全中 | `evidence/dist-consistency-2026-11-12.local-fix.json` |
+
+门禁数字从上一轮的 329/329、127/127 变为 341/341、143/143：新增 12 条单测、16 条变异锚（F1 13 条 + F2 3 条），每条锚都指向具体测试名，改坏对应代码必须变红。局部预检先各自跑过（wait-policy 8/8、retry-semantics 11/11、adapter-wait 7/7、new-session-control 13/13），再跑全量。
+
+### 20.5 机器裁定（`evidence/local-fix-verdict-2026-11-12.json`）
+
+`LOCAL_FIX_GATES_PASS_REAL_MACHINE_NOT_VERIFIED`：`localFixComplete=true`、`allGatesPass=true`、`realMachineVerified=false`、`propositionSupported=false`、**N25 保持 `open`**（`closed_at: null`）。
+
+**不得越线**：本轮没有新增任何站点回执，所以不能说「假超时已在真机上修好」；§19.6 的 `PROPOSITION_NOT_SUPPORTED_ROUNDS_UNUSABLE` 与全部归因边界继续有效——不能说会话边界解掉了 `step_8` 撞墙、不能说边界无效、不能把 longcat B 前 7 步差异归功边界、不能说重置免费或把耗时归因重置（§14.4）。也不能把内容型增长信号说成全局默认：它是按实测证据开的实验开关，未验证平台一律不启用。
+
+### 20.6 限制
+
+- 内容型信号要求「新回答正文 ≠ 发送前最新正文」。两次回答文本完全相同时仍会退化成超时——**真机未测**。
+- 本轮全部证据都是本地产物（jsdom 行为测试 / node:test / 变异 / dist 产物核对），不是站点回执。
+- deepseek A(11-11 23:00) 与 B(11-12 07:53) 跨约 8.5 小时的 likeForLike 缺口仍在；重跑必须重新安排相邻时间窗。
+- 新增的 9 秒级行为测试让 `adapter-wait.test.mjs` 变慢，已显式给生产等待 13s 上限，避免变异把内容通道改坏时 `setInterval` 挂到 60s 默认超时拖死子进程。
+
+### 20.7 产物与未提交状态
+
+代码改动 10 个文件（`wait-policy.js` / `retry-policy.js` / `content-script.js` / `pack-executor.js` / `longcat-adapter.js` + 5 个测试与变异锚文件）；新增证据 6 份（build ×2、npm-test、全量变异、dist 一致性、机器裁定）。`git status` 共 **42 项**（14 个 tracked 改动 + 28 个 untracked 证据/回执文件，含上一轮补跑留下的 22 份），**全部未提交、未推送**，`HEAD == origin/main == 36d9ec2`。
+
+### 20.8 后续步骤（依赖顺序，均未授权执行）
+
+1. 需要用户**明确解冻并授权真机重跑**；每条命令仍带 `ALLOW_FROZEN=1` 留痕。
+2. 先跑预检核登录态，再**串行**跑 4 轮 A/B；B 组须 `sessionResets[0].available === true && messageCountAfter < messageCountBefore`，否则该轮作废／本轮不可评估。
+3. 只有「A 撞墙且 B 通过」才支持命题；跑完按判据裁定，**在此之前 N25 保持 `open`**。
+4. 提交 / push 需单独授权（授权范围要按提交/文件集合分清）。
+
+---
+
+## 21. 执行后续步骤：ab3 四轮真机 A/B 跑完，F1 真机验证成立，命题仍不成立（2026-11-12）
+
+### 21.1 本轮授权边界
+
+用户指令「执行后续步骤」对应 §20.8 的依赖链：① 解冻并授权真机重跑 → ② 预检 + 串行 4 轮 A/B → ③ 按判据裁定 N25 → ④ 提交/push 需**单独授权**。本轮执行 ①–③；**④ 未执行**：没有 `git commit` / `git push`，`HEAD == origin/main == 36d9ec2`。回写完成后就 60 项待提交文件向用户确认范围，用户明确选择「**暂不提交**」⇒ 全部改动继续留在工作区，不动远端。冻结仍是逐次显式放行：白名单未改，每条命令带 `ALLOW_FROZEN=1`，4 份回执 `platformPolicy.unfrozenBy` 均为该值。
+
+### 21.2 前置对账（#39 / #40，只读）
+
+| 项 | 磁盘真值 |
+|---|---|
+| A/B 计划 | `session-wall-ab-plan-2026-11-11.json`，4 轮 `executionOrder` 串行，`mergeStrategy: overwrite` 导入同一 `pack_id` |
+| 变体 Pack | A `89b197cf99f2fcac…`（`workflow.steps` 8 步、无 `fresh_session`）；B `0e1b4b9816545e52…`（8 步、仅 `step_8_output` 带 `fresh_session: prefer`） |
+| dist | `dist-consistency-2026-11-12.local-fix.json`：`allPass=true`、幂等；CS `cffb6eb540abdf11…` / SW `b243c74de2afcecf…`；产物中含 `CONTENT_GROWTH_PLATFORM_IDS` / `shouldTrackBaselineContent` / `baselineContent` / `longcat.chat` |
+| 两站登录态 | `L2-precheck-2026-11-12.deepseek-longcat.json`：`composerVisible:true`、`looksLikeLogin:false`，`unfrozenBy=ALLOW_FROZEN=1` |
+| 目标路径 | 4 个 `.json` + 4 个 `.png` 全部为空，runner 前置拒绝覆盖 |
+
+`currentPlatformId` 取自 `adapter.platformId`（`chat.deepseek.com` / `longcat.chat`），与内容型增长白名单的 key 一致——修 F1 时最容易踩的 ID 不匹配，磁盘核对已排除。
+
+### 21.3 四轮实测结果（ab3，修复后 dist）
+
+| 轮 | 平台 | 变体 | 回执 | 结果 | 步数 | 耗时 | `sessionResets` |
+|---|---|---|---|---|---|---|---|
+| 1 | deepseek | A `no-boundary` | `L2-deepseek-auto-2026-11-12.ab3-no-boundary.json` | **8/8 completed** | 8/8 | 82,223 ms | `[]` |
+| 2 | deepseek | B `with-boundary` | `L2-deepseek-auto-2026-11-12.ab3-with-boundary.json` | **8/8 completed** | 8/8 | 81,289 ms | 1 条，`available:false` / `strategy:none` / 3→3 / 4 ms |
+| 3 | longcat | A `no-boundary` | `L2-longcat-auto-2026-11-12.ab3-no-boundary.json` | failed | 5/6 | 810,784 ms | `[]` |
+| 4 | longcat | B `with-boundary` | `L2-longcat-auto-2026-11-12.ab3-with-boundary.json` | failed | 3/4 | 764,066 ms | `[]` |
+
+第 3 轮失败在 `step_6_takeaway`（723,637 ms），第 4 轮失败在 `step_4_scene`（723,219 ms）；两处都是 4×180s 窗口。但**这一轮和 ab2 的假超时不是一回事**：两张长猫截图里最后一条 AI 回复都是「服务出错啦，请稍后再试。」，即站点侧错误、根本没产出回答，等待超时是正确行为。两轮在失败前分别有 5 步和 3 步成功，单步 19–27 s，说明内容型等待信号确实在真机上工作。
+
+### 21.4 第 4 轮补跑：从「没跑」补齐成「有回执」
+
+`ab3-rerun-2026-11-12.log` 的第 4 轮在 `launch()` 清 SW 缓存时被 WorkBuddy safe-delete shim 拦截（`SAFE_DELETE_BULK_CONFIRM_REQUIRED`，count 52 > threshold 50，scope=turn）：浏览器未启动、页面未打开、Pack 未导入、未发送任何内容；`ab3-rerun-progress-2026-11-12.jsonl` 明确记 `exists:false`。runner 末尾的 `RUNNER_FINISHED` 不代表四轮都跑完——该日志同时有 `NODE_EXIT=1`。
+
+补跑用独立 `ab3-round4-rerun-2026-11-12.sh`：新日志 `ab3-round4-2026-11-12.log` 全程 tee、新进度 `ab3-round4-progress-2026-11-12.jsonl` 即时追加、回执由驱动自身即时落盘；**不覆盖任何既有证据**，前置复核 `PRECONDITION_OK`（Pack hash / dist hash / 目标路径为空 / 放行留痕）。没有设置 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 去绕过安全门：单轮只清 1 项，远低于阈值。12m53s 后回执落盘，`NODE_EXIT=0`。至此 **4/4 轮都有回执**，`allFourRoundsExecuted=true`。
+
+### 21.5 逐轮机器复核与裁定
+
+裁定不是手写结论：`ab3-verdict-2026-11-12.py` 只读 4 份回执，机械计算每条布尔判据，产出 `evidence/ab3-verdict-2026-11-12.json`（初版 `classify()` 把 deepseek 只标成 `INVALID_ROUND_RESET_UNAVAILABLE`，埋没了更根本的「A/B 都通过」；已用显式 `--regenerate` 重生成并列 `reasons`，产物内 `regeneratedFrom` 留痕，最终 `code` 未变）。
+
+| 平台 | 主状态 | 机械判据 | 结论 |
+|---|---|---|---|
+| deepseek | `NO_WALL_THIS_ROUND` | `aPassed8of8=true`、`bPassed8of8=true`、`bothPassed=true`；`bResetActuallyHappened=false`、`bRoundUsable=false` | A/B 都 8/8 ⇒ **本轮墙不存在**，不能归功边界；且 B 组 `available:false / 3→3`，按判据**该轮作废** |
+| longcat | `BOUNDARY_NEVER_ATTEMPTED` | `aBoundaryStepReached=false`、`bBoundaryStepReached=false`、`bBoundaryAttempted=false`、`sessionResets=[]` | 边界声明在 `step_8_output`，两轮分别在 `step_6` / `step_4` 就停了 ⇒ **本轮不可评估**，既不能归功边界，也不能说边界无效 |
+
+`verdict.code = PROPOSITION_NOT_SUPPORTED`、`propositionSupported=false`、**N25 保持 `open`**（`closed_at: null`）。`allBoundariesActuallyExecuted=false`：`available===true && messageCountAfter<Before` 这一 B 组硬判据，四轮里一次都没有成立。
+
+### 21.6 回溯修正：§20.5 的「真机未验证」限制已被新证据推翻
+
+§20.5 写「本轮没有新增任何站点回执，所以不能说『假超时已在真机上修好』」。**该限制对本轮不再适用**：ab3 有 4 份新站点回执，`f1RealMachineVerified=true`，依据是 deepseek A/B 从 ab2 的「4×180s 假超时、AI 明明答了」变成两轮 8/8 completed、82.2 s / 81.3 s，且 longcat 失败前的多个 AI 步骤都在 19–27 s 内正常取回。按「遇到新证据回溯更正既往结论」的口径，这里明确改为：**F1 公共等待判据修复在真机上生效，已有回执证据**。
+
+但必须同时钉死范围，防止把这条结论挪用：① 它验的是 `hasNewReply` 的内容型增长信号，**不是** `fresh_session` 会话边界，两者是不同变量；② longcat 未完成 8/8，站点侧错误情况下的恢复能力未测；③ 内容型信号要求「新回答正文 ≠ 发送前最新正文」，两次回答文本完全相同的退化路径仍无真机证据。裁定 JSON 用 `nonMachineObservations` 单独标注两张截图的人工视觉判读，明确它**不参与**任何机器布尔推导。
+
+### 21.7 新发现（本轮新增，均未修复）
+
+1. **deepseek 缺 `newChat` 入口**：B 组回执 reason 明写「adapter 没有声明 newChat 选择器」。而只读探针 `new-session-probe-2026-11-11.deepseek-ab-diagnostic.json` **早就抓到了真入口**——`<span>开启新对话</span>`、`clickableAncestor:null`、父链为哈希类名 div；`NEW_SESSION_TEXTS` 不含「开启新对话」，公共标签兜底也扫不到 `span`。§19.7「待修 ②」当时只点了 longcat，F2 因此只补了 longcat，deepseek 的同类缺口被漏掉。这是 B 组 `available:false` 的直接原因，也是下一轮 A/B 的硬前置。
+2. **F2 的 longcat `newChat` 仍未被真机触发**：边界只声明在 `step_8_output`，两轮都没走到，本轮零次验证；jsdom 行为测试仍是它的唯一证据。
+3. **longcat 站点侧错误是新的混杂变量**：两张截图均为「服务出错啦，请稍后再试。」，失败步骤不同（`step_6` / `step_4`），说明站点在会话中途随机报错；这与「长会话撞墙」「等待判据」都不是同一层，后续归因必须单独标注。
+4. **likeForLike 局部缺口**：deepseek A/B 相邻（03:41 / 03:42）、longcat A 紧随其后（03:44），但补跑的第 4 轮在 04:28，与第 3 轮相隔约 31 分钟；Pack 与 dist 经 hash 复核完全一致，时间窗不相邻这一条仍需如实保留。
+
+### 21.8 归因边界（不得越线）
+
+- 不能说「会话边界解掉了 step_8 长会话撞墙」——没有「A 撞墙且 B 通过」的成对证据。
+- 不能说「边界无效」——四轮里边界一次都没有真正生效，不可用「都失败」反推无效。
+- 不能把 deepseek 的 8/8 归功于边界——A 组无边界同样 8/8，且 B 组 `available:false` 是降级照发。
+- 不能把 longcat 从第 3 轮的 `step_6` 到第 4 轮的 `step_4` 差异归给边界——边界在 `step_8`，两轮都没到；差异属站点报错位置抖动。
+- 不能说重置免费、不能把耗时差异归因给重置（§14.4 继续有效）；不能把 F1 真机成功与会话边界混为一谈。
+- 不能说「长会话撞墙已被根治」——deepseek 本轮压根没出现墙，longcat 挂在站点错误上。
+
+### 21.9 产物与未提交状态
+
+新增证据：`ab3-precheck-2026-11-12.log`、`ab3-runner-2026-11-12.sh`、`ab3-rerun-2026-11-12.log`、`ab3-rerun-progress-2026-11-12.jsonl`、4 份 `L2-*-2026-11-12.ab3-*.json` 与 4 份截图、`ab3-round4-rerun-2026-11-12.sh`、`ab3-round4-2026-11-12.log`、`ab3-round4-progress-2026-11-12.jsonl`、`ab3-verdict-2026-11-12.py`、`ab3-verdict-2026-11-12.json`。本轮**未改任何源码、未重建 dist**。**未执行 `git commit` / `git push`**，所有改动留在工作区待授权。
+
+### 21.10 后续步骤（依赖顺序，均未授权执行）
+
+1. 给 deepseek adapter 补 `newChat` 精确入口（依据 11-11 只读探针），并补契约测试 + 变异锚；同时考虑把 `NEW_SESSION_TEXTS` 扩到「开启新对话」，但不得放宽公共标签兜底去点历史会话诱饵。
+2. 重建 dist → 全量 `npm test` → 全量变异 → dist 严格一致性，全部在最终代码状态下跑完。
+3. 重新申请解冻，把 4 轮安排在**相邻时间窗**内串行重跑；B 组必须 `available===true && messageCountAfter<Before`，只有「A 撞墙且 B 通过」才支持命题。在此之前 **N25 保持 `open`**。
+4. 提交 / push 需单独授权，授权范围要按提交/文件集合分清。
+
+---
+
+## 22. 执行后续步骤①–②：deepseek 精确文案逃生口落地、全量本地门禁通过，真机 A/B 仍未重跑（2026-11-12）
+
+### 22.1 授权边界与开工前的磁盘真值
+
+用户指令是「执行 后续步骤」，依赖链为：① 补 deepseek `newChat` 精确入口 + 契约测试与变异锚 → ② 重建 dist、全量 `npm test`、全量变异、dist 严格一致性 → ③ 重新申请解冻、相邻时间窗串行重跑 4 轮 → ④ 提交 / push 单独授权。**本节只完成 ①②**；③ 是「申请解冻」，不是自动解冻，④ 未授权。
+
+开工前对账（不认 recap）：仓库 `/Users/raymondna/Documents/AI-collab/ai-collab-base`，`HEAD == origin/main == 36d9ec2`，`git status --porcelain` 62 项，TaskList #45 completed / #46 in_progress。源码与 8 条契约测试已在盘，但 `mutation-check.mjs` 仍是 143 锚 ⇒ 判定上一轮在「准备加变异锚」处被中断，本次从那里续上。
+
+**授权收口（回写完成后逐次确认）**：就 ③ 解冻真机重跑与 ④ 提交/push 两个独立问题向用户确认，用户明确选择「**暂不重跑（推荐）**」+「**暂不提交（推荐）**」。据此：不解冻、不打开冻结站、不跑预检、不发消息；不 `git commit`、不 `git push`；74 项改动全部留在工作区，`HEAD == origin/main == 36d9ec2`、`unpushed=0`。N25 保持 `open`。①② 的产物与结论照常交付，③④ 仍列为未执行的后续步骤。
+
+### 22.2 设计决策：为什么不是 CSS 选择器，也不是放宽公共兜底
+
+只读探针 `new-session-probe-2026-11-11.deepseek-ab-diagnostic.json` 给出的真入口是 `<span>开启新对话</span>`：自身无 class / id / aria / title / role / testid，`clickableAncestor:null`，六层祖先全是构建期哈希类名（`_5a8ac7a` / `dc1f7bee _4bcc731` / `_7b40dad` / …）。写哈希类名等于下次发版即失效；写 `span` 到公共 `NEW_SESSION_CONTROL_SELECTOR` 则会误点 longcat 历史会话里的 `div.conv-title`「新对话」诱饵（§21.7 已有实证守护）。
+
+因此采用 **adapter-scoped exact-text hook**：只有显式声明 `newChatText` 的 adapter 才启用一层「窄选择器 + 文案 `trim()` 后全等」匹配，仍要过 `isElementRendered` 与 `COMPOSER_ZONE_SELECTOR`，返回 `strategy: "adapter-text-match"`，并由 `waitForSessionReset` 的消息数下降判真实重置。`NEW_SESSION_TEXTS` 只新增文案「开启新对话」，**标签表一个字节未动**。
+
+另核到 `content-script.js` 的 `PLATFORM_CONFIGS["chat.deepseek.com"] = DEEPSEEK_SELECTORS`、`handleNewSession()` 传的是完整 `currentConfig`，所以新字段自动流入，**不需要改内容脚本**。
+
+### 22.3 改动清单
+
+| 文件 | 改动 |
+|---|---|
+| `src/content/new-session-control.js` | `NEW_SESSION_TEXTS` 加「开启新对话」；`findNewSessionControl()` 加 `1.5)` 逃生口；返回类型加 `"adapter-text-match"` |
+| `src/platforms/deepseek-adapter.js` | 新增 `newChatText: { selector: "span", texts: ["开启新对话"] }`，注释钉住 ab3 B 组 `available:false` 根因与「不写哈希类名、不放宽公共兜底」 |
+| `tests/deepseek-new-session.test.mjs` | 新增 8 条契约测试，用生产 `DEEPSEEK_SELECTORS` / `CHATGLM_SELECTORS` 与探针原样哈希祖先夹具 |
+| `tests/real-machine/mutation-check.mjs` | 追加 8 条语义锚（143 → 151），全部指向独立测试文件，可用 `MUTATION_TESTFILE` 秒级预检 |
+
+新测试第一次跑 5/8：`makeSite()` 里 `{ ...config, messageList }` 的 spread 顺序让 adapter 自带 `messageList` 覆盖夹具，12 条 `.msg` 数成 0，`handleNewSession` 直接走 `already-empty` 绕过了真正要验的行为。改成把 `messageList` 放在 spread **之后**后 8/8。回归 `new-session-control.test.mjs` 12/12、`session-boundary.test.mjs` 9/9、`message-list-contract.test.mjs` 8/8。定向变异预检 8/8 全杀死。
+
+### 22.4 全量门禁（最终代码状态，机器执行结果）
+
+runner `evidence/gates-deepseek-newchat-2026-11-12.sh`：每步 stdout 全程 `tee -a`，start / exit 即时写 `gates-deepseek-newchat-2026-11-12.jsonl`，汇总 `gates-deepseek-newchat-2026-11-12.summary.json`。总耗时 17m49s，`ALL_PASS=true`。
+
+| 门禁 | 结果 | 证据 |
+|---|---|---|
+| `npm run build` #1 / #2 | 两次 EXIT=0，产物 hash 幂等 | `build-2026-11-12.deepseek-newchat{,-second}.log` |
+| 全量 `npm test` | **349/349，fail 0，EXIT=0**（341 + 8 新增） | `npm-test-2026-11-12.deepseek-newchat.log` |
+| 全量变异 | **151/151 全杀死，存活 0，EXIT=0** | `mutation-check-2026-11-12.deepseek-newchat.full.log` |
+| dist 严格一致性 | `allPass=true`，10 项关键字全中 | `dist-consistency-2026-11-12.deepseek-newchat.json` |
+
+`CODEBUDDY_SAFE_DELETE_ENABLED=0` **只设在变异检查这一条命令的进程上**，用途是让 `.mutation-tmp` 收尾删除拿到干净退出码（脚本内注释有说明）；没有给任何真机 runner 关安全门，也没有绕过沙箱策略。
+
+### 22.5 dist 产物本身被核过
+
+`dist/content-script.js` sha256 `5b4807bd1b3123e8307599935c640918c07f1cb72631522f677848620d1c48a7`（61,464 B）、`dist/service-worker.js` `fe3122cb809c29555eece5c6aec635796dc72ad079629a23499a6eb8d3d963da`（138,861 B），两次构建前后完全一致。10 项关键字里包含本轮新增的 `adapter-text-match`（1 次）、`newChatText`（2 次）、`开启新对话`（6 次），以及上一轮不能丢的 `baselineContent` / `longcat.ai` / `RESPONSE_TIMEOUT` / `RESUME_WAIT_NO_BASELINE`。
+
+⚠️ 新 dist hash 已不同于 §20 / ab3 使用的 `cffb6eb5…` / `b243c74d…`：`ab3-runner-2026-11-12.sh` 的前置检查里 `DIST_EV` 写死指向 `dist-consistency-2026-11-12.local-fix.json`，再用其中记录的老 hash 去比当前 dist 文件，**照原样跑必然报 hash 不符**。任何后续真机 runner 的 `PRECONDITION_OK` 必须改用本轮 `dist-consistency-2026-11-12.deepseek-newchat.json` 的新 hash，不得原样复用旧 runner。两个变体 Pack 的 sha256 本轮复核未变（`89b197cf…` / `0e1b4b98…`）。
+
+### 22.6 机器裁定
+
+`evidence/deepseek-newchat-verdict-2026-11-12.py` 只读门禁汇总、dist JSON、两份日志与源码声明，机械产出 `evidence/deepseek-newchat-verdict-2026-11-12.json`：
+
+```
+code = LOCAL_FIX_GATES_PASS_REAL_MACHINE_NOT_VERIFIED
+localFixComplete = true      allGatesPass = true
+realMachineVerified = false  propositionSupported = false
+n25 = { status: "open", decision: "remain open" }
+```
+
+`realMachineVerified=false` 由「本轮是否产出新站点回执」机械判定（`newRealMachineReceipts=[]`），本地全绿不得把它推成 true。§21.5 的 `PROPOSITION_NOT_SUPPORTED` 与全部归因边界继续有效；N25 证据 23 → 27，`status=open`、`closed_at=null`。
+
+### 22.7 归因边界（不得越线）
+
+- 不能说 deepseek 的会话边界在真机上生效——本轮零次真机触发，jsdom 仍是唯一证据。
+- 不能说「会话边界解掉了 step_8 撞墙」，也不能说「边界无效」——没有「A 撞墙且 B 通过」的成对证据，也没有边界真正生效过的轮次。
+- 不能把 F1 公共等待判据的真机成功（`f1RealMachineVerified=true`）挪用为 `fresh_session` 的因果证据，两者是不同变量。
+- 不能把 deepseek 的 8/8 归功于边界；不能说重置免费或把耗时差异归因给重置（§14.4）。
+- 本轮未打开冻结站、未导入 Pack、未发送任何消息、**未 `git commit` / 未 `git push`**。
+
+### 22.8 产物与当前状态
+
+新增：`gates-deepseek-newchat-2026-11-12.sh`、同名 `.log` / `.jsonl` / `.summary.json`、`dist-consistency-deepseek-newchat-2026-11-12.mjs`、`dist-consistency-2026-11-12.deepseek-newchat.json`、`deepseek-newchat-verdict-2026-11-12.py` / `.json`，以及两份 build 日志、单测日志、全量变异日志。裁定 JSON 生成时核到 `HEAD == origin/main == 36d9ec2`、`statusItems=73`（开工 62 + 当时已落盘 11 项）；裁定 JSON 自身写完后再核为 **74** 项，`unpushed=0`，`committed=false` / `pushed=false`。两个数字都是磁盘真值，差别只来自裁定文件自身落盘的先后，不是漏项。
+
+### 22.9 后续步骤（依赖顺序，均需单独授权）
+
+1. **重新申请解冻** deepseek / longcat 并授权真机重跑：逐次 `ALLOW_FROZEN=1` 留痕，白名单不改；预检核登录态；用 §22.5 的新 dist hash 重核前置；相邻时间窗串行跑 4 轮 A/B。
+2. B 组必须 `sessionResets[0].available===true && messageCountAfter<Before`；只有「A 撞墙且 B 通过」才支持命题。若边界未执行或 `available:false`，该轮作废 / 本轮不可评估，不得包装成「边界无效」。
+3. 跑完按判据裁定 N25；在此之前 **N25 保持 `open`**。
+4. 提交 / push 需单独授权，授权范围按提交与文件集合分清。
+
+---
+
+## 23. 明确解冻后 ab4 四轮真机 A/B：B 组硬判据首次 2/2 成立，命题仍不成立（2026-11-12 20:1x–20:5x）
+
+### 23.1 授权边界与前置对账
+
+用户明确下令「① 明确解冻并授权真机重跑；② B 组须 `available===true && messageCountAfter<Before`，边界未执行或 `available:false` 则判该轮作废 / 本轮不可评估，不得包装成「边界无效」；③ 只有「A 撞墙且 B 通过」才支持命题，跑完按判据裁定 N25，此前保持 open；④ 提交 / push 单独授权」。本节执行 ①–③，**④ 未授权也未执行**。冻结白名单代码未改，逐次 `ALLOW_FROZEN=1` 留痕：预检与 4 份回执的 `platformPolicy.unfrozenBy` 全为 `ALLOW_FROZEN=1`。
+
+只读前置：`HEAD == origin/main == 36d9ec2`；当前 dist hash `5b4807bd…` / `fe3122cb…` 与 `dist-consistency-2026-11-12.deepseek-newchat.json` 完全一致；两个变体 Pack hash 未变（`89b197cf…` / `0e1b4b98…`）；`*.ab4-*` 目标路径全空；SW 缓存仅 13 文件（低于 shim 50 阈值）。预检 `L2-precheck-2026-11-12.ab4.deepseek-longcat.json`：deepseek / longcat 均 `composerVisible=true`、`looksLikeLogin=false`。
+
+`ab4-runner-2026-11-12.sh` 相对 ab3 的三处硬修正：`DIST_EV` 改用本轮新证据（ab3 写死指向 `local-fix` 证据，新 dist 下必报 hash 不符）；OUT 全换 `*.ab4-*` 且不覆盖；结尾 `ALL_RECEIPTS_PRESENT` 逐份核回执，不再让 `RUNNER_FINISHED` 冒充「四轮都跑完」。4 轮严格串行，未设置 `CODEBUDDY_SAFE_DELETE_ENABLED=0`。
+
+### 23.2 四轮实测结果
+
+| 轮 | 平台 | 变体 | 回执 | 结果 | 步数 | 耗时 | `sessionResets` |
+|---|---|---|---|---|---|---|---|
+| 1 | deepseek | A `no-boundary` | `L2-deepseek-auto-2026-11-12.ab4-no-boundary.json` | **8/8 completed** | 8/8 | 80,535 ms | `[]` |
+| 2 | deepseek | B `with-boundary` | `L2-deepseek-auto-2026-11-12.ab4-with-boundary.json` | **8/8 completed** | 8/8 | 79,644 ms | `available:true / adapter-text-match / 3→0 / 359 ms` |
+| 3 | longcat | A `no-boundary` | `L2-longcat-auto-2026-11-12.ab4-no-boundary.json` | failed | 3/4，挂在 `step_4_scene`（723,310 ms） | 765,162 ms | `[]` |
+| 4 | longcat | B `with-boundary` | `L2-longcat-auto-2026-11-12.ab4-with-boundary.json` | failed | 7/8，挂在 `step_8_output`（724,267 ms） | 861,811 ms | `available:true / adapter-selector / 6→0 / 307 ms` |
+
+两处失败都是 4×180s 窗口的 `Response timeout`。第 4 轮前 7 步全部成功（单步 20–27 s），说明内容型等待判据仍在真机工作。
+
+### 23.3 第 4 轮补齐：从「没跑」到 4/4 有回执
+
+原 runner 第 4 轮在 `launch()` 清 SW 缓存时被 WorkBuddy safe-delete shim 拦住（`SAFE_DELETE_BULK_CONFIRM_REQUIRED`，`count 52 > threshold 50`，`scope:"turn"`，`targets=Extension Scripts`）：浏览器未启动、页面未打开、Pack 未导入、未发送任何内容，回执 `exists:false`。runner 正确输出 `ALL_RECEIPTS_PRESENT=False` —— §21.4 的教训已修好。只读核当前 `Extension Scripts` 只有 5 个文件，说明拦的是 turn 累计删除数，与 ab3 同型。
+
+独立补跑 `ab4-round4-rerun-2026-11-12.sh` 走了两轮尝试，两个都是**脚本自身的 bug**，如实留痕：
+
+1. 第一次 `PRECONDITION_FAILED`：`out_name` 是 `Path` 对象，`.replace(".json", suffix)` 调用的是 `Path.replace()`（文件系统重命名）而非字符串替换，Python 崩溃；且 stderr 当时没接进 `tee`，日志里只剩两行 shell 输出。已修为 `out_name.name.replace(...)`，并让两段 Python 的 stderr 一并 `2>&1 | tee`，日志改 append-only 保留失败证据。
+2. 第二次 `PRECONDITION_OK`，清 SW 缓存仅 1 项未被拦，14m32s 后回执落盘；但收尾 verify 段把退出码字符串也转成了 `Path`，`int(ec)` 抛 `TypeError` ⇒ 进程假 `EXIT=1`、`summary` 与 verify 行缺失。**回执由驱动自身即时落盘，有效**。因此**不重跑真机**（不重复发送、不破坏 likeForLike），改用 `ab4-finalize-2026-11-12.py` 只读补齐 `ab4-final-receipts-2026-11-12.json`、`ab4-round4-summary-2026-11-12.json` 与一条标注 `source: "post-hoc-readonly-finalize"` 的 verify 行，明确不冒充即时记录；原 `ab4-runner-summary-2026-11-12.json` 里当时的 `allFourRoundsExecuted=false` 保留不覆盖。
+
+### 23.4 逐轮机器复核与裁定
+
+`ab4-verdict-2026-11-12.py` 只读 4 份回执机械推导，产出 `ab4-verdict-2026-11-12.json`（显式 `--regenerate` 补入 F2 / 混杂观察字段，产物内 `regeneratedFrom` 留痕，最终 `code` 未变）：
+
+```
+code = PROPOSITION_NOT_SUPPORTED_ROUNDS_UNUSABLE
+allFourRoundsExecuted = true     allBoundariesActuallyExecuted = true
+bHardCriteriaMetCount = 2       f2RealMachineVerified = true
+propositionSupported = false    N25 remain open
+```
+
+| 平台 | 主状态 | 机械判据 | 结论 |
+|---|---|---|---|
+| deepseek | `NO_WALL_THIS_ROUND` | `aCompleted8of8=true`、`bCompleted8of8=true`、`bResetActuallyHappened=true` | A/B 都 8/8 ⇒ **本轮墙不存在**，B 组边界虽真执行（3→0）但无墙可解，不能归功边界 |
+| longcat | `A_FAILED_BEFORE_WALL_STEP` | A 在 `step_4_scene` 失败、B 在 `step_8_output` 失败、`bResetActuallyHappened=true`、`bPassed=false` | **本轮不可评估**：A 没走到墙的位置，站点报错是混杂变量；既不能归功边界，也不能说边界无效 |
+
+`bFailedAtWallStepAfterSuccessfulReset=true`：longcat B 在边界 `6→0` 真执行之后，`step_8_output` 仍 `Response timeout`。这是与命题方向相反的观察，必须显式列出；但按用户判据，**不得包装成「边界无效」** —— 没有成对的「A 在 step_8 撞墙」对照，且站点报错未被排除。裁定 JSON 里 `boundaryIneffectiveClaimed=false` 恒成立。
+
+### 23.5 本轮最大进展：F2 真机验证成立，但 ≠ 命题成立
+
+§21.7 的两条待修本轮均已落地并首次在真机上验证：deepseek B 组 `strategy:"adapter-text-match" / 3→0`，longcat B 组 `strategy:"adapter-selector" / 6→0`，`sessionResets[0].available===true && messageCountAfter<Before` **两站全部成立**（ab3 时是 0/2）。`f2RealMachineVerified=true` 证明的是「两个 adapter 的新会话入口真的能打开会话」，与「边界解掉长会话撞墙」是**不同变量**。§20.5 / §21.6 的 F1 / F2 分离口径继续有效：F1 验等待判据、F2 验入口可达、A/B 命题验因果，三者不可互相挪用。ab3 的 `allBoundariesActuallyExecuted=false` 被本轮 `true` 取代，这是**执行条件改善**，不是因果证据改善。
+
+### 23.6 新混杂变量与 likeForLike 缺口
+
+两张 longcat 截图的人工视觉判读：末条 AI 回复均为「**服务出错啦，请稍后再试。**」，无登录墙 / 验证码，左栏「开启新对话」入口可见。与 ab3 同型，站点侧随机报错持续存在，是独立于「长会话撞墙」「等待判据」「会话边界」的混杂变量。这些放在 `nonMachineObservations`，**不参与任何机器布尔推导**。
+
+第 3→4 轮为独立补跑，`likeForLikeGapSeconds=182`（约 3 分钟），比 ab3 的约 31 分钟显著改善，但仍非连续执行；Pack 与 dist hash 经前置复核一致，缺口如实保留，不得抹掉。
+
+### 23.7 归因边界（不得越线）
+
+- 不能说「会话边界解掉了 step_8 长会话撞墙」——没有「A 撞墙且 B 通过」的成对证据。
+- 不能说「边界无效」——longcat A 在 step_4 就失败，站点报错是混杂变量，不可用「B 在 step_8 也超时」反推。
+- 不能把 deepseek 的 8/8 归功于边界——A 组无边界同样 8/8。
+- 不能把 F2 的 3→0 / 6→0 挪用为 A/B 因果证据；不能把 F1 真机成功与会话边界混为一谈。
+- 不能说重置免费、不能把耗时差异归因给重置（§14.4）；不能说「长会话撞墙已被根治」。
+- 不能把补跑脚本的两个 bug 写成真机失败，也不能把「进程假 EXIT=1」写成「第 4 轮没跑」。
+
+### 23.8 产物与未提交状态
+
+新增：`ab4-precheck-2026-11-12.log`、`L2-precheck-2026-11-12.ab4.deepseek-longcat.json`、`ab4-runner-2026-11-12.sh`、`ab4-rerun-2026-11-12.log`、`ab4-rerun-progress-2026-11-12.jsonl`、`ab4-runner-summary-2026-11-12.json`、4 份 `L2-*-2026-11-12.ab4-*.json` 与 4 份截图、`ab4-round4-rerun-2026-11-12.sh`、`ab4-round4-2026-11-12.log`、`ab4-round4-progress-2026-11-12.jsonl`、`ab4-finalize-2026-11-12.py`、`ab4-final-receipts-2026-11-12.json`、`ab4-round4-summary-2026-11-12.json`、`ab4-verdict-2026-11-12.py`、`ab4-verdict-2026-11-12.json`。本轮**未改任何源码、未重建 dist**（真机加载的是 §22 已核过的 dist）、**未 `git commit` / 未 `git push`**。`HEAD == origin/main == 36d9ec2`、`unpushed=0`。
+
+④ 的授权范围用只读清单 `commit-scope-2026-11-12.json` 盘点：工作区共 **96 项** = 15 个 tracked 改动 + 81 个 untracked；untracked 按来源分为本轮 ab4 证据/脚本 22、§22 门禁证据/脚本 12、ab3 17、ab/ab2 17、其他历史证据 12、源码与测试 1；按扩展名分为 34 json / 18 log / 12 png / 6 jsonl / 5 sh / 4 py / 2 mjs。后续授权须按「提交」与「文件集合」分别确认，不得默认一次性全收。清单落盘后工作区变为 **97 项**（清单文件自身 +1），两个数字都是磁盘真值，差别只来自生成先后。
+
+### 23.9 后续步骤（依赖顺序，均需单独授权）
+
+1. 若要让命题可判定，必须构造「A 在 `step_8_output` 撞墙」的成对对照，并排除 longcat 站点侧报错这个混杂变量；可在站点稳定时重跑，但**不得改 Pack**（会破坏「只差 `fresh_session` 一个变量」的 likeForLike）。
+2. 重跑仍须逐次 `ALLOW_FROZEN=1` 留痕、预检核登录态、相邻时间窗串行、B 组硬判据成立；只有「A 撞墙且 B 通过」才支持命题。在此之前 **N25 保持 `open`**。
+3. 本轮 runner / 补跑脚本的两个 bug 已在文件中修好，供后续复用；不要为它们再跑一次真机。
+4. 提交 / push 需单独授权，授权范围按提交与文件集合分清。
+
+---
+
+## 24. 执行后续步骤：只读诊断证明「墙」已不可复现，产出观测先行方案，真机与提交均未越线（2026-11-12 21:1x）
+
+### 24.1 授权分辨与开工真值
+
+用户指令是「执行 后续步骤」，指向 §23.9 的四条：① 构造「A 在 `step_8_output` 撞墙」的成对对照并排除站点报错（可在站点稳定时重跑，**不得改 Pack**）；② 判据成立前 N25 保持 open；③ 归因边界；④ 提交 / push **单独授权，按提交与文件集合分清**。
+
+按红线分辨：上一轮的解冻是**逐次显式放行**，「用完仍是冻结」，再跑真机必须**再次明确解冻**；④ 明示单独授权。因此本轮**不打开冻结站、不跑真机、不 `git commit` / 不 `git push`**。自主执行的是不越线且确有增量的本地准备：只读诊断 → 离线验证上轮脚本修复 → 产出 plan-only 方案 → 跑本地门禁。
+
+开工磁盘真值：`HEAD == origin/main == 36d9ec2`、`unpushed=0`、`status_items=97`；N25 `open` / 32 条证据 / `closed_at:null`；裁定仍为 `PROPOSITION_NOT_SUPPORTED_ROUNDS_UNUSABLE`；RESULT 1456 行。
+
+**授权收口（回写完成后逐次确认）**：就 ① 再次解冻真机重跑与 ④ 提交 / push 两个独立问题分别确认，用户明确选择「**暂不重跑（推荐）**」+「**暂不提交（推荐）**」。据此：不解冻、不打开冻结站、不跑预检、不发消息；不 `git commit`、不 `git push`；105 项改动全部留在工作区，`HEAD == origin/main == 36d9ec2`、`unpushed=0`。N25 保持 `open`，`ab5` 方案保持 `plan-only / NOT-EXECUTED`。§24.2–§24.5 的本地准备产物与结论照常交付。
+
+### 24.2 只读诊断：命题的自变量（长会话撞墙）已不可控、不复现
+
+`wall-observability-diagnosis-2026-11-12.py` 只读 13 份 ab / ab2 / ab3 / ab4 回执，机械汇总 `step_8` 演化，产出 `wall-observability-diagnosis-2026-11-12.json`：
+
+| 侧 | F1 修复前 | F1 修复后（ab3 / ab4） |
+|---|---|---|
+| deepseek | 3 份回执全部在 `step_5_boundary` 假超时（4×180s），**根本没走到 step_8** | 4 份回执全部 8/8 completed；`step_8_output` 耗时 **13,333 / 13,286 / 12,310 / 13,617 ms** |
+| longcat | — | 首次失败步在 `step_3_explain` / `step_4_scene` / `step_6_takeaway` / `step_8_output` **漂移**；两次 step_8 失败都是 723,235 / 724,267 ms（4×180s），截图同型「服务出错啦，请稍后再试。」 |
+
+三条发现：
+
+1. **F-D1**：§9.4 的 deepseek 症状「答案迟到，4×180s 都没稳定，运行结束后才生成完」正是长会话虚拟列表下 `countGrew` 恒 false 的**假超时**，已由 F1 内容型增长信号根治；不是上下文太长导致平台答不出。F1 后 `step_8` 只要 12–14 秒。
+2. **F-D2**：longcat 在同一 Pack / 同一 dist 下失败步位置漂移，且截图均为站点报错 ⇒ 站点侧随机报错是**外部混杂变量**，不是稳定的 `step_8` 上下文墙。
+3. **F-D3**：§9.4 的隔离实验证据 `L2-longcat-fusion-isolated-2026-11-11.json` 确实在盘，空会话 21s 通过只能证明「提示词本身不被平台拒绝」；而 §9.4 自己就写着 longcat 症状是「平台直接报错：服务出错啦，请稍后再试试。」⇒ 原始「长会话是变量」的因果归因被新证据削弱，不能作为「墙存在」的独立证据。
+
+```
+code = PROPOSITION_INDETERMINABLE_WALL_NOT_REPRODUCIBLE
+```
+
+结论：命题的自变量在 F1 修复后不可控、不复现，**继续盲跑 4 轮 A/B 大概率仍是 `NO_WALL_THIS_ROUND` 或站点错误**，无法提供「A 撞墙且 B 通过」的成对证据，只会白耗约 30 分钟与 32 步额度。必须钉死这不是：边界无效 / 命题不成立（不成立需有可判定的对照轮次）/ N25 可以关闭 / F1 或 F2 真机验证无效。
+
+N25 的性质建议改述为「**已跑 A/B，但原始观察对象已重新归因、命题不可判定**」，而不是「还没跑对照」；是否关闭由用户裁定，本节**保持 `open`**。
+
+### 24.3 plan-only 方案：把「A 撞墙」做成前置 gate，而不是跑完才发现没墙
+
+`ab5-observe-first-plan-2026-11-12.json`（`status = "plan-only / NOT-EXECUTED"`、`noRealMachineAction=true`，自检 `pass=true`）：
+
+- **Gate A**：先**只跑 A 组单轮**。机器判据 `stepsTotal==8 && stepSuccess==7 && firstFailedStepId=='step_8_output' && 错误含 Response timeout && 前 7 步全成功 && sessionResets 为空`；再加一道**人工视觉 gate**：截图末条 AI 回复不得是「服务出错啦，请稍后再试。」（属 `nonMachineObservation`，放行必须由人确认）。
+- `onFalse → ABORT_NO_WALL`：不跑 B，落盘「本轮墙不存在」证据，N25 保持 open；约省 3/4 额度与时间。
+- `onTrue`：立即跑同站 B，A/B 间隔目标 ≤ 5 分钟并如实记录；B 组硬判据 `available===true && messageCountAfter<Before`，`bPassed = hard && 8/8 completed`。
+- 只有 `gateA && visualConfirmed && bPassed` 才支持命题；边界未执行 / `available:false` ⇒ 该轮作废或本轮不可评估，**不得包装成「边界无效」**。
+- 硬约束：不得改 Pack（A/B 只差 `fresh_session` 一个变量，两个变体 sha256 不变）、同 dist / 同账号态 / 相邻时间窗、逐次 `ALLOW_FROZEN=1` 留痕且白名单不改、预检也显式解冻、全程 tee + 即时 JSONL + 即时回执、`*.ab5-*` 新路径不覆盖、`ALL_RECEIPTS_PRESENT` 逐份核、不设 `CODEBUDDY_SAFE_DELETE_ENABLED=0`、提交 / push 单独授权。
+- 前置条件第一条「用户给出明确解冻指令」**当前未满足**，因此方案不执行。
+
+### 24.4 离线验证 §23.3 的两处脚本 bug 已修
+
+`offline-verify-ab4-round4-fix-2026-11-12.py` 用静态断言 + `bash -n` + `tempfile` 重放验证 10 项，**10/10 通过**：
+
+- B1 `out_name.name.replace(...)` 存在、旧 `Path.replace` 代码消失、后缀推导结果为 `.json` / `.png` 两个正确路径且不抛异常；
+- B2 `ec = _args[4]` 保持字符串、`int(ec)` 不再抛 `TypeError`，重放得到 `nodeExit=0 / 8 步 / 7 成功 / reset 6→0 / resetActuallyHappened=true`；
+- 两段 Python 的 stderr 都接进 `tee`、日志 append-only 不覆盖第一次 `PRECONDITION_FAILED`；两个脚本 `bash -n` 通过。
+
+硬边界全部为 false：未启动浏览器、未打开冻结站、未发送消息、未写真机 OUT、未覆盖既有证据、未调用 `l2-platform-auto.mjs`、未碰 git。离线通过**只证明脚本不再因自身 bug 假失败**，不代表任何新的真机结论。
+
+### 24.5 本地门禁（`ab5-prep-gates-2026-11-12.json`，`allPass=true`）
+
+| 门禁 | 结果 |
+|---|---|
+| 全量 `npm test` | **349/349，fail 0**（`npm-test-2026-11-12.ab5-plan.log`） |
+| 离线脚本重放 | 10/10 |
+| plan 自检 | `pass=true`，`status=plan-only / NOT-EXECUTED` |
+| evidence JSON | 121 份全部可解析，0 失败 |
+| 源码 / 测试 / dist | **本轮未改**；tracked 改动仍是上一轮那 15 个文件，新增物全在 `evidence/` 下 |
+
+`allPass=true` 时的 evidence JSON 计数是 121（汇总文件自身尚未落盘）；全部回写完再核为 **122**、`status_items=105`（开工 97 + 本轮 8 项新产物）。两个数字都是磁盘真值，差别只来自生成先后。
+
+### 24.6 归因边界（继续有效并扩充）
+
+- 不能说「会话边界解掉 step_8 撞墙」，也没有依据说「边界无效」。
+- 不能把 A/B 都通过归功边界；不能把 F1 / F2 的真机成功挪用为 A/B 因果证据。
+- 不能说重置免费、不能把耗时差异归因给重置；不能说「长会话撞墙已被根治」——准确说法是**原始观察已重新归因，墙不复现**。
+- 站点侧报错是外部混杂变量，必须单独标注，不得与「墙」合并归因。
+- 不能把补跑脚本的两个 bug 写成真机失败；不能把 plan-only 方案写成已执行回执。
+
+### 24.7 产物与状态
+
+新增 `wall-observability-diagnosis-2026-11-12.py` / `.json`、`offline-verify-ab4-round4-fix-2026-11-12.py` / `.json`、`ab5-observe-first-plan-2026-11-12.py` / `.json`、`ab5-prep-gates-2026-11-12.json`、`npm-test-2026-11-12.ab5-plan.log`。**未改源码 / 未重建 dist / 未打开冻结站 / 未发消息 / 未 `git commit` / 未 `git push`**；N25 保持 `open`。
+
+### 24.8 后续步骤（依赖顺序，均需单独授权）
+
+1. **再次明确解冻**并授权真机重跑：建议按 §24.3 的 observe-first gate 执行，而不是盲跑 4 轮；逐次 `ALLOW_FROZEN=1` 留痕。
+2. 若 Gate A 判「墙不存在」，按 `ABORT_NO_WALL` 停止，N25 仍保持 open；若成立才跑 B 并按判据裁定。
+3. 提交 / push 按「提交」与「文件集合」分别确认；`commit-scope-2026-11-12.json` 已给出 96 项分类（清单自身落盘后工作区 97 项），不要默认一次性全收。
+
+
+---
+
+## §25 执行「后续步骤」：解冻 + observe-first 单轮 → ABORT_NO_WALL，N25 保持 open（2026-11-14）
+
+用户 2026-11-14 明令：「解冻并按 observe-first gate 重跑（先跑 A 单轮，判无墙即停），而不是盲跑 4 轮；逐次 `ALLOW_FROZEN=1` 留痕。Gate A 判「墙不存在」→ `ABORT_NO_WALL`，N25 仍 open；仅当 Gate A 成立才跑 B 并按判据裁定。提交 / push 按「提交」与「文件集合」分别确认，不要默认一次全收。」时间跨了 2 天，先核磁盘真值，不认上轮自述。
+
+### 25.1 跨 2 天只读前置对账（`ab5-precondition-2026-11-14.json`，`preconditionPass=true`）
+
+| 项 | 磁盘真值 | 结论 |
+|---|---|---|
+| HEAD / origin/main | `36d9ec2` / `36d9ec2`，`unpushed=0` | 一致 |
+| 工作区 | 105 项（落盘本证据时 106） | 与 `commit-scope-2026-11-12.json` 分类一致 |
+| dist | `content-script.js 5b4807bd…` / `service-worker.js fe3122cb…` | 与 `dist-consistency-2026-11-12.deepseek-newchat.json` 逐文件 hash 一致，幂等构建证据 `allPass=true` |
+| 变体 Pack | `89b197cf…` / `0e1b4b98…` | 与 ab5 plan 声明一致，**未改 Pack** |
+| `L2-*.ab5-*.json/.png` 目标路径 | 0 个占用 | 不覆盖任何既有证据 |
+| SW 缓存 | Service Worker 8 / Extension Scripts 5 / Code Cache 缺失 = 13 项 | 远低于 shim 的 50 阈值，无需绕过安全门 |
+| ab5 plan 状态 | `plan-only / NOT-EXECUTED`、`noRealMachineAction=true` | 未被偷跑 |
+
+授权留痕：用户明令全文写进 `authorization.verbatim`；`unfrozenPlatforms=[deepseek,longcat]`；`perCommandFlag=ALLOW_FROZEN=1`；`appliesToPrecheck=true`；`whitelistCodeChanged=false`；`usageRule=逐次显式放行，用完仍是冻结`。**代码白名单未改**。
+
+### 25.2 判据留白不暗猜：Gate A 首轮平台由用户裁定
+
+ab5 plan 的 `gateA.description` 只写「先只跑 A 组（no-boundary）单轮」，**未钉死 platform**。前置证据把该项标为 `openCriterion.resolution=PENDING_USER_CONFIRMATION`，并向用户出具只读探测得到的两条依据：deepseek 在 F1 修复后 ab3/ab4 两轮 A 全 8/8、`step_8` 12.3–13.6s，原始「答案迟到 4×180s」已重新归因为虚拟列表假超时；longcat 失败步在 `step_3/4/6/8` 漂移、截图同型「服务出错啦」站点报错，属外部混杂变量。
+
+用户 `AskUserQuestion q-0` 裁定 **deepseek**。裁定独立落盘 `ab5-gate-a-platform-ruling-2026-11-14.json`（`roundsTotal=1`，`onGateAFalse=ABORT_NO_WALL`），**不覆盖**前置证据里的 PENDING 历史留痕。
+
+### 25.3 显式解冻预检（`L2-precheck-2026-11-14.ab5.deepseek-longcat.json`）
+
+`CANDIDATES=deepseek,longcat PRECHECK=1 ALLOW_FROZEN=1`，全程 `tee -a ab5-precheck-2026-11-14.log`。两站 `composerVisible=true` / `looksLikeLogin=false`；`platformPolicy` 两站均 `allowed=true / active=false / unfrozenBy=ALLOW_FROZEN=1 / reason=frozen-but-explicitly-unfrozen`。SW 缓存仅清 2 项，**未设置** `CODEBUDDY_SAFE_DELETE_ENABLED=0`。
+
+### 25.4 observe-first：只跑 1 轮 A（`ab5-observe-first-runner-2026-11-14.sh`）
+
+`PRECONDITION_OK` 后仅执行 `deepseek / no-boundary` 一轮，`NODE_EXIT=0`，耗时 1m19s。落盘口径全部满足：stdout 全程 `tee -a ab5-observe-first-2026-11-14.log`；`start / node-exit / verify / verify written / runner done` 即时写 append-only `ab5-observe-first-progress-2026-11-14.jsonl`；回执由驱动自身即时写 OUT；结尾 `RECEIPT_PRESENT=True`。
+
+| 字段 | A 单轮真值 |
+|---|---|
+| 回执 | `L2-deepseek-auto-2026-11-14.ab5-no-boundary.json`（17968 B） |
+| `exec.success` / `status` | `true` / `completed` |
+| steps | **8/8 全成功**，`duration=74558ms` |
+| `step_8_output` | **成功，11736ms** |
+| `sessionResets` | **0**（A 组无边界，符合变体） |
+| `platformPolicy.unfrozenBy` | `ALLOW_FROZEN=1` |
+| 首失败步 | **无**（`firstFailedStepId=null`） |
+
+截图 `L2-deepseek-auto-2026-11-14.ab5-no-boundary.png` 已落盘。
+
+### 25.5 Gate A 机器裁定（`ab5-gate-a-verdict-2026-11-14.json`）
+
+`ab5-gate-a-verdict-2026-11-14.py` 只读回执，机械判 6 条判据：
+
+| 判据 | 结果 |
+|---|---|
+| C1 `stepsTotal==8` | ✅ |
+| C2 `stepSuccess==7` | ❌（实际 8） |
+| C3 `firstFailedStepId=='step_8_output'` | ❌（无失败步） |
+| C4 错误含 `Response timeout` | ❌（无失败步） |
+| C5 前 7 步全成功 | ✅ |
+| C6 A 组 `sessionResets` 为空 | ✅ |
+
+`machinePass=false` ⇒ **`code=ABORT_NO_WALL`**，`bShouldRun=false`。按判据**不跑 B、不跑 longcat**。
+
+### 25.6 人工视觉巡检（`nonMachineObservation`，不参与机器布尔）
+
+`ViewImage` 判读截图：末条 AI 回复是**正常中文长文本**（AI 智能体定义与场景说明），不是「服务出错啦，请稍后再试。」；无登录墙、无验证码/滑块。左栏「开启新对话」入口可见，但本轮是 `no-boundary`、**未触发任何 `NEW_SESSION`**，不得据此说 F2 在本轮真机生效。该观察在 `ab5-final-verdict-2026-11-14.json` 里单列 `visualObservation.participatesInMachineBoolean=false`，**不改变 `ABORT_NO_WALL` 结论**。
+
+### 25.7 ABORT 分支硬核与归因边界（`ab5-final-verdict-2026-11-14.json`）
+
+只读核磁盘：`bReceipt / longcatAReceipt / longcatBReceipt` 三个 ab5 目标路径 **全部 `exists=false`**；`roundsExecuted=1`、`bActuallyRun=false`、`longcatActuallyRun=false`；`progressEvents` 只有单轮的 6 条事件。
+
+- 只有「A 撞墙且 B 通过」才支持命题；本轮 A 未撞墙、B 未跑 ⇒ **`propositionSupported=false`**，`boundaryIneffectiveClaimed=false`。
+- **不能说边界有效，也不能说边界无效**；不能把「A 8/8 通过」归功边界；不能把既往 F1 / F2 真机验证挪用为 A/B 因果证据。
+- `f1RealMachineVerifiedThisRound=false` / `f2RealMachineVerifiedThisRound=false`：本轮 `sessionResets=0`，没有触发会话边界，不新增任何 F1/F2 因果结论；§21 / §23 的既往结论不翻案。
+- 准确说法是：**本轮墙不存在，判无墙即停**；§24 的「原始观察已重新归因、墙不复现」得到又一次同型真机佐证，但这不是「长会话撞墙已被根治」的因果证明。
+- **N25 保持 `open`**，`closed_at=null`。
+
+### 25.8 产物与状态
+
+新增：`ab5-precondition-2026-11-14.py/.json`、`ab5-gate-a-platform-ruling-2026-11-14.json`、`L2-precheck-2026-11-14.ab5.deepseek-longcat.json`、`ab5-precheck-2026-11-14.log`、`ab5-observe-first-runner-2026-11-14.sh`、`ab5-observe-first-2026-11-14.log`、`ab5-observe-first-progress-2026-11-14.jsonl`、`ab5-observe-first-verify-2026-11-14.json`、`L2-deepseek-auto-2026-11-14.ab5-no-boundary.json/.png`、`ab5-gate-a-verdict-2026-11-14.py/.json`、`ab5-final-verdict-2026-11-14.py/.json`。
+
+本轮**未改源码 / 未重建 dist / 未改变体 Pack / 未改冻结白名单 / 未跑 B / 未跑 longcat / 未 `git commit` / 未 `git push`**。提交 / push 按「提交」与「文件集合」分别确认，不默认一次全收。
+
+### 25.9 后续步骤（均未授权，按依赖顺序）
+
+1. 若仍要追究命题：先解决 §24 的自变量不可控问题（原始墙已重新归因），再申请**新的逐次解冻**；不得直接盲跑 4 轮。
+2. 提交 / push 单独授权：按「是否提交」与「提交哪个文件集合」两个问题分别确认，`commit-scope-2026-11-12.json` 已有分类清单。
+
+
+### 25.10 收口时补记：`origin/main` 已被外部推进 4 个提交（回溯修正 §25.1）
+
+最终磁盘真证对账发现，§25.1 表格里的「HEAD / origin/main 均 `36d9ec2`」是**开工时（07:34Z）**快照；收口时 `origin/main = f98a1a7`，本地 `HEAD = 36d9ec2`，**behind 4 / ahead 0 / unpushed 0**。`git reflog show origin/main` 显示两次 `fetch --quiet origin: fast-forward`，来自外部推进，**不是本会话操作**；本会话未执行 fetch / pull / merge / rebase / commit / push，本地 HEAD 未移动。
+
+| 新远端提交 | 说明 |
+|---|---|
+| `9dc4da9` | `ci(nightly): 给 pytest 管道显式开 pipefail，别让 tee 吞掉失败` |
+| `b577d05` | `test(adapter-matrix): 同步 kimi/longcat/yiyan 快照到 11-11 真机选择器` |
+| `3173dd7` | Merge PR #47 |
+| `f98a1a7` | Merge PR #48 |
+
+改动文件只有 `.github/workflows/nightly.yml` 与 3 个 `chrome-extension/tests/adapter-matrix/fixtures/mock-dom-*.html`，**未触碰 dist / 变体 Pack / evidence / known_gaps / RESULT**。因此 §25.1 的 hash 复核、§25.4 单轮回执、§25.5 Gate A 裁定、§25.7 `ABORT_NO_WALL` 结论全部保持有效，不需要翻案。原文不删，留痕。
+
+对提交的现实影响：若后续授权提交并推送，本地落后远端 4 个提交，**push 前必须先处理分歧（merge / rebase）**，该动作须单独授权，不得默认执行。见 `remote-divergence-2026-11-14.json` 与 `commit-scope-2026-11-14.json` 的 `remoteDivergence` 字段。
+
+
+### 25.11 提交授权裁定：暂不提交（`commit-authorization-ruling-2026-11-14.json`）
+
+按用户明令「提交 / push 按『提交』与『文件集合』分别确认，不要默认一次全收」，两个问题分别确认：
+
+| 问题 | 用户裁定 | 效力 |
+|---|---|---|
+| q-0 提交动作 | **暂不提交（推荐）** | **本次实际裁定**：不 commit / 不 push / 不 stage，125 项全留工作区；远端 `behind=4` 的分歧不处理 |
+| q-1 文件集合 | **仅本轮 ab5 产物（推荐）** | **仅为日后偏好登记**（`PREFERENCE_ONLY_NOT_AUTHORIZATION`）：19 项 ab5 新产物 + RESULT 报告 + `known_gaps.json`，不含源码/测试与 ab3/ab4/ab/ab2 历史证据 |
+
+q-1 的题面是「若后续授权提交」，因此**不能**据此推断本轮已授权提交，也不能当成一次全收 125 项的授权。下一次真正提交时，「提交动作」仍须单独重新授权；且因本地落后远端 4 个提交，push 前处理分歧的动作也须单独授权。
+
+落盘前后磁盘真值一致（`HEAD=36d9ec2`、`origin/main=f98a1a7`、`unpushed=0`、`behind=4`、`staged=0`）；本轮**未碰 git**。
+
+
+---
+
+## §26 追究命题：可判定性的只读诊断（2026-11-14，路径待裁定）
+
+用户明令「处理后续步骤：1、追究命题；2、重新授权」。本节只完成第 1 项的**只读诊断**；第 2 项授权宾语未指明，按维度分别确认，不擅自执行。开工前核磁盘真值：`HEAD=36d9ec2` / `origin/main=f98a1a7`，behind 4 / ahead 0 / unpushed 0 / staged 0，127 项全在工作区；N25 `open` 40 证据；ab5 仍 `ABORT_NO_WALL`；132 份 evidence JSON 全可解析；`ab6` 目标路径为空。
+
+### 26.1 命题与可判定条件的形式化
+
+| 项 | 定义 |
+|---|---|
+| 命题 | `fresh_session` 会话边界能解掉 deepseek / longcat 的 `step_8` 长会话撞墙 |
+| 自变量 | 单会话串行累积到 `step_8` 时的「长会话撞墙」状态 |
+| 因变量 | `step_8_output` 是否失败（`Response timeout` / 站点报错） |
+| 可判定 iff | 存在至少一次 A 组能稳定复现「前 7 步全成功、`step_8_output` 失败、且失败**不是**站点侧随机报错、**不是**等待判据 bug」；且同站相邻时间窗的 B 组在边界真执行后通过 |
+
+### 26.2 机械证据：8 份 A 组回执，结构条件已满足但墙不出现
+
+变体 Pack 的唯一差异经复核确认：B 组只在 `workflow.steps[7]` 多一个 `fresh_session: "prefer"`，A 组递归删掉该键，**其余 8 步的 `prompt_template` / `input_fields` / `config` 逐字节一致**。因此 A 组 `no-boundary` 本来就是**同一会话 8 步串行、7 次 AI 往返、无任何会话边界**——这正是 §9.4 原文宣称的自变量条件「会话已累积 7 轮、约 5–6k 字」。
+
+`proposition-pursuit-plan-2026-11-14.py` 机械汇总 8 份 A 组回执，F1 之后走满 8 步的有 3 份：
+
+| 回执 | steps | step_8 成功 | step_8 耗时 | sessionResets |
+|---|---|---|---|---|
+| `L2-deepseek-auto-2026-11-12.ab3-no-boundary.json` | 8/8 | True | 13333 ms | 0 |
+| `L2-deepseek-auto-2026-11-12.ab4-no-boundary.json` | 8/8 | True | 12310 ms | 0 |
+| `L2-deepseek-auto-2026-11-14.ab5-no-boundary.json` | 8/8 | True | 11736 ms | 0 |
+
+**3 份全部 8/8 completed，撞墙 0 次**。加上 ab5 observe-first 单轮（8/8、11.7s、`sessionResets=0`），这是第 3 份同型结构复现证据。
+
+### 26.3 回溯修正 §24：不是「没复现长会话」，而是「条件满足、因变量不出现」
+
+§24 写「自变量不可控、不复现」。更准确的机械表述是：**长会话的结构条件已经复现**（同一会话 7 次 AI 往返），但 `step_8` 没有失败。原始观察的两种症状已被分别重新归因 —— deepseek 是 F1 已根治的虚拟列表 `countGrew` 假超时，longcat 是站点侧随机报错（外部混杂变量）。因此「墙」不是被漏掉，而是**作为可复现的自变量并不存在**。§24 的 `PROPOSITION_INDETERMINABLE_WALL_NOT_REPRODUCIBLE` 结论不变，但论据由「推论」升级为「多次真机同型观察」。
+
+隔离实验 `L2-longcat-fusion-isolated-2026-11-11.json`（2437 字、空会话、21s、1481 字）只能证明「提示词本身不被平台拒绝」，不能独立证明「长会话是变量」，F-D3 的削弱依然有效。
+
+### 26.4 五条候选路径（`proposition-pursuit-plan-2026-11-14.json`）
+
+| ID | 路径 | 真机轮次 | 需解冻 | 建议 |
+|---|---|---|---|---|
+| P1 | 按不可判定收口 / 改述 N25 | 0 | 否 | 推荐：唯一不消耗站点额度、不制造新混杂变量的诚实路径 |
+| P2 | 回滚 F1 的归因对照实验 | 2–4 | 是 | 不推荐作为追究原命题的手段（答的是另一个问题） |
+| P3 | 人工加长会话试图复现墙 | 2–4 | 是 | 不推荐：换命题 + 破坏单变量约束 |
+| P4 | 按原判据再跑一次完整 4 轮 A/B | 4 | 是 | 不推荐：与用户最新明令冲突 |
+| P5 | 换活跃 5 站做替代对照 | 2–4 | 否 | 不推荐：答非所问 |
+
+- **P1**：零真机成本、不制造新混杂变量；但「是否关闭 N25」仍须用户裁定，判据未成立前默认保持 `open`，只改述性质为「已跑 A/B，原始观察对象已重新归因、命题不可判定」。
+- **P2**：临时回滚 F1 属主动制造已知 bug，违反本轮「不改源码 / 不改 dist」边界；即便重现假超时，只验证 F-D1 归因，**对原命题的因果结论无直接贡献**。
+- **P3**：改 Pack 违反 ab5 plan 硬约束「A/B 只差 `fresh_session` 一个变量、Pack hash 不变」；加长会话等于换命题。
+- **P4**：与用户 2026-11-14 明令「而不是盲跑 4 轮」直接冲突。
+- **P5**：N25 原始观察对象明确是 deepseek / longcat，换活跃 5 站等于换命题，N23 的「重置真的做到了」不能代偿。
+
+### 26.5 「重新授权」的授权维度拆分（宾语未指明）
+
+用户只说「重新授权」，未指明授权什么。按既有红线「提交 / push 按提交与文件集合分别确认、不要默认一次全收」，拆解为 6 个**互相独立**的维度，当前全部为未授权：A1 追究路径（P1–P5）、A2 逐次解冻 deepseek / longcat、A3 `git commit`、A4 提交文件集合、A5 behind=4 分歧处理（merge / rebase / pull）、A6 push 到远端。上一轮 q-0 = 暂不提交、q-1 = 仅本轮 ab5 产物且状态为 `PREFERENCE_ONLY_NOT_AUTHORIZATION`，**不因本轮「重新授权」四个字自动升级为授权**。
+
+### 26.6 状态
+
+方案 `status = plan-only / NOT-EXECUTED`；硬边界全 false（未启动浏览器、未改 Pack、未改源码/dist、未碰 git、未发消息、未产生真机回执）；`n25 = remain open`。本节路径裁定与授权结果待用户明确后补 §26.x。
+
+
+### 26.7 用户裁定与 P1 执行（`proposition-pursuit-ruling-2026-11-14.json`）
+
+四个维度分别确认，未默认打包：
+
+| 问题 | 裁定 | 效力 |
+|---|---|---|
+| q-0 追究路径 | **P1 收口改述 N25** | 已执行，见下 |
+| q-1 解冻真机 | **不解冻** | 不启动浏览器、不打开冻结站、不跑预检、不发消息；用完仍是冻结，白名单代码未改 |
+| q-2 提交动作 | **暂不提交** | 不 commit / push / stage / merge / rebase；127+ 项全留工作区 |
+| q-3 文件集合 | **仅本轮产物** | 因 q-2 为暂不提交，仍是 `PREFERENCE_ONLY_NOT_AUTHORIZATION`，**不是**本次提交授权，也不是一次全收 |
+
+P1 的具体落地：N25 新增 `recharacterization` 结构化字段，性质由「待 A/B 验证」改述为「**已跑 A/B，但原始观察对象已重新归因、命题不可判定**」；写明 `reader`、三条机器证据依据、`isNot` 四条边界、以及「关闭仍需单独裁定」。`status` 保持 `open`、`closed_at` 保持 `null`、优先级不动；**原 `title` / `detail` / `fix` / `reader` / `where` 全部保留不覆盖**，符合台账 `conventions` 的「关闭后保留条目」与「每条必须写 reader」精神，也便于接手者考古原始口径。N25 证据 41→42。
+
+六维授权结果：A1 路径已裁定 P1；**A2 解冻 / A3 commit / A4 文件集合 / A5 behind=4 分歧处理 / A6 push 全部保持未授权**。`behind=4` 分歧不动。
+
+### 26.8 最终磁盘真证与状态
+
+本轮 `realMachineRounds=0`，硬边界全 false：未启动浏览器、未打开冻结站、未发送消息、未改 Pack、未改源码 / 测试 / dist、未碰 git、未产生真机回执。新增产物全部在 `evidence/` 下：`proposition-pursuit-plan-2026-11-14.py/.json`、`proposition-writeback-2026-11-14.py`、`proposition-pursuit-ruling-2026-11-14.json`、`proposition-pursuit-execution-2026-11-14.json`。
+
+归因边界继续有效：不能说边界有效、也不能说边界无效；不能把 F1 / F2 真机验证挪用为因果证据；不能说「长会话撞墙已根治」（准确说法是**原始观察已重新归因、结构条件复现但墙不出现**）；站点侧报错须单独标注；不能把 `plan-only` 写成已执行回执。
+
+后续步骤（均未授权，按依赖顺序）：① 若要关闭 N25，须单独明确裁定；② 若要跑真机，须逐次明确解冻并说明本次改变了哪个自变量（否则 §26 已证盲跑不产生新证据）；③ 若要提交，须按「提交动作」与「文件集合」分别重新授权；④ 若 push，还须单独授权先处理 `behind=4` 分歧。
+
+
+---
+
+## §27 关闭 N25 + 两条条件指令判定（2026-11-15）
+
+用户指令：「后续步骤（均未授权，按依赖顺序）1、关闭 N25 2、跑真机：须逐次明确解冻，并说明本次改变了哪个自变量；否则 §26 已证盲跑不产生新证据。3、提交：按『提交动作』与『文件集合』分别重新授权；若 push，还须单独授权先处理 behind=4 分歧。」
+
+### 27.1 开工磁盘真值（跨 1 天，不认上轮自述）
+
+| 项 | 真值 |
+|---|---|
+| HEAD / origin/main | `36d9ec2` / **`19635c6`**（上轮收口时是 `f98a1a7`） |
+| ahead / behind / unpushed / staged | 0 / **31**（上轮 4）/ 0 / 0 |
+| 工作区 | 133 项（本轮新产物落盘后递增） |
+| N25 | `open` / `closed_at=null` / 42 条证据 / 已有 `recharacterization` |
+| RESULT | 1745 行，§26 共 8 子节 |
+| evidence JSON | 135 份全可解析 |
+| `ab6` 目标路径 | 空 |
+
+### 27.2 🔧 回溯补记：`behind=4` 已是过期快照
+
+`origin/main` 又被**外部** `fetch origin main --quiet: fast-forward` 推进 27 个提交（`f98a1a7 → 19635c6`），`git diff --name-only` 显示只改 7 个 `.github/workflows/*.yml`（nightly / build / healthcheck / lint / mypy-gate / security / test）。**未触碰 dist / 变体 Pack / evidence / 台账 / 报告 / 源码 / 测试** ⇒ §25、§26、ab5 结论全部保持有效，不翻案。用户指令里的 `behind=4` 是 2026-11-14 快照，按 disk-truth 以 **31** 为准。见 `remote-divergence-2026-11-15.json`；§25.10 原文不删。
+
+现实影响：若日后授权 push，须先单独授权处理 **behind 31** 的分歧，代价较上轮的 behind 4 大幅上升。本会话未 fetch / pull / merge / rebase / commit / push，本地 HEAD 未移动。
+
+### 27.3 三条指令的机器前提判定（`three-steps-precondition-2026-11-15.json`）
+
+括号里的「**均未授权**」是关键：第 2、3 条自带前置条件，不能因用户复述清单就推断为已授权。
+
+| 步骤 | 用户自设前提 | 实际 | 判定 |
+|---|---|---|---|
+| 1 关闭 N25 | 无附加条件（祈使句） | 构成对旧红线的**显式裁定** | `EXECUTED` |
+| 2 跑真机 | 逐次明确解冻 + 说明改了哪个自变量 | 两项都没给；`ALLOW_FROZEN` 本轮未出现 | `NOT_EXECUTED_PRECONDITION_UNMET` |
+| 3 提交 | 提交动作、文件集合分别授权；push 另需授权处理分歧 | 三项都没给 | `NOT_AUTHORIZED_NO_ACTION` |
+
+### 27.4 第 1 条：关闭 N25（`n25-closure-2026-11-15.json`）
+
+🔧 **显性标记：本次关闭推翻用户 2026-11-11 旧红线「N25 只能在 A/B 跑完且判据成立之后关闭」**。用户是本红线的制定者，本条无条件祈使句即为显式裁定；依据是 §26 证明该判据**永远不会成立**（A 组结构条件已满足仍 3/3 全 8/8、撞墙 0 次），继续 `open` 只会固化「待验证」的假状态。
+
+落盘动作：`status: open → closed`、`closed_at: "2026-11-15"`，新增 `closure` 字段（`type = INDETERMINABLE_PROPOSITION_CLOSED`），含 `🔧_explicitRedLineOverride`、结案理由、`isNot` 5 条、`whatRemainsTrue` 4 条、`reader`、5 份证据引用。**原 `title` / `detail` / `fix` / `reader` / `where` / `recharacterization` 与全部既有证据原样保留，不删不改**，符合台账 `conventions`「关闭后保留条目与结论」。证据 42→43。
+
+**结案理由 = 原始观察对象已重新归因、墙不复现、命题不可判定。不是验证通过、不是边界有效、也不是边界无效。** 仍然成立的事实：F1 等待判据修复真机生效（§21）、F2 会话入口真机可达（§23）、ab4 B 组硬判据 2/2 成立、ab5 判无墙即停。
+
+### 27.5 第 2 条：不跑真机（前提未满足）
+
+用户自己写了「须逐次明确解冻，并说明本次改变了哪个自变量；否则 §26 已证盲跑不产生新证据」。本轮：无解冻指令、无 `ALLOW_FROZEN=1`、无自变量说明。§26 五条路径里只有 P2（改源码/dist 回滚 F1）和 P3（改 Pack 加长会话）会改变自变量，两者都违反本轮硬约束；P1/P4/P5 不改变自变量。按用户自设条件，此条自动不成立。冻结站未碰，用完仍是冻结，白名单代码未改。
+
+### 27.6 第 3 条：不提交（未授权）
+
+「提交动作」与「文件集合」两项均未分别授权，push 的前置分歧处理亦未授权。上轮 q-0「暂不提交」与 q-3（`PREFERENCE_ONLY_NOT_AUTHORIZATION`）继续有效，不因复述清单自动升级。不 commit / push / stage / merge / rebase；`behind 31` 保持不动。
+
+### 27.7 硬边界与最终状态
+
+本轮 `realMachineRounds=0`：未启动浏览器、未打开冻结站、未发送消息、未改 Pack / 源码 / 测试 / dist、未碰 git、未产生真机回执。新增产物全在 `evidence/`：`three-steps-precondition-2026-11-15.py/.json`、`remote-divergence-2026-11-15.json`、`n25-closure-2026-11-15.json`、`three-steps-execution-2026-11-15.json`、本节回写脚本。
+
+归因边界继续有效：不能说边界有效/无效、不能把 F1/F2 真机验证挪用为因果证据、不能说「长会话撞墙已根治」、站点侧报错须单独标注、不能把 plan-only 写成已执行回执、**不能把本次关闭写成验证通过**。
+
+## §28 ①②③ 授权闭合度与「N25 若需重开」机制（2026-11-15）
+
+### 28.1 开工磁盘真值（跨时段，不认上轮自述）
+
+`three-items-precondition-2026-11-15.json`：`HEAD=36d9ec2`、`origin/main=915c350`、`ahead=0 / behind=33 / unpushed=0 / staged=0`、`status_items=139`（对账脚本落盘前）。台账 25 条 `open 0 / closed 24 / wontfix 1`；N25 `closed` / 43 条证据 / `closed_at=2026-11-15` / `closure.type=INDETERMINABLE_PROPOSITION_CLOSED` / `recharacterization=True`；RESULT 1802 行、§27 共 7 子节；139 份 evidence JSON 全部可解析；`ab6` 目标回执 0。
+
+🔧 **本轮对账自身抓到两处数据缺陷并回溯修正**：
+- **D-1（假阳性）**：首个对账脚本对 `git status --porcelain` 整段 stdout 调了 `.strip()`，吃掉首行前导空格，把 `' M chrome-extension/src/background/pack-executor.js'` 误读成 `'M ...'`，报 `staged=1`。复核 `git diff --cached --stat/--raw` 均为空、`ls-files -s` 的 index blob `f151615` 与 HEAD blob 相同、worktree blob `cfc4fa2` 不同 ⇒ **真值 `staged=0`**，是未暂存的 worktree 修改。不得据此 unstage。
+- **D-2（真实缺陷）**：同一 `.strip()` 使 `commit-scope-2026-11-14.json` 的 `modifiedTracked.files[0]` 变成 `'hrome-extension/src/background/pack-executor.js'`（首字符 `c` 被切），照该清单逐条 `git add` 会漏 add 或报 pathspec 错。本轮 `commit-scope-2026-11-15.py` 改用 `rstrip('\n')` 并按前缀断言，已修正为 `chrome-extension/src/background/pack-executor.js`；旧清单作为历史证据保留不覆盖。
+- 附带一处开发期即时修正：新盘点脚本首版断言误用子串匹配（`"hrome-extension"` 本就是 `"chrome-extension"` 的子串），改成 `startswith` 后通过。
+
+### 28.2 🔧 回溯补记：`behind=31` 已是过期快照
+
+用户指令写「另需单独授权先处理 behind 31 分歧」。磁盘真值：`origin/main` 由 `19635c6` 被外部 fetch 推进到 `915c350`，新增 2 个提交（`915c350` Merge PR #62、`08ab0f9` 清掉最后 2 处 `continue-on-error`），只改 `.github/workflows/security.yml` 与 `test.yml`；累计 `36d9ec2..origin/main` 共 10 个文件（7 个 workflow + 3 个 adapter-matrix fixture），`ourInputsTouched=[]` —— 未触碰 dist / 变体 Pack / evidence / known_gaps / RESULT / 源码 / 测试。本会话未 fetch / pull / merge / rebase / commit / push。见 `remote-divergence-2026-11-15.2.json`。
+
+**若日后授权 push，须单独授权处理 `behind=33`（不是 31）的分歧。**
+
+### 28.3 ①②③ 逐条授权闭合度（不默认打包）
+
+`three-items-authorization-closure-verdict-2026-11-15.json`：`overall.code = PARTIAL_INTENT_ONLY_NO_EXECUTABLE_AUTHORIZATION`，`executableItemCount = 0`。三条各自独立判定：② 的意图不构成 ③ 的授权；① 前提缺失不构成 ② 的自动放行；任何一条不得靠复述清单升级为授权。
+
+| 条目 | 意图已表达 | 缺口 | 机器裁定 |
+|---|---|---|---|
+| ① 要跑真机 | 是 | 缺逐次明确解冻 + `ALLOW_FROZEN=1` 留痕；缺「本次改变了哪个自变量」 | `NOT_EXECUTED_PRECONDITION_UNMET` |
+| ② 要提交 | 是 | 缺「文件集合」单独授权；旧清单已过期且含 D-2 缺陷 | `COMMIT_ACTION_EXPRESSED_BUT_FILE_SET_NOT_AUTHORIZED` |
+| ③ 要 push | 是 | 用户自己写明「另需单独授权」处理分歧，该授权未给 | `NOT_AUTHORIZED_NO_ACTION` |
+
+① 的关键不是「没给解冻」这么简单：§26 已证 A 组 `no-boundary` 本来就是同一会话 8 步串行 / 7 次 AI 往返，自变量结构条件已满足而墙不出现，F1 修复后 3 份完整 A 组回执 8/8、撞墙 0 次。`proposition-pursuit-plan-2026-11-14.json` 五条路径里只有 **P2**（`needsSourceOrDistChange`，回滚 F1 归因对照）和 **P3**（`needsPackChange`，人工加长会话）会改变自变量，代价是改源码/dist 或改 Pack、既有 hash 证据链断代、须重建全部门禁并登记新基线；P1/P4/P5 不改变自变量。首次推导曾按不存在的字段 `changesIndependentVariable` 过滤得到空列表，回读 plan 真实结构后按 `needsPackChange` / `needsSourceOrDistChange` 重算为 P2/P3，已在裁定文件 `derivationCorrection` 留痕。
+
+`commit-scope-2026-11-15.json` 刷新盘点：**145 项 = 15 tracked 改动 + 130 untracked**，`staged=0`，`behind=33`。候选集合：`minimal_this_turn` 6 项、`source_tests_ledger_report` 16 项、`everything` 145 项（用户明令「不要默认一次全收」，仅登记不作默认）。执行方案为 `plan-only / NOT-EXECUTED`，禁止 `git add -A` / `git commit -a` / `--amend` / `--no-verify` / force push / 自动处理分歧。
+
+### 28.4 N25 当前状态的准确含义
+
+N25 是按 `INDETERMINABLE_PROPOSITION_CLOSED` 结案：**结案理由 = 原始观察对象已重新归因、墙不复现、命题不可判定**。不是验证通过（A/B 判据从未成立），不是「边界有效」，也不是「边界无效」，不是「长会话撞墙已根治」。仍成立的事实：F1 等待判据修复真机生效（§21）、F2 `newChat` / `newChatText` 入口真机可达（§23）、ab4 B 组硬判据 2/2 成立、ab5 判无墙即停。原 `title` / `detail` / `fix` / `reader` / `where` / `recharacterization` 与 43 条证据全部原样保留。
+
+### 28.5 什么才构成重开理由（`n25-reopen-mechanism-2026-11-15.json`）
+
+- **T1（唯一能让命题重新可判定的路径）**：出现新的可控自变量，且「墙」可被稳定复现。机器条件：A 组 `stepsTotal==8 && stepSuccess==7`、`firstFailedStepId=='step_8_output'`、错误含 `Response timeout`、前 7 步全成功且 `sessionResets` 为空；人工视觉闸确认不是「服务出错啦，请稍后再试。」且无登录墙 / 验证码；同站相邻时间窗 B 组边界真执行且 `available===true && messageCountAfter<messageCountBefore`。
+- **T2**：新证据（可复核磁盘回执）推翻 §24 三条根因 F-D1（等待判据假超时）/ F-D2（站点随机报错）/ F-D3（「长会话是变量」归因被削弱）之一。
+- **T3**：找到 §9.4 原始观察里可量化的第三变量（真实上下文 token 长度、站点限流窗口、会话累积时长），且能人为控制并写进新判据。
+- **T4**：审计 / 交付口径要求改结论性质，但仍须附新证据。
+
+### 28.6 什么不构成重开理由
+
+想再跑一轮完整 4 轮 A/B（§26 已证盲跑不产生新证据）；台账显示 `closed` 不好看；把 F1 / F2 真机验证挪用为「边界有效」的因果证据；把「边界无效」当结论；仅重述旧证据换措辞；**用户只是问「若需重开怎么办」—— 问句本身不是重开指令**。
+
+### 28.7 重开的技术机制（append-only，不删历史）
+
+须用户显式重开指令，写明触发条件与新的自变量 / 新证据；机器不得自行重开。字段契约：`status: closed → open`、`closed_at: "2026-11-15" → null`、**`closure` 原样保留不删不改**（可追加 `reopenedAt` 标记）、新增 `reopen: []` 数组 append-only（每条含 `reopened_at` / `decidedBy` / `trigger` / `newIndependentVariable` / `newCriterion` / `inheritedCriteria` / `priorClosurePreserved` / `evidenceCountBefore` / `relatedEvidence`）、`appended_evidence` 只追加不删既有 43 条、`updated_at` 改当天、台账顶层 `updated_at` 同步而 `conventions` 不动。RESULT 追加新章节（§29 顺延），不改写 §26 / §27 / §28，且必须写明「重开不是验证通过」。新真机回执用 `ab6+` 新前缀，不覆盖 ab3 / ab4 / ab5。若采用 P2 / P3，改动源码 / dist / Pack 后必须重建 dist、跑全量 `npm test` + 全量变异 + dist 严格一致性，登记新 hash 基线，并显式标注旧 hash 证据链「断代」。
+
+### 28.8 重开后判据继承与成本
+
+判据全部继承：只有「A 撞墙且 B 通过」才支持命题；A/B 都通过不能归功边界，A/B 都失败须另找根因；observe-first Gate A 先只跑 A 单轮、判无墙即 `ABORT_NO_WALL` 不跑 B；B 组硬判据 `available===true && messageCountAfter<messageCountBefore`；边界未执行或 `available:false` ⇒ 明写「该轮作废 / 本轮不可评估」，不得包装成「边界无效」；冻结站逐次显式解冻并带 `ALLOW_FROZEN=1` 留痕、用完仍冻结，预检也算碰冻结站；全程 `tee -a` + 即时 JSONL + 即时回执；机器裁定 + 磁盘真证，人工视觉判读单列 `nonMachineObservations` 不参与布尔推导。
+
+成本对比：**保持 closed** —— 结论就是「命题不可判定」，F1 / F2 / ab4 2/2 / ab5 判无墙即停全部不变，零新成本；**重开** —— 必须付出 P2 或 P3 的改造代价，既有 dist hash 与变体 Pack sha256 证据链断代，重建全部本地门禁并登记新基线后，才是逐次解冻 + 串行真机 + 按判据裁定。
+
+### 28.9 本轮动作与硬边界
+
+本轮 `realMachineRounds=0`：未启动浏览器、未打开冻结站、未发送消息、未产生真机回执；未 commit / push / stage / add / fetch / pull / merge / rebase；未改源码 / 测试 / dist / Pack；**N25 保持 `closed`，未重开、未加 `reopen` 字段**。新增产物全在 `evidence/`：`three-items-precondition-2026-11-15.py/.json`、`remote-divergence-2026-11-15.2.json`、`three-items-authorization-verdict-2026-11-15.py/.json`、`commit-scope-2026-11-15.py/.json`、`n25-reopen-mechanism-2026-11-15.json` 与本节回写脚本。归因边界继续有效：不能把关闭写成验证通过，不能把 F1 / F2 挪用为因果证据，不能把 plan-only 写成已执行回执。
+
+### 28.10 用户四项裁定（`three-items-user-ruling-2026-11-15.json`）
+
+`AskUserQuestion` 四问四答：q-0 **不跑真机**、q-1 **暂不提交**、q-2 **暂不 push**、q-3 **不重开 N25**。据此：
+
+| 条目 | 裁定码 | 实际动作 |
+|---|---|---|
+| ① 真机 | `NO_REAL_MACHINE_THIS_TURN` | 不解冻、不预检、不打开冻结站、不发消息；`realMachineRounds=0`，本轮任何命令都未出现 `ALLOW_FROZEN=1` |
+| ② 提交 | `NO_COMMIT_NO_STAGE` | 145 项全留工作区，`staged` 保持 0；不 commit / stage / add |
+| ③ push | `NO_PUSH_NO_DIVERGENCE_HANDLING` | 不 fetch / pull / merge / rebase / push；`behind=33` 保持不动 |
+| N25 重开 | `N25_REMAINS_CLOSED` | 保持 `closed` / `closed_at=2026-11-15` / 43 条证据 / `closure` 原样；不新增 `reopen` 字段 |
+
+四项裁定**只对本轮生效，不构成对后续轮次的授权**；后续如需真机 / 提交 / push / 重开，须重新逐项显式授权。判据继承不变：只有「A 撞墙且 B 通过」才支持命题；B 组 `available===true && messageCountAfter<Before`；边界未执行或 `available:false` ⇒ 该轮作废 / 本轮不可评估；observe-first Gate A 判无墙即 `ABORT_NO_WALL`；机器裁定 + 磁盘真证，人工视觉判读单列。
+
+本轮未改 git / 源码 / 测试 / dist / 变体 Pack / known_gaps.json / N25，未碰冻结平台。新增产物为 `three-items-user-ruling-2026-11-15.json` 与本节回写脚本。

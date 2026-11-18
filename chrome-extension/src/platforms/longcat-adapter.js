@@ -26,6 +26,22 @@ const SELECTORS = {
   // 多出来的正是「已搜到 14 个网页」这条联网搜索状态行（真机逐条 dump 实测）。
   // 整卡回退会把状态行带进产物，且长度足以顶过 50 字闸门。
   messageContent: [".md-show-container", ".mt-markdown-body", ".markdown"],
+  // 🔧 2026-11-12 冻结站 A/B 第 4 轮实测（L2-longcat-auto-2026-11-12.ab2-with-boundary.json）：
+  // B 组 `fresh_session: prefer` 的回执是 available:false / strategy:"none" /
+  // 6→6 / durationMs:0，原因「找不到「新对话」入口」——边界**根本没执行**，
+  // 那一轮按判据作废，不能算「边界有效」也不能算「边界无效」。
+  //
+  // 只读 DOM 探针（evidence/new-session-probe-2026-11-12.longcat.json）给出真入口：
+  //   <span>开启新对话</span> 挂在 div.new-content 里，祖先是
+  //   div.slider-header > div.v-slider-header；clickableAncestor 为 null
+  // （不是 button / a / [role=button]），所以公共文案兜底永远扫不到它。
+  // 页面上还有一个同名诱饵 div.conv-title「新对话」，那是**历史会话列表项**，
+  // 点它只会切到旧会话——必须靠 adapter 精确声明，不许放宽标签兜底去碰它。
+  newChat: [
+    ".v-slider-header .new-content",
+    ".slider-header .new-content",
+    "div.new-content span",
+  ],
   // typingIndicator 选择器来源：2026-11-04 零发送静态普查（站点 bundle 字面量级证据）。
   // s3.meituan.net/.../js/ chunk 8575268a + 27443337 + f8ccdd86。
   // 聊天流式主链：等待首 token 打字点 v-loading-dot（chatStatus===LOADING 时渲染，
