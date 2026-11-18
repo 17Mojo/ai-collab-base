@@ -1,68 +1,65 @@
 # 项目事实快照
 
-**生成时间**: 2026-10-23T02:20:45Z
+**生成时间**: 2026-11-18T13:19:27Z
 **生成方式**: scripts/gen_facts.sh（自动生成，请勿手工编辑）
 **仓库路径**: /Users/raymondna/Documents/AI-collab/ai-collab-base
-**仓库 HEAD**: 9c6596aed7b5fb6004d14b8ad85e62a93e25c69c
-**当前分支**: feat/codearts-collab-wiring
+**仓库 HEAD**: a02212ae9db1f483d51878f1d851183c9508d8e6
+**当前分支**: main
 
 ## 1. Git 状态
 ```
 $ git status --short --branch
-## feat/codearts-collab-wiring...origin/main [ahead 39]
- M ai_collab/ack_protocol.py
- M ai_collab/cli/_cli_main.py
- M collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md
+## main...origin/main
  M docs/FACTS.generated.md
- M scripts/agent_receipt_bridge.py
- M scripts/codearts_bridge_deliver.py
- M tests/unit/test_codearts_bridge_deliver.py
-?? collaboration/results/RESULT-PREFIX-DERIVATION-2026-10-23.md
-?? collaboration/tasks/TASK-P1-PREFIX-DERIVATION-001.md
-?? tests/unit/test_ack_prefix_derivation.py
 ```
 
 ## 2. 最近 20 次提交
 ```
-9c6596a chore(monitoring): 刷新终态一致性审计摘要
-b104ffc chore(monitoring): 刷新自动生成摘要（事实快照 + 终态一致性审计）
-e70b94c chore(memory): 记忆镜像去外部化 + 落「仓库边界」硬规则
-2f72286 test(cleanup): 测试 fixture 里的外部项目路径中性化
-c07cab5 docs(cleanup): 文档与指南去掉外部项目框架，保留历史事实
-019332c refactor(cleanup): 删除外部项目副本目录 hermes_target/ 与其变更提案
-85973f7 feat(purge): 僵尸 cron 任务清理 —— 官方删除路由 + 文件级兜底
-1cb3b8c chore(monitoring): 刷新自动生成摘要（回执桥接 + 一致性审计 3/3）
-61afa3f docs(result): 对齐回执桥接的结果文件契约（## 测试结论 + 验收命令逐字一致）
-4f49318 chore(monitoring): 刷新自动生成摘要（干预队列已全部 resolved）
-5b9160e fix(prefix): 补齐 229062d 漏改的 3 份角色前缀映射副本
-e88e1c8 fix(prefix): ACK 前缀字母池不相交——codex 的 X→O，未知 provider 的 X→Z
-7af5ae3 feat(bridge): 投递残留体检——僵尸 cron 任务不再沉在 kernel 里
-bbfb81b chore(monitoring): 刷新自动生成摘要（干预队列已全部 resolved）
-df2ddec docs(result): 补写成功交付证据与中止根因（write/task 工具带死会话）
-b46a5f6 chore(memory): 同步 CodeArts 记忆镜像（2 条 feedback）并刷新监控摘要
-0e8ac69 feat(hermes): CodeArts 交付 consensus_engine 移植与单测（54 用例 / 覆盖率 95%）
-ce8a3b9 fix(dispatch): payload 写明工具约束 —— write/task 会把 CodeArts 会话卡死并中止
-ccfceba chore(monitoring): 刷新自动生成摘要
-909ddcc docs(result): 更正提交号引用
+a02212a fix(fixture): 按真机探针重建 deepseek 快照，矩阵不再指向无辜的生产代码（N50 closed）
+85eeafd test(worktree): 冲突 fixture 改用 symbolic-ref，不再依赖 git 对 `-B` 的宽纵（N49 closed）
+7666180 fix(governance): 修掉 mypy 3 条与 bandit 3 条新发现，关掉两个红着的阻塞门禁（N48 closed）
+c1fdaae ci(lint): 锁死 ruff 版本并让阻塞 lint 门禁真正变绿（N47 closed）
+7afdc4d chore(test-env): 更正「50 条环境基线失败」的归因并登记 N46
+6a4171b fix(daemon): 让 --once 真实入口真的调用看门狗（N45 二次复查）
+9f5bbd3 fix(orchestration): 可用性标注与审计入口可信度（关闭 N44/N45）
+6fc4f47 fix(audit): 产物要求按状态分流，并补上「已 ACK 却无产物」的非终态扫描（N42 closed）
+2d76a2c fix(gate): 结果文件章节契约收敛为一份判据，缺回滚不再被放行（N41 closed）
+8e8d902 fix(example3): 自纠——范例三本就是 D3，我先前的 D1 判断建立在查错字段上
+1337039 test(example3): 范例三端到端 ACK 流实跑并留回执，D1→D3；跑出 4 条偏差登记 N41-N44
+5ae7732 test(evidence): 从 .gitignore 的 `!` 放行反推检查范围，堵住「规则写了动作漏了」
+823dc69 chore: 开发日志入库、logs 目录补 ignore、DOTS 立项书与解冻裁定对齐
+1e6a5a1 fix(evidence): 补齐 135 份漏 add 的真机证据，并加证据链绊线（N40 closed）
+6baeb3a fix(governance): 守卫与预检共用同一份配置解析；测试结论不再隐瞒未跟踪用例（N37/N39 closed）
+a77ff1d fix(governance): 门禁编号不再允许按连惯性虚构（N38 closed）
+c648c15 chore(N36): 多平台执行器裁定「标注未实现」——@unwired 标记 + 文档降级 + 双向绊线
+8a09c1f fix(real-machine): 登录判据不再只看输入框可见，解冻留痕不再误报（N34/N35 closed）
+e571426 docs(result): 回填 D1/D2/D3 → N34/N35/N36 交叉引用（原写「建议登记」与磁盘不符）
+2100e5e chore(governance): 登记合并提交 0ae0c18（豁免 wip-content-baseline-merge-2026-11-18）
 ```
 
 ## 3. 远端同步状态
 ```
 # 基于当前分支的 upstream（@{u}），不硬编码 main
-unpushed(ahead of upstream)=39
+unpushed(ahead of upstream)=0
 behind(upstream ahead of us)=0
 ```
 
 ## 4. 目录树（2 层）
 ```
 .
+./.arts
+./.cache
+./.cache/worktrees
 ./.cc-claude-codex
 ./.cc-claude-codex/snapshots
 ./.claude
+./.claude/commands
+./.claude/skills
 ./.codeartsdoer
 ./.codeartsdoer/.codebase
 ./.codeartsdoer/agent-team
 ./.codeartsdoer/agents
+./.codeartsdoer/experience-reuse
 ./.codeartsdoer/mcp
 ./.codeartsdoer/rule
 ./.codeartsdoer/skills
@@ -73,9 +70,13 @@ behind(upstream ahead of us)=0
 ./.ruff_cache/0.16.2
 ./.ruff_cache/0.16.8
 ./.ruff_cache/0.17.1
+./.ruff_cache/0.17.5
 ./.trae
 ./.trae/skills
 ./.vscode
+./.workbuddy
+./.workbuddy/memory
+./.workbuddy/tmp
 ./ai_collab
 ./ai_collab/adapters
 ./ai_collab/cli
@@ -86,10 +87,7 @@ behind(upstream ahead of us)=0
 ./ai_collab/integrations
 ./ai_collab/pack
 ./ai_collab/prompt_pack
-./ai_collab/quality
 ./ai_collab/resources
-./ai_collab/skills
-./ai_collab/workflow
 ./chrome-extension
 ./chrome-extension/collaboration
 ./chrome-extension/dist
@@ -98,6 +96,7 @@ behind(upstream ahead of us)=0
 ./chrome-extension/src
 ./chrome-extension/tests
 ./collaboration
+./collaboration/governance
 ./collaboration/guides
 ./collaboration/handoff
 ./collaboration/monitoring
@@ -133,12 +132,14 @@ behind(upstream ahead of us)=0
 ./notifications/handoffs
 ./openspec
 ./openspec/changes
+./openspec/specs
 ./packs
 ./packs/api-design-pack
 ./packs/demo-pack
 ./packs/examples
 ./packs/exports
 ./packs/python-best-practices
+./packs/templates
 ./packs/web-dev-pack
 ./products
 ./products/vscode-extension
@@ -170,13 +171,13 @@ $ ls -d src ai_collab 2>&1
 ai_collab
 src
 $ python3 -m ai_collab.cli --help
-usage: python3 -m ai_collab.cli [-h] [-w WORKSPACE] [-v]
-                                {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,orchestration,dispatch,trigger,2x,receipt,run,workspace-guard,spawn-agent-guard,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack} ...
+usage: __main__.py [-h] [-w WORKSPACE] [-v]
+                   {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,orchestration,dispatch,trigger,2x,receipt,daily-report,run,workspace-guard,spawn-agent-guard,concurrent,governance,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack} ...
 
 AI 协作开发系统 - Claude Code + GitHub Copilot
 
 positional arguments:
-  {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,orchestration,dispatch,trigger,2x,receipt,run,workspace-guard,spawn-agent-guard,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack}
+  {activate,check,tasks,sessions,ack,ack-remediation,patches,conflicts,logs,init,clean,status,codex,controller,orchestration,dispatch,trigger,2x,receipt,daily-report,run,workspace-guard,spawn-agent-guard,concurrent,governance,hygiene,stage-source,stage-ops,stage-docs,stage-other,stage-safe,benefit,pack}
                         命令
     activate            激活 AI 协作系统
     check               检查文件冲突
@@ -197,9 +198,12 @@ positional arguments:
     trigger             暗语触发派单（2X DISPATCH）
     2x                  极简派单入口：2x claude/codearts/codex/all
     receipt             自动回执桥接（testing -> completed）
+    daily-report        生成日报与监控摘要（operator closeout 收尾用）
     run                 标准 RUN 流程：dispatch -> receipt -> benefit
     workspace-guard     工作区门禁诊断（阈值+分域）
     spawn-agent-guard   Codex spawn_agent 前置门禁诊断
+    concurrent          并发工作区守护
+    governance          治理覆盖层（一致性校验 / 开工检查 / 登记表 / 覆盖率观测）
     hygiene             工作区/暂存区自动治理（可一次执行或轮询）
     stage-source        按 source 域安全暂存（替代 git add .）
     stage-ops           按 ops 域安全暂存（results/monitoring/logs）
@@ -237,9 +241,6 @@ options:
   ai-collab 2x all
 
   # Prompt Pack 版本管理
-  ai-collab pack bump --name demo-pack --type patch
-  ai-collab pack history --name demo-pack
-
 ```
 
 ## 7. 角色编排配置
@@ -346,7 +347,7 @@ $ cat config/agent-orchestration.json
     "codearts_agent": {
       "provider_name": "codearts_agent",
       "display_name": "CodeArts Agent",
-      "connection_status": "detected",
+      "connection_status": "unavailable",
       "supports_sub_agent": false,
       "model_variants": [],
       "capabilities": [
@@ -916,6 +917,7 @@ $ cat config/agent-orchestration.json
 ./chrome-extension/src/platforms/kimi-adapter.js
 ./chrome-extension/src/platforms/longcat-adapter.js
 ./chrome-extension/src/platforms/qianwen-adapter.js
+./chrome-extension/src/platforms/stepfun-adapter.js
 ./chrome-extension/src/platforms/yiyan-adapter.js
 ./chrome-extension/src/platforms/yuanbao-adapter.js
 ./chrome-extension/tests/_archive/test-adapters.js
@@ -926,11 +928,11 @@ $ cat config/agent-orchestration.json
 ## 9. 测试收集
 ```
 $ python3 -m pytest -q --collect-only 2>&1 | tail -5
-tests/unit/test_workspace_guard_extra.py::test_module_exports
 
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
 SKIPPED [1] tests/unit/test_database_indexes.py:17: backend database not found at /Users/raymondna/Documents/AI-collab/ai-collab-base/local-backend/data/client_tokens.db
-2840 tests collected in 0.65s
+3262 tests collected in 3.17s
 ```
 
 ## 10. 活跃任务
