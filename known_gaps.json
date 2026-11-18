@@ -912,7 +912,7 @@
     {
       "id": "N42",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "状态机双网盲区：cancelled/failed/blocked 被要求交产物（永久 missing），而「已 ACK 但缺产物且停在 testing」的任务看门狗与审计都不管",
       "reader": "任何取消过任务、或见过一致性审计长期挂着一条 missing_result_file 的人；以及任何相信「ACK 了或有异常都会被某张网兜住」的人。前者会以为是产物丢了，实际是取消任务本就不该有产物；后者要接受一个任务可以同时躲开两张网、静默停在 testing 无人过问。",
       "where": [
@@ -923,8 +923,9 @@
       ],
       "detail": "2026-11-18 实测：把负向对照任务置为 `cancelled` 后，审计立刻报 `TASK-EXAMPLE3-ACK-E2E-002 type=missing_result_file state=cancelled`——取消的任务按定义没有交付物，却被要求提交交付物，于是只要有人取消过任务，审计就永久挂一条 missing。同一轮还发现另一侧：该任务在 `testing` 阶段已成功 ACK（声明 status=ok）但产物不存在时，看门狗把它当「已 ACK」排除、审计因「非终态」不扫，**它同时躲开两张网**，可以无限期停在 testing 无人发现。另有写入门禁 `tasks update --status completed` 会拦住缺产物任务，所以「终态 + 缺产物」只在事后删除产物时可达（已用删-恢复实验证明该分支确实活着）。",
       "impact": "① 取消/失败任务污染审计，使 missing_result_file 这条告警失去信噪比，真缺产物时容易被当成老噪音忽略；② 「ACK 已发但交付物其实没有」这一最常见失败模式没有任何自动发现路径，只能靠人工比对。",
-      "fix": "① 终态集合按状态分流：`cancelled` 不要求产物（cancelled 语义即「不交付」），`failed`/`blocked` 允许产物缺失但要求写原因；② 给 `testing` 超时任务加一条独立扫描：`status==testing` 且存在 ok ACK 但 result_file 不存在 → 报 `ack_without_artifact`，不依赖终态；③ 为两条各加一条绊线用例（构造 cancelled 无产物不应报错；构造 testing+ok ACK+无产物必须报错）。",
-      "found_at": "2026-11-18"
+      "fix": "已修（2026-11-18），两半各自落地。\n① 产物要求按状态分流（ai_collab/result_consistency_audit.py）：新增 ARTIFACT_REQUIRED_TERMINAL_STATUSES={completed}、ARTIFACT_OPTIONAL_TERMINAL_STATUSES={failed,blocked,cancelled}、FAILURE_REASON_REQUIRED_STATUSES={failed,blocked}。completed 缺产物仍报 missing_result_file；failed/blocked 允许无产物但要求留下原因（notes/reason/conclusion/detail 任一非空），否则报新类型 missing_failure_reason；cancelled 既不要求产物也不要求原因，计入新计数 artifact_optional_count。\n② 新增不依赖终态的扫描（同一模块）：任务处于非终态、但 ACK 桥里已有 status=ok 的显式 ACK、而产物不存在 ⇒ 报新类型 ack_without_artifact（计数 ack_without_artifact_count）。status=blocked/noop 的 ACK 不触发（那不是「已交付」声明）。\n③ 报告与 CLI 补三个新计数：artifact_optional_count / missing_failure_reason_count / ack_without_artifact_count；summary markdown 同步。\n验证：八场景探针（cancelled 无产物 / failed 无原因 / failed 有笔记 / blocked 有原因 / completed 无产物 / testing+ok ACK 无产物 / testing+ok ACK 有产物 / testing 无 ACK）行为全部符合设计；新增 8 条绊线；5 条变异全部被杀死（cancelled 回到必须有产物 / 取消失败需原因 / 关掉非终态扫描 / 任何 ACK 都当 ok / completed 允许缺产物）；受影响的既有测试（审计 + 守护进程 + session_health + daily_report）全绿；真实仓库审计 audited=20 consistent=20 issue=0。\n顺带：docs/APPLICATION-EXAMPLES.md 范例三步骤 4 的口径描述同步更新（旧文写「cancelled 也要产物」）。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N43",
@@ -957,6 +958,23 @@
       "detail": "2026-11-18 实测一对自相矛盾的输出：`orchestration detect` 报 `claude_code: connected / codex_cli: unavailable / gemini_cli: unavailable / codearts_agent: unavailable`，而 `orchestration status` 同时报 `AGENT_EXEC → codearts_agent [主执行者]`。即唯一被声明为「主执行者」的角色指向唯一不可用的服务商。本轮只走 AGENT_ARCH（claude_code）路径，未被此矛盾阻塞，所以它是隐性配置债而非当下故障。",
       "impact": "启用三 agent 协作时，派给 AGENT_EXEC 的任务会进入不可用通道；因为不是立即报错，排查成本高。",
       "fix": "需用户裁定：① 把 AGENT_EXEC 改绑到 claude_code（当前唯一 connected）；② 保留 codearts_agent 绑定但把 binding_status 降级，并在 `orchestration status` 输出里对「已绑定但 detect 不可用」的角色加显式告警标记；③ 在 `orchestration status` 里直接对比 detect 结果，不一致即打出 ⚠️。推荐 ③ + ①，因为它是唯一能防止同类隐性矛盾的方案。",
+      "found_at": "2026-11-18"
+    },
+    {
+      "id": "N45",
+      "priority": "P2",
+      "status": "open",
+      "title": "守护进程自带一份弱化版一致性审计（覆写同一报告文件）与一个恒返回 0 的看门狗空壳",
+      "reader": "任何读 logs/task_result_consistency_report.json 或 TASK_RESULT_CONSISTENCY_SUMMARY_latest.md 判断「有没有问题」的人，以及任何以为守护进程在跑 ACK 看门狗的人。前者看到的结论取决于最后跑的是守护进程还是真实现；后者看到 ack_watchdog_candidate_count: 0 会以为「没有静默任务」，实际是「根本没扫描」。",
+      "where": [
+        "scripts/task_controller_daemon.py:315（run_terminal_result_consistency_audit 的独立副本，2026-11-18 已改为委托）",
+        "scripts/task_controller_daemon.py:380（run_ack_watchdog 空壳，恒返回 0）",
+        "ai_collab/result_consistency_audit.py（真实现）",
+        "ai_collab/ack_watchdog.py（真实现，apply 模式会真重派任务）"
+      ],
+      "detail": "N42 排查时发现守护进程里有两份「同名不同实」的东西。① 审计：它不校验终态（把 testing 也算进 consistent）、仍用 N41 之前的 `\"## 执行命令\" in text` 子串判据、不解析结果文件状态行，**却覆写真实现用的同一个报告与 summary 文件**——于是「谁后跑谁说了算」，守护进程跑一次就把权威结论覆盖成弱化结论。已在本次改为委托真实现（并验证 8 条守护进程测试全过）。② 看门狗：`run_ack_watchdog` 恒返回 {candidate_count:0, redispatched_count:0, alerted_count:0}，只被读这三个字段，所以从输出上完全看不出它是空壳；真实现存在且能工作，只是 apply 模式会真的重派任务，是否让守护进程承担这个副作用属于运行策略决定，故本次只把「这是空壳」写进 docstring，未改行为。",
+      "impact": "① 报告文件的结论不稳定：人工按它判断「一切正常」时，可能读到的是弱化副本的结论（它连 terminal_status_mismatch 都报不出来）。② 看门狗计数恒为 0 会被误读成「没有超阈未 ACK 的任务」，而真实的静默任务不会被发现——与 N27/N31/N36 同一类「符号在、能力为零」。",
+      "fix": "① 审计副本已改为委托（本次完成，见 where 第一条）。② 看门狗空壳待裁定：要么委托真实现并明确守护进程是否允许 apply 模式重派（推荐：dry_run 透传 + apply 需显式开关），要么删除该函数并让上层直接调真实现，并在守护进程报告里写 `ack_watchdog_stubbed: true` 以免 0 被误读。无论选哪条，都加一条绊线：守护进程与 ai_collab 侧同名函数必须指向同一实现（可用 `func.__module__` 或 `is` 断言）。",
       "found_at": "2026-11-18"
     }
   ]

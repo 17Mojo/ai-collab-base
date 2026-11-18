@@ -170,7 +170,15 @@ python3 -m ai_collab.cli tasks audit-result-consistency
 - blast radius 实测：在册 20 条任务 20/20 齐备（零破坏）；47 份历史结果文件中 16 份不合规，
   但均未挂在任何在册任务上，不会被校验。
 
-### F8〔可达性〕一致性审计的 `missing_result_file` 分支正常路径不可达
+### F8〔可达性〕一致性审计的 `missing_result_file` 分支正常路径不可达 〔台账 N42，已修 closed〕
+
+> **已修（2026-11-18，查 N42）**：审计的产物要求改为按状态分流——
+> `completed` 必须交产物；`failed`/`blocked` 允许无产物但必须留原因；`cancelled` 不要求。
+> 同时新增一条**不依赖终态**的扫描：任务停在非终态、但已有 `status=ok` 的显式 ACK、
+> 产物却不存在 ⇒ 报 `ack_without_artifact`。这正是下方记的「双网漏掉」那个盲区。
+> 下面保留发现时的原始记录。
+
+
 
 - 尝试把缺产物的 `TASK-EXAMPLE3-ACK-E2E-002` 直接写终态：
   `错误: 任务结果门禁失败: TASK-EXAMPLE3-ACK-E2E-002; result_file not found: ...`

@@ -235,10 +235,19 @@ $ python3 -m ai_collab.cli orchestration status   # 绑定状态 + 角色 + 命�
       from pathlib import Path; from ai_collab.ack_watchdog import run_ack_watchdog
       run_ack_watchdog(workspace=Path('.'), dry_run=False)
   - result_consistency_audit.run_terminal_result_consistency_audit:
-    终态任务 vs result_file 对账——有产物 consistent、缺产物 missing_result_file
+    终态任务 vs result_file 对账 + 「已 ACK 却无产物」扫描
     （默认产物路径 collaboration/results/RESULT_{task_id}.md，实测成立）
     〔实测注〕终态集合是 `{completed, failed, blocked, cancelled}`
-    （result_consistency_audit.py:21）——**cancelled 也要产物**，否则永久报 missing。
+    （result_consistency_audit.py 的 TERMINAL_STATUSES）。
+    **但「必须有产物」只对 completed 成立**（台账 N42 已改，2026-11-18）：
+      · completed  —— 声称「做完并交付」，缺产物报 `missing_result_file`；
+      · failed / blocked —— 允许没有产物，但必须留下原因（notes / reason / conclusion），
+                            否则报 `missing_failure_reason`；
+      · cancelled  —— 主动放弃，既不要求产物也不要求原因，计入 `artifact_optional`。
+    旧口径「cancelled 也要产物」会让任何一次取消都永久挂一条 missing，真缺产物时反被当噪音。
+    另有一条**不依赖终态**的扫描：任务停在 testing/implementing 等非终态、但已存在
+    `status=ok` 的显式 ACK、产物却不存在 ⇒ 报 `ack_without_artifact`。
+    这是原来的双网盲区——看门狗把「已 ACK」排除，终态审计又因非终态跳过。
     它还会解析结果文件里的状态行（`- **状态**: xxx`）与任务状态比对，
     不一致报 `terminal_status_mismatch`。实测把状态行写错一次，当场被抓到。
   〔修订注〕状态文件真名是 logs/collaboration_state.json（写错层级会得到假阴性）

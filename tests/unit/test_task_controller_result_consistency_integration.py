@@ -80,3 +80,62 @@ def test_run_controller_once_exposes_result_consistency_metrics(monkeypatch, tmp
         == "collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md"
     )
     assert report["error_count"] == 0
+
+
+def test_daemon_audit_delegates_to_the_authoritative_implementation(tmp_path: Path):
+    """守护进程不许再自带一份弱化版一致性审计（台账 N45）。
+
+    守的是一个真实后果：那份副本会**覆写真实现用的同一个报告文件**，
+    于是「谁后跑谁说了算」。这里用一条副本根本做不到的判据来区分——
+    「停在 testing、已 ok ACK、产物不存在」要能报出 ack_without_artifact。
+    """
+    import json
+
+    (tmp_path / "logs").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "collaboration" / "results").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "logs" / "collaboration_state.json").write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "workspace": str(tmp_path),
+                "tasks": {
+                    "T-STUCK": {
+                        "task_id": "T-STUCK",
+                        "status": "testing",
+                        "result_file": "collaboration/results/RESULT-MISSING.md",
+                        "ai_type": "claude_code",
+                        "assignee": "claude_code",
+                    }
+                },
+                "patches": {},
+                "active_tasks": ["T-STUCK"],
+                "completed_tasks": [],
+                "conflicts": [],
+                "file_status": {},
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "logs" / "agent_ack_bridge_state.json").write_text(
+        json.dumps(
+            {
+                "version": "1.0.0",
+                "items": {
+                    "T-STUCK": {
+                        "task_id": "T-STUCK",
+                        "ack_line": "X.ACK|task=T-STUCK|status=ok|result=collaboration/results/RESULT-MISSING.md",
+                        "source": "cli-ack",
+                    }
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    report = daemon.run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["ack_without_artifact_count"] == 1, (
+        "守护进程的审计没跑权威实现——如果这里忽然变回 0，说明又长出了一份弱化副本（N45）"
+    )
+    assert [i["issue_type"] for i in report["issues"]] == ["ack_without_artifact"]

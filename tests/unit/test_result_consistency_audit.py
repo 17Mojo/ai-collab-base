@@ -212,3 +212,156 @@ def test_terminal_result_consistency_summary_orders_issues(tmp_path: Path, monke
     idx_alpha = summary_text.index("`TASK-ISSUE-ALPHA`")
     idx_beta = summary_text.index("`TASK-ISSUE-BETA`")
     assert idx_alpha < idx_beta
+
+
+# ── 台账 N42：产物要求按状态分流 + 已 ACK 无产物的非终态扫描 ──────────────────
+
+def _seed(workspace: Path, tasks: dict, acked: dict | None = None) -> None:
+    """直接落状态与 ACK 桥，绕开契约校验链，专注审计判据本身。"""
+    (workspace / "logs").mkdir(parents=True, exist_ok=True)
+    (workspace / "collaboration" / "results").mkdir(parents=True, exist_ok=True)
+    payload = {
+        "version": "1.0.0",
+        "workspace": str(workspace),
+        "tasks": tasks,
+        "patches": {},
+        "active_tasks": [],
+        "completed_tasks": [],
+        "conflicts": [],
+        "file_status": {},
+    }
+    (workspace / "logs" / "collaboration_state.json").write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+    )
+    items = {}
+    for task_id, status in (acked or {}).items():
+        items[task_id] = {
+            "task_id": task_id,
+            "assignee": "claude_code",
+            "ack_line": f"X.ACK|task={task_id}|status={status}|result=collaboration/results/x.md",
+            "source": "cli-ack",
+        }
+    (workspace / "logs" / "agent_ack_bridge_state.json").write_text(
+        json.dumps({"version": "1.0.0", "items": items}, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def _task(task_id: str, status: str, *, result_file: str = "", notes=None, reason: str = "") -> dict:
+    return {
+        "task_id": task_id,
+        "status": status,
+        "result_file": result_file,
+        "notes": list(notes or []),
+        "reason": reason,
+        "ai_type": "claude_code",
+        "assignee": "claude_code",
+    }
+
+
+def test_cancelled_task_without_artifact_is_not_an_issue(tmp_path: Path, monkeypatch):
+    """取消的语义就是「不交付」——不该被要求交产物。
+
+    修复前它会被记 missing_result_file，于是任何一次取消都让审计永久挂一条噪音。
+    """
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(tmp_path, {"T-CANCELLED": _task("T-CANCELLED", "cancelled")})
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["issue_count"] == 0
+    assert report["missing_result_count"] == 0
+    assert report["artifact_optional_count"] == 1
+    assert report["audited_count"] == 1
+
+
+def test_failed_task_without_artifact_requires_a_recorded_reason(tmp_path: Path, monkeypatch):
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(tmp_path, {"T-FAILED": _task("T-FAILED", "failed")})
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["missing_failure_reason_count"] == 1
+    assert [i["issue_type"] for i in report["issues"]] == ["missing_failure_reason"]
+
+
+def test_failed_task_with_note_or_reason_is_not_an_issue(tmp_path: Path, monkeypatch):
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(
+        tmp_path,
+        {
+            "T-FAILED-NOTE": _task("T-FAILED-NOTE", "failed", notes=["接口不可达"]),
+            "T-BLOCKED-REASON": _task("T-BLOCKED-REASON", "blocked", reason="等上游确认"),
+        },
+    )
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["issue_count"] == 0
+    assert report["missing_failure_reason_count"] == 0
+    assert report["artifact_optional_count"] == 2
+
+
+def test_completed_task_without_artifact_is_still_required(tmp_path: Path, monkeypatch):
+    """completed 声称「做完并交付」，产物要求不能被分流规则削掉。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(tmp_path, {"T-DONE": _task("T-DONE", "completed")})
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["missing_result_count"] == 1
+    assert [i["issue_type"] for i in report["issues"]] == ["missing_result_file"]
+    assert report["artifact_optional_count"] == 0
+
+
+def test_ack_without_artifact_is_reported_for_non_terminal_task(tmp_path: Path, monkeypatch):
+    """N42 另一半：已 ok ACK、产物不存在、任务停在 testing。
+
+    修复前它同时躲开两张网——看门狗把它当「已 ACK」排除，终态审计因非终态不扫。
+    """
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(
+        tmp_path,
+        {"T-ACK-NOART": _task("T-ACK-NOART", "testing", result_file="collaboration/results/RESULT-GONE.md")},
+        acked={"T-ACK-NOART": "ok"},
+    )
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["ack_without_artifact_count"] == 1
+    assert [i["issue_type"] for i in report["issues"]] == ["ack_without_artifact"]
+    assert report["missing_result_count"] == 0  # 不走终态计数，口径分开
+
+
+def test_ack_with_artifact_present_is_a_normal_transition(tmp_path: Path, monkeypatch):
+    """已 ACK 且产物在、只是还没被 receipt 收口 —— 正常过渡态，不报问题。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(
+        tmp_path,
+        {"T-ACK-ART": _task("T-ACK-ART", "testing", result_file="collaboration/results/RESULT-OK.md")},
+        acked={"T-ACK-ART": "ok"},
+    )
+    (tmp_path / "collaboration" / "results" / "RESULT-OK.md").write_text(
+        "- **状态**: testing\n## 执行命令\nx\n", encoding="utf-8"
+    )
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["issue_count"] == 0
+    assert report["consistent_count"] == 1
+
+
+def test_non_terminal_task_without_ack_is_not_audited(tmp_path: Path, monkeypatch):
+    """非终态 + 没有 ACK = 正常在办任务，审计不介入。
+
+    这条守的是「别把在办任务误报成问题」——否则新扫描会变成噪音源。
+    """
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(
+        tmp_path,
+        {"T-INPROG": _task("T-INPROG", "implementing", result_file="collaboration/results/RESULT-GONE2.md")},
+    )
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["audited_count"] == 0
+    assert report["ack_without_artifact_count"] == 0
+    assert report["issue_count"] == 0
+
+
+def test_non_ok_ack_does_not_trigger_artifact_scan(tmp_path: Path, monkeypatch):
+    """ACK status=blocked/noop 不是「已交付」声明，不该触发产物扫描。"""
+    _patch_state_paths(monkeypatch, tmp_path)
+    _seed(
+        tmp_path,
+        {"T-ACK-BLOCKED": _task("T-ACK-BLOCKED", "testing", result_file="collaboration/results/RESULT-GONE3.md")},
+        acked={"T-ACK-BLOCKED": "blocked"},
+    )
+    report = run_terminal_result_consistency_audit(workspace=tmp_path)
+    assert report["audited_count"] == 0
+    assert report["ack_without_artifact_count"] == 0

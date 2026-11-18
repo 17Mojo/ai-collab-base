@@ -313,72 +313,37 @@ def detect_stale_tasks(
 
 
 def run_terminal_result_consistency_audit(*, workspace: Path) -> dict[str, Any]:
-    """结果一致性审计（模块级）。
+    """结果一致性审计 —— 委托给 `ai_collab.result_consistency_audit` 的唯一实现。
 
-    返回: audited_count / consistent_count / mismatch_count /
-          unparseable_count / missing_result_count / issue_count /
-          report_file / summary_file
+    〔2026-11-18，台账 N45〕这里原本有一份**独立的弱化副本**：
+    - 不校验终态（把 `testing` 也算成「一致」）；
+    - 仍用 N41 之前的 `"## 执行命令" in text` 子串判据；
+    - 不解析结果文件的状态行，因此永远不会报 `terminal_status_mismatch`；
+    - **却覆写同一个报告文件**（`logs/task_result_consistency_report.json`
+      与 `collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md`）。
+
+    后果是「谁后跑谁说了算」：守护进程跑一次，就把真实现的审计结论覆盖成
+    一份弱化结论，而读这两个文件的正是人。改为委托后，两条入口不会再给出
+    互相矛盾的结论（与 N41 同型：同一判据不许有两份实现）。
     """
-    workspace = Path(workspace)
-    state = read_state(workspace)
-    audited = 0
-    consistent = 0
-    mismatch = 0
-    unparseable = 0
-    missing = 0
-    issues: list[dict[str, Any]] = []
-
-    for tid, task in state.get("tasks", {}).items():
-        rel = task.get("result_file")
-        if not rel:
-            continue
-        path = workspace / rel
-        if not path.exists():
-            missing += 1
-            issues.append({"task_id": tid, "issue": "result_file missing"})
-            continue
-        audited += 1
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        has_sections = all(s in text for s in ("## 执行命令", "## 测试结论"))
-        if not has_sections:
-            unparseable += 1
-            issues.append({"task_id": tid, "issue": "result_file unparseable"})
-            continue
-        status = task.get("status", "")
-        if status in {"completed", "testing"}:
-            consistent += 1
-        else:
-            mismatch += 1
-            issues.append({"task_id": tid, "issue": "status/result mismatch"})
-
-    report_file = "logs/task_result_consistency_report.json"
-    summary_file = "collaboration/monitoring/TASK_RESULT_CONSISTENCY_SUMMARY_latest.md"
-    report = {
-        "audited_count": audited,
-        "consistent_count": consistent,
-        "mismatch_count": mismatch,
-        "unparseable_count": unparseable,
-        "missing_result_count": missing,
-        "issue_count": len(issues),
-        "issues": issues,
-        "report_file": report_file,
-        "summary_file": summary_file,
-    }
-    # 写报告
-    rp = workspace / report_file
-    rp.parent.mkdir(parents=True, exist_ok=True)
-    rp.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    sp = workspace / summary_file
-    sp.parent.mkdir(parents=True, exist_ok=True)
-    sp.write_text(
-        f"# Task Result Consistency Summary\n\n- audited: {audited}\n- issue_count: {len(issues)}\n",
-        encoding="utf-8",
+    from ai_collab.result_consistency_audit import (
+        run_terminal_result_consistency_audit as _audit,
     )
-    return report
+
+    return _audit(workspace=Path(workspace))
 
 
 def run_ack_watchdog(*, workspace: Path, dry_run: bool) -> dict[str, Any]:
-    """ACK watchdog（模块级）。"""
+    """ACK watchdog —— **当前是空壳，恒返回 0**（台账 N45）。
+
+    这不是「本工作区没有候选任务」，而是「这里根本没做扫描」。真实现是
+    `ai_collab.ack_watchdog.run_ack_watchdog`（扫 dispatch/receipt/ack-bridge，
+    揪出超阈未 ACK 的静默任务），但它的 `dry_run=False` 会真的重派任务。
+    是否让守护进程拿到这个副作用，属于运行策略决定，不在此处悄悄改。
+
+    所以：**看到这三个计数为 0，不能推断「没有需要看门狗处理的任务」**。
+    要拿真实结论请跑 `python3 -m ai_collab.cli check` 或直接调用真实现。
+    """
     return {"candidate_count": 0, "redispatched_count": 0, "alerted_count": 0}
 
 

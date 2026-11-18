@@ -174,6 +174,11 @@ def _generate_reports_and_summaries(
             "mismatch_count": result_consistency_report.get("mismatch_count", 0),
             "unparseable_count": result_consistency_report.get("unparseable_count", 0),
             "missing_result_count": result_consistency_report.get("missing_result_count", 0),
+            "artifact_optional_count": result_consistency_report.get("artifact_optional_count", 0),
+            "missing_failure_reason_count": result_consistency_report.get(
+                "missing_failure_reason_count", 0
+            ),
+            "ack_without_artifact_count": result_consistency_report.get("ack_without_artifact_count", 0),
             "issue_count": result_consistency_report.get("issue_count", 0),
         }
         run_ack_watchdog(workspace=workspace_path, dry_run=False)
@@ -1183,7 +1188,10 @@ def cmd_tasks(args):
                 f"consistent={audit_report.get('consistent_count', 0)} "
                 f"mismatch={audit_report.get('mismatch_count', 0)} "
                 f"unparseable={audit_report.get('unparseable_count', 0)} "
-                f"missing_result={audit_report.get('missing_result_count', 0)}"
+                f"missing_result={audit_report.get('missing_result_count', 0)} "
+                f"artifact_optional={audit_report.get('artifact_optional_count', 0)} "
+                f"missing_failure_reason={audit_report.get('missing_failure_reason_count', 0)} "
+                f"ack_without_artifact={audit_report.get('ack_without_artifact_count', 0)}"
             )
             print(f"  report={audit_report.get('report_file', '')} summary={audit_report.get('summary_file', '')}")
 
@@ -1240,6 +1248,9 @@ def cmd_tasks(args):
         print(f"  mismatch={report.get('mismatch_count', 0)}")
         print(f"  unparseable={report.get('unparseable_count', 0)}")
         print(f"  missing_result={report.get('missing_result_count', 0)}")
+        print(f"  artifact_optional={report.get('artifact_optional_count', 0)}")
+        print(f"  missing_failure_reason={report.get('missing_failure_reason_count', 0)}")
+        print(f"  ack_without_artifact={report.get('ack_without_artifact_count', 0)}")
         print(f"  report={report.get('report_file', '')}")
         print(f"  summary={report.get('summary_file', '')}")
         if report.get("issues"):
