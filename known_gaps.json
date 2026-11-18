@@ -1209,6 +1209,23 @@
       "fix": "**已实测收口（2026-11-18，用户放行点击一次）：判据 A 成立，`_extractContent` 不受影响。**\n探针 `chrome-extension/tests/real-machine/text-length-probe.mjs` + 回执 `evidence/deepseek-text-length-2026-11-18.json`，三步测量同一条回复：\n\n| 状态 | textContent 长度 | 子元素数 | 段落数 |\n|---|---|---|---|\n| 打开时（页面已在底部） | **1049** | 8 | 8 |\n| 滚到顶（scrollTop 609→0，scrollHeight 1362 / clientHeight 753） | **1049** | 8 | 8 |\n| 点一下右下角圆形按钮之后 | **1049** | 8 | 8 |\n\n三态一字不差，且 **1049 与 L2 回执 `final_content` 的 1049 完全相同**、尾部也对得上（「…评论区说说你的经历，咱们一起避避坑。」）。\n按钮身份同时取到：`div[role=button].ds-button.ds-button--circle.ds-button--floating`，34×34，`border-radius:50%`，**没有 aria-label**；只在「视口不在底部」时出现（在底部时扫描命中 0 个，滚到顶后命中 1 个）。⇒ 它是 `ds-scroll-area` 的**回到底部**浮层，纯视图层。\n用户说的「需点击后才能识别全部生成内容」对**人眼**成立（截图确实只到第 878 字），对**取数**不成立（DOM 一直是全的）。\n\n顺带记住：这个按钮**没有 aria-label、类名全是设计系统语义类**，将来若真需要「先展开再取」，没有稳定选择器可写，只能用几何闸门（尺寸 20–48px 近方形 / 含 svg / 右下象限 / 在输入区上沿之上 / 圆角 ≥40%）——探针里那 5 条闸门可直接复用。\n落地守护候选（都不引站点类名）：① L2 回执里同时记 `contentLength` 与 `messageElements` 数；② 每步产出长度低于历史同步骤 p10 时记诊断。**不要**用「结尾必须是句末标点」当判据：本轮体检 16 份 deepseek 回执，历史上有 7 条正常产出以「评论区说说👇」「我帮你看值不值得交给它」收尾，那条规则一上线就是假阳机器。",
       "found_at": "2026-11-18",
       "closed_at": "2026-11-18"
+    },
+    {
+      "id": "N58",
+      "priority": "P3",
+      "status": "open",
+      "title": "4/6 现行 spec 的 `## Purpose` 还是 `openspec archive` 的占位符 ⇒ `openspec validate --specs --strict` 一跑就 4 红，其中包括解冻要改的那份",
+      "reader": "任何要改 spec 的人（本轮解冻 change 要改的 `active-platform-registry` 就在这 4 份里）；以及任何拿「validate --strict 零错误」当交付证据的人——那句话对**单个 change** 成立，对**spec 全集**不成立。",
+      "where": [
+        "openspec/specs/active-platform-registry/spec.md:4（TBD - created by archiving change replace-qianwen-with-stepfun）",
+        "openspec/specs/new-session-boundary/spec.md:4（TBD - created by archiving change fix-qianwen-visible-semantic-control）",
+        "openspec/specs/task-contract/spec.md:4（TBD - created by archiving change migrate-session-identity）",
+        "openspec/specs/tracked-artifact-hygiene/spec.md:4（TBD - created by archiving change untrack-monitoring-snapshots）"
+      ],
+      "detail": "2026-11-19 实测 `openspec validate --specs --strict`：`Totals: 2 passed, 4 failed (6 items)`，通过的只有 concurrent-workspace-safety 与 governance-coverage。四条失败原因完全一样：`## Purpose` 仍是归档时自动写入的占位符（`TBD - created by archiving change xxx. Update Purpose after archive.`）。\n为什么以前没暴露：`openspec validate <change> --strict` 只验**那个 change 的 delta**，delta 里不写 Purpose；把 spec 当整体验才会命中——而 N25 / stepfun 两轮报告里写的都是「validate --strict 零错误」，语境是 change，不是 spec 全集。两类结论不能互相冒充。",
+      "impact": "解冻 deepseek 必须改 `active-platform-registry` 的 Scenario（它现在写着「`ACTIVE_PLATFORM_IDS` 仍是不含这两站的 5 站白名单」）。如果改完仍留着占位 Purpose，交付时只能说「新 change 严格通过」，不能说「这个能力被规范干净地描述着」——前者是过程证据，后者才是治理状态。",
+      "fix": "未修。逐份补一两句 Purpose（说清这条能力为了什么、约束谁），然后跑 `openspec validate --specs --strict` 直到 6/6 通过。改 `active-platform-registry` 时顺手做，别单开一轮。",
+      "found_at": "2026-11-19"
     }
   ]
 }
