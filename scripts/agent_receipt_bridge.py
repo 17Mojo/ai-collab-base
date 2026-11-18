@@ -11,6 +11,7 @@
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
@@ -119,7 +120,63 @@ def get_error_suggestion(category: ReceiptErrorCategory) -> str | None:
 
 # ---------------- IO ----------------
 
-REQUIRED_SECTIONS = ("## 执行命令", "## 测试结论", "## 风险")
+# 结果文件章节契约（PROTOCOL §7.4，台账 N41）。
+#
+# 本脚本可被单独拷走执行，所以**刻意不 import ai_collab**，保留本地副本；
+# 权威定义在 ai_collab/result_file_contract.py。两侧由
+# tests/unit/test_result_file_contract.py 强制逐字一致 + 行为等价，
+# 沿用 _MANAGED_LEDGER_FILENAMES 的既有模式。改这里必须同步改那边。
+#
+# 旧实现是 `REQUIRED_SECTIONS = ("## 执行命令", "## 测试结论", "## 风险")`，
+# 即字面 H2 子串匹配，与 state_manager 的三组替代词判据矛盾：
+# ① 按 PROTOCOL §7.4 写的合规文件（「测试结论」是 `## 验证结果` 下的小节）被判 invalid；
+# ② 缺强制段 `## 回滚` 的文件被放行；
+# ③ `## 4. 执行命令` 这种编号标题反而匹配不上。
+SECTION_GROUPS = (
+    ("执行命令", ("执行命令", "命令清单", "acceptance_commands", "verification commands", "commands")),
+    ("验证结果", ("验证结果", "测试结论", "验证", "test result", "test conclusion", "verification")),
+    ("风险", ("风险", "risk")),
+    ("回滚", ("回滚", "rollback")),
+)
+
+# `(?!#)` 必不可少：没有它，`##### H5` 会被贪婪的 `#{2,4}` 吃掉四个 `#`，
+# 剩下的 `# H5` 当成标题文字，于是 5 级标题被误判成 4 级（与权威实现保持一致）。
+_HEADING_RE = re.compile(r"^(#{2,4})(?!#)[ \t]*(.+?)[ \t]*$", re.MULTILINE)
+_NUMBERING_RE = re.compile(
+    r"^[ \t]*(?:"
+    r"第?[0-9０-９一二三四五六七八九十百]+(?:[.．、)）]|[ \t])"
+    r"|[（(][0-9０-９一二三四五六七八九十百]+[）)]"
+    r"|[0-9０-９]+(?:[.．][0-9０-９]+)+[.．、]?"
+    r")[ \t]*"
+)
+_COMPOUND_SEP_RE = re.compile(r"[与和及、/／,，;；]+")
+
+
+def _heading_matches(heading_normalized: str, keywords: tuple[str, ...]) -> bool:
+    """标题**作为章节名**表达该概念：某一段以关键词开头。
+
+    只认「以关键词开头」，不认「标题里提到」——否则
+    `### F7 关于回滚的说明` 这种描述性小节会顶替真正的 `## 回滚` 段。
+    """
+    parts = [p.strip() for p in _COMPOUND_SEP_RE.split(heading_normalized) if p.strip()]
+    for part in parts:
+        low = part.lower()
+        for kw in keywords:
+            if low.startswith(str(kw).lower()):
+                return True
+    return False
+
+
+def missing_result_sections(text: str) -> list[str]:
+    """返回缺失的章节组名；空列表表示齐备。"""
+    headings = []
+    for m in _HEADING_RE.finditer(text or ""):
+        headings.append(_NUMBERING_RE.sub("", m.group(2).strip()).strip())
+    missing = []
+    for label, keywords in SECTION_GROUPS:
+        if not any(_heading_matches(h, keywords) for h in headings):
+            missing.append(label)
+    return missing
 
 
 def read_json(path: Path, default: Any) -> Any:
@@ -163,7 +220,7 @@ def check_result_file(workspace: Path, task: dict[str, Any]) -> str | None:
     text = path.read_text(encoding="utf-8", errors="ignore")
     if not text.strip():
         return f"result_file is empty: {rel}"
-    missing = [s for s in REQUIRED_SECTIONS if s not in text]
+    missing = missing_result_sections(text)
     if missing:
         return f"result_file missing sections: {missing}"
     return None

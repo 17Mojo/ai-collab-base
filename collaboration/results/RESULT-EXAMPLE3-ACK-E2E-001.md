@@ -113,7 +113,12 @@ python3 -m ai_collab.cli tasks audit-result-consistency
   会把「字段名写错」伪装成「数据为空」，这是 disk-truth 核对里最隐蔽的一类假阴性
   （与 N40 的「文件在但没入库」不同：这次是「键在但名字错」）。
 
-### F6〔门禁互斥·需立账〕PROTOCOL §7.4 合规的结果文件会被回执桥判 invalid
+### F6〔门禁互斥·需立账〕PROTOCOL §7.4 合规的结果文件会被回执桥判 invalid 〔台账 N41，已修 closed〕
+
+> **已修（2026-11-18，查 N41）**：两处判据已收敛为 `ai_collab/result_file_contract.py` 一份实现，
+> 判据从「字面 `## ` 子串匹配」改为「标题语义匹配」（H2–H4、允许编号、允许复合标题、
+> 要求以同义词开头）。下方记录保留发现时的原始状态以便追溯；**现状以 §F6-F7 修复回填 为准**。
+> 修复后四形态探针两处门禁结论完全一致：A/B PASS、C/D FAIL(回滚)。
 
 - `collaboration/PROTOCOL.md:413-420` 强制四段：`## 执行命令` / `## 验证结果` / `## 风险` / `## 回滚`，
   且规定「验证结果」**须含「测试结论」小节**（subsection，非 H2 标题）。
@@ -130,12 +135,40 @@ python3 -m ai_collab.cli tasks audit-result-consistency
 - 结论：**照派单指令写的结果文件（形态 A）会在最后一步被拦**；而缺失 PROTOCOL 强制段落的
   文件（形态 C）两处门禁都放行。两处门禁判据不一致，且方向相反。
 
-### F7〔门禁缺口〕`## 回滚` 是强制段，但零执行
+### F7〔门禁缺口〕`## 回滚` 是强制段，但零执行 〔台账 N41，已修 closed〕
+
+> **已修（2026-11-18）**：`回滚` 已从「风险」的替代词提升为**独立必填组**。
+> 缺 `## 回滚` 现在两处门禁都会报 `missing sections=[回滚]`，由
+> `tests/unit/test_result_file_contract.py::test_missing_rollback_is_reported` 守住；
+> 把回滚组从权威表删掉的变异会被该用例杀死（已验证）。
 
 - 形态 C（无 `## 回滚`）在 `check_result_file` 与 `TASK_RESULT_REQUIRED_SECTION_GROUPS` 双双通过。
 - `state_manager.py:348-352` 的第三组是 `("风险", "回滚", "risk")`——「回滚」只是「风险」的**替代词**，
   写了「风险」就算满足，无需单列「回滚」。
 - 即 PROTOCOL §7.4 的第四段**没有任何门禁强制**。
+
+### F6-F7 修复回填（2026-11-18，N41 closed）
+
+两处门禁已收敛为一份判据 `ai_collab/result_file_contract.py`：
+
+| 项 | 修复前 | 修复后 |
+|---|---|---|
+| 判据形态 | 回执桥：字面 `## ` 子串；state_manager：三组替代词 | 两侧同一份 `SECTION_GROUPS`，标题语义匹配 |
+| `## 4. 执行命令` | 匹配不上（回执桥） | ✅ 允许前导编号 |
+| `## 风险与回滚` | 只满足风险 | ✅ 同时满足两组 |
+| `### 关于回滚的说明` | 会顶替真正的回滚段 | ✅ 不命中（须以同义词**开头**） |
+| `回滚` | 只是「风险」的替代词，零强制 | ✅ 独立必填组 |
+| 副本漂移 | 无人守 | ✅ `test_result_file_contract.py` 逐字对账 + 行为等价 |
+
+验证证据：
+
+- 四形态探针两处门禁结论**完全一致**：A（合规、测试结论为 H3 小节）/ B（编号 + 复合）PASS；
+  C（缺回滚）/ D（旧回执桥形态，缺验证结果与回滚）FAIL `[回滚]`。
+- 三条变异全部被杀死：M1 回执桥副本改一个同义词 / M2 权威侧删回滚组 / M3 判据退化回子串匹配。
+- 顺带发现并修掉一处**测试夹具自身不合规**：`test_agent_receipt_bridge.py` 的「有效结果文件」
+  原本只有三段、缺 `## 回滚`——它恰好证明旧判据把强制段放行了（一份不合规样本被当成有效样本用）。
+- blast radius 实测：在册 20 条任务 20/20 齐备（零破坏）；47 份历史结果文件中 16 份不合规，
+  但均未挂在任何在册任务上，不会被校验。
 
 ### F8〔可达性〕一致性审计的 `missing_result_file` 分支正常路径不可达
 
@@ -147,8 +180,9 @@ python3 -m ai_collab.cli tasks audit-result-consistency
 
 ## 风险
 
-1. **F6/F7 会让合规交付在最后一步被拦**，且拦截理由（缺 `## 测试结论`）与派单指令矛盾，
-   执行者按指令写文件却被打回，容易陷入「改了还是不过」的循环。
+1. ~~**F6/F7 会让合规交付在最后一步被拦**~~ —— **已修（N41 closed）**：判据已收敛，
+   四形态探针两处门禁结论一致，缺回滚两处都报。残余风险变为「历史结果文件中有 16 份不合规」，
+   但它们未挂在在册任务上，不会被校验。
 2. **F2 会让首次跑范例三的人以为回执坏了**，实际只是漏了状态流转。
 3. **F1 会让审计者按文档 grep `C.ACK` 找不到任何 claude_code 的 ACK**，误判「没有 ACK」。
 4. **F4 的绑定矛盾**会在真正启用三 agent 协作时直接踩坑（派给 unavailable 通道）。
@@ -164,7 +198,9 @@ python3 -m ai_collab.cli tasks audit-result-consistency
 | `docs/EXAMPLE-ACCEPTANCE-MATRIX.md` | 新增文档，回滚＝删除该文件 |
 | `docs/APPLICATION-EXAMPLES.md` | 仅在 §总结 加一段指针注释，回滚＝`git checkout -- docs/APPLICATION-EXAMPLES.md` |
 | `collaboration/results/RESULT-EXAMPLE3-ACK-E2E-001.md` | 本文件，回滚＝删除 |
-| `known_gaps.json` | 追加 F6/F7 两条 gap，回滚＝删除对应 id 条目 |
+| `known_gaps.json` | N41 已关闭、N42/N43/N44 已登记，回滚＝还原该文件 |
+| `ai_collab/result_file_contract.py` / `tests/unit/test_result_file_contract.py` | N41 新增实现与绊线，回滚＝删除 |
+| `ai_collab/state_manager.py` / `scripts/agent_receipt_bridge.py` / `scripts/agent_dispatch_bridge.py` / `collaboration/PROTOCOL.md` | N41 判据收敛，回滚＝`git checkout --` 这四个文件 |
 | `logs/*.json`（协作状态） | **未跟踪**，不进版本库，无需回滚 |
 
 回滚命令：
@@ -252,11 +288,14 @@ candidate_count: 0   redispatched_count: 0   alerted_count: 0   error_count: 0
 |---|---|
 | `docs/EXAMPLE-ACCEPTANCE-MATRIX.md` | 四范例验收矩阵（D0–D3 四档），本任务的直接交付物 |
 | `collaboration/results/RESULT-EXAMPLE3-ACK-E2E-002-NEGATIVE-CONTROL.md` | 负向对照的自述文件（任务已 cancelled） |
-| `known_gaps.json` N41 / N42 / N44 | 本次新发现的三条待修缺陷（open） |
+| `known_gaps.json` N41 | 门禁互斥 + 回滚零执行，**已随本轮修复关闭**（见 §F6-F7 修复回填） |
+| `known_gaps.json` N42 / N44 | 本次新发现的两条待修缺陷（open，等裁定） |
+| `ai_collab/result_file_contract.py` | N41 的唯一判据实现（新） |
+| `tests/unit/test_result_file_contract.py` | N41 绊线：两侧逐字对账 + 行为等价 + 三处变异锚 |
 | `known_gaps.json` N43 | 范例三文档缺步与前缀歧义，**已随本任务修复并关闭** |
 
 ### 未做（诚实边界）
 
 - 未验证「真实多 agent 并发」：AGENT_ARCH 与 AGENT_TEST 由同一执行者扮演。
 - 未验证看门狗的超阈告警分支：需构造一个超 120 秒未 ACK 的任务，本轮未造。
-- 未修 F4/F6/F7/F8：已登记 N41/N42/N44，等裁定。
+- 未修 F4/F8：已登记 N42/N44，等裁定。（F6/F7 已修，见 §F6-F7 修复回填。）

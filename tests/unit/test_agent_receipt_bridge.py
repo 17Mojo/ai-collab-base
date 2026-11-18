@@ -29,6 +29,9 @@ def _write_result(workspace: Path, relative_path: str, *, valid: bool) -> None:
     result_file = workspace / relative_path
     result_file.parent.mkdir(parents=True, exist_ok=True)
     if valid:
+        # 必须满足 PROTOCOL §7.4 四段契约（含回滚段）。
+        # 台账 N41 之前这里是三段、缺 `## 回滚`——那恰好说明旧判据把强制段放行了：
+        # 一份不合规的夹具被当成「有效结果文件」用了很久。
         content = "\n".join(
             [
                 "# Result",
@@ -36,10 +39,13 @@ def _write_result(workspace: Path, relative_path: str, *, valid: bool) -> None:
                 "```bash",
                 "echo test",
                 "```",
-                "## 测试结论",
+                "## 验证结果",
+                "### 测试结论",
                 "- pass",
                 "## 风险",
                 "- none",
+                "## 回滚",
+                "- git revert",
             ]
         )
     else:
@@ -379,6 +385,8 @@ def test_receipt_reports_gate_error_for_mismatched_acceptance_command(tmp_path):
                 "- pass",
                 "## 风险",
                 "- none",
+                "## 回滚",
+                "- git revert",
             ]
         ),
         encoding="utf-8",

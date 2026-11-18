@@ -27,6 +27,8 @@ from .identity import (
     normalize_session_id,
     resolve_identity,
 )
+from .result_file_contract import SECTION_GROUPS
+from .result_file_contract import missing_sections as missing_result_sections
 
 T = TypeVar("T")
 
@@ -345,10 +347,11 @@ class StateManager:
         "bugfix/no-spec",
         TASK_CONTRACT_DEFAULT_CHANGE_ID,
     }
-    TASK_RESULT_REQUIRED_SECTION_GROUPS = (
-        ("执行命令", "acceptance_commands", "verification commands"),
-        ("测试结论", "验证结果", "test conclusion"),
-        ("风险", "回滚", "risk"),
+    # 兼容视图：由 ai_collab.result_file_contract.SECTION_GROUPS 派生。
+    # 历史形状是 (组名, *同义词)，组名同时充当第一个关键词；新模块用 (组名, (同义词...))。
+    # 判据本体已收敛到 result_file_contract（台账 N41），此处只保留形状以兼容外部引用。
+    TASK_RESULT_REQUIRED_SECTION_GROUPS = tuple(
+        (label, *keywords) for label, keywords in SECTION_GROUPS
     )
     TASK_RESULT_NEGATIVE_SIGNAL_MARKERS = (
         "⚠️ blocked",
@@ -1907,16 +1910,17 @@ class StateManager:
         if not content.strip():
             raise ValueError(f"任务结果门禁失败: {task_id}; result_file is empty: {result_file}")
 
-        lowered = content.lower()
-        missing_sections: list[str] = []
-        for section_group in self.TASK_RESULT_REQUIRED_SECTION_GROUPS:
-            if not any(marker.lower() in lowered for marker in section_group):
-                missing_sections.append(section_group[0])
+        # 章节判据唯一实现见 ai_collab/result_file_contract.py（PROTOCOL §7.4，台账 N41）。
+        # 这里曾经是「子串匹配 + 三组替代词 + 回滚当作风险的替代词」，与回执桥的
+        # 字面 `## 测试结论` 判据互相矛盾：合规文件被回执桥拦、缺强制段的文件两处放行。
+        missing_sections = missing_result_sections(content)
 
         if missing_sections:
             missing_label = ",".join(missing_sections)
             raise ValueError(f"任务结果门禁失败: {task_id}; result_file missing sections=[{missing_label}]")
 
+        # 否定信号判据与章节契约无关，仍用小写全文匹配。
+        lowered = content.lower()
         negative_hits: list[str] = []
         for marker in self.TASK_RESULT_NEGATIVE_SIGNAL_MARKERS:
             if marker.lower() in lowered:

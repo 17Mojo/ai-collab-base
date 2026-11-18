@@ -423,9 +423,35 @@ python3 -m ai_collab.cli tasks migrate-identity   # 只读审计
 - 一行**可解析的状态行**（如 `- **状态**: completed`）；
 - 工单 `acceptance_commands` 里的每条命令字符串**原样**出现在结果报告中。
 
-**机器校验实现**：`ai_collab/state_manager.py` 的
-`TASK_RESULT_REQUIRED_SECTION_GROUPS` 与 `TASK_RESULT_NEGATIVE_SIGNAL_MARKERS`
-（`tasks validate-contract` 走的就是这套判定）。
+#### 7.4.1 匹配规则（2026-11-18 补，台账 N41）
+
+上表列的是「概念」，不是「字面字符串」。四段各自必须有**标题**表达该概念，
+判据如下（权威实现在 `ai_collab/result_file_contract.py`）：
+
+| 规则 | 说明 | 例 |
+|---|---|---|
+| 必须是标题 | H2–H4 标题，正文里提到不算 | 正文写「风险：无」**不**满足风险段 |
+| 允许前导编号 | `1.` `2.3` `六、` `(1)` 等前缀会被剥掉再匹配 | `## 4. 执行命令` ✅ |
+| 允许合并标题 | 复合标题按分隔符拆段，任一段命中即算 | `## 风险与回滚` 同时满足风险+回滚 |
+| 必须以概念**开头** | 只认「某一段以同义词开头」，不认「标题里出现」 | `## 回滚方案` ✅ / `### 关于回滚的说明` ❌ |
+
+「验证结果」组接受 `## 验证结果`、`## 测试结论`、`## 验证结果 / ### 测试结论` 等形态——
+即「测试结论」既可作为 `验证结果` 的**小节**，也可独立成段，两种都算。
+
+> **为什么把规则写死到这种程度**：此前这条契约有两份互相矛盾的实现对
+> ——`state_manager` 用三组替代词且把「回滚」当成「风险」的替代词（回滚零强制），
+> 回执桥 `scripts/agent_receipt_bridge.py` 要求字面 `## 测试结论`（无替代词）。
+> 结果是按本节写出的**合规**结果文件被回执桥判 invalid，卡在链路最后一步；
+> 而缺强制段 `## 回滚` 的文件两处门禁都放行——方向正好相反。
+> 现已收敛为一份判据：`ai_collab/result_file_contract.py` 是唯一实现，
+> 回执桥出于「可单独拷走执行」保留本地副本，由
+> `tests/unit/test_result_file_contract.py` 强制两侧逐字一致 + 行为等价。
+
+**机器校验实现**：`ai_collab/result_file_contract.py` 的 `SECTION_GROUPS` 与
+`missing_sections()`；`ai_collab/state_manager.py` 的
+`TASK_RESULT_NEGATIVE_SIGNAL_MARKERS` 是另一组判据（否定信号，不属于章节契约）。
+`ai_collab/state_manager.py` 的 `TASK_RESULT_REQUIRED_SECTION_GROUPS` 只是
+`SECTION_GROUPS` 的兼容视图，不再是独立判据。
 
 ---
 

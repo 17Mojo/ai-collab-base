@@ -894,7 +894,7 @@
     {
       "id": "N41",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "结果文件章节门禁互斥：按 PROTOCOL §7.4 写的文件被回执桥判 invalid，而缺强制段的文件两处都放行",
       "reader": "任何按派单指令写结果文件的 agent，以及任何声称「结果文件四段契约已被强制」的审计者。前者会在链路最后一步被拦、拦截理由（缺 `## 测试结论`）与派单指令自相矛盾，陷入「改了还是不过」的循环；后者会以为「回滚」段受保护，实际它零执行。",
       "where": [
@@ -905,8 +905,9 @@
       ],
       "detail": "2026-11-18 跑范例三端到端时，本仓自己产出的结果文件被 `receipt` 判 `result_file_invalid: missing sections ['## 执行命令','## 测试结论','## 风险']`。探针实测三种文件形态：A（PROTOCOL 四段齐全、无「测试结论」小节）→ 回执桥 FAIL / state_manager PASS；B（四段 + `### 测试结论` 小节）→ 两者都 PASS；C（只有三标题、缺 `## 回滚`）→ 两者都 PASS。即两处门禁判据不一致且方向相反：(1) 合规文件在最后一步被拦；(2) PROTOCOL §7.4 的第四段「回滚」没有任何门禁强制，state_manager 把「回滚」当成「风险」的替代词，写了「风险」就算满足。附带事实：`### 测试结论` 能通过是因为子串匹配（`\"## 测试结论\" in \"### 测试结论\"` 为真），属巧合而非设计。",
       "impact": "派单指令与回执门禁对「什么样的结果文件算合格」给出互相矛盾的答案；执行者按指令做仍被打回。若下游按 PROTOCOL 声称已强制四段，则「回滚」段的缺失无从发现。",
-      "fix": "择一收敛：① 以 PROTOCOL §7.4 为唯一事实源，把 `agent_receipt_bridge.REQUIRED_SECTIONS` 改为复用 `state_manager.TASK_RESULT_REQUIRED_SECTION_GROUPS`（含替代词与「回滚」独立分组），并让 `agent_dispatch_bridge.py:266` 的指令原文补齐「验证结果内须含测试结论小节」；② 反之改 PROTOCOL，把「测试结论」提升为独立第五段。无论选哪条，都要加一条绊线：从 PROTOCOL §7.4 表格反推必需段，与两处实现双向对账，任一侧缺段即红。",
-      "found_at": "2026-11-18"
+      "fix": "已收敛为一份判据（2026-11-18）。\n① 新增 ai_collab/result_file_contract.py 作为 PROTOCOL §7.4 的唯一实现：SECTION_GROUPS 四组（执行命令 / 验证结果 / 风险 / 回滚），判据从「字面 `## ` 子串匹配」改为「标题语义匹配」——只认 H2–H4 标题（正文提及不算）、允许前导编号（`## 4. 执行命令`）、允许复合标题（`## 风险与回滚` 同时满足两组）、且要求某一段以同义词开头（`## 回滚方案` 算，`### 关于回滚的说明` 不算，防止描述性小节顶替真段）。\n② ai_collab/state_manager.py 改为调用 missing_sections()，TASK_RESULT_REQUIRED_SECTION_GROUPS 降级为 SECTION_GROUPS 的兼容视图（不再是独立判据）。\n③ scripts/agent_receipt_bridge.py 出于「可单独拷走执行」保留本地副本，由 tests/unit/test_result_file_contract.py 强制两侧 SECTION_GROUPS 逐字一致 + 7 个夹具行为等价。\n④ scripts/agent_dispatch_bridge.py 的派单指令补齐「验证结果内须含测试结论小节」与匹配规则（编号/复合/必须标题）。\n⑤ collaboration/PROTOCOL.md 新增 §7.4.1 匹配规则表，写明四条规则与「为什么写死到这种程度」。\n验证：探针四形态 A(合规 H3 小节)/B(编号+复合)/C(缺回滚)/D(旧回执桥形态) 两处门禁结论完全一致（A/B PASS、C/D FAIL 回滚）；三条变异全部被杀死（副本漂移 / 删回滚组 / 判据退化回子串）；全量单测受影响面 500+ 条通过；validate-contract --strict invalid=0；审计 consistent=20。\n顺带修掉：测试夹具 test_agent_receipt_bridge.py 的「有效结果文件」原本只有三段、缺 `## 回滚`——那恰好证明旧判据把强制段放行了（一份不合规夹具被当成有效样本用了很久），已补成四段。\n blast radius 实测：47 份历史结果文件中 16 份不合规，但均未挂在任何在册任务上（不会被校验）；在册 20 条任务 20/20 齐备，运行时零破坏。",
+      "found_at": "2026-11-18",
+      "closed_at": "2026-11-18"
     },
     {
       "id": "N42",
