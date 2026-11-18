@@ -73,6 +73,11 @@ function assertAIStepSucceeded(response, targetTabId) {
   if (Number.isInteger(response.baselineCount)) {
     error.baselineCount = response.baselineCount;
   }
+  // 虚拟列表站点的内容基准：只认字符串。缺失/null 时不挂到 error 上，
+  // 续等会据此关掉内容通道、退回计数判据（不猜基准）。
+  if (typeof response.baselineContent === "string") {
+    error.baselineContent = response.baselineContent;
+  }
   throw error;
 }
 
@@ -686,6 +691,7 @@ class PackExecutor {
                   step,
                   execution,
                   error.baselineCount,
+                  error.baselineContent,
                 )
               : await this._executeStepByType(step, execution);
             stepResult.success = true;
@@ -967,10 +973,11 @@ class PackExecutor {
    * @param {Object} step - 步骤定义（读 `config.timeout`，不设则内容脚本按站点例外表回落）
    * @param {Object} execution - 执行上下文（读 `targetTabId`）
    * @param {number|undefined} baselineCount - 发送前的消息条数
+   * @param {string|undefined} baselineContent - 发送前的最新正文（虚拟列表站点才有）
    * @returns {Promise<string>} 取回的正文
    * @throws {Error} 没有目标标签页 / 没有基准条数 / 续等又超时
    */
-  async _resumeWaitForResponse(step, execution, baselineCount) {
+  async _resumeWaitForResponse(step, execution, baselineCount, baselineContent) {
     const targetTabId = execution.targetTabId;
     if (targetTabId === null || targetTabId === undefined) {
       // 调用方已经拦过这种情况，这里再兜一次：静默退化成「重新数」是最坏的
@@ -997,6 +1004,9 @@ class PackExecutor {
       // 与第一次发送用的是同一个上限——不用在这里复制一份站点表。
       timeout: step?.config?.timeout,
       baselineCount,
+      // 内容基准必须跟着续等一路走：丢了就等于把内容通道关掉，
+      // 虚拟列表站点第二次续等又会退化成「计数不涨 ⇒ 假超时」。
+      baselineContent,
     });
     assertAIStepSucceeded(response, targetTabId);
     const content = response?.result?.content ?? "";

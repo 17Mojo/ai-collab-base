@@ -103,3 +103,21 @@ export function resolveInitialCount(snapshotCount, baselineCount) {
   if (Number.isInteger(baselineCount) && baselineCount >= 0) return baselineCount;
   return snapshotCount;
 }
+
+/**
+ * 续等时「发送前最新正文」用哪个值。
+ *
+ * 与 {@link resolveInitialCount} 是一对，但**不就地快照**：计数没有基准就必须
+ * 就地数（否则无从比较），正文却相反——续等开始时回复可能已经落地，就地取会把
+ * 「新回答」当成基准，`contentGrew` 于是恒 false，等于亲手把内容通道关掉。
+ *
+ * 所以：只有随失败信封一路传过来的字符串基准才认；没有就回 `null`，
+ * 由 `wait-policy.hasNewReply` 关闭内容通道、退回原来的计数判据。
+ * 「不知道就别猜」比「猜一个看起来合理的基准」安全。
+ *
+ * @param {unknown} baselineContent - 失败信封 / WAIT_FOR_RESPONSE 消息里带的内容基准
+ * @returns {string|null}
+ */
+export function resolveBaselineContent(baselineContent) {
+  return typeof baselineContent === "string" ? baselineContent : null;
+}

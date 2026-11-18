@@ -37,6 +37,7 @@ import assert from "node:assert/strict";
 import {
   FAILURE_STRATEGY,
   failureStrategy,
+  resolveBaselineContent,
   resolveInitialCount,
 } from "../src/utils/retry-policy.js";
 import {
@@ -70,6 +71,13 @@ const TIMEOUT_ENVELOPE = {
   error: "Response timeout",
   code: "RESPONSE_TIMEOUT",
   baselineCount: 4,
+};
+
+/** 虚拟列表站点：信封上还带「发送前最新正文」 */
+const BASELINE_CONTENT = "上一轮 AI 的回答正文，发送前它已经是最新一条。";
+const TIMEOUT_ENVELOPE_WITH_CONTENT = {
+  ...TIMEOUT_ENVELOPE,
+  baselineContent: BASELINE_CONTENT,
 };
 
 const kindsOf = (tabMessages) => tabMessages.map((m) => m.msg.type);
@@ -119,6 +127,21 @@ test("续等要用发送前的基准条数，不许重新数", () => {
   assert.equal(resolveInitialCount(9, -1), 9, "负数不是合法条数");
   assert.equal(resolveInitialCount(9, 4.5), 9, "小数不是合法条数");
   assert.equal(resolveInitialCount(9, 0), 0, "0 是合法基准（空会话）");
+});
+
+test("续等的内容基准只认字符串，缺失/null 就关掉内容通道（不就地猜一个基准）", () => {
+  // 计数没有基准只能就地数；正文恰好相反——续等开始时回复可能已落地，
+  // 就地取会把「新回答」当成基准 ⇒ contentGrew 恒 false，等于亲手关掉
+  // 刚修好的通道。所以「不知道」必须如实回 null。
+  assert.equal(resolveBaselineContent("旧回答"), "旧回答", "字符串基准原样沿用");
+  assert.equal(resolveBaselineContent(""), "", "空串是合法基准（发送前是空会话）");
+  for (const missing of [undefined, null, 4, {}, false]) {
+    assert.equal(
+      resolveBaselineContent(missing),
+      null,
+      `baselineContent=${String(missing)} 不许当成基准`,
+    );
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────
@@ -171,6 +194,66 @@ test("超时后 SEND_TO_AI 只发一次，随后是带 baselineCount 的续等",
     response?.success,
     true,
     `续等拿到回复时 Pack 必须成功，实际：${JSON.stringify(response?.error || response)}`,
+  );
+});
+
+test("虚拟列表站点超时：续等消息必须把发送前的内容基准一并带回页面", async () => {
+  // content-script 在发送前记了 baselineContent，失败信封把它交给后台；
+  // 后台续等时若丢掉，页面就只剩「计数不涨」这条恒 false 的路 ⇒ 又白等 180s。
+  const { send, tabMessages } = await loadServiceWorker([AI_PACK], {
+    tabsSendMessageResponse: (tabId, msg) => {
+      if (msg.type === "SEND_TO_AI") return TIMEOUT_ENVELOPE_WITH_CONTENT;
+      if (msg.type === "WAIT_FOR_RESPONSE") {
+        return { success: true, result: { content: ECHO_CONTENT } };
+      }
+      return undefined;
+    },
+  });
+
+  const response = await send({
+    type: "EXECUTE_PACK",
+    packId: "retry-semantics",
+    input: {},
+    tabId: 42,
+  });
+
+  const resume = tabMessages.find((m) => m.msg.type === "WAIT_FOR_RESPONSE");
+  assert.ok(resume, "超时后必须走续等");
+  assert.equal(
+    resume.msg.baselineContent,
+    BASELINE_CONTENT,
+    "内容基准必须原样回到页面，后台不许吞掉也不许就地编一个",
+  );
+  assert.equal(
+    response?.success,
+    true,
+    `续等拿到回复时 Pack 必须成功，实际：${JSON.stringify(response?.error || response)}`,
+  );
+});
+
+test("信封里没有内容基准：续等不许凭空编一个字符串", async () => {
+  const { send, tabMessages } = await loadServiceWorker([AI_PACK], {
+    tabsSendMessageResponse: (tabId, msg) => {
+      if (msg.type === "SEND_TO_AI") return TIMEOUT_ENVELOPE;
+      if (msg.type === "WAIT_FOR_RESPONSE") {
+        return { success: true, result: { content: ECHO_CONTENT } };
+      }
+      return undefined;
+    },
+  });
+
+  await send({
+    type: "EXECUTE_PACK",
+    packId: "retry-semantics",
+    input: {},
+    tabId: 42,
+  });
+
+  const resume = tabMessages.find((m) => m.msg.type === "WAIT_FOR_RESPONSE");
+  assert.equal(
+    typeof resume?.msg.baselineContent,
+    "undefined",
+    "老路径/白名单外的平台没有内容基准，续等就该明确不带，而不是塞个空串放宽判据",
   );
 });
 

@@ -1322,6 +1322,311 @@ const MUTATIONS = [
     testFile: "session-wall-ab.test.mjs",
     expectTest: "预检命令也要显式解冻",
   },
+  // ── DeepSeek DOM 契约（2026-11-11 A/B 第 1 轮假超时的根修）────────
+  {
+    name: "DeepSeek messageList 退回 [class*=message] 混合兜底",
+    why: "8 个混合元素（5 消息卡 + 3 正文容器）当基准，虚拟列表一滚动计数就不涨 ⇒ AI 答完仍判 timeout（723.7s = 4×180s）",
+    target: "src/platforms/deepseek-adapter.js",
+    find: '  messageList: [".ds-assistant-message-main-content"],',
+    replace: '  messageList: [\'[class*="message"]\'],',
+    testFile: "message-list-contract.test.mjs",
+    expectTest: "DeepSeek：混合诱饵 8 个，但 messageList 只数 3 条 AI 回答",
+  },
+  {
+    name: "DeepSeek messageList 改回收 human 气泡的消息卡",
+    why: "div.ds-message 会连 human 气泡一起数，prompt 一出现计数就涨，是 longcat 注释里警告过的静默错数据",
+    target: "src/platforms/deepseek-adapter.js",
+    find: '  messageList: [".ds-assistant-message-main-content"],',
+    replace: '  messageList: ["div.ds-message"],',
+    testFile: "message-list-contract.test.mjs",
+    expectTest: "DeepSeek：空会话基准必须是 0，不许回退到消息卡或通配选择器",
+  },
+  {
+    name: "DeepSeek messageList 被清空",
+    why: "空选择器让 findElements 恒返回 []，countGrew 永远 false，每一步都会白等满 180s",
+    target: "src/platforms/deepseek-adapter.js",
+    find: '  messageList: [".ds-assistant-message-main-content"],',
+    replace: "  messageList: [],",
+    testFile: "message-list-contract.test.mjs",
+    expectTest: "DeepSeek：新回答落地 3 → 4，countGrew 成立且基准不跳组",
+  },
+
+  // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────
+  // 四轮 A/B 全部 723.x s 失败、截图却显示 AI 已答完：长会话卸载旧回答，
+  // 计数不涨 ⇒ countGrew 恒 false。下面把「内容型增长信号」的每一环
+  // 都做成可证伪的守护，任何一环被改回去都必须有具体测试变红。
+  {
+    name: "完成判据退回只认计数增长（虚拟列表假超时原样复活）",
+    why: "ready 只看 countGrew 就是修复前的样子：deepseek / longcat 每一步都白等满 180s",
+    target: "src/utils/wait-policy.js",
+    find: "    ready: hasNewReply({ countGrew, content, baselineContent }) && stable,",
+    replace: "    ready: Boolean(countGrew) && stable,",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "虚拟列表：消息数不涨、正文换了，稳定满 8 秒仍判完成（deepseek/longcat 假超时根治）",
+  },
+  {
+    name: "为了修虚拟列表把已绿的计数通道砸了",
+    why: "只认内容通道会让 5 个活跃站（无基准）全部退化成永远等不到完成",
+    target: "src/utils/wait-policy.js",
+    find: "  if (countGrew) return true;",
+    replace: "  if (false) return true;",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "内容连续稳定满窗口才算完成",
+  },
+  {
+    name: "没有内容基准时静默放宽全局判据",
+    why: "老信封/白名单外平台没有基准，一旦也走内容通道，静止的旧消息会被当成新回复 ⇒ 太早成功",
+    target: "src/utils/wait-policy.js",
+    find: '  if (typeof baselineContent !== "string") return false;',
+    replace: "  if (false) return false;",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "没有内容基准时，计数不涨一律不算新回复（不许静默放宽全局判据）",
+  },
+  {
+    name: "contentGrew 退化成「非空即算新回复」",
+    why: "不看基准就等于把发送前那条一直没变的旧回答判成本轮回复",
+    target: "src/utils/wait-policy.js",
+    find: "  return text.length > 0 && text !== base;",
+    replace: "  return text.length > 0;",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "contentGrew：只认「非空且与基准不同」，空串和旧回答都不算新回复",
+  },
+  {
+    name: "内容型增长信号被悄悄晋升为所有平台的默认行为",
+    why: "白名单是实测证据驱动的实验开关；放开等于让未验证的 5 站也换判据",
+    target: "src/utils/wait-policy.js",
+    find: "  return CONTENT_GROWTH_PLATFORM_IDS.includes(platformId);",
+    replace: "  return true;",
+    testFile: "wait-policy.test.mjs",
+    expectTest: "内容型增长信号只开给有真机假超时证据的站点，已绿的 5 站行为不变",
+  },
+  {
+    name: "续等就地猜一个内容基准",
+    why: "续等开始时回复可能已落地，就地取会把新回答当基准 ⇒ 内容通道恒 false",
+    target: "src/utils/retry-policy.js",
+    find: '  return typeof baselineContent === "string" ? baselineContent : null;',
+    replace: '  return "就地猜一个基准";',
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "续等的内容基准只认字符串，缺失/null 就关掉内容通道（不就地猜一个基准）",
+  },
+  {
+    name: "发送前不再记录最新正文",
+    why: "没有 baselineContent，虚拟列表站点的内容通道一开始就关着，四轮假超时原样复活",
+    target: "src/content/content-script.js",
+    find:
+      "  const baselineContent = shouldTrackBaselineContent(currentPlatformId)\n" +
+      "    ? latestContentOf(baselineMessages)\n" +
+      "    : null;",
+    replace: "  const baselineContent = null;",
+    testFile: "adapter-wait.test.mjs",
+    expectTest: "虚拟列表：消息数不涨但正文换了，SEND_TO_AI 仍把新回答带回来",
+  },
+  {
+    name: "等待采样丢掉内容基准（只记不用的假修复）",
+    why: "记录了却没传给 sampleWaitState，等于什么都没修",
+    target: "src/content/content-script.js",
+    find: "        baselineContent: initialContent,\n",
+    replace: "",
+    testFile: "adapter-wait.test.mjs",
+    expectTest: "虚拟列表：消息数不涨但正文换了，SEND_TO_AI 仍把新回答带回来",
+  },
+  {
+    name: "失败信封不再带回内容基准",
+    why: "后台收不到基准，续等就只剩恒 false 的计数通道",
+    target: "src/content/content-script.js",
+    find: "    baselineContent: resolveBaselineContent(error?.baselineContent),",
+    replace: "    baselineContent: null,",
+    testFile: "adapter-wait.test.mjs",
+    expectTest: "WAIT_FOR_RESPONSE 再超时：失败信封仍带回两个基准，续等链不许断",
+  },
+  {
+    name: "续等再超时时把内容基准丢了（续等链第二环断）",
+    why: "第一次续等再超时后信封不带基准，第三次续等会退化成假超时",
+    target: "src/content/content-script.js",
+    find: "        error.baselineContent = initialContent;",
+    replace: "        error.baselineContent = null;",
+    testFile: "adapter-wait.test.mjs",
+    expectTest: "WAIT_FOR_RESPONSE 再超时：失败信封仍带回两个基准，续等链不许断",
+  },
+  {
+    name: "后台不认信封里的内容基准",
+    why: "信封带了也没用：error 上没挂，_resumeWaitForResponse 就收不到",
+    target: "src/background/pack-executor.js",
+    find: '  if (typeof response.baselineContent === "string") {',
+    replace: "  if (false) {",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "虚拟列表站点超时：续等消息必须把发送前的内容基准一并带回页面",
+  },
+  {
+    name: "续等调用丢掉内容基准",
+    why: "从 error 到 _resumeWaitForResponse 这一环断了，页面收不到基准",
+    target: "src/background/pack-executor.js",
+    find: "                  error.baselineContent,\n",
+    replace: "                  undefined,\n",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "虚拟列表站点超时：续等消息必须把发送前的内容基准一并带回页面",
+  },
+  {
+    name: "续等消息里丢掉 baselineContent",
+    why: "消息协议这一端断了，等于上一条变异",
+    target: "src/background/pack-executor.js",
+    find:
+      "      // 内容基准必须跟着续等一路走：丢了就等于把内容通道关掉，\n" +
+      "      // 虚拟列表站点第二次续等又会退化成「计数不涨 ⇒ 假超时」。\n" +
+      "      baselineContent,\n",
+    replace: "",
+    testFile: "retry-semantics.test.mjs",
+    expectTest: "虚拟列表站点超时：续等消息必须把发送前的内容基准一并带回页面",
+  },
+
+  // ── longcat 的会话边界入口（2026-11-12 A/B 第 4 轮 B 组作废的根因） ─
+  {
+    name: "longcat 的 newChat 被清空（B 组边界又变成降级照发）",
+    why: "探针证明真入口是 span「开启新对话」/ div.new-content，没有 adapter 声明就谁也找不到 ⇒ available:false / 6→6，该轮作废",
+    target: "src/platforms/longcat-adapter.js",
+    find:
+      '  newChat: [\n' +
+      '    ".v-slider-header .new-content",\n' +
+      '    ".slider-header .new-content",\n' +
+      '    "div.new-content span",\n' +
+      "  ],",
+    replace: "  newChat: [],",
+    testFile: "new-session-control.test.mjs",
+    expectTest: "longcat：真入口是 div.new-content 里的「开启新对话」，不是历史项 div.conv-title",
+  },
+  {
+    name: "longcat 的 newChat 指到历史会话诱饵 div.conv-title",
+    why: "conv-title 的「新对话」是历史会话标题，点它只会切回旧会话；waitForSessionReset 判不出消息数下降 ⇒ 如实失败",
+    target: "src/platforms/longcat-adapter.js",
+    find:
+      '  newChat: [\n' +
+      '    ".v-slider-header .new-content",\n' +
+      '    ".slider-header .new-content",\n' +
+      '    "div.new-content span",\n' +
+      "  ],",
+    replace: '  newChat: ["div.conv-title"],',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "longcat：真入口是 div.new-content 里的「开启新对话」，不是历史项 div.conv-title",
+  },
+  {
+    name: "为了让 longcat 找到入口把公共标签兜底放宽到所有 div",
+    why: "一旦扫所有 div，历史会话列表里的 div.conv-title「新对话」会被当成新对话入口误点，静默切到旧会话",
+    target: "src/content/new-session-control.js",
+    find:
+      '  "button",\n' +
+      '  \'[role="button"]\',\n' +
+      '  "a",\n',
+    replace:
+      '  "button",\n' +
+      '  \'[role="button"]\',\n' +
+      '  "a",\n' +
+      '  "div",\n',
+    testFile: "new-session-control.test.mjs",
+    expectTest: "longcat：没声明 newChat 时宁可降级，也不许误点历史会话项",
+  },
+
+  // ── deepseek 的 adapter 级精确文案逃生口（2026-11-12 ab3 B 组作废根因） ─
+  //
+  // 与上面 longcat 那组不同：deepseek 的真入口 `<span>开启新对话</span>`
+  // 没有稳定 CSS hook，所以这一组锚守的是**逃生口本身**——
+  // 「只在声明方启用 / 文案全等 / 可见 / 非输入区 / 点完真的清空」，
+  // 少任何一层都会把 B 组的 available 变成凭空捏造的 true。
+  // 全部指向独立文件 deepseek-new-session.test.mjs，可用 MUTATION_TESTFILE 秒级预检。
+  {
+    name: "deepseek 的 newChatText 逃生口被删掉（B 组边界又变成降级照发）",
+    why: "ab3 真机回执 sessionResets[0] 就是 {available:false, strategy:none, 3→3}；删掉声明等于把那一轮作废状态原样复原",
+    target: "src/platforms/deepseek-adapter.js",
+    find:
+      "  newChatText: {\n" +
+      '    selector: "span",\n' +
+      '    texts: ["开启新对话"],\n' +
+      "  },",
+    replace: "  newChatText: null,",
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "deepseek：裸 span「开启新对话」+ 哈希祖先，仍能找到并真的清空 12→0",
+  },
+  {
+    name: "deepseek 逃生口文案被换成历史会话诱饵的「新对话」",
+    why: "按模糊文案找会命中 longcat 历史项同款「新对话」，静默切回旧会话；这里必须是探针实证的全等文案",
+    target: "src/platforms/deepseek-adapter.js",
+    find: '    texts: ["开启新对话"],',
+    replace: '    texts: ["新对话"],',
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "deepseek：裸 span「开启新对话」+ 哈希祖先，仍能找到并真的清空 12→0",
+  },
+  {
+    name: "精确文案层把 wanted.has 放宽成 includes",
+    why: "一旦模糊匹配，「开启新对话（Pro）」这类营销后缀会被当成入口点下去，而真正该点的侧栏入口反而可能被跳过",
+    target: "src/content/new-session-control.js",
+    find: '      if (wanted.has(text)) return { el, how: "adapter-text-match" };',
+    replace:
+      '      if (text.includes(textRule.texts[0])) return { el, how: "adapter-text-match" };',
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "deepseek：文案必须全等，近似文案「开启新对话（Pro）」不许蒙混过关",
+  },
+  {
+    name: "逃生口省掉 isElementRendered 渲染闸",
+    why: "隐藏的 hover-reveal / 已下线模板里也有同名 span，不判可见就会点到一个不存在的入口并回报成功",
+    target: "src/content/new-session-control.js",
+    find:
+      "      if (!isElementRendered(el)) continue;\n" +
+      "      if (el.closest(COMPOSER_ZONE_SELECTOR)) continue;\n" +
+      '      const text = (el.textContent || "").trim();',
+    replace:
+      "      if (el.closest(COMPOSER_ZONE_SELECTOR)) continue;\n" +
+      '      const text = (el.textContent || "").trim();',
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "deepseek：不可见的同名 span 不许认（渲染闸不能省）",
+  },
+  {
+    name: "逃生口省掉 COMPOSER_ZONE 输入区闸",
+    why: "输入/发送区旁边的同名 span 不是新对话入口；先出现的诱饵会被当成入口，真入口永远轮不到",
+    target: "src/content/new-session-control.js",
+    find:
+      "      if (el.closest(COMPOSER_ZONE_SELECTOR)) continue;\n" +
+      '      const text = (el.textContent || "").trim();\n' +
+      '      if (wanted.has(text)) return { el, how: "adapter-text-match" };',
+    replace:
+      '      const text = (el.textContent || "").trim();\n' +
+      '      if (wanted.has(text)) return { el, how: "adapter-text-match" };',
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "deepseek：输入区里的同名 span 不许认（COMPOSER_ZONE 闸不能省）",
+  },
+  {
+    name: "把逃生口从 adapter 级偷偷放宽成全局默认",
+    why: "全局扫 span 会让 5 个活跃站也命中裸 span；尤其 longcat 历史会话 div 结构下的同名文案会静默切回旧会话",
+    target: "src/content/new-session-control.js",
+    find: "  const textRule = config?.newChatText;",
+    replace:
+      '  const textRule = config?.newChatText || { selector: "span", texts: NEW_SESSION_TEXTS };',
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "没声明 newChatText 的平台：裸 span「开启新对话」必须找不到，宁可降级",
+  },
+  {
+    name: "为了让 deepseek 找到入口把公共标签兜底放宽到所有 span",
+    why: "这是最 tempting 的「简单修法」：span 一进公共兜底，longcat 历史会话诱饵与所有站点同名文案一起被误点",
+    target: "src/content/new-session-control.js",
+    find:
+      '  "button",\n' +
+      '  \'[role="button"]\',\n' +
+      '  "a",\n',
+    replace:
+      '  "button",\n' +
+      '  \'[role="button"]\',\n' +
+      '  "a",\n' +
+      '  "span",\n',
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "公共层只加文案、不放宽标签：NEW_SESSION_TEXTS 有「开启新对话」，选择器表无裸 span/div",
+  },
+  {
+    name: "waitForSessionReset 被改成「点过就算重置」",
+    why: "< 改 <= 会让「点了没清空」也回报 available:true，B 组验收判据 messageCountAfter < Before 从此可以凭空成立",
+    target: "src/content/new-session-control.js",
+    find: "    if (last < beforeCount) return last;",
+    replace: "    if (last <= beforeCount) return last;",
+    testFile: "deepseek-new-session.test.mjs",
+    expectTest: "deepseek：找到了入口但点了没清空，仍判 available:false（不假装重置）",
+  },
 ];
 
 /**

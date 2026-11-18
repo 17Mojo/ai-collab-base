@@ -18,6 +18,11 @@
 - L1 + L2 全绿 **≠** 「第一个外部用户」——路线 A/B 决策门禁缺的正是后者，
   本脚本**永远不会**把路线门禁判为关闭。
 
+两条通道不可混报：`driver=browser-extension` 与 `driver=app` 各自计数，
+App 通道的 pass 不自动计入浏览器扩展的平台分母。driver 会同时写进 run 与
+每条 record，并在 verify 里校验、回显分通道计数——不许手工往 JSON 里塞一个
+没人读的键（record 覆盖写会把未纳入契约的字段静默抹掉）。
+
 用法:
     python3 scripts/real_machine_regression.py init \\
         --run-id RMR-2026-10-25-01 --platforms chatgpt,claude,gemini \\
@@ -48,11 +53,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_RESULTS_DIR = "collaboration/results/real-machine-runs"
 
 SCHEMA_VERSION = 1
-LAYERS = ("L1", "L2")
+# L0 = 可达/账号态，GATE = 门禁口径；两者不是 L1/L2，但必须能登记并对账。
+LAYERS = ("L0", "L1", "L2", "GATE")
 STATUSES = ("pass", "fail", "unverified", "not-run")
 STATUS_PASS = "pass"
 STATUS_FAIL = "fail"
 STATUS_NEEDS_REASON = ("unverified", "not-run")
+
+# 通道口径：browser-extension 计入扩展平台分母；app 单独计数，不混报。
+# driver 为可选字段，缺省按 browser-extension 推断——存量 RMR 不因缺字段被判红。
+DRIVERS = ("browser-extension", "app")
+DEFAULT_DRIVER = "browser-extension"
+# GATE 记录面向全局，platform 用 "*"，不落在本次 run 声明的平台列表里。
+GLOBAL_PLATFORM = "*"
 
 # 路线 A/B 决策门禁的现状：本脚本只能产出 L1/L2 证据，
 # 「第一个外部用户」不在本脚本的证据范围内，因此门禁恒为开启。
@@ -118,6 +131,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         "purpose": args.purpose,
         "platforms": platforms,
         "locales": locales,
+        "driver": args.driver or DEFAULT_DRIVER,
         "records": [],
     }
     save_run(path, run)
@@ -157,6 +171,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         "layer": args.layer,
         "platform": args.platform,
         "status": args.status,
+        "driver": effective_driver(run, {}, args.driver),
         "locale": args.locale or default_locale(run),
         "checked_at": now_iso(),
         "evidence": list(args.evidence or []),
@@ -171,6 +186,7 @@ def cmd_record(args: argparse.Namespace) -> int:
             existing.get("layer") == entry["layer"]
             and existing.get("platform") == entry["platform"]
             and existing.get("locale") == entry["locale"]
+            and effective_driver(run, existing) == entry["driver"]
         )
         if same:
             records[idx] = entry
@@ -182,6 +198,14 @@ def cmd_record(args: argparse.Namespace) -> int:
     save_run(path, run)
     print(f"[OK] 已登记记录：{entry['layer']}/{entry['platform']}/{entry['locale']} → {entry['status']}")
     return 0
+
+
+def effective_driver(run: dict, rec: dict, override: str | None = None) -> str:
+    """记录的通道：显式覆盖 > 记录级 > run 级 > 缺省。
+
+    存量 RMR 没有 driver 字段，一律推断为 browser-extension，不判红。
+    """
+    return override or rec.get("driver") or run.get("driver") or DEFAULT_DRIVER
 
 
 def default_locale(run: dict) -> str:
@@ -227,8 +251,11 @@ def verify_run(run: dict, workspace: Path) -> tuple[list[str], str, bool]:
         locale = rec.get("locale")
         if layer not in LAYERS:
             errors.append(f"{where}: layer 非法（{layer}），只能是 {LAYERS}")
-        if platform not in platforms:
+        if platform not in platforms and platform != GLOBAL_PLATFORM:
             errors.append(f"{where}: platform {platform} 不在本次 run 声明的范围 {platforms} 内")
+        driver = effective_driver(run, rec)
+        if driver not in DRIVERS:
+            errors.append(f"{where}: driver 非法（{driver}），只能是 {DRIVERS}")
         if status not in STATUSES:
             errors.append(f"{where}: status 非法（{status}），只能是 {STATUSES}")
         if not rec.get("checked_at"):
@@ -236,9 +263,9 @@ def verify_run(run: dict, workspace: Path) -> tuple[list[str], str, bool]:
         if layer == "L1" and not locale:
             errors.append(f"{where}: L1 记录缺 locale（漂移随界面语言变化）")
 
-        key = (str(layer), str(platform), str(locale))
+        key = (str(layer), str(platform), str(locale), driver)
         if key in seen:
-            errors.append(f"{where}: 与前面的记录重复（layer/platform/locale 三元组重复）")
+            errors.append(f"{where}: 与前面的记录重复（layer/platform/locale/driver 四元组重复）")
         seen.add(key)
 
         if status == STATUS_PASS:
@@ -268,8 +295,25 @@ def verify_run(run: dict, workspace: Path) -> tuple[list[str], str, bool]:
             errors.append(f"平台 {platform}: 缺 L1 记录（先跑 L1 再谈 L2）")
         if not l2:
             errors.append(f"平台 {platform}: 缺 L2 记录（没跑就记 not-run + reason）")
-        if any(r.get("status") == STATUS_PASS for r in l2) and not any(r.get("status") == STATUS_PASS for r in l1):
-            errors.append(f"平台 {platform}: L2 记为 pass，但 L1 没有 pass 的记录")
+
+        # 通道内闭环：L2 pass 必须由**同一 (platform, driver)** 的 L1 pass 支撑。
+        # 只按 platform 聚合会让 app 通道借 browser 通道的 L1 过关，与两条通道各自计数冲突。
+        # 仅对出现 L2 pass 的通道检查，避免为未使用的通道凭空造出错误。
+        for drv in DRIVERS:
+            l2_pass = [
+                r for r in l2
+                if r.get("status") == STATUS_PASS and effective_driver(run, r) == drv
+            ]
+            if not l2_pass:
+                continue
+            l1_pass = [
+                r for r in l1
+                if r.get("status") == STATUS_PASS and effective_driver(run, r) == drv
+            ]
+            if not l1_pass:
+                errors.append(
+                    f"平台 {platform}（{drv}）: L2 记为 pass，但 L1 没有 pass 的记录"
+                )
 
     # 结论
     has_fail = any(r.get("status") == STATUS_FAIL for r in records)
@@ -305,11 +349,24 @@ def cmd_verify(args: argparse.Namespace) -> int:
     run = load_run(path)
     errors, verdict, complete = verify_run(run, workspace)
 
+    # 两条通道各自计数：App 通道的 L2 pass 不并入扩展通道那一栏。
+    pass_by_driver = {
+        d: sum(
+            1
+            for rec in run.get("records") or []
+            if rec.get("layer") == "L2"
+            and rec.get("status") == STATUS_PASS
+            and effective_driver(run, rec) == d
+        )
+        for d in DRIVERS
+    }
     payload = {
         "run_id": run.get("run_id"),
         "verdict": verdict,
         "complete": complete,
         "errors": errors,
+        "driver": run.get("driver") or DEFAULT_DRIVER,
+        "pass_by_driver": pass_by_driver,
         "route_gate": "open",
         "route_gate_note": ROUTE_GATE_NOTE,
     }
@@ -319,6 +376,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
         print(f"=== 真机回归记录对账：{run.get('run_id')} ===")
         print(f"  平台：{', '.join(run.get('platforms') or [])}")
         print(f"  语言：{', '.join(run.get('locales') or [])}")
+        print(f"  通道：{run.get('driver') or DEFAULT_DRIVER}（L2 pass 分通道：{pass_by_driver}）")
         print(f"  记录条数：{len(run.get('records') or [])}")
         print(f"  结论：{verdict}")
         if errors:
@@ -379,6 +437,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--locales", required=True, help="逗号分隔的界面语言列表")
     p_init.add_argument("--operator", default="", help="执行人")
     p_init.add_argument("--purpose", default="真机回归：L1 DOM 契约 + L2 真实发送", help="本次 run 的目的")
+    p_init.add_argument("--driver", default=DEFAULT_DRIVER, choices=list(DRIVERS), help="本次 run 的通道")
     p_init.add_argument("--force", action="store_true", help="覆盖已存在的记录")
     p_init.set_defaults(func=cmd_init)
 
@@ -388,6 +447,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_record.add_argument("--platform", required=True)
     p_record.add_argument("--status", required=True, choices=list(STATUSES))
     p_record.add_argument("--locale", default="", help="界面语言（L1 必填）")
+    p_record.add_argument(
+        "--driver", default="", choices=("",) + DRIVERS,
+        help="本条记录的通道；留空继承 run 级 driver（存量 run 缺省为 browser-extension）",
+    )
     p_record.add_argument("--evidence", action="append", default=[], help="结论出处（可重复）")
     p_record.add_argument("--evidence-file", action="append", default=[], help="可机检的证据文件（可重复）")
     p_record.add_argument("--reason", default="", help="unverified / not-run 的原因")
