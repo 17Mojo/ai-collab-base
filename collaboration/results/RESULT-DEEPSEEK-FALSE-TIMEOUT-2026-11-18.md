@@ -189,7 +189,27 @@ longcat 属冻结站，连只读预检都算「碰」，故未做——需用户
 
 反面没被证伪：若站点改成「只把可见段落挂进 DOM」（不是 CSS 折叠，而是懒渲染），
 `textContent` 同样拿不到，而 50 字闸门会照常放行半截内容——这是 N14「太早成功」的同类。
-登记 **N57**，写明证伪方法与落地守护候选（不引站点类名）。
+
+### 实测收口（用户当日放行点击一次）
+
+探针 `chrome-extension/tests/real-machine/text-length-probe.mjs`，回执
+`evidence/deepseek-text-length-2026-11-18.json`，对同一条回复量三次：
+
+| 状态 | `textContent` 长度 | 子元素 | 段落 |
+|---|---|---|---|
+| 打开时（页面已在底部） | **1049** | 8 | 8 |
+| 滚到顶（`scrollTop` 609→0，`scrollHeight` 1362 / `clientHeight` 753） | **1049** | 8 | 8 |
+| 点一下右下角圆形按钮之后 | **1049** | 8 | 8 |
+
+三态一字不差，**1049 与 L2 回执 `final_content` 的 1049 完全相同**，尾部也对得上
+（「…评论区说说你的经历，咱们一起避避坑。」）。
+
+按钮身份同时取到：`div[role=button].ds-button.ds-button--circle.ds-button--floating`，
+34×34，`border-radius:50%`，**无 aria-label**；在页面底部时扫描命中 **0 个**，滚到顶后命中
+**1 个** ⇒ 它是 `ds-scroll-area` 的**回到底部**浮层，纯视图层。
+
+⇒ 用户说的「需点击后才能识别全部生成内容」对**人眼**成立（截图确实只到第 878 字），
+对**取数**不成立（DOM 一直是全的）。**N57 判据 A 成立，已 closed。**
 
 ## 6. 风险
 

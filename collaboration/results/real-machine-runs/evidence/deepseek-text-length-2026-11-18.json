@@ -1,0 +1,146 @@
+{
+  "probe": "text-length-probe",
+  "purpose": "N57：长回答视口外的正文是否在 DOM 里（证伪 A/B）",
+  "startedAt": "2026-11-18T15:46:06.042Z",
+  "policy": {
+    "frozenPlatform": true,
+    "unfrozenBy": "user-approved-2026-11-18-chevron-probe"
+  },
+  "config": {
+    "url": "https://chat.deepseek.com/",
+    "clickConv": "text=最贵AI协作工具掉链子",
+    "measureSel": "[class*=\"ds-assistant-message-main-content\"]",
+    "expandClick": true
+  },
+  "before": {
+    "count": 1,
+    "items": [
+      {
+        "textLength": 1049,
+        "innerTextLength": 1063,
+        "childElementCount": 8,
+        "paragraphCount": 8,
+        "scrollHeight": 840,
+        "clientHeight": 840,
+        "rect": {
+          "x": 475,
+          "y": -253,
+          "w": 752,
+          "h": 840
+        },
+        "tail": "在那一棒，不用整份重来。你被AI交接坑过吗？评论区说说你的经历，咱们一起避避坑。",
+        "head": "我把市面上的AI协作工具按同一套任务点按实测了一遍，结果最贵"
+      }
+    ],
+    "composerTop": 666,
+    "viewport": {
+      "w": 1440,
+      "h": 813
+    }
+  },
+  "scrollToTop": {
+    "cls": "ds-virtual-list ds-virtual-list--printable ds-scroll-area ds-scroll-area--show-o",
+    "before": 609,
+    "after": 0,
+    "scrollHeight": 1362,
+    "clientHeight": 753
+  },
+  "afterScroll": {
+    "count": 1,
+    "items": [
+      {
+        "textLength": 1049,
+        "innerTextLength": 1063,
+        "childElementCount": 8,
+        "paragraphCount": 8,
+        "scrollHeight": 840,
+        "clientHeight": 840,
+        "rect": {
+          "x": 475,
+          "y": 356,
+          "w": 752,
+          "h": 840
+        },
+        "tail": "在那一棒，不用整份重来。你被AI交接坑过吗？评论区说说你的经历，咱们一起避避坑。",
+        "head": "我把市面上的AI协作工具按同一套任务点按实测了一遍，结果最贵"
+      }
+    ],
+    "composerTop": 666,
+    "viewport": {
+      "w": 1440,
+      "h": 813
+    }
+  },
+  "chevronCandidates": [
+    {
+      "x": 1210,
+      "y": 624,
+      "w": 34,
+      "h": 34,
+      "radius": 50,
+      "cls": "ds-button ds-button--outlinedNeutral ds-button--outlined ds-button--circle ds-button--m ds-button--icon-relative-m ds-bu",
+      "aria": "",
+      "tag": "DIV",
+      "svgPaths": 1,
+      "html": "<div role=\"button\" class=\"ds-button ds-button--outlinedNeutral ds-button--outlined ds-button--circle ds-button--m ds-button--icon-relative-m ds-button--floating\" tabindex=\"0\" style=\"--dsl-button-color: var(--dsw-alias-button-floating-fill); --dsl-button-height: 34px; --dsl-button-color-hover: var(--",
+      "composerTop": 666
+    }
+  ],
+  "clicked": true,
+  "clickedTarget": {
+    "x": 1210,
+    "y": 624,
+    "w": 34,
+    "h": 34,
+    "radius": 50,
+    "cls": "ds-button ds-button--outlinedNeutral ds-button--outlined ds-button--circle ds-button--m ds-button--icon-relative-m ds-bu",
+    "aria": "",
+    "tag": "DIV",
+    "svgPaths": 1,
+    "html": "<div role=\"button\" class=\"ds-button ds-button--outlinedNeutral ds-button--outlined ds-button--circle ds-button--m ds-button--icon-relative-m ds-button--floating\" tabindex=\"0\" style=\"--dsl-button-color: var(--dsw-alias-button-floating-fill); --dsl-button-height: 34px; --dsl-button-color-hover: var(--",
+    "composerTop": 666
+  },
+  "after": {
+    "count": 1,
+    "items": [
+      {
+        "textLength": 1049,
+        "innerTextLength": 1063,
+        "childElementCount": 8,
+        "paragraphCount": 8,
+        "scrollHeight": 840,
+        "clientHeight": 840,
+        "rect": {
+          "x": 475,
+          "y": -253,
+          "w": 752,
+          "h": 840
+        },
+        "tail": "在那一棒，不用整份重来。你被AI交接坑过吗？评论区说说你的经历，咱们一起避避坑。",
+        "head": "我把市面上的AI协作工具按同一套任务点按实测了一遍，结果最贵"
+      }
+    ],
+    "composerTop": 666,
+    "viewport": {
+      "w": 1440,
+      "h": 813
+    }
+  },
+  "verdict": {
+    "unchanged": true,
+    "beforePairs": [
+      [
+        1049,
+        8
+      ]
+    ],
+    "afterPairs": [
+      [
+        1049,
+        8
+      ]
+    ],
+    "conclusion": "A：视口外正文在 DOM 里，点击只影响视图（textContent 取数不受影响）"
+  },
+  "finishedAt": "2026-11-18T15:46:27.003Z"
+}
