@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-16",
+  "updated_at": "2026-11-18",
   "purpose": "已确认但本次未修的缺陷台账。宁可写下来也不要留在某人脑子里——下一个人接手时不必重新考古一遍。",
   "conventions": {
     "id": "N1、N2……递增，永不复用。关闭后把 status 改 closed 并保留条目与结论，不要删。",
@@ -482,7 +482,7 @@
     {
       "id": "N26",
       "priority": "P2",
-      "status": "open",
+      "status": "closed",
       "title": "身份审计只读状态账本（18 条），磁盘上另有 8 个任务文件未被计入",
       "reader": "读 `tasks migrate-identity` 输出、准备据 `legacy=18` 宣布「历史工单已全部盘点」的人——26 个 `TASK-*.md` 里只有 18 个在账本就是 `tasks` 字典的键，剩下 8 个文件这份审计从没见过；以及后续要做「给历史工单补身份」的人——按账本补完仍会有 8 个文件没有身份字段，届时会被误当成「补漏了」。",
       "where": [
@@ -492,15 +492,21 @@
       ],
       "detail": "2026-11-16 在 migrate-session-identity 收口阶段实测：`python3 -m ai_collab.cli -w <main> tasks migrate-identity` 报 `total=18 legacy=18`，而对 26 个任务文件逐个 grep `session_id:` / `model_id:` 得到 26/26 两者皆无。两处事实不矛盾（账本是任务事实源，md 是文档载体），但**数量差 8** 说明有一部分任务只存在于文件里、从未进账本，因此任何以账本为输入的身份类审计都天然漏掉它们。本 change 未引入该差异，但把它写进「证据」会让 `legacy=18` 看起来像全量，属于会误导的口径。\n\n2026-11-16 复核补强：在真实 clone（`git clone git@github.com:17Mojo/ai-collab-base.git`，HEAD 2a968a2）上跑同一套命令，得到**第三个数**——`tasks validate-contract --scope all` 报 `checked=0 invalid=0 legacy_identity=0`，`tasks migrate-identity` 报 `total=0`，而磁盘上 `TASK-*.md` 仍是 26 个。于是三处数字互不相等：账本 0 条 / 磁盘 26 个文件 / 本机 18 条。结论：`legacy_identity=18` 是「某台机器账本里恰好有 18 条任务」这个事实，**不是仓库事实**，任何新鲜检出都看不到这批历史欠账。",
       "impact": "① 据 `legacy=18` 宣布历史欠账已全部盘点，实际漏 8 个文件；② 后续按账本补身份后复算，md 侧仍有 8 个空字段，容易被判成「迁移没跑完」而反复返工；③ 若将来有工具改成扫 md 文件，同一批任务会被算两次或给出不同 legacy 数，两套口径并存。 ④ 新鲜检出上身份审计空跑（`checked=0`），会让人误判「没有历史欠账」，而磁盘上 26 个文件全缺身份字段——该结论比原报告写的「差 8 条」更容易误导。",
-      "fix": "已做（本轮）：在 `openspec/changes/migrate-session-identity/tasks.md` 的「偏离与理由 §2」写明差 8 条、审计输入是账本而非文件，并在 E7 证据里同时给出账本 18 与磁盘 26 两个数，避免单口径误导；结果报告新增「记录更正」章节，补入真实 clone 上的第三个数字（0）。待做：① 决定任务事实源的唯一归属——要么把 8 个文件补录进账本，要么在审计输出里显式声明「本审计覆盖账本 N 条，磁盘另有 M 个未登记文件」；② 若选后者，给 `audit_task_identity` 增加 `unregistered_files` 计数并加守护用例；③ 补录前不得在报告里使用「全部任务」这类全量措辞。",
+      "fix": "已修（2026-11-18 · resolve-md-task-source，用户裁定方案 A：md 为事实源）：新增 `ai_collab/task_md_sync.py` 与 `tasks sync-from-md` 显式同步入口（支持 --dry-run）；修 `scripts/verify_task_file_contracts.py` 两处登记调用漏传 session_id/model_id；同步时按 md 的 created_at 覆盖（否则 register_task 用当前时间会把历史工单误判 missing）；`audit_task_identity()` 返回追加 input_source，显式披露同步时间/条数或「未同步过 md」。PROTOCOL §7.6 写明标准流程 sync-from-md → migrate-identity 及四条约束。遗留边界（已明文披露，不属本条未修项）：切点按日期判定，2026-11-16 当天早于身份机制落地时刻的历史工单判 missing；不得为其编造身份，须先裁定切点规则（独立 change）。",
       "found_at": "2026-11-16",
-      "closed_at": null,
+      "closed_at": "2026-11-18",
       "appended_evidence": [
         "账本侧：`tasks migrate-identity` → `total=18 declared=0 partial=0 legacy=18 missing=0 invalid=0`；该次运行前后 `logs/collaboration_state.json` sha256 均为 62d92b34…f1b5d4（只读实测）。",
         "磁盘侧：`for f in TASK-*.md` 逐个 grep 身份字段 → `文件总数=26 有 session_id=0 有 model_id=0 两者皆无=26`。",
         "差值 8 未逐条追查归属，本条只登记「数量不一致且审计口径会误导」，不宣称已知是哪 8 个。",
         "2026-11-16 真实 clone 复测（HEAD 2a968a2）：`checked=0` / `total=0` / `legacy_identity=0`，同时 `ls collaboration/tasks/TASK-*.md | wc -l` → 26。三处数字不一致，18 不可从仓库复现。",
-        "2026-11-16 根因补强（untrack-monitoring-snapshots 期间实测）：`logs/` 是**每个工作树各一份**的本机状态，不随 worktree 共享。主工作区 `logs/collaboration_state.json` 为 34,644 B / tasks 18 条 / sha256 62d92b34…（mtime 2026-10-26）；同基线新建的 wt-g11 为 3,301 B / tasks 2 条 / sha256 0472a163…（mtime 2026-11-16）；而磁盘 26 个 `TASK-*.md` 与两侧账本的交集均为 0。故「0 / 26 / 18」三数不一致的根因不是「审计漏读了文件」，而是**账本 per-worktree、md 才是仓库共享** —— 任何以账本为输入的审计，在非主工作区里只能看到该工作区自己注册过的任务。修法须先裁定任务事实源归属。"
+        "2026-11-16 根因补强（untrack-monitoring-snapshots 期间实测）：`logs/` 是**每个工作树各一份**的本机状态，不随 worktree 共享。主工作区 `logs/collaboration_state.json` 为 34,644 B / tasks 18 条 / sha256 62d92b34…（mtime 2026-10-26）；同基线新建的 wt-g11 为 3,301 B / tasks 2 条 / sha256 0472a163…（mtime 2026-11-16）；而磁盘 26 个 `TASK-*.md` 与两侧账本的交集均为 0。故「0 / 26 / 18」三数不一致的根因不是「审计漏读了文件」，而是**账本 per-worktree、md 才是仓库共享** —— 任何以账本为输入的审计，在非主工作区里只能看到该工作区自己注册过的任务。修法须先裁定任务事实源归属。",
+        "2026-11-18 根因第二层：`scripts/verify_task_file_contracts.py` 两处登记调用（register_task / update_task_contract）漏传 session_id/model_id，而两个函数都支持且内部真会写入账本（state_manager.py:1083-1084/1427-1428，写入在 1139-1140/1496-1503）。漏在调用点，故把 md 全量登记进账本仍会得到全 legacy。",
+        "第三层：该脚本 docstring 首段已记载「validate-contract 读运行时状态库、不读 md」，给出的解法是临时登记再校验，但它不检查身份——身份只在账本侧被查，md 侧校验器完全没覆盖。",
+        "实现期抓到两个真 bug：① applied 字典键用 created/updated 而 action 值是 create/update，第二条同步即 KeyError，造成部分写入；② register_task 不接受 created_at，同步时用当前时间，把 2026-10-24 的历史工单误判成切点后 missing。两处均已修并加守护用例。",
+        "同步实测（wt-g11，28 个 md）：`tasks sync-from-md` → source=28 created=26 updated=0 unchanged=2；随后 `tasks migrate-identity` → total=29 declared=3 legacy=25 missing=1 invalid=0，input_source=「账本源自 md 同步（2026-11-18T07:58:01，28 条）」。total 29 > synced_count 28 的差值来自 1 条无对应 md 的本机条目，同步不删除它，差值在输出中可见。",
+        "missing=1 的成因已定位：TASK-CLOSE-GOV-GAPS-001，created_at=2026-11-16T04:30:00，正好等于切点日期；按现有「按日期比较」规则判 missing 是正确的，但它早于身份机制当天稍晚落地的时刻，属切点粒度边界。未改切点规则（独立 change），已在 PROTOCOL §7.6 第 4 条明文披露，并禁止为其编造身份。",
+        "幂等与单向验证：连续同步两次 `tasks` 内容 sha256 均为 095bbb5478ffac2a；md 集合 sha256 均为 16040211017f448c（未被回写）；重复同步 created=0 updated=0 unchanged=28。账本文件整体 sha256 会变，因 synced_at 元数据刷新——这是审计信息，不牺牲它换字节幂等。"
       ]
     },
     {

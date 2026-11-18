@@ -1228,6 +1228,7 @@ def cmd_tasks(args):
         apply_changes = bool(getattr(args, "apply", False))
         report = state.audit_task_identity(scope=scope, apply=apply_changes)
         counts = report["counts"]
+        source = report.get("input_source") or {}
         print(
             "\n身份迁移审计: "
             f"scope={report['scope']} apply={report['apply']} cutoff={report['cutoff']} total={report['total']} "
@@ -1235,6 +1236,7 @@ def cmd_tasks(args):
             f"legacy={counts.get('legacy', 0)} missing={counts.get('missing', 0)} "
             f"invalid={counts.get('invalid', 0)}"
         )
+        print(f"  输入来源: {source.get('text', '未知')}")
         if report["route_fillable"]:
             print("  路由键可按注册表补全:")
             for item in report["route_fillable"]:
@@ -1249,6 +1251,27 @@ def cmd_tasks(args):
             print("  提示: missing 表示切点之后创建却未声明身份，需用 tasks update --session-id --model-id 补齐")
         if counts.get("legacy", 0):
             print("  提示: legacy 是历史欠账，本命令不为其编造身份值")
+
+    elif cmd == "sync-from-md":
+        workspace = Path(os.path.abspath(args.workspace or os.getcwd()))
+        tasks_dir = str(getattr(args, "tasks_dir", None) or (workspace / "collaboration" / "tasks"))
+        dry_run = bool(getattr(args, "dry_run", False))
+        report = state.sync_tasks_from_md(tasks_dir, dry_run=dry_run)
+        if report.get("error"):
+            print(f"md 同步失败: {report['error']}")
+            return 1
+        print(
+            f"\nmd 工单同步: {'预演' if dry_run else '已写入'} "
+            f"source={report['source_files']} created={report['created']} "
+            f"updated={report['updated']} unchanged={report['unchanged']}"
+        )
+        for item in report["items"]:
+            if item["action"] != "unchanged":
+                print(f"  {item['action']}: {item['task_id']}")
+        if dry_run:
+            print("  预演未写盘（去掉 --dry-run 才写入）")
+        else:
+            print("  方向单向：md → 账本；不回写 md，不推导未声明身份")
 
     elif cmd == "migrate-contract":
         scope = getattr(args, "scope", None) or "all"
@@ -5104,6 +5127,7 @@ def main():
             "audit-result-consistency",
             "migrate-contract",
             "migrate-identity",
+            "sync-from-md",
         ],
         help="子命令",
     )
@@ -5128,6 +5152,7 @@ def main():
     )
     tasks_parser.set_defaults(status_provided=False)
     tasks_parser.add_argument("--task-id", help="任务ID")
+    tasks_parser.add_argument("--tasks-dir", help="sync-from-md 读取 md 工单的目录")
     tasks_parser.add_argument("--ai", choices=["claude_code", "copilot", "codearts_agent", "codex"], help="AI 类型")
     tasks_parser.add_argument("--description", help="任务描述")
     tasks_parser.add_argument("--files", nargs="*", help="涉及文件")
