@@ -88,5 +88,21 @@ Change 'retire-frozen-ab-platforms' is valid
 ### E8 · 收口
 
 ```
-（提交、PR、合入登记与归档完成后写入本节）
+提交: dcb304c1f888bde380adf223e43abd1405de2af0（14 文件，pathspec 精确）
+PR:   #79 https://github.com/17Mojo/ai-collab-base/pull/79  (MERGED 03:44:43Z)
+合入: 237589ddb9974d8d4f0361cd2d3db466b84c04e4（40 位完整 sha）
+治理登记: change-id=retire-frozen-ab-platforms, kind=commit, declared_by=claude_code
+归档: 2026-11-18-retire-frozen-ab-platforms
+openspec validate --archived --strict: 11 passed / 0 failed
+
+CI（PR #79）:
+  chrome-extension-tests pass (10m20s), extension-static-checks pass,
+  lint pass, pack-validation pass, performance-tests pass, pip-audit pass,
+  secrets-scan pass, studio-api-integration pass, dependency-hygiene pass
+  Bandit fail / python-tests 3.10+3.11+3.12 fail —— 既有红灯：
+    Bandit 3 条全在 ai_collab/governance.py (B404/B607/B603)，本 PR 零 Python 改动；
+    mypy "3 errors in 1 file" 与历史计数一致；非本 PR 引入。
+preflight: 六项全 PASS（含新增第六项工作树分支冲突：8 个工作树无重复分支）
 ```
+
+结论报告：`collaboration/results/RESULT-N25-AB-2026-11-18.md`。
