@@ -30,7 +30,7 @@
 
 ## Phase 4 · 收口
 
-- [ ] 4.1 `known_gaps.json` N29 → closed，附四层证据（待 N29 台账条目随 PR #77 进入本分支后填）
+- [x] 4.1 `known_gaps.json` N29 → closed，附四层证据（E7）
 - [ ] 4.2 提交带 pathspec、PR、合入登记、归档、`validate --archived --strict`
 
 ## 实测证据
@@ -107,3 +107,13 @@ kimi 使用 /tmp profile 副本规避本机 safe-delete 阈值，未绕过守卫
 ```
 
 结论报告：`collaboration/results/RESULT-N29-QIANWEN-SEMANTIC-CONTROL-2026-11-18.md`。
+
+### E7 · 台账关单
+
+```
+$ python3 -c "import json; from collections import Counter; d=json.load(open('known_gaps.json')); print(len(d['gaps']), Counter(g['status'] for g in d['gaps']))"
+29 Counter({'closed': 27, 'wontfix': 1, 'open': 1})
+
+N29: status=closed, closed_at=2026-11-18
+唯一仍 open 的条目: N25（冻结站 A/B，需用户明确授权，本 change 不触碰）
+```
