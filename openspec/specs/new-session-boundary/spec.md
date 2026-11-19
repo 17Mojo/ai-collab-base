@@ -1,7 +1,7 @@
 # new-session-boundary Specification
 
 ## Purpose
-TBD - created by archiving change fix-qianwen-visible-semantic-control. Update Purpose after archive.
+让「新建对话」入口的识别依赖可见的语义标记，而不是宽泛的文案匹配：同名容器与语义入口同时出现时要选对可见入口，语义入口不可见时才走隐藏兜底，并且可见层与兜底层共用同一判定，避免 N29 那种「入口被同名容器遮住」造成的假绿与假红。
 
 ## Requirements
 

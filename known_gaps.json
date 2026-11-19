@@ -1220,7 +1220,7 @@
     {
       "id": "N58",
       "priority": "P3",
-      "status": "open",
+      "status": "closed",
       "title": "4/6 现行 spec 的 `## Purpose` 还是 `openspec archive` 的占位符 ⇒ `openspec validate --specs --strict` 一跑就 4 红，其中包括解冻要改的那份",
       "reader": "任何要改 spec 的人（本轮解冻 change 要改的 `active-platform-registry` 就在这 4 份里）；以及任何拿「validate --strict 零错误」当交付证据的人——那句话对**单个 change** 成立，对**spec 全集**不成立。",
       "where": [
@@ -1231,8 +1231,9 @@
       ],
       "detail": "2026-11-19 实测 `openspec validate --specs --strict`：`Totals: 2 passed, 4 failed (6 items)`，通过的只有 concurrent-workspace-safety 与 governance-coverage。四条失败原因完全一样：`## Purpose` 仍是归档时自动写入的占位符（`TBD - created by archiving change xxx. Update Purpose after archive.`）。\n为什么以前没暴露：`openspec validate <change> --strict` 只验**那个 change 的 delta**，delta 里不写 Purpose；把 spec 当整体验才会命中——而 N25 / stepfun 两轮报告里写的都是「validate --strict 零错误」，语境是 change，不是 spec 全集。两类结论不能互相冒充。",
       "impact": "解冻 deepseek 必须改 `active-platform-registry` 的 Scenario（它现在写着「`ACTIVE_PLATFORM_IDS` 仍是不含这两站的 5 站白名单」）。如果改完仍留着占位 Purpose，交付时只能说「新 change 严格通过」，不能说「这个能力被规范干净地描述着」——前者是过程证据，后者才是治理状态。",
-      "fix": "未修。逐份补一两句 Purpose（说清这条能力为了什么、约束谁），然后跑 `openspec validate --specs --strict` 直到 6/6 通过。改 `active-platform-registry` 时顺手做，别单开一轮。",
-      "found_at": "2026-11-19"
+      "fix": "已修（2026-11-19）。\n① 逐份补 `## Purpose`，内容从各 spec 自己的 Requirement 归纳，不写未来时：\n  - active-platform-registry：白名单绑用户裁定而非脚本可达性；退出目标源 ≠ 删生产支持；\n    未获有效检验的命题不得写成已解决，现场判断与磁盘证据分层陈述。\n  - new-session-boundary：可见语义入口优先于宽泛文案匹配；可见层与隐藏兜底层共用同一判定。\n  - task-contract：身份必须声明且与路由键分离；迁移与 md→账本同步显式、可审计、不推导不编造，\n    更新不得丢失已有身份字段；审计披露输入覆盖范围。\n  - tracked-artifact-hygiene：本机快照不进 git；忽略规则覆盖整类而非逐条列举；\n    untrack 不丢内容，规则完备性可一次性核验。\n② 实测：`openspec validate --specs --strict` → `Totals: 6 passed, 0 failed (6 items)`（改前 2 passed / 4 failed）。\n③ 交叉复验：`openspec validate unfreeze-deepseek --strict` 仍 `Change 'unfreeze-deepseek' is valid`\n   —— Purpose 写在主 spec，delta 不含 Purpose，两者不冲突。\n④ **与 fix 原案的偏离，如实记**：原写「改 active-platform-registry 时顺手做，别单开一轮」，\n   实际单开了一轮。理由：解冻 P1–P4 卡在用户裁定原文，而这 4 份 Purpose 的修复不需要授权；\n   继续挂在解冻后面只会让一个已登记的独立缺陷长期开放，也让「validate --specs 零错误」\n   一直没法作为交付证据。单开一轮的代价是改动半径多一点，收益是治理口径当场可复核。\n\n关闭口径：`--specs --strict` 全集 6/6，不等于任何单个 change 的 delta 自动通过——\n两类 validate 仍是两件事，本条只证明前者。",
+      "found_at": "2026-11-19",
+      "closed_at": "2026-11-19"
     },
     {
       "id": "N59",

@@ -366,9 +366,11 @@ A1 证据对账 ✅ →  B1/B2 解耦 ✅  →  A2 fixture ✅ / A3 adapter 收�
 unfrozenBy:null, reason:"frozen-by-user-redline"}`；`platform-freeze.test.mjs` 15/15 绿。
 C 段的「不在范围」已落成提案与 spec 条款（N61）。
 
-`openspec validate --specs --strict` 仍有 **4 红**，是 N58 登记的 TBD Purpose，
-其中 `active-platform-registry` 那份会被本 change 的 delta 归档写回 ⇒ 已列为 **P2.4**
-顺手修掉（验收口径：4 红 → 3 红，其余仍属 N58）。
+`openspec validate --specs --strict` 原有 **4 红**，是 N58 登记的 TBD Purpose（其中
+`active-platform-registry` 那份会被本 change 的 delta 归档写回）。**已于 P0 之后单开一轮修完并关闭
+N58**：4 份 Purpose 按各自 Requirement 归纳补齐，`--specs --strict` → **6 passed / 0 failed**，
+`unfreeze-deepseek --strict` 仍 valid。提前做的理由：这一步不需要解冻授权，而 P1–P4 卡在裁定原文；
+继续挂在解冻后面只会让一个已登记的独立缺陷长期开放。偏离原案「顺手做、别单开一轮」已写进 N58 的 fix。
 
 1. 你给裁定原文 → 建 `openspec/changes/unfreeze-deepseek/`（P0）
 2. 按 §2 清单改（含 §2.3 的锚点改写、spec 的 Purpose 与 Scenario 更新）

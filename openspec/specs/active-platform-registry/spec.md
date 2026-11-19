@@ -1,7 +1,7 @@
 # active-platform-registry Specification
 
 ## Purpose
-TBD - created by archiving change replace-qianwen-with-stepfun. Update Purpose after archive.
+把真机自动化的平台范围绑定到用户裁定，而不是脚本碰巧能访问到哪些站：活跃白名单只有一个代码事实源，平台退出目标源不等于删除生产支持；未经有效检验的命题不得写成已解决，现场判断与磁盘证据必须分层陈述，避免把一次「没跑到生效点」误记成「边界无效」。
 
 ## Requirements
 

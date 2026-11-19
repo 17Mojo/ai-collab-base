@@ -28,8 +28,8 @@ deepseek / longcat 降级为目标源外平台（N25 closed，含义是「未获
   与 deepseek 同样没有基线。
 
 当前可复核的基线：单测 **413**、适配器矩阵 **108/125**（0 failed / 17 skipped）、
-全量变异 **178/178 被杀死**、台账 **61 条**（53 closed / 7 open / 1 wontfix）、
-未解冻基线工作区全绿。
+全量变异 **178/178 被杀死**、台账 **61 条**（P0 时点：53 closed / 7 open / 1 wontfix；
+随后 N58 关闭，当前 54 closed / 6 open / 1 wontfix）、未解冻基线工作区全绿。
 
 ## What Changes
 

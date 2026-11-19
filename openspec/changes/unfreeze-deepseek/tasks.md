@@ -9,6 +9,8 @@
 - [x] 0.1 产出 proposal / spec delta / tasks，`openspec validate unfreeze-deepseek --strict` 零错误
 - [x] 0.2 把 C 段「反自动化不在范围、且非 deepseek 特有」落成提案与 spec 要求（N61）
 - [x] 0.3 记录未解冻基线：单测 413 / 矩阵 108/125 / 变异 178/178 / 台账 61 条
+- [x] 0.4 补齐 4 份 spec 的 TBD Purpose（关闭 N58），`openspec validate --specs --strict` 6/6
+      见「P0 · N58」段；这一步不需要解冻授权，故提前做掉，没挂在 P2 后面
 
 ## Phase 1 · 用户裁定原文 + N60（未执行）
 
@@ -22,9 +24,6 @@
 - [ ] 2.2 `tests/platform-freeze.test.mjs` 的 4 条断言**换样例而非删断言**
       （`:30` / `:40` / `:139` / `:155`），改后仍 0 红
 - [ ] 2.3 `mutation-check.mjs` 里绑定旧常量值的 `find` 串同步，避免「变异描述与代码脱节」
-- [ ] 2.4 归档写回主 spec 时，补掉 `active-platform-registry/spec.md` 的 TBD Purpose（N58）。
-      本 change 的 delta 本来就要改这份 spec，顺手写掉既有占位符；
-      验收：`openspec validate --specs --strict` 从 4 红降到 3 红，其余 3 条仍属 N58 待办。
 
 ## Phase 3 · 离线门禁（未执行）
 
@@ -61,4 +60,22 @@ Change 'unfreeze-deepseek' is valid
 台账：      61 gaps — 53 closed / 7 open / 1 wontfix
 守护测试：  test_declared_env_and_gaps.py 6 passed;
             test_protocol_gate_ids.py 3 passed
+```
+
+### P0 · N58（4 份 spec 的 Purpose）
+
+```
+$ openspec validate --specs --strict     # 改前
+Totals: 2 passed, 4 failed (6 items)
+$ openspec validate --specs --strict     # 改后
+✓ spec/active-platform-registry
+✓ spec/concurrent-workspace-safety
+✓ spec/governance-coverage
+✓ spec/new-session-boundary
+✓ spec/task-contract
+✓ spec/tracked-artifact-hygiene
+Totals: 6 passed, 0 failed (6 items)
+$ openspec validate unfreeze-deepseek --strict    # 交叉复验
+Change 'unfreeze-deepseek' is valid
+台账：61 条，54 closed / 6 open / 1 wontfix（N58 closed）
 ```

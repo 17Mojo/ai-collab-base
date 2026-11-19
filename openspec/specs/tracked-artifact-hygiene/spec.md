@@ -1,7 +1,7 @@
 # tracked-artifact-hygiene Specification
 
 ## Purpose
-TBD - created by archiving change untrack-monitoring-snapshots. Update Purpose after archive.
+把机器本地生成的快照与监控产物挡在 git 跟踪之外：忽略规则必须覆盖整类实例而不是逐条列举，生成器重跑不得把本机产物回流成代码库事实；已经跟踪的本机快照在 untrack 时内容不丢失，且规则完备性可被一次性核验。
 
 ## Requirements
 

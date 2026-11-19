@@ -1,7 +1,7 @@
 # task-contract Specification
 
 ## Purpose
-TBD - created by archiving change migrate-session-identity. Update Purpose after archive.
+给工单一个可审计的身份契约：每条工单必须声明身份，身份与路由键分离且可反查；身份迁移与 md → 账本同步必须显式、可审计，不得推导或编造，也不得在更新时丢失已有身份字段；审计输出要披露输入覆盖范围，让「没同步过」与「同步过但没命中」可区分。
 
 ## Requirements
 
