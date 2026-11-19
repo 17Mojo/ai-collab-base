@@ -1516,6 +1516,45 @@ const MUTATIONS = [
     expectTest: "计划只跑 AB 实验对象，不跑冻结名单里的其他站",
   },
 
+  // ── 计划工件留档：默认拒绝覆盖（B3，2026-11-19）─────────────────────
+  // 守卫的价值全在「覆盖历史证据这件事会不会被一次重跑顺带完成」。
+  {
+    name: "覆盖判据的默认结局从 refuse 改回 create（即回到无条件覆盖）",
+    why: "plan 文件名只带日期，同一天重跑就会盖掉现场记录；2026-11-19 真发生过一次（靠 git checkout 才还原）。默认必须是拒绝",
+    target: "real-machine/session-wall-ab.mjs",
+    find: '    action: "refuse",',
+    replace: '    action: "create",',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "main：目标处已有内容不同的工件时，一个文件都不写（退出码 2）",
+  },
+  {
+    name: "同内容也重写（identical 分支被废）",
+    why: "identical 的意义是不刷 mtime——否则一份旧工件会被 mtime 伪装成「刚生成的新产物」，而内容审计看不出来",
+    target: "real-machine/session-wall-ab.mjs",
+    find: "  if (existing === next) {",
+    replace: '  if (existing === "__never_equal__") {',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "main：重跑一律拒绝覆盖，唯一的出口是显式放行；放行后仍跳过同内容的文件",
+  },
+  {
+    name: "force 判据反向（不显式放行反而覆盖，放行了才拒绝）",
+    why: "出口反了比没有出口更糟：正常用法被挡、误用被放行，而错误信息看起来还算「在保护你」",
+    target: "real-machine/session-wall-ab.mjs",
+    find: "  if (force) {",
+    replace: "  if (!force) {",
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "main：重跑一律拒绝覆盖，唯一的出口是显式放行；放行后仍跳过同内容的文件",
+  },
+  {
+    name: "拒绝理由不再给放行办法（只报错不给出口）",
+    why: "只报错不给出口，下一个人遇到红只会把守卫删掉——拒绝必须自带一条能走的路",
+    target: "real-machine/session-wall-ab.mjs",
+    find: '      "确认要覆盖时加 FORCE_OVERWRITE=1，或改 OUT 写到别的路径。",',
+    replace: '      "不许覆盖。",',
+    testFile: "session-wall-ab.test.mjs",
+    expectTest: "写盘判据：不存在 ⇒ create，相同 ⇒ identical，不同 ⇒ refuse，显式放行才覆盖",
+  },
+
   // ── 虚拟列表假超时的根修（2026-11-12，见 RESULT §19.7） ───────────
   // 四轮 A/B 全部 723.x s 失败、截图却显示 AI 已答完：长会话卸载旧回答，
   // 计数不涨 ⇒ countGrew 恒 false。下面把「内容型增长信号」的每一环

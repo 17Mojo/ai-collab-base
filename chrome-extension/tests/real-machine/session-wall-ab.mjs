@@ -26,9 +26,13 @@
  * 用法（只写本地计划与变体文件，安全）：
  *   node tests/real-machine/session-wall-ab.mjs
  *   OUT=... node tests/real-machine/session-wall-ab.mjs
+ *
+ * 覆盖行为（B3 2026-11-19）：目标路径已有**内容不同**的工件时默认拒绝，
+ * 一个文件都不写，退出码 2。要覆盖必须显式 `FORCE_OVERWRITE=1`——
+ * 因为那些工件是现场记录，不是草稿。只想验证脚本能跑就用 `OUT=/tmp/...`。
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -91,16 +95,70 @@ export function derivePackVariant(pack, variant) {
 }
 
 /**
+ * 计划写盘前的**留档判据**（纯函数，B3 2026-11-19）。
+ *
+ * ## 为什么需要这道门
+ *
+ * `main()` 原来无条件 `writeFileSync(out, ...)`，而计划文件名只带**日期**。
+ * 「同一天重跑一次」就等于覆盖同名工件——而那件工件可能已经是一份
+ * 不可复现的现场记录（N25 的 4 命令计划就是这种）。
+ *
+ * 这不是假想。2026-11-19 为验证脚本能跑，我直接执行了 `--plan`，
+ * 把 `evidence/session-wall-ab-plan-2026-11-18.json` 覆盖成了「1 站 2 命令」
+ * 的版本（原文件是 2026-11-18 02:49 的现场计划，还被 `.vscode/ai-collab.local.json`
+ * 的 watchPaths 监视着），靠 `git checkout` 才还原。**能靠 git 还原是运气**：
+ * 没提交过的工件覆盖了就没了。
+ *
+ * ## 三种结局，默认是拒绝而不是覆盖
+ *
+ *   create     目标不存在 → 正常落盘
+ *   identical  与已有文件逐字节相同 → 不重写（顺便避免 mtime 漂移，
+ *              把一份旧工件伪装成「刚生成的产物」）
+ *   refuse     内容不同且没有显式放行 → 拒绝，一个文件都不写
+ *
+ * 放行办法只有一个：`FORCE_OVERWRITE=1`（或 `opts.force`）。
+ * 之所以要「显式」，是因为覆盖历史证据这件事不该由「我刚好又跑了一次」
+ * 顺带完成——它应该是一次有人负责的决定。
+ *
+ * @param {{existing?: string|null, next: string, force?: boolean}} input
+ * @returns {{action: "create"|"identical"|"refuse", reason: string}}
+ */
+export function decidePlanWrite({ existing, next, force = false }) {
+  if (existing === null || existing === undefined) {
+    return { action: "create", reason: "目标文件不存在，首次落盘" };
+  }
+  if (existing === next) {
+    return {
+      action: "identical",
+      reason: "内容与已有文件逐字节相同，不重写（避免 mtime 漂移把旧工件伪装成新产物）",
+    };
+  }
+  if (force) {
+    return { action: "create", reason: "FORCE_OVERWRITE=1 显式放行覆盖" };
+  }
+  return {
+    action: "refuse",
+    reason:
+      "目标处已有一份内容不同的工件，默认拒绝覆盖（历史证据不是草稿纸）。" +
+      "确认要覆盖时加 FORCE_OVERWRITE=1，或改 OUT 写到别的路径。",
+  };
+}
+
+/**
  * 纯本地生成两个待用变体 Pack，**不导入、不执行、不碰任何网站**。
  *
  * 自检是硬性的：pack_id 必须与出厂一致（EXECUTE_PACK 用的是固定 PACK_ID），
  * 步数必须是 8，A 必须删干净 fresh_session、B 必须原样保留，
  * 两者除 fresh_session 外逐字节一致。任何一条不满足就直接抛错，不写文件。
  *
+ * B3（2026-11-19）把「算」与「写」拆开：`deriveVariantFiles` 只算不写，
+ * 让 `main()` 能在**任何文件落盘之前**统一过 `decidePlanWrite`——
+ * 否则会出现「变体包已写、计划被拒」的半新半旧状态。
+ *
  * @param {{outDir?: string, packPath?: string, date?: string}} [opts]
- * @returns {{files: Array<{variant:string, path:string, sha256:string, bytes:number}>, checks: object}}
+ * @returns {{files: Array<{variant:string, path:string, text:string, sha256:string, bytes:number}>, checks: object}}
  */
-export function emitVariantPacks(opts = {}) {
+export function deriveVariantFiles(opts = {}) {
   const outDir = opts.outDir || EVIDENCE_DIR;
   const date = opts.date || TODAY;
   const factory = JSON.parse(readFileSync(opts.packPath || FACTORY_PACK, "utf-8"));
@@ -140,20 +198,32 @@ export function emitVariantPacks(opts = {}) {
     if (actual !== want) throw new Error(`变体自检失败：${k} = ${actual}，期望 ${want}`);
   }
 
-  mkdirSync(outDir, { recursive: true });
   const files = [];
   for (const [variant, pack] of [["no-boundary", a], ["with-boundary", b]]) {
     const path = variantPackPath(variant, outDir, date);
     const text = JSON.stringify(pack, null, 2) + "\n";
-    writeFileSync(path, text);
     files.push({
       variant,
       path,
+      text,
       sha256: createHash("sha256").update(text).digest("hex"),
       bytes: Buffer.byteLength(text),
     });
   }
   return { files, checks };
+}
+
+/**
+ * 生成并落盘两个变体 Pack。保留「算了就写」的旧语义（测试与一次性脚本用它），
+ * 跳过覆盖判据的调用方请改用 `deriveVariantFiles` 自己决定写不写。
+ * @param {{outDir?: string, packPath?: string, date?: string}} [opts]
+ * @returns {{files: Array<{variant:string, path:string, sha256:string, bytes:number}>, checks: object}}
+ */
+export function emitVariantPacks(opts = {}) {
+  const { files, checks } = deriveVariantFiles(opts);
+  mkdirSync(dirname(files[0].path), { recursive: true });
+  for (const f of files) writeFileSync(f.path, f.text);
+  return { files: files.map(({ text: _text, ...rest }) => rest), checks };
 }
 
 /**
@@ -274,22 +344,59 @@ export function buildAbPlan(opts = {}) {
 }
 
 function main() {
-  // 纯本地准备：生成两个待用变体 Pack。不是导入、不是执行、不碰网站。
-  const { files, checks } = emitVariantPacks({
+  // PLAN_OUT_DIR 只影响「写到哪」，默认仍是 evidence/。存在的意义是让
+  // 端到端测试能在临时目录里验证覆盖判据，而不去碰真实工件（B3）。
+  const outDir = process.env.PLAN_OUT_DIR || EVIDENCE_DIR;
+
+  // 纯本地准备：算出两个待用变体 Pack（此时**还没写盘**）。不是导入、不是执行、不碰网站。
+  const { files: derived, checks } = deriveVariantFiles({
+    outDir,
     packPath: process.env.PACK_PATH || FACTORY_PACK,
   });
-  for (const f of files) {
-    console.log("变体 Pack 已生成（未导入/未执行）:", f.path, "sha256=" + f.sha256.slice(0, 12) + "…");
+
+  // buildAbPlan 只需要 path / sha256，别把整段包文本塞进计划 JSON。
+  const files = derived.map(({ text: _text, ...rest }) => rest);
+  const plan = buildAbPlan({ variantFiles: files });
+  const out = process.env.OUT || `${outDir}/session-wall-ab-plan-${TODAY}.json`;
+  const planText = JSON.stringify(plan, null, 2);
+
+  // B3（2026-11-19）：**先对全部目标做覆盖判定，再决定写不写**。
+  // 逐个「检查即写」会出现「变体包已落盘、计划被拒」的半新半旧状态。
+  const force = process.env.FORCE_OVERWRITE === "1";
+  const targets = [
+    ...derived.map((f) => ({ what: `变体包 ${f.variant}`, path: f.path, text: f.text })),
+    { what: "A/B 计划", path: out, text: planText },
+  ].map((t) => ({
+    ...t,
+    ...decidePlanWrite({
+      existing: existsSync(t.path) ? readFileSync(t.path, "utf-8") : null,
+      next: t.text,
+      force,
+    }),
+  }));
+
+  const refused = targets.filter((t) => t.action === "refuse");
+  if (refused.length > 0) {
+    console.error("拒绝写入——目标处已有内容不同的工件，一个文件都没写：");
+    for (const t of refused) console.error(`  · ${t.what}: ${t.path}\n    ${t.reason}`);
+    console.error("确认要覆盖就加 FORCE_OVERWRITE=1；只想验证脚本能跑，请用 OUT=/tmp/... 指到别处。");
+    process.exitCode = 2;
+    return;
   }
 
-  const plan = buildAbPlan({ variantFiles: files });
-  const out =
-    process.env.OUT || `${EVIDENCE_DIR}/session-wall-ab-plan-${TODAY}.json`;
-  mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, JSON.stringify(plan, null, 2));
-  console.log("A/B 计划已写（**未执行、无真机回执**）:", out);
+  for (const t of targets) {
+    if (t.action === "identical") {
+      console.log(`未改写（内容相同）: ${t.what}`, t.path);
+      continue;
+    }
+    mkdirSync(dirname(t.path), { recursive: true });
+    writeFileSync(t.path, t.text);
+    console.log(`已写入: ${t.what}`, t.path);
+  }
+
+  console.log("A/B 计划（**未执行、无真机回执**）:", out);
   console.log("status:", plan.status);
-  console.log("冻结平台:", plan.frozenPlatforms.join(", "));
+  console.log("实验对象:", plan.abPlatforms.join(", "), "| 冻结样本集:", plan.frozenPlatforms.join(", "));
   console.log("变体自检:", JSON.stringify(checks));
   console.log("命令:", plan.commands.length - 1, "条 + 注释；判据:", Object.keys(plan.acceptance).length, "条");
   console.log("本脚本未启动浏览器、未导入 Pack、未发送任何消息。");

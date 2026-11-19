@@ -9,13 +9,15 @@
 
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
 import {
   buildAbPlan,
+  decidePlanWrite,
   derivePackVariant,
   emitVariantPacks,
   variantPackPath,
@@ -302,5 +304,94 @@ test("emitVariantPacks 遇到出厂 Pack 契约变化必须拒绝，不静默生
       /变体自检失败|出厂 Pack 契约变了/,
       `${name} 必须被自检拦下，否则 A/B 两轮会导入一个 EXECUTE_PACK 找不到的包`,
     );
+  }
+});
+
+// ── B3（2026-11-19）：计划工件「退役留档」的前提是它不再被覆盖 ─────────────
+// 两份 4 命令计划是 N25 的现场记录，不是草稿。原来 main() 无条件 writeFileSync，
+// 「同一天重跑一次」就覆盖同名工件——2026-11-19 我为验证脚本能跑跑了 --plan，
+// 把 2026-11-18 那份覆盖成 1 站 2 命令的版本，靠 git checkout 才还原。
+
+test("写盘判据：不存在 ⇒ create，相同 ⇒ identical，不同 ⇒ refuse，显式放行才覆盖", () => {
+  assert.equal(decidePlanWrite({ existing: null, next: "A" }).action, "create");
+  assert.equal(decidePlanWrite({ existing: "A", next: "A" }).action, "identical");
+
+  const refused = decidePlanWrite({ existing: "A", next: "B" });
+  assert.equal(refused.action, "refuse");
+  assert.match(
+    refused.reason,
+    /FORCE_OVERWRITE=1/,
+    "拒绝时必须告诉人怎么放行——只报错不给出口，下一个人只会把守卫删掉",
+  );
+
+  assert.equal(decidePlanWrite({ existing: "A", next: "B", force: true }).action, "create");
+});
+
+/** 在临时目录里跑一次 real script，返回 {status, stdout, stderr, dir, out}。 */
+function runPlanScript(dir, extraEnv = {}) {
+  const out = join(dir, "plan.json");
+  const run = spawnSync(process.execPath, [PLAN_SRC], {
+    env: { ...process.env, PLAN_OUT_DIR: dir, OUT: out, PACK_PATH, ...extraEnv },
+    encoding: "utf-8",
+  });
+  return { run, dir, out };
+}
+
+test("main：目标处已有内容不同的工件时，一个文件都不写（退出码 2）", () => {
+  // 只放一份「旧计划」，两个变体包**故意不放**：它们本该 create。
+  // 于是「包里一个都没出现」就能证明判据是「全判完再写」，
+  // 而不是「边判边写」——后者会留下「包已写、计划被拒」的半新半旧。
+  const dir = mkdtempSync(join(tmpdir(), "ab-plan-guard-"));
+  try {
+    const out = join(dir, "plan.json");
+    writeFileSync(out, '{"stale": true}');
+    const { run } = runPlanScript(dir);
+
+    assert.equal(run.status, 2, `拒绝时应退出码 2，实际 ${run.status}；stderr=${run.stderr}`);
+    assert.match(run.stderr, /拒绝写入/, "拒绝理由要打在 stderr，不能安静退出");
+    assert.equal(readFileSync(out, "utf-8"), '{"stale": true}', "被拒绝时不许动已有工件");
+
+    const packs = readdirSync(dir).filter((f) => f.startsWith("ab-pack-"));
+    assert.deepEqual(packs, [], "拒绝时必须整体放弃，不许留下「包已写、计划被拒」的半成品");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("main：重跑一律拒绝覆盖，唯一的出口是显式放行；放行后仍跳过同内容的文件", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ab-plan-force-"));
+  try {
+    const first = runPlanScript(dir);
+    assert.equal(first.run.status, 0, `干净目录应正常落盘；stderr=${first.run.stderr}`);
+    assert.ok(existsSync(first.out), "计划必须落盘");
+    const packPaths = readdirSync(dir)
+      .filter((f) => f.startsWith("ab-pack-"))
+      .map((f) => join(dir, f));
+    assert.equal(packPaths.length, 2, "两个变体包都要在");
+
+    // 关键事实：计划 JSON 里带 generatedAt，所以**同一天重跑内容也必然不同**。
+    // 于是「第二次跑」在留档语义下就该被拒——不是同内容幂等，是真覆盖。
+    const packMtimes = packPaths.map((p) => statSync(p).mtimeMs);
+    const second = runPlanScript(dir);
+    assert.equal(second.run.status, 2, "重跑会改写计划，必须拒绝而不是静默覆盖");
+    assert.match(second.run.stderr, /A\/B 计划/, "拒绝理由要点名是哪个目标被挡下");
+    assert.deepEqual(
+      packPaths.map((p) => statSync(p).mtimeMs),
+      packMtimes,
+      "拒绝时一个文件都不许动——变体包内容没变，但也不该被 rewrite",
+    );
+
+    // 显式放行后才覆盖计划；变体包内容相同 ⇒ 仍然跳过（不刷 mtime）。
+    const forced = runPlanScript(dir, { FORCE_OVERWRITE: "1" });
+    assert.equal(forced.run.status, 0, `放行后应覆盖成功；stderr=${forced.run.stderr}`);
+    assert.deepEqual(
+      packPaths.map((p) => statSync(p).mtimeMs),
+      packMtimes,
+      "内容相同的变体包不该因为「放行了覆盖」就顺手重写一遍",
+    );
+    const rewritten = JSON.parse(readFileSync(first.out, "utf-8"));
+    assert.equal(rewritten.status, "plan-only / NOT-EXECUTED", "覆盖后的内容必须是本轮计划，不是旧文件");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
