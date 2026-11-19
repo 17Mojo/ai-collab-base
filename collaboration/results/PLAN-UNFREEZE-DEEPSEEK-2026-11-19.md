@@ -346,12 +346,29 @@ Cloudflare「本网站使用安全服务防护恶意自动程序」正文与 Ray
 
 ```
 A1 证据对账 ✅ →  B1/B2 解耦 ✅  →  A2 fixture ✅ / A3 adapter 收口 ✅  →  B3 计划退役 ✅
-            →  P0 立项  →  P2 常量改动  →  P3 离线门禁  →  P4 真机验收
+            →  C 跨站空白 N61 ✅  →  P0 立项 ✅  →  （用户裁定原文）
+            →  P2 常量改动  →  P3 离线门禁  →  P4 真机验收
 ```
 
 **A1 排最前**：它不改任何 fixture 就能把假绿变红。门禁先说实话，解冻才有意义。
 
 ## 6 · 若决定解冻，最小执行顺序
+
+**P0 已落地（2026-11-19）**：`openspec/changes/unfreeze-deepseek/`
+（`proposal.md` / `tasks.md` / `specs/active-platform-registry/spec.md`），
+`openspec validate unfreeze-deepseek --strict` → `Change 'unfreeze-deepseek' is valid`（exit 0），
+`openspec validate --changes --strict` → `1 passed, 0 failed`。
+
+**立项不是授权**：提案里写明 P1–P4 一律未勾选、未执行。实测复核未授权状态仍成立——
+`ACTIVE_PLATFORM_IDS = ["stepfun","yuanbao","chatglm","yiyan","kimi"]`、
+`isPlatformActive("deepseek") === false`、
+`evaluatePlatformPolicy("deepseek", {allowFrozen:false}) = {allowed:false, active:false,
+unfrozenBy:null, reason:"frozen-by-user-redline"}`；`platform-freeze.test.mjs` 15/15 绿。
+C 段的「不在范围」已落成提案与 spec 条款（N61）。
+
+`openspec validate --specs --strict` 仍有 **4 红**，是 N58 登记的 TBD Purpose，
+其中 `active-platform-registry` 那份会被本 change 的 delta 归档写回 ⇒ 已列为 **P2.4**
+顺手修掉（验收口径：4 红 → 3 红，其余仍属 N58）。
 
 1. 你给裁定原文 → 建 `openspec/changes/unfreeze-deepseek/`（P0）
 2. 按 §2 清单改（含 §2.3 的锚点改写、spec 的 Purpose 与 Scenario 更新）
