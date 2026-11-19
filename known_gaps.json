@@ -1267,6 +1267,23 @@
       "impact": "两个方向都有风险，而且是对称的：\n① 若 N54 记对了（真没有 button 形态的发送控件），那么「声明 none」是对的；但只要没有工件，将来有人质疑就只能重新上真机，等于这份结论一直处于「不可复核」状态。\n② 若 N54 记错了（比如其实有 `<button>`，只是它没有 aria-label / data-testid，所以 `querySelectorAll(\"button\")` 那次是在**别的页面状态**下数的），那么 A2 的 `data-expect-send-button=\"none\"` 会把 adapter 永久锁在 Enter 兜底上，而矩阵会一直是绿的——声明把错误固化了，且比原来那个假 button 更难发现（假 button 至少留下了「这里有个按钮」的痕迹）。\n③ 谁要是照着 N54 那句话去写 fixture 或补选择器，就把一份没人复核过的记忆当成真机事实用了。",
       "fix": "**未修，且 A2 刻意绕开了它**：A2 只删掉假 button + 声明 `none`，**不重建**发送区形状（`mock-dom-deepseek.html` 的 Send 区注释写明了原因）。凭一句话重建 fixture 只是把猜测从 adapter 挪进 fixture，PASS 会再次失去意义。\n\n补采办法（属于冻结站操作，需用户明确放行）：\n① 对 `https://chat.deepseek.com/` 跑一次只读探针（不发消息、不输入、不点发送），把输入区容器的 `outerHTML` 连同祖先 3 层落到 `evidence/deepseek-composer-2026-11-XX.json`，同时记 `document.querySelectorAll(\"button\").length`、输入区右侧 80px 内元素的 tag/class/aria/svg 概况；\n② 拿工件回填 N54 的 detail（把「记忆」换成「引用」）；\n③ 若确无按钮形态：把工件挂到本条，作为「没有」的**正面证据**，A2 的声明就从「待证主张」升级为「已证事实」；\n④ 若确有按钮：撤销 A2 的 `none` 声明，按工件重建 fixture，并把 A3（清空 4 条 `button[...]` 死选择器）改成「换成基于工件的选择器」。\n\n在此之前，任何引用 N54 形状描述的地方都必须标注「无工件」。",
       "found_at": "2026-11-19"
+    },
+    {
+      "id": "N61",
+      "priority": "P2",
+      "status": "open",
+      "title": "反自动化维度没有采集手段，5 个活跃站零基线：L1 的 6 条 bot_check 阳性只在 chatgpt/claude，不能外推到活跃站",
+      "reader": "解冻 change 的作者与交付审阅者；任何准备写「N 个源都验过了 / 反自动化无异常」的人；以及将来第一次看到风控信号、想定义采集指标的人。",
+      "where": [
+        "collaboration/results/PLAN-UNFREEZE-DEEPSEEK-2026-11-19.md §5 C（原写「所有回执里一个阳性样本都没有」，2026-11-19 复核时更正，见本条 detail）",
+        "collaboration/results/real-machine-runs/evidence/L1-2026-10-25-zh-CN.json / L1-2026-10-26-zh-CN.json / L1-2026-11-04-en-US.json：platforms[0]=chatgpt、platforms[1]=claude 的 outcome=bot_check；两份 zh-CN 还带 Cloudflare「本网站使用安全服务防护恶意自动程序」正文与 Ray ID",
+        "chrome-extension/tests/real-machine/l2-platform-auto.mjs（全文无 captcha / waf / 429 / 风控 字段，L2 回执不具备采集能力）",
+        "known_gaps.json N30（qianwen 因有防范非人类操作机制被移出白名单——那是平台侧事实，不是我方采集能力）"
+      ],
+      "detail": "2026-11-19 复核 PLAN §5 C 的断言「目前所有回执里一个阳性样本都没有」，发现它写反了一半，必须先更正再登记：\n\n① **不是零阳性**。L1 可达性探测的三份快照（10-25 zh-CN / 10-26 zh-CN / 11-04 en-US）里，chatgpt 与 claude 两站各一条 `outcome=bot_check`，合计 6 条；两份 zh-CN 还留下了 Cloudflare 安全验证页正文与 Ray ID——这是真实的反自动化阳性样本，不是推断。\n② **但阳性只在非活跃站**。这 6 条全部属于 chatgpt / claude，二者都不在活跃 5 站白名单（stepfun / yuanbao / chatglm / yiyan / kimi）。所以「5 个活跃站同样没有基线」这句仍然成立。\n③ **探针里的字段别读反**。`captchaBypass: false` 是「没有使用绕过手段」的**行为声明**，不是「没有遇到验证码」的观测；`captchaOrSliderPresent: false` 只在 `ab5-final-verdict-2026-11-14.json` 出现过一次，是单次观测，不构成群体基线。L2 生成器 `l2-platform-auto.mjs` 全文没有 captcha / waf / 429 / 风控 字段——**没有采集**，不等于**没有发生**。\n\n因此真正的缺口要重新表述：**我方没有反自动化信号采集手段，且 5 个活跃站没有基线**；而不是「历史上从未出现过阳性」。后者是假的，而且假得很危险——它会让人把「我们没采到」写成「平台上没有」。",
+      "impact": "① 把「没采集」写成「没发生」是交付里最危险的一种安心，尤其在解冻报告这种会被后续引用为基线的文档里；② L1 的 6 条阳性若被误当成 deepseek 特有，会导出错误归因——它们属于 chatgpt/claude 两个非活跃站；③ N30 已经证明平台侧防范机制真实存在、且足以改变白名单决策，没有采集手段意味着这类风险只能靠人眼偶然发现；④ 一旦 A/B 因风控失败，回执里没有字段可判，会再次落到「超时 / 撞墙」的模糊归因——N55（loading 通配假超时）与 N56（longcat 残留失败未归因）已经各吃过一次。",
+      "fix": "**未修，接受为已知空白**；是否建采集器仍待用户裁定。刻意不做的理由：目前活跃站侧没有阳性对照，此时写出来的采集器只能输出「0 命中」，那正是把「未采集」伪装成「没发生」的机器。\n\n解冻 change 的「不在范围」必须写清两点：① 反自动化维度不在本次验证内；② 它**不是 deepseek 特有**——5 个活跃站同样没有基线，L1 那 6 条阳性只说明两个非活跃站被平台侧拦过。\n\n真要做，按依赖顺序：先等第一次真实风控信号（验证码 / 滑块 / 429 / 单步耗时 p95 漂移）出现 → 把那次信号作为阳性样本落盘 → 再按样本定义选择器与判据 → 拿它当阳性对照验证采集器不是恒假 → 最后才谈覆盖 5 个活跃站。\n\n本条 open **不阻断解冻**；它的作用是让交付说明里不许出现「反自动化已验过」这句话。",
+      "found_at": "2026-11-19"
     }
   ]
 }
