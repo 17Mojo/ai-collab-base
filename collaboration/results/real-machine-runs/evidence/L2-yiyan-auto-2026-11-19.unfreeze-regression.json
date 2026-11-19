@@ -1,0 +1,190 @@
+{
+  "generatedAt": "2026-11-19T08:16:17.033Z",
+  "platform": "yiyan",
+  "platformUrl": "https://yiyan.baidu.com/",
+  "packId": "xiaohongshu-knowledge-creator",
+  "packPath": "/Users/raymondna/Documents/AI-collab/ai-collab-base/packs/examples/xiaohongshu_knowledge_creator.json",
+  "packVariant": "as-is",
+  "platformPolicy": {
+    "allowed": true,
+    "active": true,
+    "unfrozenBy": null,
+    "reason": "active"
+  },
+  "input": {
+    "topic": "AI 智能体（Agent）到底是什么",
+    "target_audience_level": "普通上班族"
+  },
+  "tabIdUsed": 1785663543,
+  "delivery": "precise",
+  "exec": {
+    "success": false,
+    "error": "Step step_8_output failed: 无法把提示词发到标签页 1785663543：Could not establish connection. Receiving end does not exist.。请确认该页面是受支持的 AI 站点（千问/文心/元宝/Kimi/…），并在扩展装好之后刷新一次页面。",
+    "result": {
+      "packId": "xiaohongshu-knowledge-creator",
+      "input": {
+        "topic": "AI 智能体（Agent）到底是什么",
+        "target_audience_level": "普通上班族"
+      },
+      "runtime_overrides": {},
+      "targetTabId": 1785663543,
+      "startTime": 1795076100849,
+      "status": "failed",
+      "steps": [
+        {
+          "id": "step_1_topic",
+          "name": "选题确认",
+          "type": "local",
+          "startTime": 1795076100849,
+          "success": true,
+          "output": {
+            "topic": "AI 智能体（Agent）到底是什么",
+            "target_audience_level": "普通上班族"
+          },
+          "error": null,
+          "delivery": null,
+          "endTime": 1795076100849,
+          "duration": 0
+        },
+        {
+          "id": "step_2_hook",
+          "name": "结论提炼",
+          "type": "analysis",
+          "startTime": 1795076100849,
+          "success": true,
+          "output": "它不是一个会聊天的对话框，而是能自己定步骤、找工具、跑完一整件事的AI执行者。",
+          "error": null,
+          "delivery": "precise",
+          "endTime": 1795076111127,
+          "duration": 10278
+        },
+        {
+          "id": "step_3_explain",
+          "name": "人话翻译",
+          "type": "generation",
+          "startTime": 1795076111127,
+          "success": true,
+          "output": "它不是一个会聊天的对话框，而是能自己定步骤、找工具、跑完一整件事的AI执行者。\n你可以把它当成公司里新来的全能助理，你不用一步步教他先做什么后做什么，只说一句“帮我把下周部门团建的方案搞定”，它就会自己先查大家的空闲时间，再筛出3个符合预算的地点，连交通和吃饭的备选都能提前列好。\n普通聊天AI更像个只能接指令的传声筒，你不问下一句，它就卡在原地不动，而这个助理拿到目标就会自己往前推进，遇到缺的信息还会主动补全，不用你反复追进度。\n平时你要查个周末短途游的攻略，得自己开地图、翻点评、算油费过路费，现在把需求丢给它，它能直接把路线、沿途打卡点、甚至附近不踩雷的饭馆清单一起整理好，你拿到手就能直接用。",
+          "error": null,
+          "delivery": "precise",
+          "endTime": 1795076124290,
+          "duration": 13163
+        },
+        {
+          "id": "step_4_scene",
+          "name": "场景化表达",
+          "type": "generation",
+          "startTime": 1795076124290,
+          "success": true,
+          "output": "开社区水果店的张姐，每天闭店后花10分钟核对当日临期水果库存、生成次日的社群优惠文案、同步给供货商补货清单，用它省去了之前要在3个软件里来回切换抄写的麻烦。\n做中小学托管班的李老师，每周日晚上花5分钟整理本周所有孩子的课堂表现、对应生成每个孩子的周反馈话术、按家长微信分组定时发送，用它不用再熬夜挨个敲几十份重复度很高的私信。",
+          "error": null,
+          "delivery": "precise",
+          "endTime": 1795076136452,
+          "duration": 12162
+        },
+        {
+          "id": "step_5_boundary",
+          "name": "边界标注",
+          "type": "generation",
+          "startTime": 1795076136452,
+          "success": true,
+          "output": "它更适合平时手头重复琐事多、需要同时推进好几件细碎任务，不想把精力耗在查资料、整理信息这类机械环节的人；如果你习惯每一步都亲手核对所有细节、完全不接受中间环节有自主调整空间，或者只需要简单聊几句、搜个现成答案，那它反而会显得多余，而且目前它也没法完全代替你做重大决策，遇到关键判断还是得你自己拿主意。",
+          "error": null,
+          "delivery": "precise",
+          "endTime": 1795076147615,
+          "duration": 11163
+        },
+        {
+          "id": "step_6_takeaway",
+          "name": "可带走内容",
+          "type": "generation",
+          "startTime": 1795076147615,
+          "success": true,
+          "output": "你现在就可以对着自己手头一件要花3步以上做完的琐事试：直接把“目标+你的限制条件”一起说出来，不用拆分步骤给它，看它能不能自己把完整结果交回来，能做到的就是真正的AI智能体，而不是普通聊天AI。",
+          "error": null,
+          "delivery": "precise",
+          "endTime": 1795076158777,
+          "duration": 11162
+        },
+        {
+          "id": "step_7_visual",
+          "name": "图片内容生成",
+          "type": "generation",
+          "startTime": 1795076158777,
+          "success": true,
+          "output": "图1（封面）\nAI智能体 根本不是聊天框\n它是能自己跑完一整件事的AI执行者\n图2\n不用你一步步拆解指令\n你说一句“搞定团建方案”\n它会自己查时间、筛地点、列交通餐饮备选\n图3\n普通聊天AI=传声筒\n你不问下一句 它就卡在原地不动\nAI智能体拿到目标会自己推进补全信息\n图4\n查短途游攻略不用来回切APP\n丢给它一个需求\n路线、打卡点、避坑饭馆清单直接全套出\n图5\n1个马上能试的判断方法\n找一件要3步以上的琐事\n只说「目标+你的限制条件」\n不拆分步骤 看它能不能直接交完整结果\n图6\n记住这3点就够了\n不是聊天框/能自己推进/不用拆步骤\n你最近用它省了哪件麻烦事？评论区说下",
+          "error": null,
+          "delivery": "precise",
+          "endTime": 1795076171938,
+          "duration": 13161
+        },
+        {
+          "id": "step_8_output",
+          "name": "整合输出",
+          "type": "fusion",
+          "startTime": 1795076171938,
+          "success": false,
+          "output": null,
+          "error": "无法把提示词发到标签页 1785663543：Could not establish connection. Receiving end does not exist.。请确认该页面是受支持的 AI 站点（千问/文心/元宝/Kimi/…），并在扩展装好之后刷新一次页面。",
+          "delivery": "precise",
+          "endTime": 1795076177030,
+          "duration": 5092
+        }
+      ],
+      "output": {
+        "topic_info": {
+          "topic": "AI 智能体（Agent）到底是什么",
+          "target_audience_level": "普通上班族"
+        },
+        "hook_statement": "它不是一个会聊天的对话框，而是能自己定步骤、找工具、跑完一整件事的AI执行者。",
+        "explanation_text": "它不是一个会聊天的对话框，而是能自己定步骤、找工具、跑完一整件事的AI执行者。\n你可以把它当成公司里新来的全能助理，你不用一步步教他先做什么后做什么，只说一句“帮我把下周部门团建的方案搞定”，它就会自己先查大家的空闲时间，再筛出3个符合预算的地点，连交通和吃饭的备选都能提前列好。\n普通聊天AI更像个只能接指令的传声筒，你不问下一句，它就卡在原地不动，而这个助理拿到目标就会自己往前推进，遇到缺的信息还会主动补全，不用你反复追进度。\n平时你要查个周末短途游的攻略，得自己开地图、翻点评、算油费过路费，现在把需求丢给它，它能直接把路线、沿途打卡点、甚至附近不踩雷的饭馆清单一起整理好，你拿到手就能直接用。",
+        "use_cases": "开社区水果店的张姐，每天闭店后花10分钟核对当日临期水果库存、生成次日的社群优惠文案、同步给供货商补货清单，用它省去了之前要在3个软件里来回切换抄写的麻烦。\n做中小学托管班的李老师，每周日晚上花5分钟整理本周所有孩子的课堂表现、对应生成每个孩子的周反馈话术、按家长微信分组定时发送，用它不用再熬夜挨个敲几十份重复度很高的私信。",
+        "boundary_notes": "它更适合平时手头重复琐事多、需要同时推进好几件细碎任务，不想把精力耗在查资料、整理信息这类机械环节的人；如果你习惯每一步都亲手核对所有细节、完全不接受中间环节有自主调整空间，或者只需要简单聊几句、搜个现成答案，那它反而会显得多余，而且目前它也没法完全代替你做重大决策，遇到关键判断还是得你自己拿主意。",
+        "takeaway_content": "你现在就可以对着自己手头一件要花3步以上做完的琐事试：直接把“目标+你的限制条件”一起说出来，不用拆分步骤给它，看它能不能自己把完整结果交回来，能做到的就是真正的AI智能体，而不是普通聊天AI。",
+        "visual_content": "图1（封面）\nAI智能体 根本不是聊天框\n它是能自己跑完一整件事的AI执行者\n图2\n不用你一步步拆解指令\n你说一句“搞定团建方案”\n它会自己查时间、筛地点、列交通餐饮备选\n图3\n普通聊天AI=传声筒\n你不问下一句 它就卡在原地不动\nAI智能体拿到目标会自己推进补全信息\n图4\n查短途游攻略不用来回切APP\n丢给它一个需求\n路线、打卡点、避坑饭馆清单直接全套出\n图5\n1个马上能试的判断方法\n找一件要3步以上的琐事\n只说「目标+你的限制条件」\n不拆分步骤 看它能不能直接交完整结果\n图6\n记住这3点就够了\n不是聊天框/能自己推进/不用拆步骤\n你最近用它省了哪件麻烦事？评论区说下"
+      },
+      "errors": [
+        {
+          "message": "Step step_8_output failed: 无法把提示词发到标签页 1785663543：Could not establish connection. Receiving end does not exist.。请确认该页面是受支持的 AI 站点（千问/文心/元宝/Kimi/…），并在扩展装好之后刷新一次页面。",
+          "timestamp": 1795076177030
+        }
+      ],
+      "extractedData": {},
+      "sessionResets": [
+        {
+          "stepId": "step_8_output",
+          "mode": "prefer",
+          "available": true,
+          "strategy": "adapter-selector",
+          "messageCountBefore": 6,
+          "messageCountAfter": 0,
+          "durationMs": 318
+        },
+        {
+          "stepId": "step_8_output",
+          "mode": "prefer",
+          "available": false,
+          "strategy": "failed",
+          "reason": "Could not establish connection. Receiving end does not exist."
+        },
+        {
+          "stepId": "step_8_output",
+          "mode": "prefer",
+          "available": false,
+          "strategy": "failed",
+          "reason": "Could not establish connection. Receiving end does not exist."
+        },
+        {
+          "stepId": "step_8_output",
+          "mode": "prefer",
+          "available": false,
+          "strategy": "failed",
+          "reason": "Could not establish connection. Receiving end does not exist."
+        }
+      ],
+      "stepIndex": {},
+      "endTime": 1795076177030,
+      "duration": 76181
+    }
+  }
+}

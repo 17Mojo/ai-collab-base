@@ -1202,17 +1202,17 @@ const MUTATIONS = [
 
   // ── 平台冻结守卫（用户 2026-11-11 红线的代码级落地）──────────
   {
-    name: "把 deepseek 悄悄加进活跃白名单",
-    why: "白名单被放宽就等于替用户解冻；冻结平台会被真机驱动照跑，红线形同虚设",
+    name: "把 longcat 悄悄加进活跃白名单（未授权放宽）",
+    why: "白名单被放宽就等于替用户解冻；冻结平台会被真机驱动照跑，红线形同虚设。2026-11-19 deepseek 已获授权解冻，这条锚改用仍然冻结的 longcat",
     target: "real-machine/platform-freeze.mjs",
     find: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "stepfun",',
-    replace: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "deepseek",\n  "stepfun",',
+    replace: 'export const ACTIVE_PLATFORM_IDS = Object.freeze([\n  "longcat",\n  "stepfun",',
     testFile: "platform-freeze.test.mjs",
-    expectTest: "白名单恰好是 5 个活跃站",
+    expectTest: "白名单恰好是 6 个活跃站",
   },
   {
     name: "冻结平台不再被硬闸门拒绝（默认放行）",
-    why: "assertPlatformAllowed 一旦恒放行，PLATFORM=deepseek 就会真实发消息；这是最直接的越线",
+    why: "assertPlatformAllowed 一旦恒放行，PLATFORM=longcat 就会真实发消息；deepseek 已于 11-19 获授权，这条锚守的是仍冻结的站",
     target: "real-machine/platform-freeze.mjs",
     find: "  if (!policy.allowed) {\n    throw new Error(",
     replace: "  if (false) {\n    throw new Error(",
@@ -1508,12 +1508,12 @@ const MUTATIONS = [
   },
   {
     name: "session-wall-ab 改回读冻结名单当实验对象",
-    why: "这正是 B1 要拆掉的耦合：读冻结名单 ⇒ 解冻一个站就悄悄把实验设计改掉，计划少两轮命令而没人说得清为什么",
+    why: "B1 要拆掉的耦合。2026-11-19 解冻 deepseek 后两个常量都是 ['longcat']，这条变异在值层面成了等价变换——全量变异实测存活，所以必须靠结构性断言验来源，不能靠值级断言",
     target: "real-machine/session-wall-ab.mjs",
     find: "  const platforms = [...AB_PLATFORMS];",
     replace: "  const platforms = [...FROZEN_AB_PLATFORMS];",
     testFile: "session-wall-ab.test.mjs",
-    expectTest: "计划只跑 AB 实验对象，不跑冻结名单里的其他站",
+    expectTest: "实验对象的来源只能是 AB_PLATFORMS，不许改读冻结名单",
   },
 
   // ── 计划工件留档：默认拒绝覆盖（B3，2026-11-19）─────────────────────

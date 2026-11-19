@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-11-19T07:33:15.351Z",
+  "mode": "precheck",
+  "candidates": [
+    "deepseek"
+  ],
+  "platformPolicy": [
+    {
+      "id": "deepseek",
+      "allowed": true,
+      "active": true,
+      "unfrozenBy": null,
+      "reason": "active"
+    }
+  ],
+  "results": [
+    {
+      "platform": "deepseek",
+      "url": "https://chat.deepseek.com/",
+      "finalUrl": "https://chat.deepseek.com/",
+      "title": "DeepSeek - 探索未至之境",
+      "composerVisible": true,
+      "composerCount": 1,
+      "looksLikeLogin": false,
+      "dom": {
+        "counts": {
+          "[class*=\"message\"]": 0,
+          "[class*=\"response\"]": 0,
+          ".message-item": 0,
+          "[class*=\"chat\"]": 0,
+          "[data-conv-speaker]": 0,
+          "[data-message-id]": 0,
+          "[role=\"article\"]": 0
+        },
+        "cands": [
+          {
+            "cls": "_3098d02",
+            "len": 49,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 86,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "c08e6e93",
+            "len": 41,
+            "attrs": [
+              "class=c08e6e93"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 51,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 48,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "c08e6e93",
+            "len": 41,
+            "attrs": [
+              "class=c08e6e93"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 58,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          },
+          {
+            "cls": "_3098d02",
+            "len": 48,
+            "attrs": [
+              "class=_3098d02"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

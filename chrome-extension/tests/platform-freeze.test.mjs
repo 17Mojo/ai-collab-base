@@ -4,6 +4,9 @@
  * 用户 2026-11-11 红线：仅保留 5 个活跃站，其他冻结不去碰。
  * 2026-11-18 用户改判：千问有反自动化机制，活跃位由 stepfun 接替；
  * qianwen 不再出现在活跃白名单里（生产 adapter 仍保留）。
+ * 2026-11-19 用户再次改判：授权解冻 deepseek（P1→P4，含真机验收）⇒ 活跃 6 站，
+ * 冻结样本集只剩 longcat。原先用 deepseek 当「冻结站样例」的断言全部换成 longcat，
+ * **不是删掉**；另补一条正向断言钉住「deepseek 真活跃且 unfrozenBy=null」。
  * 上一轮的教训是「只读探针」——红线写在注释里，
  * 谁加一行 click 也不会红。这里把红线变成会红的测试。
  */
@@ -27,17 +30,22 @@ const L2_DRIVER = fileURLToPath(
   new URL("./real-machine/l2-platform-auto.mjs", import.meta.url),
 );
 
-test("白名单恰好是 5 个活跃站，不含 deepseek / longcat / qianwen", () => {
+test("白名单恰好是 6 个活跃站：deepseek 已解冻，longcat / qianwen 仍不碰", () => {
   assert.deepEqual(
     [...ACTIVE_PLATFORM_IDS].sort(),
-    ["chatglm", "kimi", "stepfun", "yiyan", "yuanbao"],
+    ["chatglm", "deepseek", "kimi", "stepfun", "yiyan", "yuanbao"],
   );
   for (const id of [...FROZEN_AB_PLATFORMS, "qianwen"]) {
     assert.equal(isPlatformActive(id), false, `${id} 必须处于冻结/不碰状态`);
   }
+  assert.equal(
+    isPlatformActive("deepseek"),
+    true,
+    "2026-11-19 授权解冻后 deepseek 必须真的活跃——不是 ALLOW_FROZEN 假放行",
+  );
 });
 
-test("冻结平台默认被硬闸门拒绝（deepseek / longcat 都拦）", () => {
+test("当前冻结平台默认被硬闸门拒绝（deepseek 已解冻，longcat 仍拦）", () => {
   for (const id of FROZEN_AB_PLATFORMS) {
     assert.throws(
       () => assertPlatformAllowed(id),
@@ -52,7 +60,7 @@ test("不认识的平台 id 也一律视为冻结，不搞默认放行", () => {
   assert.throws(() => assertPlatformAllowed("some-new-site"), /已冻结/);
 });
 
-test("活跃 5 站默认放行，且不留解冻痕迹", () => {
+test("活跃 6 站默认放行，且不留解冻痕迹", () => {
   for (const id of ACTIVE_PLATFORM_IDS) {
     const p = assertPlatformAllowed(id);
     assert.equal(p.allowed, true);
@@ -61,12 +69,22 @@ test("活跃 5 站默认放行，且不留解冻痕迹", () => {
   }
 });
 
-test("只有 ALLOW_FROZEN=1 才放行冻结平台，并在回执里留痕", () => {
-  assert.equal(evaluatePlatformPolicy("deepseek").allowed, false);
-  const p = evaluatePlatformPolicy("deepseek", { allowFrozen: true });
+test("只有 ALLOW_FROZEN=1 才放行仍冻结的平台，并在回执里留痕", () => {
+  // 样例换成 longcat：deepseek 已于 2026-11-19 被授权解冻，不再是冻结站。
+  // 改样例而不是删断言——这道门守的是「例外开关必须留痕」，与具体站点无关。
+  assert.equal(evaluatePlatformPolicy("longcat").allowed, false);
+  const p = evaluatePlatformPolicy("longcat", { allowFrozen: true });
   assert.equal(p.allowed, true);
   assert.equal(p.active, false, "解冻不改变它「本质是冻结平台」这一事实");
   assert.equal(p.unfrozenBy, "ALLOW_FROZEN=1", "谁解冻的必须可复核");
+});
+
+test("解冻后的 deepseek 默认放行且不留例外痕迹（不是 ALLOW_FROZEN 假放行）", () => {
+  const p = assertPlatformAllowed("deepseek");
+  assert.equal(p.allowed, true);
+  assert.equal(p.active, true, "它现在是真活跃站，active 必须是 true");
+  assert.equal(p.unfrozenBy, null, "不许带 ALLOW_FROZEN 留痕——那是冻结站才有的标记");
+  assert.equal(p.reason, "active", "回执理由必须是 active，不是例外开关");
 });
 
 test("候选集里混进一个冻结站，整个预检都拒绝，不许跳过继续", () => {
@@ -136,7 +154,7 @@ test("N35 回归：预检 + 真的解冻过，仍不许打（这条才守住 pre
   // 此时**只有 precheck 守卫能拦住**。预检只打开 CANDIDATES，从不打开 PLATFORM，
   // 所以对 PLATFORM 打「已放行」依旧是无依据的假日志。
   // 若有人删掉 `if (opts.precheck === true) return false;`，这条必须变红。
-  const unfrozen = evaluatePlatformPolicy("deepseek", { allowFrozen: true });
+  const unfrozen = evaluatePlatformPolicy("longcat", { allowFrozen: true });
   assert.equal(unfrozen.unfrozenBy, "ALLOW_FROZEN=1", "前提：确实处于解冻态");
   assert.equal(shouldAnnounceUnfreeze(unfrozen, { precheck: false }), true, "非预检时该打");
   assert.equal(
@@ -152,7 +170,7 @@ test("N35 回归：冻结但未解冻 ⇒ 不打（旧实现会在这里误报�
 });
 
 test("真正解冻过 ⇒ 打，且靠 unfrozenBy 而非 active 判定", () => {
-  const unfrozen = evaluatePlatformPolicy("deepseek", { allowFrozen: true });
+  const unfrozen = evaluatePlatformPolicy("longcat", { allowFrozen: true });
   assert.equal(unfrozen.active, false, "解冻不等于变成活跃站");
   assert.equal(shouldAnnounceUnfreeze(unfrozen, { precheck: false }), true);
 });

@@ -395,3 +395,23 @@ test("main：重跑一律拒绝覆盖，唯一的出口是显式放行；放行�
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── 解耦是结构性约束，不是值约束（2026-11-19 解冻后补）─────────────────
+// 全量变异抓到一条存活锚：deepseek 解冻后 AB_PLATFORMS 与 FROZEN_AB_PLATFORMS
+// 都是 ["longcat"]，于是「把 platforms 改回读冻结名单」在值层面是等价变换——
+// 上面那些值级断言数学上不可能红。不能靠"等两值再次不同"来修，
+// 必须验来源：实验设计只能来自实验对象常量，治理事实不许代用。
+
+test("实验对象的来源只能是 AB_PLATFORMS，不许改读冻结名单（即使两值当前相等）", () => {
+  const src = readFileSync(PLAN_SRC, "utf-8");
+  const m = src.match(/const platforms = \[([^\]]*)\];/);
+  assert.ok(m, "找不到 buildAbPlan 里 platforms 的来源表达式");
+
+  assert.match(m[1], /\bAB_PLATFORMS\b/, "实验对象必须直接来自 AB_PLATFORMS");
+  assert.doesNotMatch(
+    m[1],
+    /\bFROZEN_AB_PLATFORMS\b/,
+    "冻结样本集记的是治理事实；即使当前与 AB 同值也不许拿来当实验对象——" +
+      "否则解冻 longcat 时实验设计会被静默改掉，而没有任何测试会红",
+  );
+});

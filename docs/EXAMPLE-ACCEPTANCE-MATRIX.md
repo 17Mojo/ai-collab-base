@@ -56,13 +56,18 @@
 
 ### 2.1 关于范例一的「全量」
 
-11 个 adapter 中，除白名单 5 站外的 6 站各有**不同性质**的阻塞，不能统一说「还没测」：
+> **2026-11-19 更新**：用户已授权解冻 deepseek，活跃白名单 **5 → 6 站**
+> （见 `RESULT-DEEPSEEK-UNFREEZE-2026-11-19.md` §1）。本表与本节的「白名单 5 站」
+> 是 **2026-11-18 的历史验收范围**，数字不改写；deepseek 的首轮回归另记在 RESULT 里。
+> 「全量」的定义域因此也变了：当前是 6 站，不再是 5 站。
+
+11 个 adapter 中，除**当时**白名单 5 站外的 6 站各有**不同性质**的阻塞，不能统一说「还没测」：
 
 | 平台 | 状态 | 性质 | 依据 |
 |---|---|---|---|
 | qianwen | 用户裁定移出白名单 | **政策** | `platform-freeze.mjs:7-9`（有防范非人类操作机制，2026-11-18 改判换成 stepfun） |
-| deepseek | 冻结 A/B 样本，**已从实验对象移出** | **政策** | `platform-freeze.mjs:55` `FROZEN_AB_PLATFORMS`（仍在冻结表内）；`:96` `AB_PLATFORMS` 已不含它——11-18 两轮 A/B 都撞在 step_5 被裁定收口 |
-| longcat | 冻结 A/B 样本，**仍是实验对象** | **政策** | `platform-freeze.mjs:96` `AB_PLATFORMS`（当前唯一在跑的 A/B 对象）；`:55` `FROZEN_AB_PLATFORMS` |
+| deepseek | **已解冻的活跃站**（11-19 用户授权）；仍不是 A/B 实验对象 | **政策** | `platform-freeze.mjs` `ACTIVE_PLATFORM_IDS` 已含它、`FROZEN_AB_PLATFORMS` 已移除；`RESULT-DEEPSEEK-UNFREEZE-2026-11-19.md` §1。N25 的 A/B 收口结论不变 |
+| longcat | 冻结 A/B 样本，**仍是实验对象** | **政策** | `platform-freeze.mjs` `AB_PLATFORMS`（当前唯一在跑的 A/B 对象）；`FROZEN_AB_PLATFORMS`（现在只剩它） |
 | ChatGPT | `bot_check` HTTP 403 | **平台侧不可控** | `RESULT-REAL-MACHINE-REACHABILITY-2026-10-26.md:68` |
 | Claude.ai | `bot_check` HTTP 403 + 「安全验证」 | **平台侧不可控** | 同上 `:69` |
 | gemini | 不在白名单，无近期真机记录 | **未排期** | `platform-freeze.mjs` 未提及；仅在历史 `fiveSites` 名单中出现 |

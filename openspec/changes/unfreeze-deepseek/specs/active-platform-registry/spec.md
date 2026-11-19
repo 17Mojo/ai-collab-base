@@ -61,3 +61,27 @@ MUST NOT 覆盖已有且内容不同的工件；任一目标要被覆盖时，�
 - **THEN** 脚本 MUST 退出码 2 并点名被挡下的目标
 - **AND** 所有目标文件 MUST 保持原样（含 mtime）
 - **AND** 两份历史计划 `session-wall-ab-plan-2026-11-11/11-18.json` MUST NOT 被当作待执行计划
+
+## MODIFIED Requirements
+
+### Requirement: 目标源退出是治理定性，不等于删除平台支持
+
+平台被裁定退出目标源时，系统 SHALL 把该裁定记录在结果报告与缺口台账中，并保留其生产
+adapter；MUST NOT 为了表达「退出」而删除 adapter 或削弱闸门。退出当时的白名单冻结状态
+SHALL 被记成历史事实；若用户后续另行给出解冻裁定，白名单 SHALL 按新裁定同步更新，
+且新裁定 MUST NOT 被写成对旧裁定事实的篡改——两次裁定及其时间都要能从磁盘复核。
+
+#### Scenario: deepseek / longcat 退出目标源
+
+- **WHEN** 用户裁定 deepseek / longcat 不适合作为目标网络源
+- **THEN** **当时**的 `ACTIVE_PLATFORM_IDS` 是不含这两站的 5 站白名单，闸门默认拒绝它们
+- **AND** 结果报告与 `known_gaps.json` 记录退出理由与裁定人
+- **AND** 两站生产 adapter 仍保留，平台注册一致性测试不删站
+
+#### Scenario: 2026-11-19 用户另行解冻 deepseek
+
+- **WHEN** 用户在退出裁定之后另行授权 deepseek 做真机回归（点名平台 + 范围 + 时间）
+- **THEN** `ACTIVE_PLATFORM_IDS` 加入 deepseek，`FROZEN_AB_PLATFORMS` 移除它
+- **AND** 原退出裁定仍留在 N25 与 `RESULT-N25-AB-2026-11-18.md` 中，不被改写
+- **AND** longcat 仍冻结，不因 deepseek 解冻而跟着放行
+- **AND** 解冻后的回执 `active === true && unfrozenBy === null`

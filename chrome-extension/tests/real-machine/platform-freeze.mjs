@@ -12,9 +12,17 @@
  * 同日第二次裁定（N25 收口）：deepseek / longcat 真机 A/B 只跑了 deepseek
  * 两轮（A/B 都撞在 step_5，fresh_session 在 step_8 未获触发机会），用户据
  * 现场反自动化判断裁定停止并收口，两站**降级为目标源外平台**。本文件把
- * 它们从活跃白名单排除的事实不变；「目标源外」是治理定性，不通过改白名单
+ * 它们从活跃白名单排除的事实**当时**不变；「目标源外」是治理定性，不通过改白名单
  * 常量或 adapter 表达——避免动到变异锚点。详见
  * collaboration/results/RESULT-N25-AB-2026-11-18.md。
+ *
+ * 2026-11-19 用户改判（**覆盖上面那段的历史状态**）：明确授权解冻 deepseek，
+ * 范围是当前 change 的 P1→P4、含真机验收。于是 deepseek 回到活跃白名单，
+ * `FROZEN_AB_PLATFORMS` 只剩 longcat，`AB_PLATFORMS` 仍是 longcat（deepseek 的
+ * A/B 已按 N25 收口，不因解冻而重新变成实验对象）。授权原文与未授权事项
+ * 逐项列在 collaboration/results/RESULT-DEEPSEEK-UNFREEZE-2026-11-19.md §1：
+ * N60 只读探针未放行、longcat 零触碰、反自动化不在范围（N61）。
+ * 解冻后的 deepseek 是**活跃站**，不许再被写成「冻结但放行了」。
  *
  * ## 为什么必须是代码，不能只是报告里的一句话
  *
@@ -42,17 +50,18 @@
  * 「谁在什么时候解冻过」要能从磁盘复核，不能靠聊天记录。
  */
 
-/** 当前允许真机动作的 5 个活跃平台（顺序无关，别处不许复制）。 */
+/** 当前允许真机动作的 6 个活跃平台（顺序无关，别处不许复制）。 */
 export const ACTIVE_PLATFORM_IDS = Object.freeze([
   "stepfun",
   "yuanbao",
   "chatglm",
   "yiyan",
   "kimi",
+  "deepseek",
 ]);
 
 /** 本轮 A/B 待验证、但当前**冻结**的样本（写进方案，不许跑）。 */
-export const FROZEN_AB_PLATFORMS = Object.freeze(["deepseek", "longcat"]);
+export const FROZEN_AB_PLATFORMS = Object.freeze(["longcat"]);
 
 /**
  * 本轮真机 A/B 的**实验对象**——与上面的「冻结样本集」是两件事，别再混用。
@@ -74,12 +83,17 @@ export const FROZEN_AB_PLATFORMS = Object.freeze(["deepseek", "longcat"]);
  * 这条红线是「不许拿活跃站当 A/B 实验对象」——活跃站是交付源，实验会扰动它。
  * 拆开之后，解冻 deepseek 会让**这条断言**说话（要么把 deepseek 移出实验对象，
  * 要么解释为什么它还能实验），而不是让计划悄悄少两轮命令。
+ * **2026-11-19 实证**：deepseek 真的解冻了，deepseek 本就不在实验对象里，
+ * 子集断言保持绿、`session-wall-ab` 17/17 仍绿——这正是拆开要达到的效果：
+ * 治理状态变了，实验设计不必跟着变，也不需要有人去改「4」这个数字。
  *
  * ## 当前为什么只有 longcat
  *
  *   - **deepseek 的 A/B 已结案**：2026-11-11/12 两轮真机回执齐全，step_8 撞墙
  *     4×180s 的形态已定性；用户 2026-11-18 据现场反自动化判断裁定停止收口（N25），
  *     deepseek 降级为目标源外平台。它的回执与计划留在 evidence/ 里当历史，不再「待跑」。
+ *     2026-11-19 用户另行授权解冻 deepseek 做真机回归（见 RESULT-DEEPSEEK-UNFREEZE），
+ *     但**没有**重开它的 A/B 命题：N25 的 closed 口径不变，它也不回到实验对象里。
  *   - **longcat 仍待跑**：2026-11-12 的两轮是**无效**数据——`ab2-no-boundary` 第 3 步
  *     就失败（3 步里只成功 2 步），`ab2-with-boundary` 虽然跑完 8 步，但
  *     `sessionResets[0] = {available:false, strategy:"none"}`（本站 adapter 没有声明

@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-11-19T07:42:25.840Z",
+  "platform": "stepfun",
+  "platformUrl": "https://studio.stepfun.com/",
+  "packId": "xiaohongshu-knowledge-creator",
+  "packPath": "/Users/raymondna/Documents/AI-collab/ai-collab-base/packs/examples/xiaohongshu_knowledge_creator.json",
+  "packVariant": "as-is",
+  "platformPolicy": {
+    "allowed": true,
+    "active": true,
+    "unfrozenBy": null,
+    "reason": "active"
+  },
+  "input": {
+    "topic": "AI 智能体（Agent）到底是什么",
+    "target_audience_level": "普通上班族"
+  },
+  "tabIdUsed": 1785662707,
+  "delivery": "precise",
+  "exec": {
+    "success": false,
+    "error": "Step step_2_hook failed: 无法把提示词发到标签页 1785662707：Could not establish connection. Receiving end does not exist.。请确认该页面是受支持的 AI 站点（千问/文心/元宝/Kimi/…），并在扩展装好之后刷新一次页面。",
+    "result": {
+      "packId": "xiaohongshu-knowledge-creator",
+      "input": {
+        "topic": "AI 智能体（Agent）到底是什么",
+        "target_audience_level": "普通上班族"
+      },
+      "runtime_overrides": {},
+      "targetTabId": 1785662707,
+      "startTime": 1795074081887,
+      "status": "failed",
+      "steps": [
+        {
+          "id": "step_1_topic",
+          "name": "选题确认",
+          "type": "local",
+          "startTime": 1795074081887,
+          "success": true,
+          "output": {
+            "topic": "AI 智能体（Agent）到底是什么",
+            "target_audience_level": "普通上班族"
+          },
+          "error": null,
+          "delivery": null,
+          "endTime": 1795074081887,
+          "duration": 0
+        },
+        {
+          "id": "step_2_hook",
+          "name": "结论提炼",
+          "type": "analysis",
+          "startTime": 1795074081887,
+          "success": false,
+          "output": null,
+          "error": "无法把提示词发到标签页 1785662707：Could not establish connection. Receiving end does not exist.。请确认该页面是受支持的 AI 站点（千问/文心/元宝/Kimi/…），并在扩展装好之后刷新一次页面。",
+          "delivery": "precise",
+          "endTime": 1795074145838,
+          "duration": 63951
+        }
+      ],
+      "output": {
+        "topic_info": {
+          "topic": "AI 智能体（Agent）到底是什么",
+          "target_audience_level": "普通上班族"
+        }
+      },
+      "errors": [
+        {
+          "message": "Step step_2_hook failed: 无法把提示词发到标签页 1785662707：Could not establish connection. Receiving end does not exist.。请确认该页面是受支持的 AI 站点（千问/文心/元宝/Kimi/…），并在扩展装好之后刷新一次页面。",
+          "timestamp": 1795074145838
+        }
+      ],
+      "extractedData": {},
+      "sessionResets": [],
+      "stepIndex": {},
+      "endTime": 1795074145838,
+      "duration": 63951
+    }
+  }
+}
